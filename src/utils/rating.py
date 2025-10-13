@@ -15,7 +15,7 @@ def get_last_activity_weight(last_activity, base=None):
         return 0
     base = base or datetime.now(utc)
     n_activities = (base - last_activity) / timedelta(days=180)
-    return 0.9 ** min(n_activities, 0)
+    return 0.9 ** max(n_activities, 0)
 
 
 def get_weighted_rating(wratings, target, threshold=0.95, cache=None) -> float:
