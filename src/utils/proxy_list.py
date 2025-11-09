@@ -58,7 +58,7 @@ class ProxyList:
     @staticmethod
     def _get_proxy_from_json():
         urls = [
-            ('https://api.proxyscrape.com/v3/free-proxy-list/get?request=displayproxies&protocol=https&proxy_format=ipport&format=json', 'proxies'),  # noqa
+            ('https://api.proxyscrape.com/v3/free-proxy-list/get?request=displayproxies&protocol=https&proxy_format=ipport&format=json&limit=500', 'proxies'),  # noqa
             ('https://proxylist.geonode.com/api/proxy-list?limit=500&page=1&sort_by=lastChecked&sort_type=desc&protocols=http,https', 'data'),
         ]
         for url, key in urls:

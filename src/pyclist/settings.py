@@ -575,6 +575,7 @@ if DEBUG:
             first_path not in DEBUG_PERMISSION_EXCLUDE_PATHS and
             not request.is_ajax() and
             'disable_dtb' not in request.GET and
+            request.session.get('debug_toolbar') and
             (not DEBUG or request.user.is_authenticated)
         )
 
@@ -890,12 +891,16 @@ FONTAWESOME_ICONS_ = {
     'vk': {'icon': '<i class="fa-fw fab fa-vk"></i>', 'title': None},
     'patreon': {'icon': '<i class="fa-fw fab fa-patreon"></i>', 'title': None},
     'yandex-contest': {'icon': '<i class="fa-fw fas fa-tools"></i>'},
-    'n_gold': '<span class="trophy trophy-detail gold-trophy"><i class="fas fa-trophy"></i></span>',
-    'n_silver': '<span class="trophy trophy-detail silver-trophy"><i class="fas fa-trophy"></i></span>',
-    'n_bronze': '<span class="trophy trophy-detail bronze-trophy"><i class="fas fa-trophy"></i></span>',
+    'codeforces': {'icon': '<i class="fa-solid fa-chart-simple"></i>'},
+    'n_win': '<span class="trophy trophy-detail gold-trophy"><i class="fas fa-trophy"></i></span>',
+    'n_gold': '<span class="trophy trophy-detail gold-trophy"><i class="fas fa-medal"></i></span>',
+    'n_silver': '<span class="trophy trophy-detail silver-trophy"><i class="fas fa-medal"></i></span>',
+    'n_bronze': '<span class="trophy trophy-detail bronze-trophy"><i class="fas fa-medal"></i></span>',
     'sum': '&sum;',
     'matching': '<i class="fa-solid fa-magnifying-glass"></i>',
     'silk': '<i class="fa-solid fa-magnifying-glass-chart"></i>',
+    'debug_toolbar': '<i class="fa-solid fa-toolbox"></i>',
+    'account_type': '<i class="fa-regular fa-circle-user"></i>',
 }
 
 
@@ -914,7 +919,7 @@ STANDINGS_UNSPECIFIED_PLACE = '-'
 STANDINGS_STATISTIC_FIELDS = ['upsolving', 'total_solving', 'n_solved', 'n_upsolved', 'n_total_solved', 'n_first_ac']
 
 ACCOUNT_STATISTIC_FIELDS = ['solving', 'upsolving', 'total_solving', 'n_solved', 'n_upsolved', 'n_total_solved',
-                            'n_first_ac', 'n_gold', 'n_silver', 'n_bronze', 'n_medals',
+                            'n_first_ac', 'n_win', 'n_gold', 'n_silver', 'n_bronze', 'n_medals',
                             'n_first_places', 'n_second_places', 'n_third_places', 'n_top_ten_places', 'n_places']
 
 UPSOLVING_FILTER_DEFAULT = True
@@ -948,6 +953,8 @@ SHELL_PLUS_IMPORTS = [
     ('django.core.management', 'call_command'),
     ('collections', 'defaultdict'),
     ('tqdm'),
+    ('ranking.models', 'AccountType'),
+    ('datetime', ('timedelta', 'datetime')),
 ]
 
 

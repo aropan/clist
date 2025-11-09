@@ -1,4 +1,5 @@
 import hashlib
+import itertools
 import os
 import re
 from typing import Optional
@@ -26,6 +27,7 @@ from clist.templatetags.extras import get_item, get_statistic_stats, has_season
 from clist.utils import update_account_by_coders
 from pyclist.indexes import DescNullsLastIndex, ExpressionIndex, GistIndexTrgrmOps
 from pyclist.models import BaseManager, BaseModel
+from ranking.enums import AccountType
 from true_coders.models import Coder, Party
 from utils.mathutils import sum_with_none
 from utils.signals import update_n_field_on_change
@@ -60,6 +62,8 @@ class Account(BaseModel):
     submissions_info = models.JSONField(default=dict, blank=True)
     updated = models.DateTimeField(auto_now_add=True)
     duplicate = models.ForeignKey('Account', null=True, blank=True, on_delete=models.CASCADE)
+    related = models.ForeignKey('Account', null=True, blank=True, on_delete=models.CASCADE,
+                                related_name='related_accounts')
     global_rating = models.IntegerField(null=True, blank=True, default=None, db_index=True)
     need_verification = models.BooleanField(default=False)
     deleted = models.BooleanField(null=True, blank=True, default=None, db_index=True)
@@ -73,6 +77,7 @@ class Account(BaseModel):
     n_upsolved = models.IntegerField(default=None, null=True, blank=True)
     n_total_solved = models.IntegerField(default=0, blank=True)
     n_first_ac = models.IntegerField(default=0, blank=True)
+    n_win = models.IntegerField(default=None, null=True, blank=True)
     n_gold = models.IntegerField(default=None, null=True, blank=True)
     n_silver = models.IntegerField(default=None, null=True, blank=True)
     n_bronze = models.IntegerField(default=None, null=True, blank=True)
@@ -83,6 +88,7 @@ class Account(BaseModel):
     n_third_places = models.IntegerField(default=None, null=True, blank=True)
     n_top_ten_places = models.IntegerField(default=None, null=True, blank=True)
     n_places = models.IntegerField(default=None, null=True, blank=True)
+    account_type = models.PositiveSmallIntegerField(choices=AccountType.choices, default=AccountType.USER)
 
     objects = BaseManager()
     priority_objects = PriorityAccountManager()
@@ -131,13 +137,13 @@ class Account(BaseModel):
             return False
         if field[0] == '_' or field[-1] == '_' or '___' in field:
             return True
-        if field in {'profile_url', 'rating', 'raw_rating', 'is_virtual', 'name', 'country', 'rank_percentile'}:
+        if field in {'profile_url', 'rating', 'raw_rating', 'is_virtual', 'is_team', 'name', 'country',
+                     'rank_percentile'}:
             return True
         field = field.lower()
-        if field in {'telegram', 'dateofbirth'}:
-            return True
-        if 'email' in field or 'password' in field:
-            return True
+        for word in ('email', 'password', 'phone', 'birth', 'telegram'):
+            if word in field:
+                return True
 
     def get_last_season(self):
         if not self.last_activity:
@@ -206,8 +212,8 @@ class Account(BaseModel):
         return queryset
 
     def save(self, *args, **kwargs):
+        update_fields = []
         if self.has_field('rating'):
-            update_fields = kwargs.get('update_fields')
             prev_rating = self.rating
             if self.deleted:
                 self.rating = None
@@ -220,10 +226,23 @@ class Account(BaseModel):
             if self.rating is None:
                 self.rating50 = None
                 self.resource_rank = None
-            if update_fields and self.rating != prev_rating:
+            if self.rating != prev_rating:
                 update_fields.extend(['rating', 'rating50', 'resource_rank'])
         if self.has_field('info'):
             download_avatar_url(self)
+
+        account_type = None
+        if self.info.get('is_university'):
+            account_type = AccountType.UNIVERSITY
+        elif self.info.get('is_team'):
+            account_type = AccountType.TEAM
+        if account_type and self.account_type != account_type:
+            self.account_type = account_type
+            update_fields.append('account_type')
+
+        if update_fields:
+            self.add_to_update_fields(update_fields, kwargs.get('update_fields'))
+
         super().save(*args, **kwargs)
 
     @staticmethod
@@ -235,6 +254,28 @@ class Account(BaseModel):
         ):
             account = resource.account_set.get(key=renaming.new_key)
         return account
+
+    @staticmethod
+    def get_type(name) -> Optional[AccountType]:
+        if not name or not isinstance(name, str):
+            return None
+        name_ci = name.upper()
+        if name_ci not in AccountType.__members__:
+            return None
+        return AccountType[name_ci]
+
+    @staticmethod
+    def get_type_value(index) -> Optional[str]:
+        for idx, value in AccountType.choices:
+            if idx == index:
+                return value.lower()
+        return None
+
+    def related_accounts_list(self):
+        ret = self.related_accounts.all()
+        if self.related:
+            ret = itertools.chain([self.related], ret)
+        return ret
 
     class Meta:
         indexes = [
@@ -301,9 +342,21 @@ class Account(BaseModel):
             DescNullsLastIndex(fields=['country', '-n_total_solved']),
             DescNullsLastIndex(fields=['country', '-n_first_ac']),
 
-            DescNullsLastIndex(fields=['resource', '-n_gold', '-n_silver', '-n_bronze', '-n_other_medals']),
-            DescNullsLastIndex(fields=['resource', '-n_first_places', '-n_second_places', '-n_third_places',
-                                       '-n_top_ten_places']),
+            DescNullsLastIndex(fields=['resource',
+                                       '-n_win', '-n_gold', '-n_silver', '-n_bronze', '-n_other_medals']),
+            DescNullsLastIndex(fields=['resource',
+                                       '-n_first_places', '-n_second_places', '-n_third_places', '-n_top_ten_places']),
+
+            DescNullsLastIndex(fields=['resource', 'account_type']),
+            DescNullsLastIndex(fields=['resource', 'country', 'account_type']),
+            DescNullsLastIndex(fields=['resource', 'account_type', 'n_contests']),
+            DescNullsLastIndex(fields=['resource', 'account_type', '-n_contests']),
+            DescNullsLastIndex(fields=['resource', 'account_type', 'last_activity']),
+            DescNullsLastIndex(fields=['resource', 'account_type', '-last_activity']),
+            DescNullsLastIndex(fields=['resource', 'account_type',
+                                       '-n_win', '-n_gold', '-n_silver', '-n_bronze', '-n_other_medals']),
+            DescNullsLastIndex(fields=['resource', 'account_type',
+                                       '-n_first_places', '-n_second_places', '-n_third_places', '-n_top_ten_places']),
         ]
 
         unique_together = ('resource', 'key')
@@ -317,11 +370,16 @@ class CountryAccount(BaseModel):
     rating = models.IntegerField(default=None, null=True, blank=True, db_index=True)
     resource_rank = models.IntegerField(null=True, blank=True, default=None, db_index=True)
     raw_rating = models.FloatField(default=None, null=True, blank=True, db_index=True)
+    n_win = models.IntegerField(default=None, null=True, blank=True)
     n_gold = models.IntegerField(default=None, null=True, blank=True)
     n_silver = models.IntegerField(default=None, null=True, blank=True)
     n_bronze = models.IntegerField(default=None, null=True, blank=True)
     n_medals = models.IntegerField(default=None, null=True, blank=True)
     n_other_medals = models.IntegerField(default=None, null=True, blank=True)
+    n_first_places = models.IntegerField(default=None, null=True, blank=True)
+    n_second_places = models.IntegerField(default=None, null=True, blank=True)
+    n_third_places = models.IntegerField(default=None, null=True, blank=True)
+    n_top_ten_places = models.IntegerField(default=None, null=True, blank=True)
 
     class Meta:
         indexes = [
@@ -332,7 +390,10 @@ class CountryAccount(BaseModel):
             DescNullsLastIndex(fields=['resource', '-resource_rank', 'country']),
             DescNullsLastIndex(fields=['resource', 'n_accounts', 'country']),
             DescNullsLastIndex(fields=['resource', '-n_accounts', 'country']),
-            DescNullsLastIndex(fields=['resource', '-n_gold', '-n_silver', '-n_bronze', '-n_other_medals', 'country']),
+            DescNullsLastIndex(fields=['resource', '-n_win', '-n_gold', '-n_silver', '-n_bronze',
+                                       '-n_other_medals', 'country']),
+            DescNullsLastIndex(fields=['resource', '-n_first_places', '-n_second_places', '-n_third_places',
+                                       '-n_top_ten_places', 'country'])
         ]
 
         unique_together = ('resource', 'country')
@@ -398,11 +459,20 @@ def download_avatar_url(account):
 @receiver(post_delete, sender=Account)
 def count_resource_accounts(signal, instance, **kwargs):
     if signal is post_delete:
-        instance.resource.n_accounts -= 1
-        instance.resource.save(update_fields=['n_accounts'])
+        delta = -1
     elif signal is post_save and kwargs['created']:
-        instance.resource.n_accounts += 1
-        instance.resource.save(update_fields=['n_accounts'])
+        delta = +1
+    else:
+        return
+    update_fields = ['n_accounts']
+    instance.resource.n_accounts += delta
+    if instance.account_type == AccountType.UNIVERSITY:
+        instance.resource.n_university_accounts += delta
+        update_fields.append('n_university_accounts')
+    elif instance.account_type == AccountType.TEAM:
+        instance.resource.n_team_accounts += delta
+        update_fields.append('n_team_accounts')
+    instance.resource.save(update_fields=update_fields)
 
 
 @receiver(pre_save, sender=Account)
@@ -524,6 +594,8 @@ class Statistics(BaseModel):
     n_total_solved = models.IntegerField(default=0, blank=True)
     n_first_ac = models.IntegerField(default=0, blank=True)
     medal = models.CharField(max_length=20, null=True, blank=True)
+    related = models.ForeignKey('Statistics', null=True, blank=True, on_delete=models.CASCADE,
+                                related_name='related_statistics')
 
     class StatisticsManager(BaseManager):
         def get_queryset(self):
@@ -561,7 +633,7 @@ class Statistics(BaseModel):
         return field in settings.ADDITION_HIDE_FIELDS_
 
     def __str__(self):
-        return f'Statistics#{self.id} account#{self.account_id} on contest#{self.contest_id}'
+        return f'Statistics#{self.id} Account#{self.account_id} on Contest#{self.contest_id}'
 
     def get_old_rating(self, use_rating_prediction=True):
         rating_datas = [self.addition]

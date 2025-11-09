@@ -243,6 +243,9 @@ $.browser = {};
 
 
 function log_ajax_error(response, element = null) {
+  if (response.status === 0 && response.statusText === 'abort') {
+    return
+  }
   var message;
   if (typeof response.responseJSON !== 'undefined') {
     if (response.responseJSON.redirect) {

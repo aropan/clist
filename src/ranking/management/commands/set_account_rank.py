@@ -53,7 +53,7 @@ class Command(BaseCommand):
         resources = Resource.available_for_update_objects.filter(has_rating_history=True)
         now = timezone.now()
 
-        if not args.without_delay:
+        if not args.without_delay and not args.resources:
             rank_update_delay = parse_duration(args.rank_update_delay)
             rating_update_delay = parse_duration(args.rating_update_delay)
             need_update = (
@@ -80,7 +80,7 @@ class Command(BaseCommand):
                                                 related=resource, status=EventStatus.IN_PROGRESS)
             field = 'resource_rank'
             coloring_field = get_item(resource, 'info.ratings.chartjs.coloring_field')
-            resource_update_fields = ['rank_update_time', 'n_rating_accounts']
+            resource_update_fields = []
             with failed_on_exception(event_log):
                 base_qs = Account.objects.filter(resource=resource, rating__isnull=False)
                 n_rating_accounts = base_qs.count()
@@ -142,6 +142,7 @@ class Command(BaseCommand):
                     if updated_rating:
                         resource_update_fields.append('ratings')
 
+            resource_update_fields.extend(['rank_update_time', 'n_rating_accounts'])
             resource.rank_update_time = now
             resource.n_rating_accounts = n_rating_accounts
             resource.save(update_fields=resource_update_fields)

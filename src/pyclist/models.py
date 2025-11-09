@@ -29,10 +29,19 @@ class BaseModel(models.Model):
     created = models.DateTimeField(auto_now_add=True, db_index=True)
     modified = models.DateTimeField(auto_now=True, db_index=True)
 
+    @staticmethod
+    def add_to_update_fields(fields, update_fields):
+        if not update_fields:
+            return
+        if isinstance(update_fields, list):
+            update_fields.extend(fields)
+        elif isinstance(update_fields, set):
+            update_fields.update(fields)
+        elif isinstance(update_fields, tuple):
+            raise ValueError('update_fields cannot be a tuple')
+
     def save(self, *args, **kwargs):
-        update_fields = kwargs.get('update_fields')
-        if update_fields and 'modified' not in update_fields:
-            update_fields.append('modified')
+        self.add_to_update_fields(['modified'], kwargs.get('update_fields'))
         return super().save(*args, **kwargs)
 
     def fetched_field(self, field) -> Optional[Any]:

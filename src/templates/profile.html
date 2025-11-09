@@ -160,7 +160,7 @@ ratings_url = '{{ request.path }}ratings/{% if search_resource %}?resource={{ se
   {% define 1 as history_resources_limit %}
   <div{% if two_columns %} class="col-lg-6"{% else %} class="col-xs-12"{% endif %}>
     <h3>Ratings{% if two_columns %}<a id="expand-ratings" href="#" onclick=""><i class="fas fa-expand-arrows-alt"></i></a>{% endif %}</h3>
-    {% if history_resources|length > history_resources_limit %}
+    {% if has_combined_history %}
     <div class="rating-history-block">
       <div class="text-center loading-rating">{% icon_to "rating" "placeholder" html_class="fa-3x" %}</div>
       <div class="text-center loading-rating hidden">{% icon_to "loading" "loading" html_class="fa-3x" %}</div>
@@ -169,7 +169,7 @@ ratings_url = '{{ request.path }}ratings/{% if search_resource %}?resource={{ se
     {% endif %}
 
     {% for hr in history_resources %}
-    {% if forloop.counter0 == history_resources_limit %}
+    {% if forloop.counter0 == history_resources_limit and has_combined_history %}
       <a id="collapse-history-resources" class="btn btn-default btn-block" data-toggle="collapse" href="#history-resources-collapsed" onclick="$(this).remove()"><span class="text-primary">{{ history_resources|length|subtract:history_resources_limit }} more</span></a>
       <div class="collapse" id="history-resources-collapsed">
     {% endif %}
@@ -188,10 +188,12 @@ ratings_url = '{{ request.path }}ratings/{% if search_resource %}?resource={{ se
       <div class="text-center loading-rating">{% icon_to "rating" "placeholder" html_class="fa-3x" %}</div>
       <div class="text-center loading-rating hidden">{% icon_to "loading" "loading" html_class="fa-3x" %}</div>
 
-      <canvas class="rating_history" id="resource_{{ hr.pk }}_rating{% if hr.kind %}_{{ hr.kind }}{% endif %}">{{ hr }}</canvas>
+      <canvas class="rating_history" id="resource_{{ hr.pk }}_account_{{ hr.account_pk }}{% if hr.kind %}_kind_{{ hr.kind }}{% endif %}_rating"{% if hr.account_name %} data-account="{{ hr.account_name }}"{% endif %}>
+        {{ hr.host }} {{ hr.account_pk }}{% if hr.kind %} {{ hr.kind }}{% endif %}{% if hr.account_name %} {{ hr.account_name }}{% endif %}
+      </canvas>
     </div>
     {% endfor %}
-    {% if history_resources|length > history_resources_limit %}
+    {% if history_resources|length > history_resources_limit and has_combined_history %}
       </div>
     {% endif %}
   </div>

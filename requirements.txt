@@ -116,3 +116,4 @@ pandas==2.2.2
 beautifulsoup4==4.12.3
 markdown==3.7
 pylibmc==1.6.3
+pyjwt==2.10.1

@@ -43,13 +43,22 @@
         {% endif %}
     </div>
 
-    <span class="badge progress-bar-{% if resource.module %}success{% else %}info{% endif %}">{{ resource.n_contests|intcomma }} contest(s)</span>
+    <span class="badge progress-bar-{% if resource.module %}success{% else %}info{% endif %}">{{ resource.n_contests|intcomma }} contests</span>
 
     {% if resource.module %}
     <span class="badge progress-bar-{% if resource.has_accounts_infos_update %}success{% else %}info{% endif %}">
-        {{ resource.n_accounts|intcomma }} accounts(s)
+        {{ resource.n_accounts|intcomma }} accounts
         {% if resource.n_accounts_to_update %}<span title="{{ resource.n_accounts_to_update|intcomma }} accounts to update" data-toggle="tooltip">{% icon_to 'exclamation' '' %}</span>{% endif %}
     </span>
+
+    {% if resource.n_university_accounts %}
+    <span class="badge progress-bar-info">{{ resource.n_university_accounts|intcomma }} universities</span>
+    {% endif %}
+
+    {% if resource.n_team_accounts %}
+    <span class="badge progress-bar-info">{{ resource.n_team_accounts|intcomma }} teams</span>
+    {% endif %}
+
     {% endif %}
 </div>
 
@@ -64,8 +73,8 @@
     <div class="col-md-6 col-lg-4">
         <h4>
             Top rating
-            <a href="{% url 'coder:accounts' %}?resource={{ resource.pk }}&sort_column=rating&sort_order=desc{% query_fields request 'country' 'list' %}">{% icon_to 'accounts' %}</a>
-            <a href="{% url 'clist:resources_account_ratings' %}{% query_fields request 'country' 'list' before='?' %}">{% icon_to 'top' 'Account ratings' %}</a>
+            <a href="{% url 'coder:accounts' %}?resource={{ resource.pk }}&sort_column=rating&sort_order=desc{% query_fields request 'country' 'list' 'account_type' 'coder_kind' 'as_coder' params=params %}">{% icon_to 'accounts' %}</a>
+            <a href="{% url 'clist:resources_account_ratings' %}{% query_fields request 'country' 'list' 'account_type' 'coder_kind' 'as_coder' before='?' params=params %}">{% icon_to 'top' 'Account ratings' %}</a>
             {% if resource.rating_update_time %}<span class="pull-right text-muted update-time">updated {% time_ago resource.rating_update_time %}</span>{% endif %}
         </h4>
         <div class="panel panel-default table-responsive">
@@ -207,14 +216,14 @@
     </script>
     {% endif %}
 
-    {% include "resource_accounts_panel.html" with condition=resource.has_statistic_medal accounts=most_medals field="n_gold,n_silver,n_bronze,n_medals" title="Most medals" header="n_gold,n_silver,n_bronze,sum" paging="resource_most_medals_paging.html" header_icon=True %}
+    {% include "resource_accounts_panel.html" with condition=resource.has_statistic_medal accounts=most_medals field="n_win,n_gold,n_silver,n_bronze,n_medals" title="Most medals" header="n_win,n_gold,n_silver,n_bronze,sum" paging="resource_most_medals_paging.html" header_icon=True %}
 
     {% if has_country and resource.has_country_medal and country_medals.exists %}
     <div class="col-md-6 col-lg-4{% if mute_country_rating %} text-muted{% endif %}">
         <h4>
         Countries most medals
         {% if perms.ranking.change_countryaccount %}
-        <a class="inline-button" href="{% url 'admin:ranking_countryaccount_changelist' %}?resource__id__exact={{ resource.pk }}&sort_by=-n_gold,-n_silver,-n_bronze">{% icon_to 'database' %}</a>
+        <a class="inline-button" href="{% url 'admin:ranking_countryaccount_changelist' %}?resource__id__exact={{ resource.pk }}&sort_by=-n_win,sort_by=-n_gold,-n_silver,-n_bronze">{% icon_to 'database' %}</a>
         {% endif %}
         {% if resource.country_rank_update_time %}<span class="pull-right text-muted update-time">updated {% time_ago resource.country_rank_update_time %}</span>{% endif %}
         </h4>
@@ -223,6 +232,7 @@
                 <tr>
                     <th>N</th>
                     <th>Country</th>
+                    <th>{% icon_to "n_win" %}</th>
                     <th>{% icon_to "n_gold" %}</th>
                     <th>{% icon_to "n_silver" %}</th>
                     <th>{% icon_to "n_bronze" %}</th>

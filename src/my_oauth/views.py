@@ -33,6 +33,10 @@ def generate_state(size=20, chars=string.ascii_uppercase + string.digits):
 
 
 def query(request, name):
+    redirect_url = request.GET.get("next")
+    if redirect_url:
+        request.session["next"] = redirect_url
+
     service = get_object_or_404(Service.objects, name=name)
     args = model_to_dict(service)
     args["redirect_uri"] = settings.HTTPS_HOST_URL_ + reverse("auth:response", args=(name,))
@@ -80,7 +84,7 @@ def process_data(request, service, access_token, data):
     redirect_url = request.session.pop("token_url", None)
     if not user_id:
         raise Exception("User ID not found.")
-    if not email and not redirect_url:
+    if service.email_field and not email and not redirect_url:
         raise Exception("Email not found.")
 
     token, _ = Token.objects.get_or_create(service=service, user_id=user_id)
@@ -111,13 +115,18 @@ def process_access_token(request, service, access_token):
 
     data = {}
     for data_uri in service.data_uri.split():
+        data_field = None
         url = data_uri % access_token
+        if match := re.search("\[([^\]]+?)\]$", url):
+            data_field = match.group(1)
+            url = url[:match.start()]
         response = requests.get(url, headers=headers)
 
         if response.status_code != requests.codes.ok:
             raise Exception("Response status code not equal ok.")
 
         response = json.loads(response.text)
+        response = response[data_field] if data_field else response
         while isinstance(response, list) or isinstance(response, dict) and len(response) == 1:
             array = response if isinstance(response, list) else list(response.values())
             response = array[0]
@@ -154,7 +163,7 @@ def response(request, name):
         else:
             url = re.sub("[\n\r]", "", service.token_uri % args)
             response = requests.get(url)
-        access_token = access_token_from_response(response)
+        access_token = access_token_from_response(service, response)
         return process_access_token(request, service, access_token)
     except Exception as e:
         messages.error(request, "ERROR: {}".format(str(e).strip("'")))
@@ -185,7 +194,8 @@ def login(request):
             auth.login(request, user)
             return allowed_redirect(redirect_url)
 
-    request.session["next"] = redirect_url
+    if redirect_url:
+        request.session["next"] = redirect_url
     service = request.POST.get("service")
     if service:
         return query(request, service)
@@ -228,28 +238,29 @@ def signup(request, action=None):
             return signup(request)
 
         user = None
-        coder = token.coder
-        if coder:
-            user = coder.user
-        else:
-            t = Token.objects.filter(email=token.email, coder__isnull=False).filter(~Q(id=token_id)).first()
-            if t:
-                user = t.coder.user
-                token.coder = user.coder
-                token.save()
+        if token.coder:
+            user = token.coder.user
+        elif token.email and (
+            t := Token.objects.filter(email=token.email, coder__isnull=False).filter(~Q(id=token_id)).first()
+        ):
+            user = t.coder.user
+            token.coder = user.coder
+            token.save()
+        elif request.user.is_authenticated:
+            token.coder = request.user.coder
+            token.save()
+            return signup(request)
+        elif not token.email:
+            request.logger.error("Token has no coder or email. Use another service and then connect this one.")
+            return signup(request)
+
         if user and user.is_active:
             user.backend = "django.contrib.auth.backends.ModelBackend"
             auth.login(request, user)
             return signup(request)
 
-        if request.user.is_authenticated:
-            token.coder = request.user.coder
-            token.save()
-            return signup(request)
-
         request.session["token_id"] = token_id
-
-        q_token = Q(email=token.email)
+        q_token = Q(email=token.email, email__isnull=False)
 
         if request.POST and "signup" in request.POST:
             username = request.POST.get("username", None)
@@ -284,7 +295,8 @@ def signup(request, action=None):
         context["token"] = token
     else:
         if request.user.is_authenticated:
-            return allowed_redirect(request.session.pop("next", reverse("clist:main")))
+            redirect_url = request.session.pop("next", reverse("clist:main"))
+            return allowed_redirect(redirect_url)
         return redirect("auth:login")
 
     return render(request, "signup.html", context)

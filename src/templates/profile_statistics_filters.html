@@ -3,7 +3,7 @@
 <div class="input-group input-group-sm">
   <div class="input-group-addon">Statistics</div>
   <input type="search" name="search" value="{{ request.GET.search }}" class="form-control" placeholder="Search query" {% if request.GET.search %} autofocus onfocus="var temp_value=this.value; this.value=''; this.value=temp_value"{% endif %} autocomplete="off"/>
-  <span class="input-group-addon tooltip-help" data-toggle="tooltip" data-html="true" title="Search using regular expression by statistics contest name or statistics resource host.<br>Also you can use contest:{NAME}, account:{NAME}, resource:{HOST}, medal:{|MEDAL}, type:{TYPE} or writer:{HANDLE}.<br>Use && and || for difficult conditions.">
+  <span class="input-group-addon tooltip-help" data-toggle="tooltip" data-html="true" title="Search using regular expression by statistics contest name or statistics resource host.<br>Also you can use contest:{NAME}, account:{NAME}, resource:{HOST}, medal:{MEDAL}, type:{TYPE} or writer:{HANDLE}.<br>Use && and || for difficult conditions.">
     <i class="fas fa-info"></i>
   </span>
   <span class="input-group-btn">

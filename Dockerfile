@@ -61,7 +61,6 @@ ENV DJANGO_ENV_FILE .env.prod
 RUN apt install -y cron redis-server logrotate
 
 COPY src/ $APPDIR/
-COPY legacy/api/ $APPDIR/legacy/api/
 
 COPY config/cron /etc/cron.d/clist
 RUN chmod 0644 /etc/cron.d/clist

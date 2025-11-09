@@ -590,17 +590,10 @@ def resource(request, resource, template='resource.html', extra_context=None):
 
     if request.user.is_authenticated:
         coder = request.as_coder or request.user.coder
-        primary_account = coder.primary_account(resource)
         coder_accounts_ids = set(coder.account_set.filter(resource=resource).values_list('id', flat=True))
     else:
         coder = None
-        primary_account = None
         coder_accounts_ids = set()
-
-    if primary_account:
-        primary_country = resource.countryaccount_set.filter(country=primary_account.country).first()
-    else:
-        primary_country = None
 
     params = {}
     mute_country_rating = False
@@ -609,10 +602,18 @@ def resource(request, resource, template='resource.html', extra_context=None):
 
     accounts = Account.objects.filter(resource=resource)
     country_accounts = resource.countryaccount_set
+    if account_type := Account.get_type(account_type_value := request.GET.get('account_type')):
+        accounts = accounts.filter(account_type=account_type)
+        params['account_type'] = account_type_value
+        mute_country_rating = True
+    elif resource.has_account_types:
+        params['account_type'] = Account.get_type_value(resource.default_account_type)
+        accounts = accounts.filter(account_type=resource.default_account_type)
 
     if coder_kind := request.GET.get('coder_kind'):
         accounts = Account.apply_coder_kind(accounts, coder_kind, logger=request.logger)
         params['coder_kind'] = coder_kind
+        mute_country_rating = True
 
     has_country = accounts.filter(country__isnull=False).exists()
     countries = request.GET.getlist('country')
@@ -728,7 +729,13 @@ def resource(request, resource, template='resource.html', extra_context=None):
             'icon': 'verification',
         }
 
-    medals_order = [F(f).desc(nulls_last=True) for f in ('n_gold', 'n_silver', 'n_bronze', 'n_other_medals')]
+    primary_account = coder.primary_account(accounts=accounts) if coder else None
+    if primary_account:
+        primary_country = resource.countryaccount_set.filter(country=primary_account.country).first()
+    else:
+        primary_country = None
+
+    medals_order = [F(f).desc(nulls_last=True) for f in ('n_win', 'n_gold', 'n_silver', 'n_bronze', 'n_other_medals')]
     places_order = [F(f).desc(nulls_last=True) for f in ('n_first_places', 'n_second_places', 'n_third_places',
                                                          'n_top_ten_places')]
 
@@ -943,7 +950,8 @@ def problems(request, template='problems.html'):
     list_uuids = request.get_filtered_list('list')
     if list_uuids:
         problems_coder_lists = CoderList.filter_for_coder(coder).filter(uuid__in=list_uuids)
-        problems = problems.annotate(has_coder_lists=Exists(problems_coder_lists.filter(problems__problem_id=OuterRef('pk'))))
+        has_coder_lists_filter = problems_coder_lists.filter(problems__problem_id=OuterRef('pk'))
+        problems = problems.annotate(has_coder_lists=Exists(has_coder_lists_filter))
         problems = problems.filter(has_coder_lists=True)
 
     range_filter_values = {}

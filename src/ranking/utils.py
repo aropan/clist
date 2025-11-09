@@ -31,8 +31,22 @@ from utils.logger import suppress_db_logging_context
 from utils.mathutils import max_with_none, sum_with_none
 
 
+def rename_related_accounts(old_account, new_account):
+    for related_account in old_account.related_accounts.all():
+        if related_account.key == new_account.key:
+            continue
+        new_related_account = related_account.resource.account_set.filter(key=new_account.key).first()
+        if new_related_account:
+            rename_account(related_account, new_related_account)
+        else:
+            related_account.key = new_account.key
+            related_account.save(update_fields=['key'])
+
+
 @transaction.atomic
 def rename_account(old_account, new_account):
+    rename_related_accounts(old_account, new_account)
+
     resource = old_account.resource
 
     resource.accountrenaming_set.update_or_create(old_key=old_account.key, defaults={'new_key': new_account.key})
@@ -55,6 +69,7 @@ def rename_account(old_account, new_account):
     n_upsolved = sum_with_none(new_account.n_upsolved, old_account.n_upsolved)
     n_total_solved = new_account.n_total_solved + old_account.n_total_solved
     n_first_ac = new_account.n_first_ac + old_account.n_first_ac
+    n_win = sum_with_none(new_account.n_win, old_account.n_win)
     n_gold = sum_with_none(new_account.n_gold, old_account.n_gold)
     n_silver = sum_with_none(new_account.n_silver, old_account.n_silver)
     n_bronze = sum_with_none(new_account.n_bronze, old_account.n_bronze)
@@ -82,6 +97,7 @@ def rename_account(old_account, new_account):
     new_account.n_upsolved = n_upsolved
     new_account.n_total_solved = n_total_solved
     new_account.n_first_ac = n_first_ac
+    new_account.n_win = n_win
     new_account.n_gold = n_gold
     new_account.n_silver = n_silver
     new_account.n_bronze = n_bronze
@@ -215,7 +231,7 @@ def fill_missed_ranks(account, contest_keys, fields, contest_addition_update):
                 continue
             if len(contests) == 1 and not addition_update.get('_with_create'):
                 missed += 1
-                LOG.info('Missed #%d rank %s for %s in %s', missed,  rank, account, contests[0])
+                LOG.info('Missed #%d rank %s for %s in %s', missed, rank, account, contests[0])
                 continue
         if len(contests) > 1:
             LOG.warning('Multiple contests with same key %s = %s', contest_key, contests)
@@ -692,7 +708,7 @@ def update_stage(self):
                     coder = coders[0]
                     if coder not in mapping_account_by_coder:
                         mapping_account_by_coder[coder] = account
-                    else:
+                    elif mapping_account_by_coder[coder] != account:
                         account = mapping_account_by_coder[coder]
                         has_mapping_account_by_coder = True
 

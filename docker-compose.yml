@@ -13,6 +13,7 @@ services:
       - ./logs/production:/usr/src/clist/logs/
       - ./legacy/logs/:/usr/src/clist/logs/legacy/
       - ./logs/postgres/:/usr/src/clist/logs/postgres/
+      - ./legacy/api/:/usr/src/clist/legacy/api/
     depends_on:
       - db
       - redis
@@ -29,12 +30,13 @@ services:
         ipv4_address: 172.42.0.103
     volumes:
       - ./src/:/usr/src/clist/
-      - ./legacy/api/:/usr/src/clist/legacy/api/
       - ./src/static:/usr/src/clist/staticfiles/
       - media_files:/usr/src/clist/mediafiles/
       - shared_files:/usr/src/clist/sharedfiles/
       - ./logs/development:/usr/src/clist/logs/
       - ./legacy/logs/:/usr/src/clist/logs/legacy/
+      - ./logs/postgres/:/usr/src/clist/logs/postgres/
+      - ./legacy/api/:/usr/src/clist/legacy/api/
     depends_on:
       - db
       - redis

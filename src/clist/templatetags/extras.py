@@ -260,7 +260,8 @@ def get_emails(tokens):
         return ""
     result = set()
     for token in tokens:
-        result.add("'%s'" % token.email)
+        if token.email:
+            result.add("'%s'" % token.email)
     return mark_safe(", ".join(result))
 
 
@@ -564,12 +565,17 @@ def redirect_login(request):
 
 
 @register.simple_tag
-def query_fields(request, *args, before='&'):
+def query_fields(request, *args, before='&', params: dict | None = None):
     updated = request.GET.copy()
     if args:
         for k in list(updated.keys()):
             if k not in args:
                 updated.pop(k)
+        if params:
+            for k in args:
+                if k not in updated and k in params:
+                    updated[k] = params[k]
+
     ret = updated.urlencode()
     if ret:
         ret = before + ret
@@ -1037,10 +1043,15 @@ def place_as_n_place_field(place):
         return f'n_{ret}_places'
 
 
-def medal_as_n_medal_fields(medal):
+def medal_as_n_medal_fields(medal, place: int | None = None):
+    medal = medal.lower()
     if medal in ('gold', 'silver', 'bronze'):
-        return [f'n_{medal}', 'n_medals']
-    return ['n_other_medals']
+        ret = [f'n_{medal}', 'n_medals']
+    else:
+        ret = ['n_other_medals']
+    if medal and place == 1:
+        ret.append('n_win')
+    return ret
 
 
 @register.simple_tag
@@ -1523,8 +1534,10 @@ def list_data_field_to_select(context, field='list', nomultiply=False):
 def chat_data_field_to_select(context, field='chat', nomultiply=False, owned=True):
     request = context['request']
     coder = getattr(request.user, 'coder', None)
-    chats = coder.chat_set.all() if owned else coder.chats.all()
-    options_values = {c.chat_id: c.title for c in chats} if coder else {}
+    options_values = {}
+    if coder:
+        chats = coder.chat_set.all() if owned else coder.chats.all()
+        options_values = {c.chat_id: c.title for c in chats}
     ret = {
         'values': [v for v in request.GET.getlist(field) if v and v in options_values],
         'options': options_values,
@@ -2016,7 +2029,11 @@ def field_to_select_values(context):
     if data.get('data'):
         if (values := [d['id'] for d in data['data'] if d.get('selected')]):
             return values
-    return data.get('values')
+    if 'values' in data:
+        return data['values']
+    if 'value' in data:
+        return [data['value']]
+    return None
 
 
 @register.simple_tag(takes_context=True)
@@ -2132,14 +2149,15 @@ def standings_statistic_problem_attributes(context):
 
     attrs = f'class="{class_attr}"'
     if result:
-        score = f'{full_score}' if full_score and is_solved(result) else f'{result["result"]}'
+        full_score_instead_result = full_score and is_solved(result) and not contest.is_stage()
+        score = f'{full_score}' if full_score_instead_result else f'{result["result"]}'
         attrs += f' data-score="{score}"'
         attrs += f' data-result="{result["result"]}"'
         attrs += f' data-penalty="{result["time"]}"'
 
         problem_sec = problem['time_in_seconds']
         result_sec = result['time_in_seconds']
-        penalty_in_seconds = problem_sec if problem_sec and contest.is_stage else result_sec
+        penalty_in_seconds = problem_sec if problem_sec and contest.is_stage() else result_sec
         attrs += f' data-penalty-in-seconds="{penalty_in_seconds}"'
         attrs += f' data-more-penalty="{result["penalty"]}"'
         attrs += f' data-class="{result_class}"'
@@ -2480,3 +2498,13 @@ def standings_statistic_problems(context):
         del context['stat']
 
     return mark_safe("\n".join(html_parts))
+
+
+@register.filter
+def resource_account_types(resource):
+    ret = ['user']
+    if resource is None or resource.n_university_accounts:
+        ret.append('university')
+    if resource is None or resource.n_team_accounts:
+        ret.append('team')
+    return ret

@@ -3,8 +3,9 @@
 
     $required_urls = array();
 
-    function get_ids($page) {
+    function get_ids($page, $ids = NULL) {
         global $required_urls;
+        global $curlexec_params;
         preg_match_all('#<link[^>]*href="(?P<href>[^"]*rsrc[^"]*\.js\b[^"]*)"[^>]*>#', $page, $matches);
         $urls = $matches['href'];
 
@@ -27,18 +28,26 @@
         }
         $urls = $urls_;
 
-        $ids = array();
+        $ids = $ids ?: array();
         $required_ids = array(
             "CodingCompetitionsContestSeasonRootQuery",
             "CodingCompetitionsContestSeriesRootQuery",
             "CodingCompetitionsContestScoreboardQuery",
             "CCEScoreboardQuery",
         );
-        $required_ids = array_fill_keys($required_ids, true);
+        $missing_ids = array();
+        foreach ($required_ids as $id) {
+            if (!isset($ids[$id])) {
+                $missing_ids[$id] = true;
+            }
+        }
 
         foreach ($urls as $u) {
+            if (empty($missing_ids)) {
+                break;
+            }
             $url = $u;
-            $p = curlexec($u, null, array('no_logmsg' => true));
+            $p = curlexec($u, null, $curlexec_params + ['no_logmsg' => true]);
             $new_ids = array();
             if (preg_match_all('#{id:"(?P<id>[^"]*)"(?:[^{}]*(?:{[^}]*})?)*}#', $p, $matches, PREG_SET_ORDER)) {
                 foreach ($matches as $match) {
@@ -56,12 +65,9 @@
             }
 
             foreach ($new_ids as $k) {
-                if (isset($required_ids[$k])) {
-                    unset($required_ids[$k]);
+                if (isset($missing_ids[$k])) {
+                    unset($missing_ids[$k]);
                 }
-            }
-            if (empty($required_ids)) {
-                break;
             }
         }
         return $ids;
@@ -120,7 +126,7 @@
         if (isset($fb_dtsg)) {
             $params['fb_dtsg'] = $fb_dtsg;
         }
-        $data = curlexec($url, $params, array("json_output" => 1));
+        $data = curlexec($url, $params, $curlexec_params + ['json_output' => 1]);
         if (!is_array($data)) {
             trigger_error("Wrong response data", E_USER_WARNING);
             return;
@@ -153,7 +159,7 @@
             $scoreboard_url = rtrim($url) . '/scoreboard';
             $url_ = $scoreboard_url;
             $scoreboard_page = curlexec($url_, NULL, ['with_curl' => true]);
-            $scoreboard_ids = get_ids($scoreboard_page);
+            $scoreboard_ids = get_ids($scoreboard_page, $ids);
             if ($scoreboard_ids) {
                 $info['_scoreboard_ids'] = $scoreboard_ids;
             }

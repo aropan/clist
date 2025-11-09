@@ -1,12 +1,12 @@
 function create_chart_config(resource_info, dates, y_field = 'new_rating', is_addition = false) {
   if (is_addition) {
-    var values = [].concat.apply([], $.map(resource_info['data'], function(data, index) { return $.map(data, function(val) { return val['values'][y_field] }) }))
+    var values = [].concat.apply([], $.map(resource_info['data'], function (data, index) { return $.map(data, function (val) { return val['values'][y_field] }) }))
     var min_field = Math.min(...values)
     var max_field = Math.max(...values)
     if (min_field === undefined || max_field === undefined || min_field == max_field) {
       notify(
         'Skip ' + y_field + ' field, min value = ' + min_field + ', max value = ' + max_field,
-        {position: 'bottom right', className: 'warn'},
+        { position: 'bottom right', className: 'warn' },
       )
       return false;
     }
@@ -17,7 +17,7 @@ function create_chart_config(resource_info, dates, y_field = 'new_rating', is_ad
   }
 
   function get_or_default(value, other) {
-    return value == undefined? other: value
+    return value == undefined ? other : value
   }
 
   var colors = get_or_default(resource_info['colors'], [])
@@ -27,11 +27,22 @@ function create_chart_config(resource_info, dates, y_field = 'new_rating', is_ad
   var coloring_field = get_or_default(resource_info['coloring_field'], 'new_rating')
   var with_url = !get_or_default(resource_info['without_url'], false)
 
+  var title_text = resource_info['host']
+  if (resource_info['account_name']) {
+    title_text += ' [' + resource_info['account_name'] + ']'
+  }
+  if (is_addition) {
+    title_text += ' (' + y_field + ')'
+  }
+  if (resource_info['kind']) {
+    title_text += ' (' + resource_info['kind'] + ')'
+  }
+
   function hsl_to_color(hsl) {
     return 'hsl(' + hsl[0] * 360 + ',' + hsl[1] * 100 + '%,' + (hsl[2] * 100 + 100) * 0.5 + '%)'
   }
 
-  function get_color(val, space='rgb') {
+  function get_color(val, space = 'rgb') {
     for (var idx in colors) {
       var rating = colors[idx]
       if (rating['low'] <= val[coloring_field] && val[coloring_field] < rating['high']) {
@@ -46,10 +57,10 @@ function create_chart_config(resource_info, dates, y_field = 'new_rating', is_ad
 
   var border_width = get_or_default(resource_info['border_width'], 1)
   var point_radius = get_or_default(resource_info['point_radius'], 3)
-  var datasets = [].concat.apply([], $.map(resource_info['data'], function(data, index) {
+  var datasets = [].concat.apply([], $.map(resource_info['data'], function (data, index) {
     var border_color = get_or_default(datasets_colors[index], 'black')
     var dataset = {
-      data: $.map(data, function(val) { return {x: val['date'], y: is_addition? val['values'][y_field] : val['new_rating']}; }),
+      data: $.map(data, function (val) { return { x: val['date'], y: is_addition ? val['values'][y_field] : val['new_rating'] }; }),
       label: datasets_labels[index],
       labelIndex_: index,
       history: data,
@@ -60,13 +71,13 @@ function create_chart_config(resource_info, dates, y_field = 'new_rating', is_ad
       pointHitRadius: get_or_default(resource_info['point_hit_radius'], 5 - point_radius),
       pointHoverRadius: get_or_default(resource_info['point_hover_radius'], 5),
       fill: false,
-      pointBackgroundColor: $.map(data, function(val) {
-        return colors.length? get_color(val, 'rgb') : border_color
+      pointBackgroundColor: $.map(data, function (val) {
+        return colors.length ? get_color(val, 'rgb') : border_color
       }),
     }
     var ret = [dataset]
     if (get_or_default(resource_info['outline'], false)) {
-      var border = {...dataset, }
+      var border = { ...dataset, }
       border['borderWidth'] += 1
       border['borderColor'] = 'black'
       delete border['history']
@@ -175,10 +186,10 @@ function create_chart_config(resource_info, dates, y_field = 'new_rating', is_ad
         },
         y:
         {
-          min: (is_addition? min_field : min_rating) - 1,
-          max: (is_addition? max_field : max_rating) + 1,
+          min: (is_addition ? min_field : min_rating) - 1,
+          max: (is_addition ? max_field : max_rating) + 1,
           ticks: {
-            callback: function(value, index) {
+            callback: function (value, index) {
               return +value.toFixed(2);
             },
           },
@@ -206,13 +217,13 @@ function create_chart_config(resource_info, dates, y_field = 'new_rating', is_ad
           }
           params = ''
           if (rating['division']) {
-              params += '&division=' + rating['division']
+            params += '&division=' + rating['division']
           }
           if (rating['sid']) {
-              params += '&find_me=' + rating['sid']
+            params += '&find_me=' + rating['sid']
           }
           if (params) {
-              url += '?' + params.slice(1)
+            url += '?' + params.slice(1)
           }
           window.open(url, '_blank')
           break
@@ -220,12 +231,12 @@ function create_chart_config(resource_info, dates, y_field = 'new_rating', is_ad
       },
       onHover: (e, el) => {
         var c = e.target || e.native.target
-        c.style.cursor = el[0] && with_url? 'pointer' : 'default'
+        c.style.cursor = el[0] && with_url ? 'pointer' : 'default'
       },
       plugins: {
         title: {
           display: get_or_default(resource_info['title_display'], true),
-          text: resource_info['host'] + (is_addition? ' (' + y_field + ')' : '') + (resource_info['kind']?  ' (' + resource_info['kind'] + ')' : ''),
+          text: title_text,
           font: { size: 16 },
         },
         legend: {
@@ -233,9 +244,9 @@ function create_chart_config(resource_info, dates, y_field = 'new_rating', is_ad
           position: get_or_default(resource_info['legend_position'], 'right'),
           labels: {
             usePointStyle: true,
-            generateLabels: function() {
+            generateLabels: function () {
               var chart = this.chart
-              ret = datasets_labels.map(function(label, index) {
+              ret = datasets_labels.map(function (label, index) {
                 var hidden = false
                 for (var idx = 0; idx < datasets.length; ++idx) {
                   if (chart.data.datasets[idx].label != label) {
@@ -255,23 +266,24 @@ function create_chart_config(resource_info, dates, y_field = 'new_rating', is_ad
               return ret
             },
           },
-          onClick: function(event, legendItem) {
+          onClick: function (event, legendItem) {
             var chart = this.chart
             var label = legendItem.text
             for (var index = 0; index < datasets.length; ++index) {
               if (chart.data.datasets[index].label == label) {
                 var meta = chart.getDatasetMeta(index)
-                meta.hidden = meta.hidden === null? !chart.data.datasets[index].hidden : null }
+                meta.hidden = meta.hidden === null ? !chart.data.datasets[index].hidden : null
+              }
             }
             chart.update()
           },
 
-          onHover: function(event, legendItem) {
+          onHover: function (event, legendItem) {
             chart = this.chart
             chart.data.datasets[legendItem.datasetIndex].borderWidth = border_width + 4
             chart.update()
           },
-          onLeave: function(event, legendItem) {
+          onLeave: function (event, legendItem) {
             chart = this.chart
             chart.data.datasets[legendItem.datasetIndex].borderWidth = border_width
             chart.update()
@@ -286,7 +298,7 @@ function create_chart_config(resource_info, dates, y_field = 'new_rating', is_ad
           mode: get_or_default(resource_info['tooltip_mode'], 'index'),
           intersect: false,
           callbacks: {
-            title: function(tooltipItems) {
+            title: function (tooltipItems) {
               for (var i = 0; i < tooltipItems.length; ++i) {
                 var tooltipItem = tooltipItems[i]
                 var dataset = tooltipItem.dataset
@@ -304,7 +316,7 @@ function create_chart_config(resource_info, dates, y_field = 'new_rating', is_ad
                 return ret
               }
             },
-            label: function(tooltipItem, data) {
+            label: function (tooltipItem, data) {
               var dataset = tooltipItem.dataset
               if (dataset.history === undefined) {
                 return
@@ -313,7 +325,7 @@ function create_chart_config(resource_info, dates, y_field = 'new_rating', is_ad
               var color = get_color(hist, 'hsl')
               var rating = '<span style="font-weight: bold; color: ' + color + '">' + hist['new_rating'] + '</span>'
               if (hist['old_rating'] || hist['rating_change']) {
-                var change = hist['old_rating']? hist['new_rating'] - hist['old_rating'] : hist['rating_change']
+                var change = hist['old_rating'] ? hist['new_rating'] - hist['old_rating'] : hist['rating_change']
                 if (change > 0) {
                   rating += ' <span style="font-weight: bold; color: #0f0"><i class="fas fa-angle-up"></i>' + change + '</span>'
                 } else if (change < 0) {
@@ -344,61 +356,61 @@ function create_chart_config(resource_info, dates, y_field = 'new_rating', is_ad
 
           enabled: false,
 
-          external: function(context) {
+          external: function (context) {
             // Tooltip Element
             var tooltipEl = document.getElementById('chartjs-tooltip')
 
             // Create element on first render
             if (!tooltipEl) {
-                tooltipEl = document.createElement('div')
-                tooltipEl.id = 'chartjs-tooltip'
-                tooltipEl.innerHTML = '<table></table>'
-                document.body.appendChild(tooltipEl)
+              tooltipEl = document.createElement('div')
+              tooltipEl.id = 'chartjs-tooltip'
+              tooltipEl.innerHTML = '<table></table>'
+              document.body.appendChild(tooltipEl)
             }
 
             // Hide if no tooltip
             var tooltipModel = context.tooltip
             if (tooltipModel.opacity === 0) {
-                tooltipEl.style.opacity = 0
-                return
+              tooltipEl.style.opacity = 0
+              return
             }
 
             // Set caret Position
             tooltipEl.classList.remove('above', 'below', 'no-transform')
             if (tooltipModel.yAlign) {
-                tooltipEl.classList.add(tooltipModel.yAlign)
+              tooltipEl.classList.add(tooltipModel.yAlign)
             } else {
-                tooltipEl.classList.add('no-transform')
+              tooltipEl.classList.add('no-transform')
             }
 
             function getBody(bodyItem) {
-                return bodyItem.lines
+              return bodyItem.lines
             }
 
             // Set Text
             if (tooltipModel.body) {
-                var titleLines = tooltipModel.title || []
-                var bodyLines = tooltipModel.body.map(getBody)
+              var titleLines = tooltipModel.title || []
+              var bodyLines = tooltipModel.body.map(getBody)
 
-                var innerHtml = '<thead>'
+              var innerHtml = '<thead>'
 
-                titleLines.forEach(function(title) {
-                    innerHtml += '<tr><th>' + title + '</th></tr>'
-                })
-                innerHtml += '</thead><tbody>'
+              titleLines.forEach(function (title) {
+                innerHtml += '<tr><th>' + title + '</th></tr>'
+              })
+              innerHtml += '</thead><tbody>'
 
-                bodyLines.forEach(function(body, i) {
-                    var colors = tooltipModel.labelColors[i]
-                    var style = 'background:' + colors.backgroundColor
-                    style += '; border-color:' + colors.borderColor
-                    style += '; border-width: 2px'
-                    var span = '<span style="' + style + '"></span>'
-                    innerHtml += '<tr><td>' + span + body + '</td></tr>'
-                })
-                innerHtml += '</tbody>'
+              bodyLines.forEach(function (body, i) {
+                var colors = tooltipModel.labelColors[i]
+                var style = 'background:' + colors.backgroundColor
+                style += '; border-color:' + colors.borderColor
+                style += '; border-width: 2px'
+                var span = '<span style="' + style + '"></span>'
+                innerHtml += '<tr><td>' + span + body + '</td></tr>'
+              })
+              innerHtml += '</tbody>'
 
-                var tableRoot = tooltipEl.querySelector('table')
-                tableRoot.innerHTML = innerHtml
+              var tableRoot = tooltipEl.querySelector('table')
+              tableRoot.innerHTML = innerHtml
             }
 
             var position = context.chart.canvas.getBoundingClientRect()
@@ -411,9 +423,9 @@ function create_chart_config(resource_info, dates, y_field = 'new_rating', is_ad
             var padding = context.chart.config._config.options.plugins.tooltip.padding
             tooltipEl.style.padding = padding + 'px ' + padding + 'px'
             tooltipEl.style.pointerEvents = 'none'
-            var left = position.left + window.pageXOffset + tooltipModel.caretX + (tooltipModel.caretX < position.width - tooltipEl.offsetWidth - 10? 0 : -tooltipEl.offsetWidth)
+            var left = position.left + window.pageXOffset + tooltipModel.caretX + (tooltipModel.caretX < position.width - tooltipEl.offsetWidth - 10 ? 0 : -tooltipEl.offsetWidth)
             tooltipEl.style.left = left + 'px'
-            var top = position.top + window.pageYOffset + tooltipModel.caretY + (tooltipModel.caretY < position.height - tooltipEl.offsetHeight - 10? 0 : -tooltipEl.offsetHeight)
+            var top = position.top + window.pageYOffset + tooltipModel.caretY + (tooltipModel.caretY < position.height - tooltipEl.offsetHeight - 10 ? 0 : -tooltipEl.offsetHeight)
             tooltipEl.style.top = top + 'px'
           },
         },
@@ -422,7 +434,7 @@ function create_chart_config(resource_info, dates, y_field = 'new_rating', is_ad
   }
 }
 
-function add_selection_chart_range(canvas_selector, chart, with_close_chart=false, range_selection=undefined) {
+function add_selection_chart_range(canvas_selector, chart, with_close_chart = false, range_selection = undefined) {
   $('#' + canvas_selector).data('chart', chart)
 
   var overlay = document.createElement('canvas');
@@ -554,7 +566,7 @@ function add_selection_chart_range(canvas_selector, chart, with_close_chart=fals
   function update_x_slider_values(values) {
     var $slider = $('#' + range_selection.x_slider_id)
     $slider.slider('values', values)
-    $slider.slider('option', 'slide').call($slider, true, {handle: true, values: values})
+    $slider.slider('option', 'slide').call($slider, true, { handle: true, values: values })
   }
 
   canvas.addEventListener('pointermove', update_chart_range);
@@ -627,13 +639,13 @@ function add_selection_chart_fields(resource_info, resource_rating_id, resource_
       data: resource_info['fields'],
       theme: 'bootstrap',
       placeholder: 'Select field',
-      dropdownAutoWidth : true,
+      dropdownAutoWidth: true,
     })
   } else {
     resource_fields.parent().remove()
   }
 
-  resource_fields.on('change', (function(e) {
+  resource_fields.on('change', (function (e) {
     var resource_info = this
     var resource_fields = $('#' + resource_fields_id)
     var field = resource_fields.val()
@@ -648,12 +660,12 @@ function add_selection_chart_fields(resource_info, resource_rating_id, resource_
     div.append('<canvas id="' + new_resource_rating_id + '" height="75vh"></canvas>');
     resource_rating.after(div);
 
-    config = create_chart_config(resource_info, resource_dates, y_field=field, is_addition=true)
+    config = create_chart_config(resource_info, resource_dates, y_field = field, is_addition = true)
     if (config === false) {
       $('#' + new_resource_rating_id).parent().remove()
     } else {
       var ctx = new Chart(new_resource_rating_id, config)
-      add_selection_chart_range(new_resource_rating_id, ctx, with_close_chart=true)
+      add_selection_chart_range(new_resource_rating_id, ctx, with_close_chart = true)
     }
   }).bind(resource_info))
 }

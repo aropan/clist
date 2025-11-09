@@ -8,6 +8,7 @@ import re
 import traceback
 from collections import OrderedDict, defaultdict
 from datetime import timedelta
+from functools import reduce
 from urllib.parse import urljoin, urlparse
 
 import coloredlogs
@@ -288,10 +289,11 @@ class Statistic(BaseModule):
 
             result = {}
             hidden_fields = set(self.info.get('hidden_fields', [])) | {'region'}
+            force_parse_table = self.info.get('standings', {}).get('force_parse_table')
             problems_info = OrderedDict()
             has_more_members = False
 
-            if 'zibada' in standings_url:
+            if 'zibada' in standings_url and not force_parse_table:
                 names = None
                 for f in (
                     lambda: page,
@@ -311,7 +313,8 @@ class Statistic(BaseModule):
                     match = re.search(r' = (?P<data>\{.*?);?\s*$', standings_page, re.MULTILINE)
                     data = self._json_load(match.group('data'))
                 except Exception:
-                    assert names
+                    if not names:
+                        raise ExceptionParseStandings('Not found standings data')
                     data = names
 
                 for p_name in data['problems']:
@@ -470,7 +473,7 @@ class Statistic(BaseModule):
                                 classes = vs.column.attrs.get('class', '').split()
                                 medal = vs.column.node.xpath('.//img/@alt')
                                 if medal and medal[0].endswith('medal'):
-                                    row['medal'] = medal[0].split()[0]
+                                    row['medal'] = medal[0].split()[0].lower()
                                 for medal, ending in (('gold', '🥇'), ('silver', '🥈'), ('bronze', '🥉')):
                                     if v.endswith(ending):
                                         row['medal'] = medal
@@ -525,7 +528,7 @@ class Statistic(BaseModule):
                         elif k in ('time', 'penalty', 'total time (min)', 'minutes'):
                             if v and v != '?':
                                 row['penalty'] = int(v)
-                        elif k in ('slv', 'solved', '# solved'):
+                        elif k in ('slv', 'solved', '# solved', '='):
                             row['solving'] = int(v)
                         elif k == 'score':
                             if ' ' in v:
@@ -549,20 +552,27 @@ class Statistic(BaseModule):
                             v = re.sub(r'([0-9]+)/([0-9]+)', r'\1 \2', v)
                             v = v.strip()
                             v = v.rstrip('/')
-                            if not v or v == '0':
+                            if not v or v == '0' or v == '.':
                                 continue
 
                             class_attr = vs.column.attrs.get('class', '')
 
                             p = problems.setdefault(k, {})
-                            if '+' in v or 'pending' in class_attr:
+                            if ('+' in v or 'pending' in class_attr) and not v.startswith('+'):
                                 v = v.replace(' ', '')
                                 p['result'] = f'?{v}'
                             elif ' ' in v:
-                                pnt, time = map(int, v.split())
-                                p['result'] = '+' if pnt == 1 else f'+{pnt - 1}'
-                                p['time'] = time
-
+                                pnt, time = v.split()
+                                if not pnt.startswith('+'):
+                                    pnt = int(pnt)
+                                    pnt = '+' if pnt == 1 else f'+{pnt - 1}'
+                                if ':' in time:
+                                    times = list(map(int, time.split(':')))
+                                    time = reduce(lambda x, y: x * 60 + y, times)
+                                    p['time_in_seconds'] = time
+                                    time = round(time / 60)
+                                p['result'] = pnt
+                                p['time'] = int(time)
                                 if (
                                     'solvedfirst' in class_attr
                                     or 'firstYes' in class_attr

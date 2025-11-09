@@ -5,6 +5,7 @@ from collections import defaultdict
 from logging import getLogger
 from math import isclose
 
+from django.core.management import call_command
 from django.core.management.base import BaseCommand
 from flatten_dict import flatten
 from flatten_dict.reducers import make_reducer
@@ -12,7 +13,7 @@ from stringcolor import cs
 from tqdm import tqdm
 
 from clist.models import Contest, Problem, Resource
-from ranking.models import Account, Statistics
+from ranking.models import Account, AccountType, Statistics
 from utils.attrdict import AttrDict
 
 
@@ -148,6 +149,8 @@ def set_n_fields(resources, logger):
         for field, new_value in (
             ('n_accounts', n_accounts),
             ('n_contests', n_contests),
+            ('n_university_accounts', resource.account_set.filter(account_type=AccountType.UNIVERSITY).count()),
+            ('n_team_accounts', resource.account_set.filter(account_type=AccountType.TEAM).count()),
         ):
             value = getattr(resource, field)
             if value != new_value:
@@ -186,14 +189,22 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('-r', '--resources', metavar='HOST', nargs='*', help='host name for update')
+        parser.add_argument('--full', action='store_true', help='full update')
         parser.add_argument('--avg-rating', action='store_true', help='update average rating')
         parser.add_argument('--problems-only', action='store_true', help='update problems only')
+        parser.add_argument('--remove-empty-accounts', action='store_true', help='remove empty accounts')
+        parser.add_argument('--with-priority', action='store_true', help='update resources by priority')
 
     def handle(self, *args, **options):
         self.stdout.write(str(options))
         args = AttrDict(options)
 
-        resources = Resource.get(args.resources) if args.resources else Resource.objects.all()
+        if args.resources:
+            resources = Resource.get(args.resources)
+        elif args.with_priority:
+            resources = Resource.priority_objects.all()
+        else:
+            resources = Resource.available_for_update_objects.all()
         self.logger.info(f'resources [{len(resources)}] = {[r.host for r in resources]}')
 
         if args.avg_rating:
@@ -205,3 +216,7 @@ class Command(BaseCommand):
             set_problems_fields(resources, logger=self.logger)
             set_statistics_fields(resources, logger=self.logger)
             set_n_fields(resources, logger=self.logger)
+        if args.full and args.resources:
+            call_command('set_country_fields', resources=args.resources)
+            call_command('set_account_rank', resources=args.resources)
+            call_command('set_resources_accounts', resources=args.resources, remove_empty=args.remove_empty_accounts)

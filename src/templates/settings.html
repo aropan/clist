@@ -303,7 +303,7 @@
                 <div class="btn-block btn-group">
                     <a class="btn btn-default active service-icon-btn"><i class="fab fa-telegram-plane"></i></a>
                     <a {% if not chat %}href="{% url 'telegram:me' %}"{% endif %} class="btn btn-default{% if chat %} disabled{% endif %}">
-                        <div class="text-left">{% if chat %}{{ chat.chat_id }}{% else %}connect{% endif %}</div>
+                        <div class="text-left">{% if chat %}{{ chat.chat_id }}{% else %}Connect{% endif %}</div>
                     </a>
                     {% if chat %}
                     <a href="{% url 'telegram:unlink' %}" class="btn btn-default"><i class="far fa-trash-alt"></i></a>
@@ -323,7 +323,7 @@
                 <div class="btn-block btn-group">
                     <a class="btn btn-default active service-icon-btn">{% icon_to service.name default=service.title %}</a>
                     <a {% if not token %}href="{% url 'auth:query' service.name %}?next={% url 'coder:settings' %}social/"{% endif %} class="btn btn-default{% if token %} disabled{% endif %}">
-                        <div class="text-left">{% if token %}{{ token.user_id }}{% if token.email %} ({{ token.email }}){% endif %}{% else %}connect{% endif %}</div>
+                        <div class="text-left">{% if token %}{{ token.user_id }}{% if token.email %} ({{ token.email }}){% endif %}{% else %}Connect{% endif %}</div>
                     </a>
                     {% if token and token.expires_at and service.refresh_token_uri %}
                     <a class="btn btn-default" href="{% url 'auth:refresh' service.name %}">

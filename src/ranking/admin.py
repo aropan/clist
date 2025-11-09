@@ -53,7 +53,7 @@ class HasInfo(admin.SimpleListFilter):
 class AccountAdmin(BaseModelAdmin):
     list_display = ['resource', 'key', 'name', 'country', '_has_coder', 'deleted', 'updated']
     search_fields = ['=key', '=name']
-    list_filter = [HasCoders, HasInfo, 'deleted', 'resource__host']
+    list_filter = [HasCoders, HasInfo, 'deleted', 'resource__host', 'account_type']
 
     def _has_coder(self, obj):
         return obj.has_coder
@@ -63,7 +63,7 @@ class AccountAdmin(BaseModelAdmin):
         return (
             ['updated', 'n_contests', 'n_writers', 'n_subscribers', 'n_listvalues',
              'last_activity', 'last_submission', 'last_rating_activity',
-             'rating_update_time']
+             'rating_update_time', 'account_type']
             + super().get_readonly_fields(request, obj)
         )
 
@@ -193,7 +193,8 @@ class StageContestAdmin(BaseModelAdmin):
 @admin_register(CountryAccount)
 class CountryAccountAdmin(BaseModelAdmin):
     list_display = ['resource', 'country', 'n_accounts', 'n_rating_accounts', 'rating', 'resource_rank', 'raw_rating',
-                    'n_gold', 'n_silver', 'n_bronze', 'n_medals', 'n_other_medals']
+                    'n_win', 'n_gold', 'n_silver', 'n_bronze', 'n_medals', 'n_other_medals',
+                    'n_first_places', 'n_second_places', 'n_third_places', 'n_top_ten_places']
     search_fields = ['country']
     list_filter = [
         ('resource__has_country_rating', admin.BooleanFieldListFilter),

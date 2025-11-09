@@ -1,0 +1,4 @@
+{% if resource is None or resource.has_account_types %}
+{% create_dict icon="account_type" title="account_type" field=account_type|default:"account_type" nosmall=nosmall nogroupby=groupby|iffalse nosubmit=nosubmit nomultiply=True value=params.account_type options=resource|resource_account_types noajax=True as data %}
+{% include "field_to_select.html" with data=data %}
+{% endif %}

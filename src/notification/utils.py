@@ -204,8 +204,11 @@ def compose_message_by_submissions(resource, account, submissions, subscription,
             messages.append(problem_message)
 
     if more_contests or more_problems or more_verdicts:
-        messages.append('and %d more problems (%d contests) = %s' % (
-            more_problems, more_contests, get_verdicts_message(more_verdicts)))
+        message = f"and {more_problems} more problems"
+        if more_contests:
+            message += f" ({more_contests} contests)"
+        message += f" = {get_verdicts_message(more_verdicts)}"
+        messages.append(message)
 
     return '\n'.join(messages)
 

@@ -162,37 +162,35 @@ def get_profile_context(request, statistics, writers, resources):
         Q(addition__new_rating__isnull=False) |
         Q(addition__rating_change__isnull=False) |
         Q(addition___rating_data__isnull=False)
-    ).order_by().distinct('contest__resource__host', 'contest__kind')
+    ).order_by().distinct('contest__resource__host', 'contest__kind', 'account_id')
 
     external_ratings = statistics.filter(
         contest__resource__has_rating_history=True,
         contest__resource__info__ratings__external=True,
         account__info___rating_data__isnull=False,
-    ).order_by().distinct('contest__resource__host')
+    ).order_by().distinct('contest__resource__host', 'account_id')
 
     kinds_resources = collections.defaultdict(dict)
     major_kind = None
     for stat in rated_stats.union(external_ratings):
+        account_id = stat.account_id
         resource = stat.contest.resource
         kind = stat.contest.kind
         kind = major_kind if resource.is_major_kind(kind) or get_item(resource, 'info.ratings.external') else kind
-        if not kinds_resources[resource.pk]:
-            kinds_resources[resource.pk][major_kind] = None
-        kinds_resources[resource.pk][kind] = {
+        kind_resource_key = (kind, account_id)
+        kinds_resources[resource.pk][kind_resource_key] = {
             'host': resource.host,
             'pk': resource.pk,
             'icon': resource.icon,
             'kind': kind,
+            'account_pk': account_id,
+            'account_name': stat.account.short_display(resource=resource, name=stat.addition.get("name")),
         }
     history_resources = list()
     for resource in resources.filter(has_rating_history=True):
-        if (
-            resource.pk in kinds_resources and
-            major_kind in kinds_resources[resource.pk] and
-            not kinds_resources[resource.pk][major_kind]
-        ):
-            kinds_resources[resource.pk].pop(major_kind)
-        history_resources.extend(kinds_resources[resource.pk].values())
+        values = list(kinds_resources[resource.pk].values())
+        values.sort(key=lambda x: (x['kind'] != major_kind, x['kind'], x['account_pk']))
+        history_resources.extend(values)
 
     resources = list(resources)
     search_resource = resources[0] if len(resources) == 1 else None
@@ -239,6 +237,7 @@ def get_profile_context(request, statistics, writers, resources):
         'resources': list(resources),
         'two_columns': len(resources) > 1,
         'history_resources': history_resources,
+        'has_combined_history': len({hr["pk"] for hr in history_resources}) > 1,
         'show_history_ratings': not filters,
         'search_resource': search_resource,
         'timezone': get_timezone(request),
@@ -265,6 +264,7 @@ def my_profile(request):
     return HttpResponseRedirect(url)
 
 
+@pagination_login_required
 @page_template('coders_paging.html')
 @context_pagination()
 def coders(request, template='coders.html'):
@@ -411,6 +411,7 @@ def coders(request, template='coders.html'):
     return template, context
 
 
+@pagination_login_required
 @page_templates((
     ('profile_contests_paging.html', 'contest_page'),
     ('profile_writers_paging.html', 'writers_page'),
@@ -656,6 +657,7 @@ def _get_data_mixed_profile(request, query, is_team=False):
     }
 
 
+@pagination_login_required
 @page_templates((
     ('profile_contests_paging.html', 'contest_page'),
     ('profile_writers_paging.html', 'writers_page'),
@@ -669,6 +671,7 @@ def profiles(request, query, template='profile_mixed.html'):
     return template, context
 
 
+@pagination_login_required
 @page_templates((
     ('profile_contests_paging.html', 'contest_page'),
 ))
@@ -711,7 +714,7 @@ def get_ratings_data(request, username=None, key=None, host=None, statistics=Non
         .annotate(division=KeyTextTransform('division', 'addition'))
         .annotate(n_problems=F('contest__n_problems'))
         .annotate(division_n_problems=JsonJSONF('contest__info__problems__n_problems'))
-        .annotate(cid=F('contest__pk'))
+        .annotate(cid=F('contest_id'))
         .annotate(sid=F('pk'))
         .filter(contest__is_rated=True)
         .order_by('date')
@@ -726,7 +729,7 @@ def get_ratings_data(request, username=None, key=None, host=None, statistics=Non
     )
 
     qs_values = (
-        'resource', 'cid', 'sid', 'name', 'key', 'kind', 'date',
+        'resource', 'cid', 'sid', 'account_id', 'name', 'key', 'kind', 'date',
         'new_rating', 'old_rating', 'rating_change', 'is_unrated',
         'place', 'score',
     )
@@ -807,7 +810,11 @@ def get_ratings_data(request, username=None, key=None, host=None, statistics=Non
             default_info['host'] = resource.host
             default_info['colors'] = resource.ratings
             default_info['icon'] = resource.icon
-            resource_key = resource.host if is_major_kind else f'{resource.host} ({stat["kind"]})'
+            default_info['account_pk'] = stat['account_id']
+            resource_key = resource.host
+            resource_key += f' #{stat["account_id"]}'
+            if not is_major_kind:
+                resource_key += f' ({stat["kind"]})'
         default_info['fields'] = set()
 
         resource_info = ratings['data']['resources'].setdefault(resource_key, default_info)
@@ -863,6 +870,12 @@ def get_ratings_data(request, username=None, key=None, host=None, statistics=Non
     resources_to_remove = [k for k, v in ratings['data']['resources'].items() if not v['data']]
     for k in resources_to_remove:
         ratings['data']['resources'].pop(k)
+
+    accounts_ids = {resource_info['account_pk'] for resource_info in ratings['data']['resources'].values()}
+    accounts_names = {a.pk: a.short_display() for a in Account.objects.filter(pk__in=accounts_ids)}
+    for resource_info in ratings['data']['resources'].values():
+        account_pk = resource_info['account_pk']
+        resource_info['account_name'] = accounts_names[account_pk]
 
     dates = []
     for resource_info in ratings['data']['resources'].values():
@@ -2622,7 +2635,7 @@ def accounts(request, template='accounts.html'):
     accounts = Account.objects.select_related('resource')
     accounts = accounts.annotate(has_coders=Exists('coders'))
     if request.user.is_authenticated:
-        coder = request.user.coder
+        coder = request.as_coder or request.user.coder
         accounts = accounts.annotate(my_account=Exists('coders', filter=Q(coder=coder)))
     else:
         coder = None
@@ -2712,6 +2725,10 @@ def accounts(request, template='accounts.html'):
         accounts = accounts.annotate(selected_contest=Subquery(subquery.values('contest_id')))
         accounts = accounts.annotate(selected_place=Subquery(subquery.values('place_as_int')))
 
+    if account_type := Account.get_type(account_type_value := request.GET.get('account_type')):
+        accounts = accounts.filter(account_type=account_type)
+        params['account_type'] = account_type_value
+
     if coder_kind := request.GET.get('coder_kind'):
         accounts = Account.apply_coder_kind(accounts, coder_kind, logger=request.logger)
         params['coder_kind'] = coder_kind
@@ -2724,7 +2741,7 @@ def accounts(request, template='accounts.html'):
         params['to_list'] = to_list
 
     context = {'navbar_admin_model': Account, 'params': params}
-    addition_table_fields = ['n_writers', 'modified', 'updated', 'created', 'name', 'key',
+    addition_table_fields = ['n_writers', 'modified', 'updated', 'created', 'name', 'key', 'account_type',
                              'last_rating_activity', 'last_submission']
     addition_table_fields += django_settings.ACCOUNT_STATISTIC_FIELDS
     fixed_fields = ['rating', 'resource_rank', 'n_contests', 'last_activity']
@@ -2844,8 +2861,7 @@ def accounts(request, template='accounts.html'):
     context['with_table_inner_scroll'] = not request.user_agent.is_mobile
 
     if coder and len(resources) == 1:
-        primary_account = Account.priority_objects.filter(resource=resource, coders=coder).first()
-        context['primary_account'] = primary_account
+        context['primary_account'] = coder.primary_account(accounts=accounts)
 
     # field_instead_key
     if field_instead_key := request.GET.get('field_instead_key'):

@@ -17,7 +17,7 @@ from clist.models import Contest, Resource
 from clist.templatetags.extras import as_number
 from notification.models import NotificationMessage
 from ranking.management.modules.common import LOG, REQ, BaseModule, parsed_table
-from ranking.management.modules.excepts import ExceptionParseAccounts, FailOnGetResponse
+from ranking.management.modules.excepts import ExceptionParseAccounts, ExceptionParseStandings, FailOnGetResponse
 from true_coders.models import Coder
 from utils.timetools import parse_duration
 
@@ -25,30 +25,44 @@ from utils.timetools import parse_duration
 class Statistic(BaseModule):
 
     @staticmethod
-    def _parse_profile_page(url):
-        page = REQ.get(url)
+    def _parse_profile_page(url, safe=False):
         info = {}
-
-        info['profile_url'] = {'type': urlparse(url).path.split('/')[1]}
+        path = urlparse(url).path.rstrip('/').split('/')
+        info['profile_url'] = {'type': path[1]}
         if '/profile/' not in url:
-            handle = unquote(urlparse(url).path)
-            handle = handle.strip('/')
-            handle = handle.replace('/', ':')
+            profile_type = info['profile_url']['type']
+            info[f'is_{profile_type}'] = True
+
+        try:
+            page = REQ.get(url)
+        except FailOnGetResponse as e:
+            if safe:
+                info['name'] = unquote(path[-1])
+                if '/profile/' not in url:
+                    info['member'] = f'{profile_type}:{info["name"]}'
+                else:
+                    info['member'] = info['name']
+                return info
+            raise ExceptionParseAccounts(f'Cannot get profile page {url}: {e}') from e
+
+        if '/profile/' not in url:
+            match = re.search(f'<link[^>]*rel="canonical"[^>]*href="[^"]*/(?P<handle>{profile_type}/[^"]*)"', page)
+            handle = html.unescape(match.group('handle').replace('/', ':', 1))
             info['member'] = handle
             info['profile_url']['account'] = handle.split(':', 1)[1]
         else:
-            match = re.search('<link[^>]*rel="canonical"[^>]*href="[^"]*/profile/(?P<handle>[^"]*)"[^>]*>', page)
-            handle = match.group('handle')
-            info['member'] = html.unescape(handle)
+            match = re.search('<link[^>]*rel="canonical"[^>]*href="[^"]*/profile/(?P<handle>[^"]*)"', page)
+            handle = html.unescape(match.group('handle'))
+            info['member'] = handle
 
             match = re.search(r'>[^<]*prize[^<]*money[^<]*(?:<[^>]*>)*[^<]*\$(?P<val>[.0-9]+)', page, re.IGNORECASE)
             if match:
                 info['prize_money'] = as_number(match.group('val'))
 
-            match = re.search(r'>country:</[^>]*>(?:\s*<[^>]*>)*\s*<a[^>]*href="[^"]*/country/(?P<country>[^"]*)"',
-                              page, re.IGNORECASE)
-            if match:
-                info['country'] = match.group('country')
+        match = re.search(r'>country:</[^>]*>(?:\s*<[^>]*>)*\s*<a[^>]*href="[^"]*/country/(?P<country>[^"]*)"',
+                            page, re.IGNORECASE)
+        if match:
+            info['country'] = match.group('country')
 
         accounts = set()
         match = re.search(r'<div[^>]*>\s*External\s*Profiles.*?</div>[^<]*</div>', page, re.DOTALL)
@@ -153,7 +167,7 @@ class Statistic(BaseModule):
         table = parsed_table.ParsedTable(html_table)
 
         result = {}
-        profile_urls = {}
+        profile_urls = []
         for r in table:
             row = OrderedDict()
             rank = r.pop('Rank')
@@ -179,17 +193,23 @@ class Statistic(BaseModule):
                 k = k.lower()
                 if k in row:
                     continue
-                v = v.value.strip()
-                if not v or v == '?':
+                val = v.value.strip()
+                if k == 'country':
+                    countries = v.column.node.xpath('.//a/text()')
+                    countries = [c.strip() for c in countries]
+                    if len(countries) > 1:
+                        k = '_countries'
+                        val = countries
+                if not val or val == '?':
                     continue
-                row[k.lower()] = as_number(v)
+                row[k] = as_number(val)
 
             if members:
                 for member in members:
                     url = urljoin(standings_url, member.attrib['href'])
                     row['_profile_url'] = url
                     row['_no_update_name'] = True
-                    profile_urls[url] = deepcopy(row)
+                    profile_urls.append(deepcopy(row))
             else:
                 row['member'] = f"{row['name']} {self.get_season()}"
                 row['info'] = {'is_team': True, '_no_profile_url': True}
@@ -203,8 +223,8 @@ class Statistic(BaseModule):
 
         def get_handle(row):
             url = row['_profile_url']
-            if 'university' in url:
-                row['_skip'] = True
+            if '/university/' in url:
+                row['_skip_in_members'] = True
 
             if url in statistics_profiles_urls:
                 stat = statistics_profiles_urls[url]
@@ -216,7 +236,7 @@ class Statistic(BaseModule):
                     row['info'] = dict(row['_info'])
                     return row
 
-            info = Statistic._parse_profile_page(url)
+            info = Statistic._parse_profile_page(url, safe=True)
             row.setdefault('info', {}).update(info)
 
             row['_member'] = row['member'] = info['member']
@@ -224,13 +244,21 @@ class Statistic(BaseModule):
             return row
 
         members = defaultdict(list)
+        members_counters = defaultdict(int)
         with PoolExecutor(max_workers=4) as executor, tqdm(total=len(result), desc='urls') as pbar:
-            for row in executor.map(get_handle, profile_urls.values()):
+            for row in executor.map(get_handle, profile_urls):
                 pbar.update()
-                result[row['member']] = row
-
-                skip = row.pop('_skip', False)
-                if not skip and 'team_id' in row:
+                member = row['member']
+                members_counters[member] += 1
+                if member in result and row['info'].get('is_university'):
+                    member = f"{member} #{members_counters[member]}"
+                    row['info']['_no_profile_url'] = True
+                    row['member'] = member
+                elif member in result:
+                    raise ExceptionParseStandings(f'Duplicate member: {member} in {self.contest}')
+                result[member] = row
+                skip_in_members = row.pop('_skip_in_members', False)
+                if not skip_in_members and 'team_id' in row:
                     members[row['team_id']].append({'account': row['member'], 'name': row['info']['name']})
 
         if members:
@@ -383,7 +411,7 @@ class Statistic(BaseModule):
 
             if len(coders_set) == 0:
                 username = f'{settings.VIRTUAL_CODER_PREFIX_}{cphof_account.pk}'
-                coder, created = Coder.objects.get_or_create(username=username, is_virtual=True)
+                coder, _ = Coder.objects.get_or_create(username=username, is_virtual=True)
             else:
                 coder = next(iter(coders_set))
 
@@ -418,7 +446,7 @@ class Statistic(BaseModule):
         for user, cphof_account in zip(users, accounts):
             if pbar:
                 pbar.update()
-            if user.startswith('university:') or cphof_account.info.get('is_team'):
+            if cphof_account.info.get('_no_profile_url'):
                 yield {'info': cphof_account.info}
                 continue
 
@@ -432,8 +460,9 @@ class Statistic(BaseModule):
                     continue
                 raise e
 
-            with transaction.atomic():
-                link_accounts(info, user, cphof_resource, cphof_account)
+            if '/profile/' in profile_url:
+                with transaction.atomic():
+                    link_accounts(info, user, cphof_resource, cphof_account)
 
             ret = {'info': info}
             if cphof_account.key != info['member']:

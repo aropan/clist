@@ -46,7 +46,8 @@ def get_resources(self, field='resource', method='GET') -> Optional[Resource]:
     return Resource.get(resources)
 
 
-def get_filtered_list(self, field, options=None, method='GET'):
+def get_filtered_list(self, field, options: Optional[list[str]] = None, method: str = 'GET',
+                      separator: Optional[str] = None):
     if method not in ['GET', 'POST', 'EMPTY']:
         raise ValueError(f'Invalid method: {method}')
 
@@ -54,15 +55,19 @@ def get_filtered_list(self, field, options=None, method='GET'):
     values_set = set()
     field_values = [] if method == 'EMPTY' else getattr(self, method).getlist(field)
     for value in field_values:
+        value_key = value
+        if separator is not None and separator in value:
+            value_key = value.split(separator)[0]
         if value in values_set:
             continue
-        if options is not None and value in options or options is None and value:
+        if options is not None and value_key in options or options is None and value:
             values.append(value)
             values_set.add(value)
 
     if values and isinstance(options, list):
         for value in values[::-1]:
-            options.remove(value)
+            if value in options:
+                options.remove(value)
             options.insert(0, value)
     return values
 

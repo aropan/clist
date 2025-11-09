@@ -307,7 +307,7 @@ function process_problem_cell(element, current_time, unfreeze_index, percentage_
     visible = false
   } else if (penalty || penalty_in_seconds) {
     var times = penalty.split(/[:\s]+/)
-    if (contest_timeline['time_factor'] && times.length in contest_timeline['time_factor']) {
+    if (penalty && contest_timeline['time_factor'] && times.length in contest_timeline['time_factor']) {
       var time = parse_factors_time(contest_timeline['time_factor'], penalty)
     } else if (penalty_in_seconds) {
       var time = parseFloat(penalty_in_seconds)
@@ -563,16 +563,14 @@ function set_timeline(percent = null, duration = null, scroll_to_element = null)
   percentage_filled = with_virtual_start ? percent >= 1 : percent >= contest_time_percentage
   update_timeline_text(percent)
 
-  var current_time, unfreeze_index, highlight_problem_duration
+  var current_time, unfreeze_index
   if (unfreeze_is_active(percent)) {
     current_time = unfreeze_duration()
     unfreeze_index = (percent - unfreeze_percent()) / freeze_percent() * UNFREEZE_SIZE
-    highlight_problem_duration = 0
     $('table.standings').addClass('unfreezing')
   } else {
     current_time = Math.round(contest_duration * percent)
     unfreeze_index = UNFREEZE_INDEX_UNDEF
-    highlight_problem_duration = duration
     $('table.standings').removeClass('unfreezing')
   }
 
@@ -1191,7 +1189,7 @@ function clear_extra_info_timeline() {
     if ($(e).hasClass('problem-cell-stat')) {
       return
     }
-    if (c.endsWith('-medal')) {
+    if (c.endsWith('-medal') || c == 'advance' || c == 'bg-success') {
       $(e).removeClass(c)
     }
   })

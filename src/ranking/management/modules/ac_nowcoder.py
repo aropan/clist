@@ -179,6 +179,8 @@ class Statistic(BaseModule):
                 ret[mapping[key]] = as_number(value)
             if 'rank' in ret and not isinstance(ret['rank'], int):
                 ret['rank_str'] = ret.pop('rank')
+            if re.search('<a[^>]*href="[^"]*/team/[^"]*"[^>]*class="[^"]*group-member-btn[^"]*"', page):
+                ret['is_team'] = True
             return ret
 
         balance = 10

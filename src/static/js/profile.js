@@ -28,11 +28,12 @@ function load_rating_history() {
 
       for (var resource in response['data']['resources']) {
         var resource_info = response['data']['resources'][resource]
-        var resource_rating_id = 'resource_' + resource_info['pk'] + '_rating'
-
+        var resource_rating_id = 'resource_' + resource_info['pk']
+        resource_rating_id += '_account_' + resource_info['account_pk']
         if (resource_info['kind']) {
-          resource_rating_id += '_' + resource_info['kind']
+          resource_rating_id += '_kind_' + resource_info['kind']
         }
+        resource_rating_id += '_rating'
 
         var canvas = $('#' + resource_rating_id)
         if (!canvas.length) {
@@ -40,7 +41,10 @@ function load_rating_history() {
         }
         canvas.siblings(loading_selector).remove()
         config = create_chart_config(resource_info, dates)
-        var label = config['options']['plugins']['title']['text']
+        var label = resource_info['host']
+        if (resource_info['kind']) {
+          label += ' (' + resource_info['kind'] + ')'
+        }
         combined_info['datasets']['labels'].push(label)
         combined_info['data'] = combined_info['data'].concat(resource_info['data'])
         combined_info['min'] = Math.min(combined_info['min'] || resource_info['min'], resource_info['min'])
@@ -59,24 +63,24 @@ function load_rating_history() {
       var combined_id = 'combined_rating'
       var canvas = $('#' + combined_id)
       if (n_combined > 1 && canvas.length) {
-        combined_info['datasets']['colors'] = palette('mpn65', n_combined).map(function(hex) { return '#' + hex; }),
+        combined_info['datasets']['colors'] = palette('mpn65', n_combined).map(function (hex) { return '#' + hex; })
         config = create_chart_config(combined_info, dates)
         canvas.siblings(loading_selector).remove()
         var ctx = new Chart(combined_id, config)
         add_selection_chart_range(combined_id, ctx)
       }
     },
-    error: function(data) {
+    error: function (data) {
       notify('{status} {statusText}'.format(data), 'error')
     },
-    complete: function() {
+    complete: function () {
       $(loading_selector).parent().remove()
     },
   })
 }
 
-$(function() {
-  $('#expand-ratings').click(function() {
+$(function () {
+  $('#expand-ratings').click(function () {
     $(this).closest('div.col-lg-6').removeClass('col-lg-6').addClass('col-xs-12')
     $('#list-accounts').closest('div.col-lg-6').removeClass('col-lg-6').addClass('col-xs-12')
     $('#collapse-history-resources').click()
@@ -84,7 +88,7 @@ $(function() {
     event.preventDefault()
   })
 
-  $('.update-account').click(function() {
+  $('.update-account').click(function () {
     var btn = $(this)
     if (btn.attr('disabled')) {
       return
@@ -99,11 +103,11 @@ $(function() {
         name: 'update-account',
         id: $(this).attr('data-account-id'),
       },
-      success: function(data) {
+      success: function (data) {
         btn.attr('data-original-title', '')
         btn.attr('disabled', 'disabled')
       },
-      error: function(response) {
+      error: function (response) {
         icon.removeClass('fa-spin')
         log_ajax_error(response)
       },
@@ -111,7 +115,7 @@ $(function() {
     event.preventDefault()
   })
 
-  $('#verify-account').click(function() {
+  $('#verify-account').click(function () {
     var btn = $(this)
     btn.attr('disabled', 'disabled')
     btn.parent().height(btn.parent().height())
@@ -124,7 +128,7 @@ $(function() {
     $.ajax({
       url: verify_url,
       method: 'POST',
-      data: {action: 'verify'},
+      data: { action: 'verify' },
       success: function (response) {
         btn.removeClass('btn-primary').addClass('btn-success')
         btn.text('Verified')
@@ -133,7 +137,7 @@ $(function() {
         notify('Verified', 'success')
         window.history.replaceState(null, null, account_url)
       },
-      error: function(response) {
+      error: function (response) {
         btn.removeAttr('disabled')
         btn.show()
         loading.addClass('hidden')

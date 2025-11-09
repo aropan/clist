@@ -458,6 +458,7 @@ class Command(BaseCommand):
                 is_archive_contest = (max(contest.created, contest.end_time) + timedelta(days=30) < now and
                                       contest.parsed_time)
                 is_fast_reparse = contest.parsed_time and now - contest.parsed_time < timedelta(minutes=5)
+                is_unlimited_statistics = contest.has_unlimited_statistics and contest.end_time < now
 
                 with_subscription = not without_subscriptions and not is_archive_contest and with_stats
                 with_upsolving_subscription = not without_subscriptions and not resource.has_upsolving
@@ -1784,7 +1785,11 @@ class Command(BaseCommand):
                                     prefix_deleted += ', ...'
                                 self.logger.info(f'{len(statistics_to_delete)} statistics to delete: {prefix_deleted}')
 
-                                if is_archive_contest and not allow_delete_statistics:
+                                if (
+                                    is_archive_contest
+                                    and not allow_delete_statistics
+                                    and not resource.allow_delete_archived_statistics
+                                ):
                                     raise ExceptionParseStandings(
                                         f'archive contest has {len(statistics_to_delete)} statistics to delete')
 
@@ -1913,11 +1918,12 @@ class Command(BaseCommand):
                         if wait_rating and not has_statistics and results and 'days' in wait_rating:
                             timing_delta = timing_delta or timedelta(days=wait_rating['days']) / 10
                         timing_delta = timedelta(**timing_delta) if isinstance(timing_delta, dict) else timing_delta
-                        if contest.has_unlimited_statistics and contest.end_time < now:
-                            last_action_time = contest.submissions_info.get('last_upsolving_submission_time',
-                                                                            contest.end_time)
-                            last_action_time = arrow.get(last_action_time).datetime
-                            last_action_delta = max(now - last_action_time, timedelta(hours=1))
+                        if is_unlimited_statistics:
+                            last_action_time = contest.submissions_info.get('last_upsolving_submission_time')
+                            last_action_time = arrow.get(last_action_time or contest.end_time).datetime
+                            unlimited_delay_factor = resource_statistics.get('unlimited_delay_factor', 1)
+                            last_action_delta = (now - last_action_time) * unlimited_delay_factor
+                            last_action_delta = min(max(last_action_delta, timedelta(hours=1)), timedelta(days=1))
                             timing_delta = min_with_none(timing_delta, last_action_delta)
                         if timing_delta is not None:
                             self.logger.info(f'Statistic timing delta = {timing_delta}')
@@ -2035,9 +2041,13 @@ class Command(BaseCommand):
                     delay = min(delay, module.delay_shortly_after)
                 if now < contest.end_time < now + delay:
                     delay = min(delay, contest.end_time + (module.min_delay_after_end or timedelta(minutes=7)) - now)
-                if '_timing_statistic_delta_seconds' in contest.info:
-                    timing_delta = timedelta(seconds=contest.info['_timing_statistic_delta_seconds'])
-                    delay = min(delay, timing_delta)
+
+                timing_statistic_delta_seconds = contest.info.get('_timing_statistic_delta_seconds')
+                if is_unlimited_statistics and timing_statistic_delta_seconds and parsed:
+                    delay = timedelta(seconds=timing_statistic_delta_seconds)
+                elif timing_statistic_delta_seconds:
+                    delay = min(delay, timedelta(seconds=timing_statistic_delta_seconds))
+
                 contest.statistic_timing = now + delay
                 contest.save(update_fields=['statistic_timing'])
                 self.logger.info(f'statistics delay = {delay} ({contest.statistic_timing})')

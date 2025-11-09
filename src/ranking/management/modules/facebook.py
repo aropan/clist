@@ -17,7 +17,7 @@ from ratelimiter import RateLimiter
 
 # from ranking.management.modules import conf
 from ranking.management.modules.common import LOG, REQ, BaseModule
-from ranking.management.modules.excepts import ExceptionParseStandings
+from ranking.management.modules.excepts import ExceptionParseStandings, ProxyLimitReached
 
 
 def is_rate_limit_error(e):
@@ -33,7 +33,7 @@ class Statistic(BaseModule):
             self.headers = json.load(file)
 
     def get_standings(self, users=None, statistics=None, **kwargs):
-        n_proxies = 50
+        n_proxies = 100
         req = REQ.duplicate(cookie_filename='sharedfiles/resource/facebook/cookies.txt')
 
         is_final = bool(re.search(r'\bfinals?\b', self.name, re.IGNORECASE))
@@ -163,6 +163,7 @@ class Statistic(BaseModule):
         info_paging_offset = self.info.get('_paging_offset', 0) if statistics else 0
         paging_offset = info_paging_offset
         parsed_percentage = None
+        rate_limiter = RateLimiter(max_calls=1, period=1)
 
         has_hidden = False
         result = OrderedDict()
@@ -175,26 +176,30 @@ class Statistic(BaseModule):
             with PoolExecutor(max_workers=3) as executor:
                 stop = False
 
-                @RateLimiter(max_calls=1, period=1)
                 def fetch_page(page):
+                    nonlocal stop
                     if stop:
                         return
-                    try:
-                        data = query('CCEScoreboardQuery', {
-                            'id': self.key,
-                            'start': page * limit,
-                            'count': limit,
-                            'friends_only': False,
-                            'force_limited_data': False,
-                            'country_filter': None,
-                            'show_all_submissions': False,
-                            'substring_filter': '',
-                        })
-                    except Exception as e:
-                        if not is_rate_limit_error(e):
-                            LOG.error(f'Fetch page exception = {e}')
-                        return
-                    return data
+                    with rate_limiter:
+                        try:
+                            data = query('CCEScoreboardQuery', {
+                                'id': self.key,
+                                'start': page * limit,
+                                'count': limit,
+                                'friends_only': False,
+                                'force_limited_data': False,
+                                'country_filter': None,
+                                'show_all_submissions': False,
+                                'substring_filter': '',
+                            })
+                        except ProxyLimitReached:
+                            stop = True
+                            return
+                        except Exception as e:
+                            if not is_rate_limit_error(e):
+                                LOG.error(f'Fetch page exception = {e}')
+                            return
+                        return data
 
                 n_page = (total + limit - 1) // limit
                 pages = list(range(paging_offset, n_page))

@@ -89,6 +89,10 @@
 </a>
 {% endfor %}
 
+{% for related in account.related_accounts_list %}
+{% include "account_table_cell.html" with account=related addition=None resource=related.resource with_resource=True without_country=True without_inline_url=True %}
+{% endfor %}
+
 {% for resource in resources %}
   {% for account in resource.coder_accounts %}
     {% include "profile_medals.html" with stats=account_medals|get_item:account.pk %}

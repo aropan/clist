@@ -82,6 +82,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('-r', '--resources', metavar='HOST', nargs='*', help='host name for update')
         parser.add_argument('-q', '--query', default=None, nargs='+', help='account key or name')
+        parser.add_argument('-rq', '--regex-query', action='store_true', help='regex for account key or name')
         parser.add_argument('-f', '--force', action='store_true', help='get accounts with min updated time')
         parser.add_argument('-l', '--limit', default=None, type=int,
                             help='limit users for one resource (default is 1000)')
@@ -133,8 +134,11 @@ class Command(BaseCommand):
 
                 if args.query:
                     condition = Q()
+                    query_suffix = '__regex' if args.regex_query else ''
                     for query in args.query:
-                        condition |= Q(key=query) | Q(name=query)
+                        for field in ('key', 'name'):
+                            field_name = f'{field}{query_suffix}'
+                            condition |= Q(**{field_name: query})
                     accounts = accounts.filter(condition)
                 elif not args.force:
                     condition = Q(updated__isnull=False, updated__lte=now)

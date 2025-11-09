@@ -7,6 +7,7 @@ from difflib import unified_diff
 
 import yaml
 from bs4 import BeautifulSoup
+from django.template.defaultfilters import slugify
 from markdown import markdown
 from stringcolor import cs
 
@@ -36,12 +37,12 @@ def list_string_iou(a, b):
     return intersection / union if union > 0 else 0.0
 
 
-def word_string_iou(a, b):
-    return list_string_iou(a.split(), b.split())
+def word_string_iou(a, b, sep: str | None = None):
+    return list_string_iou(a.split(sep), b.split(sep))
 
 
 def slug_string_iou(a, b):
-    return list_string_iou(a.split('-'), b.split('-'))
+    return list_string_iou(slugify(a).split('-'), slugify(b).split('-'))
 
 
 def random_string(length=40):
@@ -51,6 +52,7 @@ def random_string(length=40):
 def generate_secret(length=16):
     required_bytes = (length * 3 + 3) // 4
     return secrets.token_urlsafe(nbytes=required_bytes)[:length]
+
 
 def generate_secret_64():
     return generate_secret(32)

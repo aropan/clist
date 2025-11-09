@@ -13,7 +13,7 @@ from sql_util.utils import Exists, SubqueryCount
 from tqdm import tqdm
 
 from clist.models import Resource
-from clist.templatetags.extras import place_as_n_place_field
+from clist.templatetags.extras import medal_as_n_medal_fields, place_as_n_place_field
 from clist.utils import update_accounts_by_coders
 from utils.attrdict import AttrDict
 from utils.mathutils import is_close
@@ -38,12 +38,16 @@ class Command(BaseCommand):
         parser.add_argument('--update-statistic-stats', action='store_true',
                             help='update statistic stats')
         parser.add_argument('--update-account-urls', action='store_true', help='update account urls')
+        parser.add_argument('--with-priority', action='store_true', help='update resources by priority')
 
     def handle(self, *args, **options):
         self.stdout.write(str(options))
         args = AttrDict(options)
 
-        resources = Resource.priority_objects.all()
+        if args.with_priority or args.resources:
+            resources = Resource.priority_objects.all()
+        else:
+            resources = Resource.available_for_update_objects.all()
         if args.resources:
             resources = Resource.get(args.resources, queryset=resources)
         else:
@@ -129,13 +133,10 @@ class Command(BaseCommand):
                         for a in qs:
                             medal_stats = defaultdict(int)
                             for s in a.statistics_set.all():
-                                if s.medal in ('gold', 'silver', 'bronze'):
-                                    medal_stats[f'n_{s.medal}'] += 1
-                                    medal_stats['n_medals'] += 1
-                                else:
-                                    medal_stats['n_other_medals'] += 1
+                                for field in medal_as_n_medal_fields(medal=s.medal, place=s.place_as_int):
+                                    medal_stats[field] += 1
                             updated_fields = []
-                            for field in ('n_gold', 'n_silver', 'n_bronze', 'n_medals', 'n_other_medals'):
+                            for field in ('n_win', 'n_gold', 'n_silver', 'n_bronze', 'n_medals', 'n_other_medals'):
                                 value = medal_stats.get(field)
                                 if not is_close(value, getattr(a, field)):
                                     setattr(a, field, value)
@@ -148,7 +149,7 @@ class Command(BaseCommand):
                     counters['n_medals'] = counter
 
                 def set_n_place_field():
-                    place_filter = Q(place_as_int__gte=0, place_as_int__lte=10, contest__end_time__lt=timezone.now())
+                    place_filter = Q(place_as_int__gte=1, place_as_int__lte=10, contest__end_time__lt=timezone.now())
                     place_filter = place_filter & statistic_filter
                     statistics_with_places = resource.statistics_set.filter(place_filter)
                     qs = accounts.prefetch_related(Prefetch('statistics_set', queryset=statistics_with_places))

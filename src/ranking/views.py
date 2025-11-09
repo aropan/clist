@@ -1320,7 +1320,7 @@ def standings(request, contest, other_contests=None, template="standings.html", 
         else:
             timeline = None
     contest_timeline = contest.get_timeline_info()
-    enable_timeline = enable_timeline and (contest_timeline or contest.is_stage())
+    enable_timeline = enable_timeline and contest_timeline or contest.is_stage()
 
     problems = get_standings_problems(contest, division)
     mod_penalty = get_standings_mod_penalty(contest, division, problems, statistics)

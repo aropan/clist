@@ -4,7 +4,8 @@ extend-exclude = ["*/migrations"]
 [lint]
 preview = true
 select = ["E", "F"]
-extend-ignore = ["I", "E203", "E402"]
+extend-ignore = ["I", "E203", "E402", "F401"]
+unfixable = ["F401"]
 
 [format]
 preview = true

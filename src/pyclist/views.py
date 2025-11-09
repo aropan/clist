@@ -176,7 +176,7 @@ def update_context_by_source(request, context):
                 continue
             entity_fields.append(field)
     entity_fields_select = create_field_to_select(options=entity_fields, multiply=True)
-    entity_fields = request.get_filtered_list('field', options=entity_fields_select['options'])
+    entity_fields = request.get_filtered_list('field', options=entity_fields_select['options'], separator='__')
     for field in entity_fields[::-1]:
         if field in fields:
             fields.remove(field)
@@ -274,3 +274,13 @@ def change_environment(request):
     new_domain = settings.CHANING_HOSTS_[index]
     new_url = parse_result._replace(netloc=new_domain).geturl()
     return HttpResponseRedirect(new_url)
+
+
+@staff_member_required
+def change_debug_toolbar(request):
+    referer_url = request.META.get('HTTP_REFERER')
+    if not referer_url:
+        return HttpResponseBadRequest('No referer')
+    debug_toolbar_status = bool(request.session.get('debug_toolbar'))
+    request.session['debug_toolbar'] = not debug_toolbar_status
+    return HttpResponseRedirect(referer_url)

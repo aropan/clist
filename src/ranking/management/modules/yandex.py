@@ -487,8 +487,9 @@ class Statistic(BaseModule):
 
                     if name2logins:
                         name = row["name"]
-                        if name not in name2logins:
-                            raise ExceptionParseStandings(f"Not found {name} in name2logins")
+                        member_prefix = get_item(self.resource.info, "statistics.ensure_login_for_member_prefix")
+                        if member_prefix and member.startswith(member_prefix) and name not in name2logins:
+                            raise ExceptionParseStandings(f"Not found {name}({member}) in name2logins")
                         logins = name2logins[name]
                         row["_logins"] = logins
                         for login in logins:

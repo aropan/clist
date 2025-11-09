@@ -237,14 +237,23 @@ class Coder(BaseModel):
         account.save()
         coder.detect_country()
 
-    def primary_account(self, resource):
-        qs = self.account_set.filter(resource=resource)
+    def primary_account(self, resource=None, accounts=None):
+        if resource is not None:
+            qs = self.account_set.filter(resource=resource)
+        elif accounts is not None:
+            qs = accounts.filter(coders=self)
+        else:
+            raise ValueError('resource or accounts must be not None')
         qs = qs.annotate(has_rating=Case(When(rating__isnull=False, then=True), default=False))
-        return qs.order_by('-has_rating', '-n_contests').first()
+        return qs.order_by('account_type', '-has_rating', '-n_contests').first()
 
-    def primary_accounts(self):
-        qs = self.account_set.annotate(has_rating=Case(When(rating__isnull=False, then=True), default=False))
-        qs = qs.order_by('resource', '-has_rating', '-n_contests')
+    def primary_accounts(self, accounts=None):
+        if accounts is not None:
+            qs = accounts.filter(coders=self)
+        else:
+            qs = self.account_set.all()
+        qs = qs.annotate(has_rating=Case(When(rating__isnull=False, then=True), default=False))
+        qs = qs.order_by('resource', 'account_type', '-has_rating', '-n_contests')
         qs = qs.distinct('resource')
         return qs
 

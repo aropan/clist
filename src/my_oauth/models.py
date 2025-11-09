@@ -29,9 +29,12 @@ class Service(BaseModel):
     refresh_token_uri = models.TextField(null=True, blank=True)
     refresh_token_post = models.TextField(null=True, blank=True)
     state_field = models.CharField(max_length=255, default="state")
-    email_field = models.CharField(max_length=255, default="email")
+    signed_field = models.CharField(max_length=255, null=True, blank=True, default=None)
+    signed_method = models.CharField(max_length=10, null=True, blank=True, default=None)
+    signed_args = models.JSONField(default=dict, blank=True)
+    email_field = models.CharField(max_length=255, default="email", null=True, blank=True)
     user_id_field = models.CharField(max_length=255)
-    data_uri = models.TextField()
+    data_uri = models.TextField(blank=True)
     data_header = models.TextField(null=True, blank=True, default=None)
     fa_icon = models.CharField(max_length=255)
     disable = models.BooleanField(default=False)
@@ -65,7 +68,6 @@ class Token(BaseModel):
         return f"{self.user_id} on {self.service} Token#{self.id}"
 
     def email_hint(self):
-        login, domain = self.email.split("@")
 
         def hint(s):
             regex = "(?<!^)."
@@ -73,6 +75,10 @@ class Token(BaseModel):
                 regex += "(?!$)"
             return re.sub(regex, ".", s)
 
+        if not self.email:
+            return hint(self.service.name)
+
+        login, domain = self.email.split("@")
         return f"{hint(login)}@{hint(domain)}"
 
     def update_expires_at(self, expires_in, force: bool = False):

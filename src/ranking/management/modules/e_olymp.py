@@ -56,7 +56,8 @@ query GetContestInfo($id: ID!) {
 
         writers = []
         for staff in data['data']['contest']['staff']['edges']:
-            writers.append(staff['node']['id'])
+            if staff["role"] in {"AUTHOR", "COORDINATOR"}:
+                writers.append(staff['node']['id'])
 
         scoreboard_query = '''
 query GetScoreboard($id: ID!, $first: Int, $offset: Int) {

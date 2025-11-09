@@ -55,7 +55,9 @@
   </div>
   {% endif %}
 
+  {% if entities is not None and entities.exists %}
   {% include "fulltable_filter.html" %}
+  {% endif %}
 </form>
 
 <script>configure_pagination()</script>

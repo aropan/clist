@@ -35,6 +35,7 @@ from clist.utils import similar_contests_queryset, update_accounts_by_coders
 from logify.models import EventLog, EventStatus
 from pyclist.indexes import GistIndexTrgrmOps
 from pyclist.models import BaseManager, BaseModel
+from ranking.enums import AccountType
 from utils.colors import color_to_rgb, darken_hls, hls_to_rgb, lighten_hls, rgb_to_color, rgb_to_hls
 from utils.timetools import Epoch, parse_duration, timed_cache
 
@@ -112,6 +113,8 @@ class Resource(BaseModel):
     n_contests = models.IntegerField(default=0)
     n_statistics = models.IntegerField(default=0)
     n_rating_accounts = models.IntegerField(default=None, null=True, blank=True)
+    n_university_accounts = models.IntegerField(default=None, null=True, blank=True)
+    n_team_accounts = models.IntegerField(default=None, null=True, blank=True)
     icon = models.CharField(max_length=255, null=True, blank=True)
     accounts_fields = models.JSONField(default=dict, blank=True)
     avg_rating = models.FloatField(default=None, null=True, blank=True)
@@ -131,6 +134,9 @@ class Resource(BaseModel):
     has_account_last_submission = models.BooleanField(null=True, blank=True)
     has_account_n_writers = models.BooleanField(null=True, blank=True)
     has_country_medal = models.BooleanField(null=True, blank=True)
+    has_country_place = models.BooleanField(null=True, blank=True)
+    allow_delete_archived_statistics = models.BooleanField(default=False)
+    default_account_type = models.PositiveSmallIntegerField(choices=AccountType.choices, default=AccountType.USER)
 
     RATING_FIELDS = (
         'old_rating', 'new_rating', 'rating', 'rating_perf', 'performance', 'raw_rating',
@@ -512,6 +518,9 @@ class Resource(BaseModel):
     def problems_fields_types(self):
         return self.problems_fields.get('types', {})
 
+    def has_account_types(self):
+        return self.n_university_accounts or self.n_team_accounts
+
 
 class BaseContestManager(BaseManager):
     pass
@@ -593,6 +602,7 @@ class Contest(BaseModel):
     statistic_timing = models.DateTimeField(default=None, null=True, blank=True)
     rating_prediction_timing = models.DateTimeField(default=None, null=True, blank=True)
     wait_for_successful_update_timing = models.DateTimeField(default=None, null=True, blank=True)
+    link_statistic_timing = models.DateTimeField(default=None, null=True, blank=True)
     statistics_update_required = models.BooleanField(default=False)
     upsolving_url = models.CharField(max_length=255, default=None, null=True, blank=True)
     upsolving_key = models.CharField(max_length=255, default=None, null=True, blank=True)
