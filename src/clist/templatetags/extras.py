@@ -56,13 +56,13 @@ def get_item(data, key, default=None):
     if not data:
         return default
 
-    if isinstance(data, (dict, defaultdict, OrderedDict)):
+    if isinstance(data, (dict, defaultdict, OrderedDict)) and not isinstance(key, list):
         if key in data:
             return data.get(key)
     elif isinstance(data, (list, tuple)) and (key_as_number := as_number(key, force=True)) is not None:
         if -len(data) <= key_as_number < len(data):
             return data[key_as_number]
-    elif hasattr(data, key):
+    elif isinstance(key, str) and hasattr(data, key):
         return getattr(data, key)
 
     if isinstance(key, str):
@@ -2364,7 +2364,7 @@ def standings_statistic_problem(context):
             html_parts.append(tooltip_attrs)
     html_parts.append('>')
 
-    has_alternative_result = context.get('has_alternative_result') 
+    has_alternative_result = context.get('has_alternative_result')
     if has_alternative_result :
         alternative_result = get_item(stat, standings_options.get('alternative_result_field'), '&#183;')
         html_parts.append('<a href="" onclick="toggle_hidden(this, event)" data-class="detail-alternative-result">')

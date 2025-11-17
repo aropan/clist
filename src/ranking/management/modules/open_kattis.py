@@ -90,16 +90,25 @@ class Statistic(BaseModule):
                             v, *team = team
                             row['place'] = v.value
                         team, *more = team
-                        for addition in more:
-                            for img in addition.column.node.xpath('.//img'):
-                                alt = img.attrib.get('alt', '')
-                                if not alt:
-                                    continue
-                                src = img.attrib.get('src', '')
-                                if '/countries/' in src and 'country' not in row:
-                                    row['country'] = alt
-                                elif '/universities/' in src and 'university' not in row:
-                                    row['university'] = alt
+                    elif '' in r and isinstance(r[''], list):
+                        v, *more = r.pop('')
+                        if 'place' not in row:
+                            row['place'] = v.value
+                    else:
+                        more = []
+                    for addition in more:
+                        for img in addition.column.node.xpath('.//img'):
+                            alt = img.attrib.get('alt', '')
+                            if not alt:
+                                continue
+                            src = img.attrib.get('src', '')
+                            if '/countries/' in src and 'country' not in row:
+                                if match := re.search(r'/countries/(?P<country_code>[A-Z]{2,4})/', src):
+                                    alt = match.group('country_code')
+                                row['country'] = alt
+                            elif '/universities/' in src and 'university' not in row:
+                                row['university'] = alt
+
                     if not team.value:
                         continue
 
@@ -141,7 +150,7 @@ class Statistic(BaseModule):
                             pending = 'pending' in classes
                             first = 'solvedfirst' in classes
                             first = first or bool(v.column.node.xpath('.//i[contains(@class,"cell-first")]'))
-                            solved = first or 'solved' in classes
+                            solved = first or bool(v.column.node.xpath('.//i[contains(@class,"cell-solved")]'))
                             if options:
                                 first = False
 

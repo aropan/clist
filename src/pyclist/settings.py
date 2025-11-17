@@ -536,6 +536,20 @@ ANONYMOUS_USER_NAME = None
 GUARDIAN_AUTO_PREFETCH = True
 
 
+# DJANGO SILK
+if DEBUG:
+    MIDDLEWARE += (
+        'silk.middleware.SilkyMiddleware',
+    )
+    SILKY_PYTHON_PROFILER = True
+    SILKY_AUTHENTICATION = True
+    SILKY_AUTHORISATION = True
+    SILKY_META = True
+
+    def SILKY_PERMISSIONS(user):
+        return user.is_authenticated and user.is_superuser
+
+
 # DJANGO DEBUG TOOLBAR
 if DEBUG:
     MIDDLEWARE += (
@@ -583,20 +597,6 @@ if DEBUG:
         'SHOW_TOOLBAR_CALLBACK': show_toolbar_callback,
         'DISABLE_PANELS': DEBUG_TOOLBAR_DISABLE_PANELS,
     }
-
-
-# DJANGO SILK
-if DEBUG:
-    MIDDLEWARE += (
-        'silk.middleware.SilkyMiddleware',
-    )
-    SILKY_PYTHON_PROFILER = True
-    SILKY_AUTHENTICATION = True
-    SILKY_AUTHORISATION = True
-    SILKY_META = True
-
-    def SILKY_PERMISSIONS(user):
-        return user.is_authenticated and user.is_superuser
 
 
 # WEBPUSH
@@ -901,6 +901,7 @@ FONTAWESOME_ICONS_ = {
     'silk': '<i class="fa-solid fa-magnifying-glass-chart"></i>',
     'debug_toolbar': '<i class="fa-solid fa-toolbox"></i>',
     'account_type': '<i class="fa-regular fa-circle-user"></i>',
+    'force_default_scroll': '<i class="fa-fw fa-solid fa-arrow-down-long"></i>',
 }
 
 

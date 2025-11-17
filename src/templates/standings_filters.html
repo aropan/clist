@@ -130,6 +130,15 @@
     {% include "fulltable_filter.html" %}
     {% endif %}
 
+    {% if request.GET.force_default_scroll or request.GET.force_default_scroll|is_yes %}
+    <div class="input-group input-group-sm">
+        {% with value=request.GET.force_default_scroll|is_yes %}
+        <input type="hidden" name="force_default_scroll" value="{{ request.GET.force_default_scroll }}"/>
+        <button class="btn btn-default btn-sm{% if value %} active{% endif %}" name="force_default_scroll"{% if value %} value="off"{% endif %}>{% icon_to "force_default_scroll" %}</button>
+        {% endwith %}
+    </div>
+    {% endif %}
+
     {% include "field_to_input.html" with field="field_instead_key" default=request.GET|get_item:"field_instead_key" force_collapse=True %}
 
     {% if enable_timeline and groupby == 'none' %}

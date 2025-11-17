@@ -1094,9 +1094,7 @@ def standings(request, contest, other_contests=None, template="standings.html", 
 
     order = contest.get_statistics_order()
 
-    statistics = (
-        statistics.select_related("account").select_related("account__resource").prefetch_related("account__coders")
-    )
+    statistics = statistics.select_related("account__resource").prefetch_related("account__coders")
 
     has_country = (
         "country" in contest_fields
@@ -1162,10 +1160,8 @@ def standings(request, contest, other_contests=None, template="standings.html", 
                 if psrc in order:
                     order[order.index(psrc)] = dsrc
 
-    order.append("pk")
-    statistics = statistics.order_by(*order)
-
     view_private_fields = request.has_contest_perm("view_private_fields", contest)
+
     fields = get_standings_fields(
         contest,
         division=division,
@@ -1185,6 +1181,15 @@ def standings(request, contest, other_contests=None, template="standings.html", 
                 fields[v] = v
                 hidden_fields.append(v)
 
+    sort_by_fields = request.has_contest_perm("sort_by_fields", contest)
+    sort_options = list(fields)
+    if sort_by_fields and (sort_fields := request.get_filtered_list("sort_fields", options=sort_options)):
+        order = [f"addition__{sort_field}" for sort_field in sort_fields]
+        order = _get_order_by(order)
+
+    order.append("pk")
+    statistics = statistics.order_by(*order)
+
     if n_advanced := request.GET.get("n_advanced"):
         if n_advanced.isdigit() and int(n_advanced) and "n_highlight" in options:
             options["n_highlight"] = int(n_advanced)
@@ -1201,6 +1206,7 @@ def standings(request, contest, other_contests=None, template="standings.html", 
         },
         "ghost": {"options": ["true", "false"], "noajax": True, "nomultiply": True},
         "highlight": {"options": ["true", "false"], "noajax": True, "nomultiply": True},
+        "sort_fields": {"options": sort_options, "noajax": True, "nogroupby": True, "nofilter": True, "icon": "sort"},
     }
 
     fields_to_select = OrderedDict()
@@ -1219,38 +1225,11 @@ def standings(request, contest, other_contests=None, template="standings.html", 
         f = f.strip("_")
         fk = f.lower()
         if (
-            is_hidden_field
-            and fk in ["languages", "verdicts"]
-            or fk
-            in [
-                "institution",
-                "room",
-                "affiliation",
-                "city",
-                "school",
-                "class",
-                "job",
-                "region",
-                "location",
-                "rating_change",
-                "advanced",
-                "company",
-                "language",
-                "league",
-                "onsite",
-                "degree",
-                "university",
-                "list",
-                "group",
-                "group_ex",
-                "college",
-                "ghost",
-                "badge",
-            ]
-            or view_private_fields
-            and is_private_field(fk)
-            and is_hidden_field
-            and f"_{fk}" in fields
+            is_hidden_field and fk in ["languages", "verdicts"]
+            or fk in ["institution", "room", "affiliation", "city", "school", "class", "job", "region", "location",
+                      "rating_change", "advanced", "company", "language", "league", "onsite", "degree", "university",
+                      "list", "group", "group_ex", "college", "ghost", "badge"]
+            or view_private_fields and is_private_field(fk) and is_hidden_field and f"_{fk}" in fields
         ):
             add_field_to_select(f)
 
@@ -1300,6 +1279,9 @@ def standings(request, contest, other_contests=None, template="standings.html", 
             "nourl": True,
             "nofilter": True,
         }
+
+    if sort_by_fields and sort_fields:
+        add_field_to_select("sort_fields")
 
     paginate_on_scroll = True
     force_both_scroll = False
@@ -1736,7 +1718,7 @@ def standings(request, contest, other_contests=None, template="standings.html", 
     if with_virtual_start:
         timeline = None
 
-    inner_scroll = not request.user_agent.is_mobile
+    inner_scroll = not request.user_agent.is_mobile and not is_yes(request.GET.get("force_default_scroll"))
     is_charts = is_yes(request.GET.get("charts"))
 
     hide_problems = set()

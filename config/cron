@@ -6,7 +6,7 @@ DJANGO_ENV_FILE=.env.prod
 */1       *  *  *  *    env  MONITOR_NAME=SENTRY_CRON_MONITOR_SENDING_NOTIFICATIONS  /usr/src/clist/run-manage.bash sendout_tasks
 */1       *  *  *  *    env  MONITOR_NAME=SENTRY_CRON_MONITOR_PARSING_STATISTICS     /usr/src/clist/run-manage.bash parse_statistic --split-by-resource
 */1       *  *  *  *                                                                 /usr/src/clist/run-manage.bash parse_live_statistics
-0         2  *  *  wed                                                               /usr/src/clist/run-manage.bash detect_major_contests
+0         2  *  *  *                                                                 /usr/src/clist/run-manage.bash detect_major_contests
 */3       *  *  *  *    env  MONITOR_NAME=SENTRY_CRON_MONITOR_PARSING_ACCOUNTS       /usr/src/clist/run-manage.bash parse_accounts_infos --split-by-resource
 30        *  *  *  *    env  MONITOR_NAME=SENTRY_CRON_MONITOR_PARSE_ARCHIVE_PROBLEMS /usr/src/clist/run-manage.bash parse_archive_problems
 */1       *  *  *  *    env  MONITOR_NAME=SENTRY_CRON_MONITOR_CHECKING_LOGS          /usr/src/clist/run-manage.bash check_logs

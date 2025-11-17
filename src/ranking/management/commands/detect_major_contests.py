@@ -26,22 +26,32 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         self.stdout.write(str(options))
         args = AttrDict(options)
+        now = timezone.now()
+        self.logger.info(f"Detecting major contests at {now}, args = {args}")
 
-        contests = Contest.objects
+        base_contests = Contest.objects
         if args.resources:
             resources = Resource.get(args.resources)
-            contests = contests.filter(resource__in=resources)
+            base_contests = base_contests.filter(resource__in=resources)
+        base_contests = base_contests.filter(end_time__lt=timezone.now())
 
-        now = timezone.now()
-        contests = contests.filter(end_time__lt=now, live_statistics__isnull=False)
-        contests = contests.order_by('-end_time')
-
+        contests = base_contests.filter(live_statistics__isnull=False).order_by('-end_time')
         for contest in contests:
             major_contests = contest.similar_contests()
-            major_contests = major_contests.filter(
-                start_time__gt=now,
-                start_time__lt=now + timezone.timedelta(days=7),
-            )
+            major_contests = major_contests.filter(start_time__gt=now, start_time__lt=now + timezone.timedelta(days=7))
             for major_contest in major_contests.exclude(live_statistics__isnull=False):
                 Promotion.create_major_contest(major_contest)
                 contest.live_statistics.create_for_contest(major_contest)
+                self.logger.info(f"Created live statistics for major contest {major_contest} from {contest}")
+
+        contests = base_contests.filter(promotion__isnull=False).order_by('-end_time')
+        for contest in contests:
+            major_contests = contest.similar_contests()
+            major_contests = major_contests.filter(start_time__gt=now, start_time__lt=now + timezone.timedelta(days=7))
+            for major_contest in major_contests.exclude(promotion__isnull=False):
+                for promotion in contest.promotion_set.all():
+                    promotion.pk = None
+                    promotion.name = major_contest.title
+                    promotion.contest = major_contest
+                    promotion.save()
+                    self.logger.info(f"Created promotion {promotion} for major contest {major_contest} from {contest}")

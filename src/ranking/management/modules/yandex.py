@@ -38,6 +38,7 @@ def normalize_standings_url(url):
 class Statistic(BaseModule):
     YANDEX_API_URL = "https://api.contest.yandex.net/api/public/v2"
     SUBMISSION_FIELDS_MAPPING = {
+        "result": lambda submission: as_number(submission.get("finalScore")),
         "submission_id": "runId",
         "verdict_full": "verdict",
         "verdict": lambda submission: "".join(filter(str.isupper, submission["verdict"])),
@@ -101,16 +102,21 @@ class Statistic(BaseModule):
             if not name or not problems:
                 continue
 
-            for short, problem in problems.items():
-                if not problem.get("_submission_infos"):
-                    continue
-                row_problems = submission_infos.setdefault(name, {})
-                _submission_infos = problem["_submission_infos"]
-                if max_run_id:
-                    _submission_infos = [info for info in _submission_infos if info["run_id"] <= max_run_id]
-                row_problems[short] = {"_submission_infos": _submission_infos}
-                for submission_info in _submission_infos:
-                    already_processed.add(submission_info["run_id"])
+            for short in problems:
+                for path in ([short], [short, "upsolving"]):
+                    problem = get_item(problems, path)
+                    if not problem or not (problem_submission_infos := problem.get("_submission_infos")):
+                        continue
+
+                    if max_run_id:
+                        problem_submission_infos = [info for info in problem_submission_infos if info["run_id"] <= max_run_id]
+                    for submission_info in problem_submission_infos:
+                        already_processed.add(submission_info["run_id"])
+
+                    row_problems = submission_infos.setdefault(name, {})
+                    for key in path:
+                        row_problems = row_problems.setdefault(key, {})
+                    row_problems["_submission_infos"] = problem_submission_infos
 
         headers = self._get_headers()
         submissions = list(self._get_all_submissions(self.key))
@@ -126,7 +132,7 @@ class Statistic(BaseModule):
         LOG.info(f"{len(run_ids)} submissions to fetch, already {len(already_processed)}, total {len(submissions)}")
 
         stop_fetch_submissions = False
-        finish_time = timezone.now() + timedelta(minutes=10)
+        finish_time = timezone.now() + timedelta(minutes=30)
         rate_limiter = RateLimiter(max_calls=4, period=1)
         n_success = 0
         n_fail = 0
@@ -162,51 +168,39 @@ class Statistic(BaseModule):
         n_page = (len(run_ids) - 1) // batch_size + 1
         n_processed = len(already_processed)
         n_total = len(run_ids) + n_processed
-        with (
-            PoolExecutor(max_workers=8) as executor,
-            tqdm.tqdm(total=n_page, desc="fetch submissions") as pbar,
-        ):
+        with PoolExecutor(max_workers=8) as executor, tqdm.tqdm(total=n_page, desc="fetch submissions") as pbar:
             for submissions in executor.map(fetch_submissions, range(n_page)):
                 pbar.update()
                 if submissions is None:
                     continue
                 for submission in submissions:
                     submission_time = parse_datetime(submission["submissionTime"])
-                    upsolving = submission_time > self.end_time
+                    upsolving = submission_time >= self.end_time and not max_run_id
                     n_processed += 1
                     name = submission["participantInfo"]["name"]
                     short = submission["problemAlias"]
-                    final_score = submission.get("finalScore")
+                    submission_score = submission.get("finalScore")
                     submission_problem = submission_infos.setdefault(name, {}).setdefault(short, {})
-                    problem = get_item(names_result[name], ("problems", short))
+                    problem = get_item(names_result[name], ("problems", short), {})
                     if upsolving:
-                        if problem is not None:
-                            problem = problem.setdefault("upsolving", {})
-                        else:
-                            submission_problem = submission_problem.setdefault("upsolving", {})
+                        problem = problem.setdefault("upsolving", {})
+                        submission_problem = submission_problem.setdefault("upsolving", {})
+                    fields_data = problem or submission_problem
                     if (
-                        not problem
-                        or as_number(final_score) == as_number(problem.get("result"))
-                        and ("submission_id" not in problem or submission["runId"] < problem["submission_id"])
+                        not fields_data
+                        or as_number(submission_score) == as_number(fields_data.get("result"))
+                        and ("submission_id" not in fields_data or submission["runId"] < fields_data["submission_id"])
                     ):
-                        fields_data = problem or submission_problem
-                        for (
-                            field,
-                            source,
-                        ) in Statistic.SUBMISSION_FIELDS_MAPPING.items():
-                            if callable(source):
-                                value = source(submission)
-                            else:
-                                value = submission[source]
+                        for (field, source) in Statistic.SUBMISSION_FIELDS_MAPPING.items():
+                            value = source(submission) if callable(source) else submission[source]
                             fields_data[field] = value
 
-                    submission_info = {
-                        "ip": submission["ip"],
-                        "run_id": submission["runId"],
-                    }
-                    submission_infos[name][short].setdefault("_submission_infos", []).append(submission_info)
+                    submission_info = {"ip": submission["ip"],
+                                       "run_id": submission["runId"],
+                                       "timestamp": submission_time.timestamp()}
+                    submission_problem.setdefault("_submission_infos", []).append(submission_info)
 
-        submissions_percentage = 100 * n_processed // n_total if n_total else False
+        submissions_percentage = 100 * n_processed / n_total if n_total else False
         return submission_infos, submissions_percentage
 
     def _get_upsolving_submissions(self, contest, problems_info, names_result):
@@ -271,10 +265,7 @@ class Statistic(BaseModule):
                 if (
                     problem
                     and submission_result_value >= problem_result_value
-                    and (
-                        "submission_time" not in problem
-                        or submission_info["submission_time"] < problem["submission_time"]
-                    )
+                    and ("submission_time" not in problem or submission_info["submission_time"] < problem["submission_time"])
                 ):
                     counters["n_updated"] += 1
                     problem.update(submission_info)
@@ -536,12 +527,11 @@ class Statistic(BaseModule):
                             continue
                         statistics_problem = statistics_problems[short]
                         for key, value in statistics_problem.items():
-                            if key in Statistic.SUBMISSION_FIELDS_MAPPING and key not in problem:
+                            if (
+                                key in Statistic.SUBMISSION_FIELDS_MAPPING and key not in problem
+                                or key in {"_submission_infos", "upsolving"}
+                            ):
                                 problem[key] = value
-                        if "_submission_infos" in statistics_problem:
-                            problem["_submission_infos"] = statistics_problem["_submission_infos"]
-                        if "upsolving" in statistics_problem:
-                            problem["upsolving"] = statistics_problem["upsolving"]
                     result[member] = row
                 if tqdm_pagination:
                     tqdm_pagination.update()
@@ -573,7 +563,7 @@ class Statistic(BaseModule):
                 row.update(location)
 
         names_result = {row["name"]: row for row in result.values()}
-        submission_infos, submissions_percentage = self._get_submission_infos(names_result) or {}
+        submission_infos, submissions_percentage = self._get_submission_infos(names_result)
         whois = self.info.setdefault("_whois", {})
         contest_ips = set()
         contest_n_ips = set()
@@ -583,11 +573,12 @@ class Statistic(BaseModule):
             name = row["name"]
             if name not in submission_infos:
                 continue
-            problems = row["problems"]
+
+            row["problems"] = self.merge_dict(submission_infos[name], row["problems"])
+
             ips = set()
-            for short, problem_data in submission_infos[name].items():
-                problems.setdefault(short, {}).update(problem_data)
-                ips |= {info["ip"] for info in problem_data.get("_submission_infos", [])}
+            for short, problem in row["problems"].items():
+                ips |= {info["ip"] for info in problem.get("_submission_infos", [])}
             contest_ips |= ips
             row["_ips"] = list(sorted(ips))
             contest_n_ips |= {len(ips)}

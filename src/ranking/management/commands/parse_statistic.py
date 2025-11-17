@@ -1025,7 +1025,7 @@ class Command(BaseCommand):
                             stat = statistics_by_key.get(member, {})
 
                             previous_member = r.pop('previous_member', None)
-                            if previous_member and previous_member in statistics_by_key:
+                            if previous_member and previous_member in statistics_by_key and previous_member != member:
                                 stat = statistics_by_key[previous_member]
                                 previous_account = resource.account_set.filter(key=previous_member).first()
                                 if previous_account:

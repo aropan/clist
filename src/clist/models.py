@@ -42,6 +42,7 @@ from utils.timetools import Epoch, parse_duration, timed_cache
 contest_and_resource_permissions = (
     ('update_statistics', 'Can update statistics'),
     ('view_private_fields', 'Can view private fields'),
+    ('sort_by_fields', 'Can sort by specific fields'),
 )
 
 
