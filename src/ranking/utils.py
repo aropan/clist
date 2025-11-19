@@ -460,7 +460,7 @@ def update_stage(self):
         call_command('parse_statistic',
                      contest_id=stage.pk,
                      without_set_coder_problems=True,
-                     ignore_stage=True)
+                     without_stage=True)
         stage.refresh_from_db()
 
     stage_placing = self.score_params.get('place')

@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+import json
+import re
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from urllib.parse import urljoin
@@ -192,7 +194,12 @@ class Statistic(BaseModule):
                 data = Statistic._get(url, return_json=True)
             except FailOnGetResponse:
                 return False
-            user_data = get_item(data, 'currentData.user') or {}
+            if data.get("__no_json"):
+                match = re.search('<script[^>]*id="lentille-context"[^>]*>(?P<data>[^<]*)</script>', data["page"])
+                data = json.loads(match.group("data"))
+                user_data = get_item(data, 'data.user') or {}
+            else:
+                user_data = get_item(data, 'currentData.user') or {}
             for k, v in user_data.items():
                 if isinstance(v, (dict, list)):
                     continue

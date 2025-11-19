@@ -215,7 +215,6 @@ class Command(BaseCommand):
         parser.add_argument('--is-rated', action='store_true', default=False, help='Contest is rated')
         parser.add_argument('--after', type=str, help='Events after date')
         parser.add_argument('--for-account', type=str, help='Events for account')
-        parser.add_argument('--ignore-stage', action='store_true', default=False, help='Ignore stage')
         parser.add_argument('--disabled', action='store_true', default=False, help='Disabled module only')
         parser.add_argument('--without-delete-statistics', action='store_true')
         parser.add_argument('--allow-delete-statistics', action='store_true')
@@ -252,7 +251,6 @@ class Command(BaseCommand):
         no_update_problems=None,
         is_rated=None,
         for_account=None,
-        ignore_stage=None,
         with_reparse=None,
         enabled=True,
         without_delete_statistics=None,
@@ -437,7 +435,7 @@ class Command(BaseCommand):
                 has_stage = hasattr(contest, 'stage')
                 if not has_stage:
                     raise Exception(f'Not found stage for contest = {contest}')
-            if has_stage and not ignore_stage:
+            if has_stage:
                 self.logger.info(f'update stage = {contest.stage}')
                 stages_ids.append(contest.stage.pk)
                 count += 1
@@ -799,7 +797,9 @@ class Command(BaseCommand):
                                 for field in [v.get('member'), v.get('name')]:
                                     v.update(OrderedDict(additions.pop(field, [])))
                             for k, v in additions.items():
-                                result[k] = dict(v)
+                                if v.get("__update_only"):
+                                    continue
+                                result[k] = copy.deepcopy(v)
 
                         for r in result.values():
                             for k, v in r.items():
@@ -2197,7 +2197,6 @@ class Command(BaseCommand):
             no_update_problems=args.no_update_problems,
             is_rated=args.is_rated,
             for_account=args.for_account,
-            ignore_stage=args.ignore_stage,
             with_reparse=args.reparse,
             enabled=not args.disabled,
             without_delete_statistics=args.without_delete_statistics,

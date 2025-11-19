@@ -2183,7 +2183,13 @@ def format_verdict(verdict, test):
 
 
 def format_time_display(time, penalty, time_rank, attempt):
-    return f"{html.escape(str(time))}{format_optional(penalty, '+')}{format_optional(time_rank, ' (', ')')}{format_optional(attempt, ' (', ')')}"
+    ret = ''.join((
+        html.escape(str(time)),
+        format_optional(penalty, '+'),
+        format_optional(time_rank, ' (', ')'),
+        format_optional(attempt, ' (', ')'),
+    ))
+    return ret
 
 
 def format_status(status, status_tag, is_small):
@@ -2270,7 +2276,8 @@ def standings_statistic_problem_detail(context, small, stat=None):
     elif virtual_start_cond:
         time_passed = has_passed_since_timestamp(stat_virtual_start_ts)
         countdown_str = countdown(time_passed)
-        result_html.append(f'<span class="countdown" data-timestamp-up="{html.escape(str(stat_virtual_start_ts))}">{countdown_str}</span>')
+        timestamp_up = html.escape(str(stat_virtual_start_ts))
+        result_html.append(f'<span class="countdown" data-timestamp-up="{timestamp_up}">{countdown_str}</span>')
     elif best_score_cond:
         result_html.append(f'<small class="text-muted">{format_score(stat_best_score)}</small>')
     else:

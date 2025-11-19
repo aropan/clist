@@ -1071,6 +1071,8 @@ def standings(request, contest, other_contests=None, template="standings.html", 
     with_solution = with_solution if with_solution is not None else settings.STANDINGS_WITH_SOLUTION_DEFAULT
     with_autoreload = with_autoreload if with_autoreload is not None else settings.STANDINGS_WITH_AUTORELOAD_DEFAULT
 
+    always_show_fields = get_item(coder, "settings.always_show_fields.standings", {})
+
     with_row_num = False
 
     contest_fields = contest.info.get("fields", []).copy()
@@ -1280,7 +1282,7 @@ def standings(request, contest, other_contests=None, template="standings.html", 
             "nofilter": True,
         }
 
-    if sort_by_fields and sort_fields:
+    if sort_by_fields and (sort_fields or always_show_fields.get("sort_fields")):
         add_field_to_select("sort_fields")
 
     paginate_on_scroll = True
@@ -1720,6 +1722,8 @@ def standings(request, contest, other_contests=None, template="standings.html", 
 
     inner_scroll = not request.user_agent.is_mobile and not is_yes(request.GET.get("force_default_scroll"))
     is_charts = is_yes(request.GET.get("charts"))
+    with_table_inner_scroll = (inner_scroll and (not groupby or groupby == "none") and not is_charts
+                               and not contest.elimination_tournament_info)
 
     hide_problems = set()
     if my_stat and contest.hide_unsolved_standings_problems and not contest.is_over():
@@ -1782,51 +1786,18 @@ def standings(request, contest, other_contests=None, template="standings.html", 
         "timeformat": get_timeformat(request),
         "with_neighbors": request.GET.get("neighbors") == "on",
         "without_neighbors_aligment": not inner_scroll or "safari" in request.user_agent.browser.family.lower(),
-        "with_table_inner_scroll": inner_scroll
-        and (not groupby or groupby == "none")
-        and not is_charts
-        and not contest.elimination_tournament_info,  # noqa
+        "with_table_inner_scroll": with_table_inner_scroll,
         "enable_timeline": enable_timeline,
         "contest_timeline": contest_timeline,
         "timeline": timeline,
-        "timeline_durations": [
-            ("100", "100 ms"),
-            ("500", "500 ms"),
-            ("1000", "1 sec"),
-            ("2000", "2 sec"),
-            ("4000", "4 sec"),
-        ],
-        "timeline_steps": [
-            ("0.001", "0.1%"),
-            ("0.005", "0.5%"),
-            ("0.01", "1%"),
-            ("0.05", "5%"),
-            ("0.1", "10%"),
-            ("0.2", "20%"),
-        ],
-        "timeline_delays": [
-            ("500", "500 ms"),
-            ("1000", "1 sec"),
-            ("2000", "2 sec"),
-            ("4000", "4 sec"),
-            ("10000", "10 sec"),
-        ],
-        "timeline_freeze": [
-            ("0", "0%"),
-            ("0.2", "20%"),
-            ("01:00:00", "1h"),
-            ("0.5", "50%"),
-            ("1.0", "100%"),
-        ],
-        "timeline_follow": [
-            ("1", "1 sec"),
-            ("10", "10 sec"),
-            ("60", "1 min"),
-            ("300", "5 min"),
-            ("0", "disable"),
-        ],
+        "timeline_durations": [("100", "100 ms"), ("500", "500 ms"), ("2000", "2 sec"), ("4000", "4 sec")],
+        "timeline_steps": [("0.001", "0.1%"), ("0.01", "1%"), ("0.05", "5%"), ("0.1", "10%"), ("0.2", "20%")],
+        "timeline_delays": [("500", "500 ms"), ("1000", "1 sec"), ("2000", "2 sec"), ("4000", "4 sec")],
+        "timeline_freeze": [("0", "0%"), ("0.2", "20%"), ("01:00:00", "1h"), ("0.5", "50%"), ("1.0", "100%")],
+        "timeline_follow": [("1", "1 sec"), ("10", "10 sec"), ("60", "1 min"), ("300", "5 min"), ("0", "disable")],
         "groupby_data": statistics,
         "groupby_fields": fields,
+        "always_show_fields": always_show_fields,
     })
 
     context.update(n_highlight_context)
