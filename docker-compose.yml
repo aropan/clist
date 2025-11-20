@@ -5,7 +5,7 @@ services:
       target: prod
     networks:
       clist_network:
-        ipv4_address: 172.42.0.102
+        ipv4_address: 10.42.0.102
     volumes:
       - static_files:/usr/src/clist/staticfiles/
       - media_files:/usr/src/clist/mediafiles/
@@ -27,7 +27,7 @@ services:
       target: dev
     networks:
       clist_network:
-        ipv4_address: 172.42.0.103
+        ipv4_address: 10.42.0.103
     volumes:
       - ./src/:/usr/src/clist/
       - ./src/static:/usr/src/clist/staticfiles/
@@ -53,7 +53,7 @@ services:
     build: ./legacy
     networks:
       clist_network:
-        ipv4_address: 172.42.0.104
+        ipv4_address: 10.42.0.104
     volumes:
       - ./legacy:/usr/src/legacy/
       - shared_files:/sharedfiles/
@@ -80,7 +80,7 @@ services:
       target: postgres
     networks:
       clist_network:
-        ipv4_address: 172.42.0.105
+        ipv4_address: 10.42.0.105
     volumes:
       - postgres_data:/var/lib/postgresql/data/
       - ./src/scripts/:/usr/src/clist/scripts/
@@ -95,7 +95,7 @@ services:
       target: nginx
     networks:
       clist_network:
-        ipv4_address: 172.42.0.101
+        ipv4_address: 10.42.0.101
     volumes:
       - static_files:/staticfiles/
       - media_files:/mediafiles/
@@ -185,13 +185,14 @@ services:
 
 networks:
   clist_network:
+    enable_ipv6: false
     driver: bridge
     driver_opts:
       com.docker.network.bridge.name: br-clist
     name: clist
     ipam:
       config:
-        - subnet: 172.42.0.0/24
+        - subnet: 10.42.0.0/24
 
 secrets:
   db_conf:
