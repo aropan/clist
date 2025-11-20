@@ -104,8 +104,10 @@ class Statistic(BaseModule):
                 with lock:
                     sleep(attempt)
 
-        variables = {'id': self.key, 'force_limited_data': False, 'show_all_submissions': False,
-                     'should_include_scoreboard': True}
+        variables = {"id": self.key, "force_limited_data": False, "show_all_submissions": False, "should_include_scoreboard": True,
+                     "selected_track": "CANONICAL", "min_rank": 50, "friends_only": False, "substring_filter": "",
+                     "country_filter": None, "should_show_friend_counts": False, "show_ranked_scoreboard": False}
+
         scoreboard_data = query('CodingCompetitionsContestScoreboardQuery', variables)
 
         def get_advance():
@@ -191,6 +193,7 @@ class Statistic(BaseModule):
                                 'country_filter': None,
                                 'show_all_submissions': False,
                                 'substring_filter': '',
+                                'track': 'CANONICAL',
                             })
                         except ProxyLimitReached:
                             stop = True
