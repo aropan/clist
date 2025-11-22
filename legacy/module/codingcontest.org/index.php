@@ -55,5 +55,3 @@ foreach ($matches as &$match) {
         "rid" => $RID,
     ];
 }
-
-?>
