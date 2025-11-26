@@ -13,7 +13,9 @@ from time import sleep, time
 from urllib.parse import urlencode, urljoin, urlparse
 
 import pytz
+from django.db.models import Min
 
+from clist.models import Problem
 from clist.templatetags.extras import as_number, get_division_problems, get_problem_short, is_solved, slug
 from pyclist.middleware import RedirectException
 from ranking.management.modules import conf
@@ -503,12 +505,26 @@ class Statistic(BaseModule):
                 if not is_gym and not users:
                     status_url = self.PROBLEM_STATUS_URL_FORMAT_.format(cid=self.cid, short=d['short'])
                     status_url = urljoin(self.url, status_url)
-                    page = _get(status_url)
-                    match = re.search(r'<div[^>]*>\s*(?:Problem|Задача)\s*(?P<code>[0-9A-Z]+)\s*-', page)
+                    try:
+                        page = _get(status_url)
+                        match = re.search(r'<div[^>]*>\s*(?:Problem|Задача)\s*(?P<code>[0-9A-Z]+)\s*-', page)
+                    except FailOnGetResponse as e:
+                        if e.code == 403:
+                            match = None
+                        else:
+                            raise
                     if match:
                         d['code'] = match.group('code')
                         if self.cid not in d['code']:
                             d['_no_problem_url'] = True
+                    elif len(self.contest.key) < 6:
+                        d['code'] = f'{self.contest.key}{d["short"]}'
+                        same_problems = self.resource.problem_set.filter(name=d["name"],
+                                                                         start_time=self.contest.start_time)
+                        min_code = same_problems.aggregate(Min('key'))['key__min']
+                        if min_code:
+                            d['code'] = min(min_code, d['code'])
+
                 problems_info[d['short']] = d
 
             translation_params = {**params, 'lang': 'ru', 'count': 1}
