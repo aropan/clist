@@ -231,11 +231,12 @@ class Statistic(BaseModule):
                 for rating in data.pop('ratings'):
                     contest_id = str(rating['contest']['id'])
                     update = contest_addition_update.setdefault(contest_id, OrderedDict())
-                    if rating.get('prevDiff') is None:
+                    if rating.get('rating') is None:
                         continue
                     update['new_rating'] = rating['rating']
-                    update['rating_change'] = rating['prevDiff']
-                    update['old_rating'] = rating['rating'] - rating['prevDiff']
+                    if rating.get('prevDiff') is not None:
+                        update['rating_change'] = rating['prevDiff']
+                        update['old_rating'] = rating['rating'] - rating['prevDiff']
                     if rating.get('latest') and rating.get('rating'):
                         data['rating'] = rating['rating']
 

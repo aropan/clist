@@ -13,6 +13,10 @@
   white-space: nowrap;
 }
 
+#resources table td.wrap {
+  white-space: wrap;
+}
+
 #resources.panel {
   padding: 0px;
 }

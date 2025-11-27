@@ -137,7 +137,7 @@
       </td>
 
       {% for field in params.more_fields %}
-      <td>
+      <td class="wrap">
         {% with value=resource|get_item:field %}
         {% if value is None %}&#183;{% else %}{{ value }}{% endif %}
         {% endwith %}

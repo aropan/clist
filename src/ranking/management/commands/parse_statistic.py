@@ -1083,10 +1083,8 @@ class Command(BaseCommand):
                                 ):
                                     return
 
-                                nonlocal n_account_time_update
-                                no_rating = with_stats and (
-                                    ('new_rating' in stat) + ('rating_change' in stat) + ('old_rating' in stat) < 2
-                                )
+                                n_rating_fields = sum(f in stat for f in ('new_rating', 'rating_change', 'old_rating'))
+                                no_rating = with_stats and n_rating_fields < 2
 
                                 updated_delta = resource_statistics.get('account_updated_delta', {'hours': 12})
                                 updated = now + timedelta(**updated_delta)
@@ -1149,6 +1147,7 @@ class Command(BaseCommand):
                                         to_update_account = True
 
                                 if to_update_account:
+                                    nonlocal n_account_time_update
                                     n_account_time_update += 1
                                     contest_log_counter['account_time_update'] += 1
                                     account.updated = updated
