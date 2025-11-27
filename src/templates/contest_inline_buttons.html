@@ -1,5 +1,10 @@
 {% if user|has_update_statistics_permission:contest %}
 <span class="inline-button absolute-button">
+    {% url 'ranking:standings_list' as standings_list_url %}
+    {% if request.path == standings_list_url %}
+    <button class="database-href btn btn-default btn-xs" data-href="{% url 'ranking:standings_by_id' contest.pk %}">{% icon_to 'extra_url' %}</button>
+    {% endif %}
+
     <button class="reset-timing-statistic btn btn-default btn-xs" data-contest-id="{{ contest.pk }}">
         <!-- <i class="fas fa-sync-alt"></i> -->
         {% icon_to 'update' contest.statistic_timing|naturaltime|to_str %}

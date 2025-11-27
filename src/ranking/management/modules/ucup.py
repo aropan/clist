@@ -26,6 +26,25 @@ def extract_team_name(name):
 class Statistic(BaseModule):
 
     def _detect_standings(self):
+        contest_titles = [self.name, self.name.replace(': ', ': Grand Prix of ')]
+
+        def is_contest_title(title):
+            for contest_title in contest_titles:
+                iou = string_iou(slug(title), slug(contest_title))
+                if iou > 0.95 or title.startswith(contest_title):
+                    return True
+            return False
+
+        ucup_contests_url = "https://contest.ucup.ac/contests"
+        page = REQ.get(ucup_contests_url)
+        regex = '<td[^>]*>\s*<a[^>]*href="(?P<href>[^"]*/contest/[0-9]+/?)"[^>]*>(?P<title>[^<]*)</a>'
+        matches = re.finditer(regex, page)
+        for match in matches:
+            url = urllib.parse.urljoin(ucup_contests_url, match.group('href').rstrip('/') + '/standings/')
+            title = match.group('title')
+            if is_contest_title(title):
+                return url
+
         contest = self.resource.contest_set.filter(end_time__lt=self.start_time)
         contest = contest.filter(standings_url__isnull=False, stage__isnull=True)
         contest = contest.latest('end_time')
@@ -48,8 +67,7 @@ class Statistic(BaseModule):
             if not match:
                 continue
             title = match.group(1).strip()
-
-            if string_iou(slug(title), slug(self.name)) > 0.95:
+            if is_contest_title(title):
                 return url
 
         raise ExceptionParseStandings('No standings url, not found title matching')

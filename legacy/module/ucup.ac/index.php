@@ -55,11 +55,24 @@ function parse_season($base_url)
         $min_count = min(count($headers), count($values));
         $c = array_combine(array_slice($headers, 0, $min_count), array_slice($values, 0, $min_count));
 
-        if (!isset($c["stage"]) || !isset($c["contest"]) || !isset($c["date"]) || !isset($c["scoreboard"])) {
+        if (!isset($c["stage"]) || !isset($c["contest"]) || !isset($c["date"])) {
             continue;
         }
 
-        $title = "The " . ordinal($season) . " Universal Cup. Stage {$c["stage"]}: " . trim($c["contest"]);
+        $stage_parts = preg_split("#[^a-z0-9]+#i", strtolower($c["stage"]));
+        $stage_desc = "stage";
+        if (count($stage_parts) > 1) {
+            if (count($stage_parts) == 2 && $stage_parts[0] == "extra") {
+                $stage_desc = $stage_parts[0] . " stage " . $stage_parts[1];
+            } else {
+                continue;
+            }
+        } else {
+            $stage_desc .= " " . $c["stage"];
+        }
+        $stage_title = ucwords($stage_desc);
+
+        $title = "The " . ordinal($season) . " Universal Cup. $stage_title: " . trim($c["contest"]);
         $date = $c["date"];
 
         if (strpos($date, "TBD") !== false) {
@@ -80,10 +93,11 @@ function parse_season($base_url)
         $start_time = $date . " 05:00 UTC";
         $end_time = $date . " 23:00 UTC";
         $duration = "05:00";
-        $key = "ucup-" . $season . "-stage-" . $c["stage"];
-        $info = ["parse" => ["season" => "$season", "stage" => $c["stage"]]];
+        $stage_key = str_replace(" ", "-", $stage_desc);
+        $key = "ucup-" . $season . "-" . $stage_key;
+        $info = ["parse" => ["season" => "$season", "stage" => $stage_key]];
 
-        $standings_url = $c["scoreboard"];
+        $standings_url = isset($c["scoreboard"]) ? $c["scoreboard"] : null;
         $standings_stage = null;
         foreach ($standings as $stage => $info) {
             if (stripos($info["title"], $c["contest"]) === false) {
