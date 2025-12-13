@@ -108,7 +108,6 @@ scipy==1.13.1
 numba==0.59.1
 ipwhois==1.2.0
 fontawesomefree==6.5.1
-brotli==1.0.9
 zstandard==0.23.0
 geoip2==4.8.0
 xgboost==2.1.1
