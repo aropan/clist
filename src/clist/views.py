@@ -20,7 +20,7 @@ from sql_util.utils import Exists, SubqueryCount, SubqueryMin
 
 from clist.models import Banner, Contest, Problem, ProblemTag, ProblemVerdict, PromoLink, Promotion, Resource
 from clist.templatetags.extras import (allowed_redirect, as_number, get_item, get_problem_key, get_timezone_offset,
-                                       is_yes, rating_from_probability, redirect_login, win_probability)
+                                       is_yes, media_size, rating_from_probability, redirect_login, win_probability)
 from favorites.models import Activity
 from favorites.templatetags.favorites_extras import activity_icon
 from notification.management.commands import sendout_tasks
@@ -203,7 +203,7 @@ def get_events(request):
             'countdown': contest.next_time_to(now),
             'hr_duration': contest.hr_duration,
             'color': color,
-            'icon': contest.resource.icon,
+            'icon': media_size(contest.resource.icon_file.name, 32),
             'allDay': contest.full_duration >= timedelta(days=1),
         }
         if coder:

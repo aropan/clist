@@ -89,7 +89,7 @@
     {% endif %}
     <td class="date"><div title="{{ contest.end_time|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ contest.end_time|timezone:timezone|naturalday }}</div></td>
     <td class="title col-md-9 col-sm-8">
-        <a{% if not search_resource and not params.resources %} href="{% url_transform request resource=resource.pk %}"{% endif %} title="{{ resource.host }}" data-toggle="tooltip"><img src="{{ resource.icon|media_size:'32x32' }}" width="16" height="16"/></a>
+        <a{% if not search_resource and not params.resources %} href="{% url_transform request resource=resource.pk %}"{% endif %} title="{{ resource.host }}" data-toggle="tooltip"><img src="{{ resource.icon_file.name|media_size:'32x32' }}" width="16" height="16"/></a>
 
         {% if contest.invisible %}<i class="far fa-eye-slash"></i>{% endif %}
         <a href="{% url 'ranking:standings' contest.title|slug contest.pk %}{% if not without_findme %}?find_me={{ statistic.pk }}{% endif %}">{{ contest.title }}</a>

@@ -43,6 +43,7 @@ urlpatterns = [
     path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),
 
     re_path(r'^privacy/$', TemplateView.as_view(template_name='privacy.html'), name='privacy'),
+    re_path(r'^terms/$', TemplateView.as_view(template_name='terms.html'), name='terms'),
     re_path(r'^favicon/$', RedirectView.as_view(url=static('img/favicon/favicon-32x32.png')), name='favicon'),
 
     path('django-rq/', include('django_rq.urls')),

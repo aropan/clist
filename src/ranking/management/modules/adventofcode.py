@@ -9,12 +9,14 @@ from datetime import datetime, timedelta, timezone
 from urllib.parse import urljoin
 
 import arrow
+import django.utils.timezone
 import tqdm
 
 from clist.models import Contest
-from clist.templatetags.extras import is_hidden
+from clist.templatetags.extras import get_item, is_hidden
 from ranking.management.modules import conf
 from ranking.management.modules.common import REQ, BaseModule
+from ranking.management.modules.excepts import ExceptionParseStandings
 from ranking.models import Account, Statistics, VirtualStart
 
 
@@ -73,7 +75,10 @@ class Statistic(BaseModule):
                         row[key] += 1
 
     def _get_private_standings(self, users=None, **kwargs):
-        REQ.add_cookie('session', conf.ADVENTOFCODE_SESSION, '.adventofcode.com')
+        session = get_item(self, "info.standings._session")
+        if not session:
+            raise ExceptionParseStandings("No session cookie for private leaderboard")
+        REQ.add_cookie('session', session, '.adventofcode.com')
         page = REQ.get(self.url.rstrip('/') + '.json')
         data = json.loads(page)
 
@@ -113,7 +118,8 @@ class Statistic(BaseModule):
                 handle = str(r.pop('id'))
                 row = division_result.setdefault(handle, OrderedDict())
                 row['_skip_for_problem_stat'] = True
-                row['_global_score'] = r.pop('global_score')
+                if 'global_score' in r:
+                    row['_global_score'] = r.pop('global_score')
                 if not is_diff:
                     row['global_score'] = 0
                 row['member'] = handle
@@ -402,7 +408,16 @@ class Statistic(BaseModule):
                 prev_problem['delta_time'] = '+' + self.to_time(delta_time)
 
         problems = list(reversed(problems_info.values()))
-        problems[0].update({'subname': '*', 'subname_class': 'first-star', '_info_prefix': 'first_star_'})
+        if not problems:
+            problems = [{
+                'name': problem_name,
+                'code': f'Y{year}D{day}',
+                'url': contest_url,
+                'group': 0,
+                '_info_prefix_fields': ['first_ac', 'last_ac'],
+            }]
+        if len(problems):
+            problems[0].update({'subname': '*', 'subname_class': 'first-star', '_info_prefix': 'first_star_'})
         if len(problems) > 1:
             problems[1].update({'subname': '*', 'subname_class': 'both-stars', '_info_prefix': 'both_stars_'})
             first_ac = defaultdict(lambda: float('inf'))
@@ -416,11 +431,10 @@ class Statistic(BaseModule):
                 'diff_last_ac': self.to_time(last_ac['1'] - last_ac['2']),
             })
         problem_stats = Statistic._get_problem_stats(year, day)
-        if problem_stats:
+        if problem_stats and len(problems):
             problem_stat = problem_stats[day]
             problems[0].update({'n_solved_firstonly': problem_stat['n_solved_firstonly']})
-            if len(problems) > 1:
-                problems[1].update({'n_solved_both': problem_stat['n_solved_both']})
+            problems[0].update({'n_solved_both': problem_stat['n_solved_both']})
             problems[-1].update({'n_solved_total': problem_stat['n_solved_total']})
 
         place = None
@@ -438,7 +452,7 @@ class Statistic(BaseModule):
             'url': standings_url,
             'problems': problems,
         })
-        if n_results < 200:
+        if n_results < 200 and django.utils.timezone.now() - self.start_time < timedelta(hours=1):
             ret['timing_statistic_delta'] = timedelta(minutes=1)
         return ret
 

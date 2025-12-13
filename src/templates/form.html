@@ -10,6 +10,11 @@
   <div id="form" class="scroll-container">
     <h1>
       {{ form.title|safe }}
+      {% if perms.my_oauth.change_form %}
+      <span class="inline-button absolute-button">
+        <button class="database-href btn btn-default btn-xs" data-href="{% url 'admin:my_oauth_form_change' form.id %}">{% icon_to 'database' "Form#"|concat:form.id %}</button>
+      </span>
+      {% endif %}
     </h1>
     {% if form.is_coming %}
       <div class="alert alert-info">From will open in <a href="{{ form.start_time|get_timeanddate_href }}">{{ form.start_time|hr_timedelta }}<a></div>

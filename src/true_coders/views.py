@@ -181,7 +181,7 @@ def get_profile_context(request, statistics, writers, resources):
         kinds_resources[resource.pk][kind_resource_key] = {
             'host': resource.host,
             'pk': resource.pk,
-            'icon': resource.icon,
+            'icon': resource.icon_file.name,
             'kind': kind,
             'account_pk': account_id,
             'account_name': stat.account.short_display(resource=resource, name=stat.addition.get("name")),
@@ -809,7 +809,7 @@ def get_ratings_data(request, username=None, key=None, host=None, statistics=Non
             default_info['kind'] = None if is_major_kind else stat['kind']
             default_info['host'] = resource.host
             default_info['colors'] = resource.ratings
-            default_info['icon'] = resource.icon
+            default_info['icon'] = resource.icon_file.name
             default_info['account_pk'] = stat['account_id']
             resource_key = resource.host
             resource_key += f' #{stat["account_id"]}'
@@ -855,7 +855,7 @@ def get_ratings_data(request, username=None, key=None, host=None, statistics=Non
             default_info['pk'] = pk
             default_info['host'] = resource.host
             default_info['colors'] = resource.ratings
-            default_info['icon'] = resource.icon
+            default_info['icon'] = resource.icon_file.name
             resource_info = ratings['data']['resources'].setdefault(resource.host, default_info)
             resource_info.setdefault('data', [])
             for stat in qs.filter(contest__resource__pk=pk).distinct('account__key'):
@@ -949,7 +949,8 @@ def settings(request, tab=None):
     categories = coder.get_categories()
     custom_categories = {c.get_notification_method(): c.title for c in coder.chat_set.filter(is_group=True)}
 
-    my_lists = coder.my_list_set.annotate(n_records=SubqueryCount('values'))
+    my_lists = CoderList.filter_for_manager(coder)
+    my_lists = my_lists.annotate(n_records=SubqueryCount('values'))
     my_lists = my_lists.prefetch_related('shared_with_coders')
 
     owned_chats = coder.chat_set.order_by('-modified')
@@ -1861,7 +1862,7 @@ def search(request, **kwargs):
             order = ['-is_short'] + order
         qs = qs.order_by(*order)
         qs = qs[(page - 1) * count:page * count]
-        ret = [{'id': r.id, 'host': r.host, 'text': r.host, 'icon': r.icon} for r in qs]
+        ret = [{'id': r.id, 'host': r.host, 'text': r.host, 'icon': r.icon_file.name} for r in qs]
     elif query == 'contests':
         qs = Contest.objects.select_related('resource')
         if title_regex := request.GET.get('regex'):
@@ -1891,7 +1892,7 @@ def search(request, **kwargs):
         ret = [{
             'id': r.id,
             'text': r.title,
-            'icon': r.resource.icon,
+            'icon': r.resource.icon_file.name,
             'title': r.title,
             'disabled': getattr(r, 'disabled', False)
         } for r in qs]
@@ -1904,7 +1905,7 @@ def search(request, **kwargs):
         qs = Contest.visible.select_related('resource').filter(contest_filter)
         qs = qs.order_by('-end_time', '-id')
         qs = qs[(page - 1) * count:page * count]
-        ret = [{'id': r.id, 'text': r.title, 'icon': r.resource.icon, 'url': r.actual_url} for r in qs]
+        ret = [{'id': r.id, 'text': r.title, 'icon': r.resource.icon_file.name, 'url': r.actual_url} for r in qs]
     elif query == 'series':
         qs = ContestSeries.objects.all()
         qs = qs.annotate(n_contests=SubqueryCount('contest'))
@@ -2486,9 +2487,9 @@ def view_list(request, uuid):
                         else:
                             host, account = value.split(':', 1)
                             if host == 'NAME':
+                                group_name = account
                                 if qs := coder_list.groups.filter(name=group_name):
                                     existing_groups.update(qs)
-                                group_name = account
                                 continue
                             resources = list(Resource.objects.filter(Q(host=host) | Q(short_host=host)))
                             if not resources:

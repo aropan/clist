@@ -1581,6 +1581,8 @@ def prepend(array, value):
 
 @register.filter
 def media_size(path, size):
+    if isinstance(size, int):
+        size = f'{size}x{size}'
     ret = os.path.join(settings.MEDIA_URL, 'sizes', size, path)
     return ret
 
@@ -2097,7 +2099,7 @@ def update_dict(value, arg):
 @register.simple_tag
 def img_resource_icon(resource, size, with_href=False):
     pow2_size = max(32, 2 ** math.ceil(math.log2(size) + 1))
-    url = media_size(resource.icon, f'{pow2_size}x{pow2_size}')
+    url = media_size(resource.icon_file.name, f'{pow2_size}x{pow2_size}')
     html = f'<img src="{url}" width="{size}" height="{size}" alt="{resource.host}">'
     if with_href:
         attrs = f'href="{resource.href()}" title="{resource.host}"'

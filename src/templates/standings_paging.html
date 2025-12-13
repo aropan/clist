@@ -80,7 +80,7 @@ data-place="{{ place }}"
         <div class="small">
           {% with statistic.account.resource_coders|filter_by_resource:resource as accounts %}
             {% if accounts %}
-              <img src="{{ resource.icon|media_size:'32x32' }}" width="16" height="16"/>
+              <img src="{{ resource.icon_file.name|media_size:'32x32' }}" width="16" height="16"/>
               {% for account in accounts %}
                 {% if forloop.counter0 %}|{% endif %}
                 <span class="{% coder_color_class resource account.info %}">

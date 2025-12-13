@@ -36,7 +36,7 @@
     <tr>
       <td class="resource">
         <a class="lead" href="{% url 'clist:resource' resource.host %}">
-          <img src="{{ resource.icon|media_size:'64x64' }}" width="24" height="24"/>
+          <img src="{{ resource.icon_file.name|media_size:'64x64' }}" width="24" height="24"/>
           {{ resource.host }}
         </a>
         {% include "resource_inline_buttons.html" %}

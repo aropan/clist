@@ -13,7 +13,7 @@
 
 {% block profile_header %}
 <h2>
-  <a href="{% url 'clist:resource' account.resource.host %}" title="{{ account.resource.host }}" data-toggle="tooltip"><img src="{{ account.resource.icon|media_size:'64x64' }}" width="30" height="30"/></a>
+  <a href="{% url 'clist:resource' account.resource.host %}" title="{{ account.resource.host }}" data-toggle="tooltip"><img src="{{ account.resource.icon_file.name|media_size:'64x64' }}" width="30" height="30"/></a>
 
   {% if account.resource.avatar_url %}
     {% call_method account 'avatar_url' account.resource as avatar_url %}

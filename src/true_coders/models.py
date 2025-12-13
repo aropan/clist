@@ -498,6 +498,11 @@ class CoderList(BaseModel):
         return qs.filter(condition)
 
     @staticmethod
+    def filter_for_manager(coder):
+        managed_coderlist = get_objects_for_user(coder.user, 'true_coders.manage_coderlist', with_superuser=False)
+        return CoderList.objects.filter(Q(owner=coder) | Q(pk__in=managed_coderlist))
+
+    @staticmethod
     def filter_for_coder_and_uuids(coder, uuids, logger=None):
         qs = CoderList.filter_for_coder(coder=coder)
         active_filter = Q(owner=coder) | Q(uuid__in=uuids)

@@ -9,7 +9,7 @@ import dateutil.parser
 
 from clist.templatetags.extras import as_number
 from ranking.management.modules.common import REQ, BaseModule
-from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse
+from ranking.management.modules.excepts import ExceptionParseAccounts, ExceptionParseStandings, FailOnGetResponse
 
 
 class Statistic(BaseModule):
@@ -130,6 +130,8 @@ class Statistic(BaseModule):
                 url = Statistic.API_PROFILE_URL_
                 post = '{"relativeUrl":' + json.dumps(f'/{handle}') + '}'
                 orig_data = req.get(url, headers=headers, post=post, raise_codes={404}, return_json=True)
+                if not isinstance(orig_data, dict) or 'userProfile' not in orig_data:
+                    raise ExceptionParseAccounts('Not found profile')
                 data = orig_data.pop('userProfile')
             except FailOnGetResponse:
                 return False

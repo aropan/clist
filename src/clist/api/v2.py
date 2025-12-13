@@ -20,7 +20,7 @@ from clist.api.common import is_true_value
 from clist.api.paginator import EstimatedCountPaginator
 from clist.api.serializers import ContestAtomSerializer, use_in_atom_format
 from clist.models import Contest, Resource
-from clist.templatetags.extras import format_time, hr_timedelta
+from clist.templatetags.extras import format_time, hr_timedelta, media_size
 from clist.templatetags.extras import timezone as set_timezone
 from pyclist.context_processors import coder_time_info
 from ranking.models import Account, Statistics
@@ -89,7 +89,7 @@ class BaseModelResource(CommmonBaseModuelResource):
 
 class ResourceResource(BaseModelResource):
     name = fields.CharField('host')
-    icon = fields.CharField('icon')
+    icon = fields.CharField('icon_file')
     short = fields.CharField('short_host', null=True)
     n_accounts = fields.IntegerField('n_accounts')
     n_contests = fields.IntegerField('n_contests')
@@ -113,7 +113,7 @@ class ResourceResource(BaseModelResource):
 
     def dehydrate(self, *args, **kwargs):
         bundle = super().dehydrate(*args, **kwargs)
-        bundle.data['icon'] = '/media/sizes/64x64/' + bundle.data['icon']
+        bundle.data['icon'] = media_size(bundle.data['icon'], 64)
         return bundle
 
 

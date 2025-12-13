@@ -5,6 +5,7 @@ from collections import defaultdict
 from logging import getLogger
 from math import isclose
 
+from django.conf import settings
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
 from flatten_dict import flatten
@@ -161,6 +162,12 @@ def set_n_fields(resources, logger):
             resource.save(update_fields=update_fields)
 
 
+def set_icon(resources, logger):
+    for resource in resources:
+        if resource.icon_url and not resource.icon_updated_at:
+            resource.update_icon()
+
+
 def set_avg_rating(resources, logger, default_min_n_participations=3):
     for resource in tqdm(resources.iterator(), total=resources.count()):
         ratings = []
@@ -216,6 +223,7 @@ class Command(BaseCommand):
             set_problems_fields(resources, logger=self.logger)
             set_statistics_fields(resources, logger=self.logger)
             set_n_fields(resources, logger=self.logger)
+            set_icon(resources, logger=self.logger)
         if args.full and args.resources:
             call_command('set_country_fields', resources=args.resources)
             call_command('set_account_rank', resources=args.resources)

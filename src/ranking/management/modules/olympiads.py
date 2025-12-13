@@ -8,7 +8,7 @@ from datetime import timedelta
 
 import tqdm
 
-from ranking.management.modules.common import DOT, REQ, SPACE, BaseModule, parsed_table
+from ranking.management.modules.common import DOT, LOG, REQ, SPACE, BaseModule, parsed_table
 from ranking.management.modules.common.locator import Locator
 from ranking.management.modules.excepts import ExceptionParseStandings
 
@@ -186,6 +186,9 @@ class Statistic(BaseModule):
                     row['member'] = name
             else:
                 row['member'] = f'{self.pk}-{idx}'
+            if row["member"] in result:
+                LOG.warning(f'Duplicate member {row["member"]} in {self.standings_url}')
+                continue
             result[row['member']] = row
 
         if placing:

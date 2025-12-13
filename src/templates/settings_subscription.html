@@ -10,7 +10,7 @@
         <td class="no-stretch key-column">Resource</td>
         <td>
           <a href="{% url 'clist:resource' subscription.resource.host %}">
-            <img src="{{ subscription.resource.icon|media_size:'32x32' }}" width="16" height="16"/>
+            <img src="{{ subscription.resource.icon_file.name|media_size:'32x32' }}" width="16" height="16"/>
             {{ subscription.resource.host }}
           </a>
         </td>
@@ -21,7 +21,7 @@
         <td class="no-stretch key-column">Contest</td>
         <td>
           <a href="{% url 'clist:resource' subscription.contest.resource.host %}" title="{{ subscription.contest.resource.host }}" data-toggle="tooltip">
-            <img src="{{ subscription.contest.resource.icon|media_size:'32x32' }}" width="16" height="16"/>
+            <img src="{{ subscription.contest.resource.icon_file.name|media_size:'32x32' }}" width="16" height="16"/>
           </a>
           <a href="{{ subscription.contest.actual_url }}">
             {{ subscription.contest.title }}

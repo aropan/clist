@@ -101,12 +101,17 @@ g   <span class="text-muted">&mdash;</span>
   <td class="problem-name-column note-holder {{ solution_class }}" data-solution-class="{{ solution_class }}" data-system-solution-class="{{ system_solution_class }}">
     <span class="nowrap">
       <a href="{% url_transform request resource=problem.resource.id %}">
-        <img data-toggle="tooltip" data-placement="top" title="{{ problem.resource.host }}" src="{{ problem.resource.icon|media_size:'32x32' }}" width="16" height="16"/>
+        <img data-toggle="tooltip" data-placement="top" title="{{ problem.resource.host }}" src="{{ problem.resource.icon_file.name|media_size:'32x32' }}" width="16" height="16"/>
       </a>
+      {% if not selected_resource %}
+        {% for field in problem.resource.problems_fields.fixed_fields %}
+          {% define problem.info|get_item:field as value %}
+          {% if value is not None %}
+            {% include "field_value.html" with field=field value=value fields_types=fields_types resource=problem.resource %}
+          {% endif %}
+        {% endfor %}
+      {% endif %}
       {% if problem.actual_url %}<a href="{{ problem.actual_url }}" target="_blank" rel="noopener">{% endif %}
-        {% if not selected_resource %}
-          {% for field in problem.resource.problems_fields.fixed_fields %}{{ problem.info|get_item:field }}{% endfor %}
-        {% endif %}
         {% trim_to problem.name 50 %}
       {% if problem.actual_url %}</a>{% endif %}
 

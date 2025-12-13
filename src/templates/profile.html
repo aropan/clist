@@ -36,7 +36,7 @@ ratings_url = '{{ request.path }}ratings/{% if search_resource %}?resource={{ se
             <tr>
               <td>
                 <a href="{% url 'clist:resource' resource.host %}" title="{{ resource.host }}" data-toggle="tooltip">
-                  <img src="{{ resource.icon|media_size:'32x32' }}" width="15" height="15"/>
+                  <img src="{{ resource.icon_file.name|media_size:'32x32' }}" width="15" height="15"/>
                 </a>
               </td>
               <td>
@@ -103,7 +103,7 @@ ratings_url = '{{ request.path }}ratings/{% if search_resource %}?resource={{ se
           {% if account.rating is None or not resource.has_rating_history or not resource.enable %}
             <span class="account btn-group btn-group-sm">
               <a class="btn btn-default" href="{% url 'clist:resource' resource.host %}" title="{{ resource.host }}" data-toggle="tooltip">
-                <img src="{{ resource.icon|media_size:'32x32' }}" width="15" height="15"/>
+                <img src="{{ resource.icon_file.name|media_size:'32x32' }}" width="15" height="15"/>
               </a>
               <a class="btn btn-default" href="{% if resource.coder_accounts|length > 1 %}?search=resource:{{ resource.host|urlencode }}{% else %}{% url 'coder:account' account.key resource.host %}{% endif %}">
                 {% include "account_table_cell.html" with account=account resource=account.resource without_country=True without_url=True trim_length=20 with_verified=True %}

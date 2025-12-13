@@ -26,6 +26,7 @@ from webpush import send_user_notification
 from webpush.utils import WebPushException
 
 from clist.models import Contest
+from clist.templatetags.extras import media_size
 from notification.models import Task
 from tg.bot import Bot
 from tg.models import Chat
@@ -59,10 +60,7 @@ class Command(BaseCommand):
         if 'contests' in data:
             contests = Contest.objects.filter(pk__in=data['contests'])
             context = deepcopy(data.get('context', {}))
-            context.update({
-                'contests': contests,
-                'domain': settings.MAIN_HOST_URL_,
-            })
+            context.update({'contests': contests, 'domain': settings.MAIN_HOST_URL_})
             context.update(kwargs)
             subject = render_to_string('subject', context).strip()
             subject = re.sub(r'\s+', ' ', subject)
@@ -153,7 +151,7 @@ class Command(BaseCommand):
             if len(contests) == 1:
                 contest = contests[0]
                 payload['url'] = contest.url
-                payload['icon'] = f'{settings.HTTPS_HOST_URL_}/media/sizes/64x64/{contest.resource.icon}'
+                payload['icon'] = media_size(contest.resource.icon_file.name, '64x64')
 
             try:
                 send_user_notification(

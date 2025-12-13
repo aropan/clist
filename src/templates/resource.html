@@ -12,7 +12,7 @@
 <script>configure_pagination(false)</script>
 
 <h2>
-    <img src="{{ resource.icon|media_size:'64x64' }}" width="24" height="24"/>
+    <img src="{{ resource.icon_file.name|media_size:'64x64' }}" width="24" height="24"/>
     <a href="{{ resource.url }}">{{ resource.host }}</a>
     {% include "resource_inline_buttons.html" %}
 </h2>

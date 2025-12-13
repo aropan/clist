@@ -10,7 +10,7 @@
   </td>
   <td class="event">
     <a href="{% url_transform request resource=resource.id %}">
-      <img data-toggle="tooltip" data-placement="top" title="{{ resource.host }}" src="{{ resource.icon|media_size:"32x32" }}" width="16" height="16"/>
+      <img data-toggle="tooltip" data-placement="top" title="{{ resource.host }}" src="{{ resource.icon_file.name|media_size:"32x32" }}" width="16" height="16"/>
     </a>
     <a href="{{ contest.actual_url }}">
       {% trim_to contest.title 60 %}

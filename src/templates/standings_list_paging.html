@@ -33,7 +33,7 @@
 </td>
 <td>
   <a href="{% url_transform request resource=resource.id %}">
-    <img data-toggle="tooltip" data-placement="top" title="{{ resource.host }}" src="{{ resource.icon|media_size:'32x32' }}" width="16" height="16"/>
+    <img data-toggle="tooltip" data-placement="top" title="{{ resource.host }}" src="{{ resource.icon_file.name|media_size:'32x32' }}" width="16" height="16"/>
   </a>
   {% if contest.invisible %}<i class="far fa-eye-slash"></i>{% endif %}
   {% if group_contest %}

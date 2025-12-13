@@ -1,5 +1,6 @@
 import calendar
 import copy
+import io
 import itertools
 import logging
 import math
@@ -19,6 +20,7 @@ from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import ArrayField
+from django.core.files.base import ContentFile
 from django.db import models, transaction
 from django.db.models import Case, F, Max, Q, When
 from django.db.models.expressions import Exists, OuterRef
@@ -35,6 +37,7 @@ from clist.utils import similar_contests_queryset, update_accounts_by_coders
 from logify.models import EventLog, EventStatus
 from pyclist.indexes import GistIndexTrgrmOps
 from pyclist.models import BaseManager, BaseModel
+from pyclist.storage import OverwriteStorage
 from ranking.enums import AccountType
 from utils.colors import color_to_rgb, darken_hls, hls_to_rgb, lighten_hls, rgb_to_color, rgb_to_hls
 from utils.timetools import Epoch, parse_duration, timed_cache
@@ -116,7 +119,9 @@ class Resource(BaseModel):
     n_rating_accounts = models.IntegerField(default=None, null=True, blank=True)
     n_university_accounts = models.IntegerField(default=None, null=True, blank=True)
     n_team_accounts = models.IntegerField(default=None, null=True, blank=True)
-    icon = models.CharField(max_length=255, null=True, blank=True)
+    icon_file = models.ImageField(upload_to='resources', null=True, blank=True, storage=OverwriteStorage())
+    icon_url = models.CharField(max_length=255, null=True, blank=True)
+    icon_updated_at = models.DateTimeField(null=True, blank=True)
     accounts_fields = models.JSONField(default=dict, blank=True)
     avg_rating = models.FloatField(default=None, null=True, blank=True)
     has_upsolving = models.BooleanField(default=False)
@@ -169,7 +174,7 @@ class Resource(BaseModel):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.__original_host = self.fetched_field('host')
-        self.__original_icon = self.fetched_field('icon')
+        self.__original_icon_file = self.fetched_field('icon_file')
 
     def label_name(self):
         return self.short_host or self.host
@@ -252,7 +257,7 @@ class Resource(BaseModel):
             self.color = rgb_to_color(*hls_to_rgb(opt[1] % 1, .6, .5))
             self.update_get_events_colors()
 
-        if self.icon is None:
+        if not self.icon_file:
             self.update_icon()
 
         super().save(*args, **kwargs)
@@ -261,8 +266,10 @@ class Resource(BaseModel):
             self.__original_host = self.host
             self.update_account_urls()
 
-        if self.__original_icon and self.__original_icon != self.icon:
-            self.__original_icon = self.icon
+        if self.__original_icon_file and self.__original_icon_file != self.icon_file:
+            self.__original_icon_file = self.icon_file
+            self.update_icon_sizes()
+        if self.icon_file and self.icon_updated_at is None:
             self.update_icon_sizes()
 
     def update_account_urls(self):
@@ -279,19 +286,22 @@ class Resource(BaseModel):
         self.info.setdefault('get_events', {})['colors'] = colors
 
     def update_icon_sizes(self):
-        filepath = os.path.join(settings.STATIC_ROOT, self.icon)
         for size in settings.RESOURCES_ICONS_SIZES:
-            out_filepath = os.path.join(settings.MEDIA_ROOT, settings.MEDIA_SIZES_PATHDIR, f'{size}x{size}', self.icon)
+            size_folder = os.path.join(settings.MEDIA_ROOT, settings.MEDIA_SIZES_PATHDIR, f'{size}x{size}')
+            out_filepath = os.path.join(size_folder, self.icon_file.name)
             os.makedirs(os.path.dirname(out_filepath), exist_ok=True)
-            image = Image.open(filepath)
+            image = Image.open(self.icon_file.path)
             resized = image.resize((size, size))
             resized.save(out_filepath)
+        if self.icon_updated_at is None:
+            self.icon_updated_at = timezone_now()
+            self.save()
 
     def change_icon_background_color(self):
         icon_background_color = self.info.get('icon_background_color')
         if not icon_background_color:
             return
-        filepath = os.path.join(settings.STATIC_ROOT, self.icon)
+        filepath = self.icon_file.path
         try:
             img = Image.open(filepath).convert('RGBA')
         except UnidentifiedImageError:
@@ -305,9 +315,14 @@ class Resource(BaseModel):
         img = Image.fromarray(np.round(img).astype(np.uint8))
         img.save(filepath)
 
-    def update_icon(self):
-
+    def get_icon_urls(self):
         urls = []
+
+        if self.icon_url:
+            *_, ext = os.path.splitext(self.icon_url)
+            urls.append((self.icon_url, ext))
+            return urls
+
         for parse_url in (self.url, self.href()):
             try:
                 response = requests.get(parse_url, timeout=7)
@@ -325,45 +340,39 @@ class Resource(BaseModel):
                 if '-icon' in rel:
                     continue
                 match = re.sub(r'\?.*$', '', match)
-                sizes = list(map(int, re.findall('[0-9]+', match)))
-                size = sizes[-1] if sizes else 0
                 *_, ext = os.path.splitext(match)
                 if not match.startswith('/') and not match.startswith('http'):
                     match = '/' + match
-                urls.append((size, urljoin(response.url, match), (ext or '.png')))
+                urls.append((urljoin(response.url, match), (ext or '.png')))
             if urls:
                 break
         urls.sort(reverse=True)
-        urls.append((None, f'https://www.google.com/s2/favicons?domain={self.host}', '.ico'))
+        urls.append((f'https://www.google.com/s2/favicons?domain={self.host}', '.ico'))
+        return urls
 
-        for _, url, ext in urls:
+    def update_icon(self):
+
+        urls = self.get_icon_urls()
+
+        for url, ext in urls:
             response = requests.get(url)
             if response.status_code == 200:
-                filename = re.sub('[./]', '_', self.host) + ext
-                relpath = os.path.join(settings.RESOURCES_ICONS_PATHDIR, filename)
-                filepath = os.path.join(settings.STATIC_ROOT, relpath)
-                os.makedirs(os.path.dirname(filepath), exist_ok=True)
-
-                with open(filepath, 'wb') as fo:
-                    fo.write(response.content)
-
                 try:
-                    img = Image.open(filepath).convert('RGBA')
+                    img = Image.open(io.BytesIO(response.content))
                 except UnidentifiedImageError:
                     continue
-                img.save(filepath)
-
-                filepath = os.path.join(settings.REPO_STATIC_ROOT, relpath)
-                os.makedirs(os.path.dirname(filepath), exist_ok=True)
-                img.save(filepath)
-
-                self.icon = relpath
+                img = img.convert('RGBA')
+                output_io = io.BytesIO()
+                img.save(output_io, format='PNG')
+                filename = re.sub('[./]', '_', self.host) + '.png'
+                self.icon_file.save(filename, ContentFile(output_io.getvalue()))
+                self.icon_updated_at = timezone_now()
                 self.save()
                 break
         else:
             return
 
-        if self.icon:
+        if self.icon_file:
             self.change_icon_background_color()
             self.update_icon_sizes()
 

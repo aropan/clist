@@ -4,12 +4,13 @@ from tastypie.resources import ALL_WITH_RELATIONS
 
 from clist.api.common import BaseModelResource
 from clist.models import Contest, Resource
+from clist.templatetags.extras import media_size
 from true_coders.models import Filter
 
 
 class ResourceResource(BaseModelResource):
     name = fields.CharField('host')
-    icon = fields.CharField('icon')
+    icon = fields.CharField('icon_file')
 
     class Meta(BaseModelResource.Meta):
         abstract = False
@@ -23,7 +24,7 @@ class ResourceResource(BaseModelResource):
 
     def dehydrate(self, *args, **kwargs):
         bundle = super().dehydrate(*args, **kwargs)
-        bundle.data['icon'] = '/media/sizes/64x64/' + bundle.data['icon']
+        bundle.data['icon'] = media_size(bundle.data['icon'], 64)
         return bundle
 
 

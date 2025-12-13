@@ -210,8 +210,10 @@
                     {% if my_list.custom_names %} and <span class="label label-info">custom names</span>{% endif %}
                     {% if my_list.locale %} and <span class="label label-info">{{ my_list.locale }}</span> locale{% endif %}
                     <a href="{% url 'coder:list' my_list.uuid %}" class="btn btn-primary btn-sm" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i></a>
+                    {% if my_list.owner == coder %}
                     <button href="#" data-name="edit-list" data-id="{{ my_list.id }}" data-value="{{ my_list.name|escape }}" data-access-level="{{ my_list.access_level }}" data-shared-with="{{ my_list.shared_with_select_data|to_escaped_json }}" data-custom-names="{{ my_list.custom_names|lower }}" class="edit-list btn btn-primary btn-sm"><i class="fas fa-pen"></i></button>
                     <button href="#" data-id="{{ my_list.id }}" data-action="delete-list" data-success="$element.remove();" class="action-list btn btn-danger btn-sm"><i class="far fa-trash-alt"></i></button>
+                    {% endif %}
                     {% if perms.true_coders.change_coderlist %}
                     <a href="{% url 'admin:true_coders_coderlist_change' my_list.id %}" class="database-link invisible btn btn-default btn-xs" target="_blank" rel="noopener">{% icon_to 'database' %}</a>
                     {% endif %}

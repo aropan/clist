@@ -136,7 +136,8 @@ class ResourceAdmin(BaseModelAdmin):
                 return queryset.filter(profile_url__isnull=False)
 
     fieldsets = [
-        [None, {'fields': ['host', 'short_host', 'enable', 'url', 'profile_url', 'avatar_url', 'problem_url', 'icon',
+        [None, {'fields': ['host', 'short_host', 'enable', 'url', 'profile_url', 'avatar_url', 'problem_url',
+                           'icon_file', 'icon_url', 'icon_updated_at',
                            'n_accounts', 'n_contests', 'n_statistics']}],
         ['Parse information', {'fields': ['regexp', 'path', 'parse_url', 'api_url', 'timezone', 'auto_remove_started',
                                           'has_inherit_medals_to_related']}],

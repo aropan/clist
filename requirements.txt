@@ -34,6 +34,7 @@ django-webpush==0.3.6
 django-redis==5.4.0
 django-silk==5.3.2
 django-import-export[all]==4.3.9
+django-cleanup==9.0.0
 git+https://github.com/appfluence/django-tastypie-swagger@763f8f027ec5cc6e20c33812cd8dec5b32404583
 git+https://github.com/shtalinberg/django-el-pagination@c0885a0625c1698efba1076ae8cc9764763bcb10
 pytest-django==4.8.0

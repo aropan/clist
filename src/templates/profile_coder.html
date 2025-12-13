@@ -18,7 +18,7 @@
   {% if search_resource %}
     {% with resource=resources.0 %}
       {% if resource %}
-        <a href="{% url 'clist:resource' resource.host %}" title="{{ resource.host }}" data-toggle="tooltip"><img src="{{ resource.icon|media_size:'64x64' }}" width="30" height="30"/></a>
+        <a href="{% url 'clist:resource' resource.host %}" title="{{ resource.host }}" data-toggle="tooltip"><img src="{{ resource.icon_file.name|media_size:'64x64' }}" width="30" height="30"/></a>
 
         {% for account in resource.coder_accounts %}
           {% if resource.avatar_url %}

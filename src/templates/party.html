@@ -83,7 +83,7 @@
                     <li{% if contest.is_coming %} class="disabled"{% endif %}>
                         <a class="small" href="#" data-href="{{ contest.url }}" data-toggle="tab">
                             <div>
-                                <img src="{{ contest.resource.icon|media_size:'32x32' }}" width="18" height="18"/>
+                                <img src="{{ contest.resource.icon_file.name|media_size:'32x32' }}" width="18" height="18"/>
                                 {{ contest.title|truncatechars:33 }}
                             </div>
                             <div>{% if contest.is_coming %}starts{% else %}ends{% endif %} in <span class="timeleft countdown" data-countdown="{{ contest.next_time }}">{{ contest.next_time|countdown }}</span></div>
@@ -94,7 +94,7 @@
                     {% if not forloop.first %}
                     <li{% if not r.standings %} class="disabled"{% endif %}>
                         <a title="{{ r.contest.title }}" href="#{{ r.contest.id }}" data-toggle="tab"{% if not r.standings %} data-href="{{ r.contest.actual_url }}"{% endif %}>
-                            <img src="{{ r.contest.resource.icon|media_size:'32x32' }}" width="18" height="18"/>
+                            <img src="{{ r.contest.resource.icon_file.name|media_size:'32x32' }}" width="18" height="18"/>
                             {{ r.contest.title|truncatechars:33 }}
                         </a>
                     </li>

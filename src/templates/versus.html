@@ -186,7 +186,7 @@
       </td>
       <td class="title-column">
         <span>
-          <a href="{{ contest.resource.href }}"><img class="resource-icon" src="{{ contest.resource.icon|media_size:'32x32' }}" width="16" height="16"/></a>
+          <a href="{{ contest.resource.href }}"><img class="resource-icon" src="{{ contest.resource.icon_file.name|media_size:'32x32' }}" width="16" height="16"/></a>
           <a href="{% url 'ranking:standings' contest.title|slug contest.pk %}">{{ contest.title }}</a>
         </span>
       </td>

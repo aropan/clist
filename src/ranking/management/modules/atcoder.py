@@ -49,7 +49,6 @@ req = LazyObject(create_req)
 def post_save_req(func):
 
     @functools.wraps(func)
-
     def wrapper(*args, **kwargs):
         try:
             result = func(*args, **kwargs)
@@ -59,6 +58,7 @@ def post_save_req(func):
                 req.save()
 
     return wrapper
+
 
 class Statistic(BaseModule):
     STANDING_URL_ = '{0.url}/standings'
