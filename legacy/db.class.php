@@ -52,18 +52,30 @@ class db
         return $this->result;
     }
 
-    function getRow($sql)
+    /**
+     * @param string $sql
+     * @return array|false
+     */
+    function getRow($sql): array|false
     {
         return pg_fetch_assoc($this->query($sql));
     }
 
-    function getValue($sql)
+    /**
+     * @param string $sql
+     * @return mixed
+     */
+    function getValue($sql): mixed
     {
         $arr = pg_fetch_array($this->query($sql));
         return $arr[0];
     }
 
-    function getArray($sql)
+    /**
+     * @param string $sql
+     * @return array
+     */
+    function getArray($sql): array
     {
         $arr = [];
         $this->result = $this->query($sql);
@@ -73,13 +85,23 @@ class db
         return $arr;
     }
 
-    function select($table, $fields = "*", $where = "1 = 1")
+    /**
+     * @param string $table
+     * @param string $fields
+     * @param string $where
+     * @return array
+     */
+    function select($table, $fields = "*", $where = "1 = 1"): array
     {
         $sql = "select " . $fields . " from " . $table . " where $where";
         return $this->getArray($sql);
     }
 
-    function escapeString($data)
+    /**
+     * @param string|null $data
+     * @return string|null
+     */
+    function escapeString($data): ?string
     {
         if ($data === null) {
             return null;
@@ -87,7 +109,11 @@ class db
         return pg_escape_string($this->link, $data);
     }
 
-    function escapeArray($a)
+    /**
+     * @param array $a
+     * @return array
+     */
+    function escapeArray($a): array
     {
         $res = [];
         foreach ($a as $k => $v) {
@@ -96,7 +122,13 @@ class db
         return $res;
     }
 
-    function getFirstRow($table, $fields, $where = false)
+    /**
+     * @param string $table
+     * @param string $fields
+     * @param string|false $where
+     * @return array|false
+     */
+    function getFirstRow($table, $fields, $where = false): array|false
     {
         $sql = "select " . $fields . " from " . $table . "";
         if ($where) {
@@ -105,13 +137,25 @@ class db
         return $this->getRow($sql);
     }
 
-    function insert($table, $fields, $values)
+    /**
+     * @param string $table
+     * @param string $fields
+     * @param string $values
+     * @return mixed
+     */
+    function insert($table, $fields, $values): mixed
     {
         $sql = "insert into " . $table . "(" . $fields . ") values (" . $values . ")";
         return $this->query($sql);
     }
 
-    function delete($table, $where = false, $references = false)
+    /**
+     * @param string $table
+     * @param string|false $where
+     * @param array|false $references
+     * @return mixed
+     */
+    function delete($table, $where = false, $references = false): mixed
     {
         $sql = "delete from " . $table . "";
         if ($where) {
@@ -136,18 +180,30 @@ class db
         return $this->query($sql);
     }
 
-    function update($table, $values, $where = "1 = 1")
+    /**
+     * @param string $table
+     * @param string $values
+     * @param string $where
+     * @return mixed
+     */
+    function update($table, $values, $where = "1 = 1"): mixed
     {
         $sql = "update " . $table . " set " . $values . " where " . $where;
         return $this->query($sql);
     }
 
-    function affected_rows()
+    /**
+     * @return int
+     */
+    function affected_rows(): int
     {
         return pg_affected_rows($this->result);
     }
 
-    function close()
+    /**
+     * @return void
+     */
+    function close(): void
     {
         if ($this->link) {
             pg_close($this->link);
