@@ -47,7 +47,7 @@
     $authors = array();
     $chunks = array_chunk($contest_ids, 3);
     foreach ($chunks as $index => $chunk) {
-        $url = 'https://mirror.codeforces.com/contests/' . implode(',', $chunk);
+        $url = 'https://codeforces.com/contests/' . implode(',', $chunk);
         $page = curlexec($url);
 
         preg_match_all(

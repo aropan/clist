@@ -6,15 +6,29 @@ import xml.etree.ElementTree as ET
 import tqdm
 
 
+def parse_int(s):
+    if s is None:
+        return None
+    try:
+        return int(s)
+    except ValueError:
+        return None
+
+
 def parse_xml(standings_xml):
     root = ET.fromstring(standings_xml)
     contest = root.find('contest')
     sessions = contest.findall('session')
 
     ret = {}
+
+    has_score = all('score' in session.attrib for session in sessions)
+    if any(parse_int(session.attrib.get('solved')) and not parse_int(session.attrib.get('score'))
+           for session in sessions):
+        has_score = False
+
     for session in tqdm.tqdm(sessions):
         party = session.attrib['party'].strip()
-        has_score = 'score' in session.attrib
         problems = ret.setdefault(party, {})
         for problem in session.findall('problem'):
             letter = problem.attrib['alias']
@@ -46,6 +60,8 @@ def parse_xml(standings_xml):
                     verdict = v
                     if accepted:
                         break
+            if attempts := parse_int(problem.attrib['attempts']):
+                n_attempt = attempts
             if n_attempt == 0:
                 continue
 

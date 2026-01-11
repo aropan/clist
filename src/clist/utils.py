@@ -241,7 +241,9 @@ def update_problems(contest, problems=None, force=False):
                     'n_accepted': info.pop('n_accepted', 0) + getattr(added_problem, 'n_accepted', 0),
                     'n_partial': info.pop('n_partial', 0) + getattr(added_problem, 'n_partial', 0),
                     'n_hidden': info.pop('n_hidden', 0) + getattr(added_problem, 'n_hidden', 0),
+                    'n_failed': info.pop('n_failed', 0) + getattr(added_problem, 'n_failed', 0),
                     'n_total': info.pop('n_total', 0) + getattr(added_problem, 'n_total', 0),
+                    'n_submissions': info.pop('n_submissions', 0) + getattr(added_problem, 'n_submissions', 0),
                     'time': max(contest.start_time, getattr(added_problem, 'time', contest.start_time)),
                     'start_time': min(contest.start_time, getattr(added_problem, 'start_time', contest.start_time)),
                     'end_time': max(contest.end_time, getattr(added_problem, 'end_time', contest.end_time)),
@@ -252,6 +254,8 @@ def update_problems(contest, problems=None, force=False):
                     ('acceptance_rate', 'n_accepted'),
                     ('partial_rate', 'n_partial'),
                     ('hidden_rate', 'n_hidden'),
+                    ('failed_rate', 'n_failed'),
+                    ('submissions_rate', 'n_submissions'),
                 ):
                     defaults[rate_field] = defaults[value_field] / defaults['n_total'] if defaults['n_total'] else None
 
@@ -367,8 +371,8 @@ def update_problems(contest, problems=None, force=False):
     return True
 
 
-def update_writers(contest, writers=None) -> bool | None:
-    if writers is not None:
+def update_writers(contest, writers=None, force=False) -> bool | None:
+    if writers is not None and not force:
         if canonize(writers) == canonize(contest.info.get('writers')):
             return
         contest.info['writers'] = writers

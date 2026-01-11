@@ -18,7 +18,8 @@ from django_ratelimit.decorators import ratelimit
 from el_pagination.decorators import QS_KEY, page_templates
 from sql_util.utils import Exists, SubqueryCount, SubqueryMin
 
-from clist.models import Banner, Contest, Problem, ProblemTag, ProblemVerdict, PromoLink, Promotion, Resource
+from clist.models import (Banner, Contest, ContestSeries, Problem, ProblemTag, ProblemVerdict, PromoLink, Promotion,
+                          Resource)
 from clist.templatetags.extras import (allowed_redirect, as_number, get_item, get_problem_key, get_timezone_offset,
                                        is_yes, media_size, rating_from_probability, redirect_login, win_probability)
 from favorites.models import Activity
@@ -940,10 +941,17 @@ def problems(request, template='problems.html'):
                     break
                 contest_problems[problem_key] = problem
 
+    series = request.get_filtered_list('series')
+    if series:
+        series = list(ContestSeries.objects.filter(slug__in=series))
+        problems = problems.filter(contest__series__in=series)
+
     if len(resources) == 1:
         selected_resource = resources[0]
     elif len(contests) == 1:
         selected_resource = contests[0].resource
+    elif len(series) == 1:
+        selected_resource = Resource.objects.filter(contest__series__in=series).first()
     else:
         selected_resource = None
 
@@ -998,9 +1006,10 @@ def problems(request, template='problems.html'):
 
     custom_fields = [f for f in request.GET.getlist('field') if f]
     custom_options = ['name', 'index', 'short', 'key', 'slug', 'url', 'archive_url', 'divisions', 'kinds',
-                      'n_accepted', 'n_attempts', 'n_partial', 'n_hidden', 'n_total',
-                      'n_accepted_submissions', 'n_total_submissions',
-                      'attempt_rate', 'acceptance_rate', 'partial_rate', 'hidden_rate']
+                      'n_accepted', 'n_attempts', 'n_partial', 'n_hidden', 'n_failed', 'n_total',
+                      'n_submissions', 'n_accepted_submissions', 'n_total_submissions',
+                      'attempt_rate', 'acceptance_rate', 'partial_rate', 'hidden_rate',
+                      'failed_rate', 'submissions_rate']
     custom_info_fields = set()
     if selected_resource:
         if selected_resource.has_problem_archive:
@@ -1181,11 +1190,14 @@ def problems(request, template='problems.html'):
 
     # hidden fields
     hidden_fields = set()
-    if resources:
-        if not any(resource.has_problem_rating for resource in resources):
+    if resources or selected_resource or series:
+        checked_resources = list(resources or [])
+        checked_resources += ([selected_resource] if selected_resource else [])
+        checked_resources += list(Resource.objects.filter(contest__series__in=series)) if series else []
+        if not any(resource.has_problem_rating for resource in checked_resources):
             hidden_fields.add('rating')
             hidden_fields.add('luck')
-        if not any(resource.has_problem_statistic for resource in resources):
+        if not any(resource.has_problem_statistic for resource in checked_resources):
             hidden_fields.add('stats')
             hidden_fields.add('result')
 
@@ -1201,6 +1213,7 @@ def problems(request, template='problems.html'):
         'params': {
             'resources': resources,
             'contests': contests,
+            'series': series,
             'tags': tags,
         },
         'filter_fields': filter_fields,

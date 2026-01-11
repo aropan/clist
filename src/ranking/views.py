@@ -569,10 +569,10 @@ def standings_charts(request, context):
     if context.get("relative_problem_time"):
         total_problem_time = max([max(v) for v in problems_values.values()], default=0) + 1
     else:
-        total_problem_time = contest.duration_in_secs
+        total_problem_time = contest.current_duration
 
     if top_values:
-        top_bins = make_bins(0, contest.duration_in_secs, n_bins=default_n_bins)
+        top_bins = make_bins(0, contest.current_duration, n_bins=default_n_bins)
         top_chart = dict(
             field="top_scores",
             type="scatter",

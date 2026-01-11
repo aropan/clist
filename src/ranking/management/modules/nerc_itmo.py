@@ -10,7 +10,7 @@ from django.utils.timezone import now
 
 from clist.templatetags.extras import as_number
 from ranking.management.modules.common import REQ, BaseModule, parsed_table
-from ranking.management.modules.excepts import InitModuleException, FailOnGetResponse
+from ranking.management.modules.excepts import FailOnGetResponse, InitModuleException
 from ranking.management.modules.nerc_itmo_helper import parse_xml
 
 
@@ -180,4 +180,6 @@ class Statistic(BaseModule):
             'problems_time_format': '{M}:{s:02d}',
             'hidden_fields': ['university', 'region', 'medal', 'diploma'],
         }
+        if series := self.info.get('series'):
+            standings['series'] = series
         return standings

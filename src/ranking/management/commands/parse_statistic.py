@@ -951,6 +951,13 @@ class Command(BaseCommand):
                                         p['n_partial'] = p.get('n_partial', 0) + 1
                                     elif is_hidden_result:
                                         p['n_hidden'] = p.get('n_hidden', 0) + 1
+                                    else:
+                                        p['n_failed'] = p.get('n_failed', 0) + 1
+
+                                    if result_str and result_str[0] in '+-?':
+                                        n_attempts = as_number(result_str[1:], default=0) + ac
+                                        p['n_submissions'] = p.get('n_submissions', 0) + n_attempts
+
                                     has_problem_stats = True
 
                                 if 'default_problem_full_score' in contest.info and solved and 'solved' not in r:

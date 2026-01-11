@@ -62,7 +62,14 @@
             $year = date('Y', $c['startTimeSeconds']);
             if (!$global_rounds_stage_year || $global_rounds_stage_year < $year) {
                 $global_rounds_stage_year = $year;
-                $global_rounds_url = $url;
+                $global_rounds_url = null;
+            }
+            if ($global_rounds_stage_year == $year) {
+                if (!$global_rounds_url) {
+                    $global_rounds_url = $url;
+                } else {
+                    $global_rounds_url .= ',' . $c['id'];
+                }
             }
         }
 

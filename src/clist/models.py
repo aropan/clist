@@ -939,6 +939,11 @@ class Contest(BaseModel):
         return max(min(ret, 1), 0)
 
     @property
+    def current_duration(self):
+        now = self.parsed_time or datetime.now(timezone.utc)
+        return max(0, min(self.duration_in_secs, (now - self.standings_start_time).total_seconds()))
+
+    @property
     def standings_per_page(self):
         per_page = self.info.get('standings', {}).get('per_page', 50)
         if per_page is None:
@@ -1196,7 +1201,11 @@ class Problem(BaseModel):
     partial_rate = models.FloatField(default=None, null=True, blank=True)
     n_hidden = models.IntegerField(default=None, null=True, blank=True)
     hidden_rate = models.FloatField(default=None, null=True, blank=True)
+    n_failed = models.IntegerField(default=None, null=True, blank=True)
+    failed_rate = models.FloatField(default=None, null=True, blank=True)
     n_total = models.IntegerField(default=None, null=True, blank=True)
+    n_submissions = models.IntegerField(default=None, null=True, blank=True)
+    submissions_rate = models.FloatField(default=None, null=True, blank=True)
     n_accepted_submissions = models.IntegerField(default=None, null=True, blank=True)
     n_total_submissions = models.IntegerField(default=None, null=True, blank=True)
     visible = models.BooleanField(default=True, null=False)

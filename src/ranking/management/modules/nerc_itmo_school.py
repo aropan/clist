@@ -202,4 +202,6 @@ class Statistic(BaseModule):
             'result': result,
             'problems': list(problems_info.values()),
         }
+        if series := self.info.get('series'):
+            standings['series'] = series
         return standings

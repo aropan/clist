@@ -238,7 +238,7 @@ foreach ($contests as $i => $contest) {
 }
 
 $by_key = [];
-foreach ($contests as $i => $contest) {
+foreach ($contests as $i => &$contest) {
     if (!isset($contest['skip_update_key']) || !$contest['skip_update_key']) {
         switch ($contest['host']) {
             case 'dl.gsu.by':
@@ -251,13 +251,19 @@ foreach ($contests as $i => $contest) {
     }
 
     foreach (
-        array('start_time', 'end_time', 'duration', 'url', 'title', 'key', 'standings_url')
+        array('start_time', 'end_time', 'duration', 'url', 'title', 'key', 'standings_url', 'old_key')
         as $param
     ) {
-        if (isset($contest[$param])) $contests[$i][$param] = trim($contest[$param]);
+        if (isset($contest[$param])) {
+            if ($contest[$param] === IGNOREVALUE) {
+                unset($contest[$param]);
+            } else {
+                $contest[$param] = trim($contest[$param]);
+            }
+        }
     }
     if (isset($contest['key']) && $contest['key']) {
-        $key = "${contest['key']} @ #${contest['rid']}";
+        $key = "{$contest['key']} @ #{$contest['rid']}";
         if (isset($by_key[$key])) {
             foreach ($contest as $k => $v) {
                 $by_key[$key][$k] = $v;
@@ -265,10 +271,11 @@ foreach ($contests as $i => $contest) {
             unset($contests[$i]);
             $by_key[$key]['duplicate'] = true;
         } else {
-            $by_key[$key] = &$contests[$i];
+            $by_key[$key] = &$contest;
         }
     }
 }
+unset($contest);
 unset($by_key);
 
 echo "<br><br>Total number of contests: " . count($contests) . "<br>";
@@ -276,7 +283,7 @@ echo "<br><br>Total number of contests: " . count($contests) . "<br>";
 function is_locked_contest($resource_id, $contest_key)
 {
     global $db;
-    $ctids = $db->select("clist_contest", "ctid::text AS ctid_txt", "resource_id = ${resource_id} AND key = '${contest_key}'");
+    $ctids = $db->select("clist_contest", "ctid::text AS ctid_txt", "resource_id = {$resource_id} AND key = '{$contest_key}'");
     foreach ($ctids as $row) {
         $ctid = $row['ctid_txt'];
         $ctid_txt = substr($ctid, 1, -1);
@@ -284,13 +291,24 @@ function is_locked_contest($resource_id, $contest_key)
         $locks = $db->getArray("
                 SELECT * FROM pg_locks l
                 JOIN pg_class c ON c.oid = l.relation
-                WHERE c.relname = 'clist_contest' AND l.locktype = 'tuple' AND l.page = ${block} AND l.tuple = ${offset} AND l.granted = true
+                WHERE c.relname = 'clist_contest' AND l.locktype = 'tuple' AND l.page = {$block} AND l.tuple = {$offset} AND l.granted = true
             ");
         if ($locks) {
             return true;
         }
     }
     return false;
+}
+
+function delete_contest($query)
+{
+    global $db;
+    return $db->delete("clist_contest", $query, [
+        'clist_problem' => 'contest_id',
+        'clist_problem_contests' => 'contest_id',
+        'ranking_statistics' => 'contest_id',
+        'ranking_stagecontest' => 'contest_id',
+    ]);
 }
 
 foreach ($contests as $i => $contest) {
@@ -331,6 +349,8 @@ foreach ($contests as $i => $contest) {
         }
     }
 
+    $to_update = !DEBUG && (!isset($_GET['title']) || preg_match($_GET['title'], $contest['title']));
+    $to_update_only = false;
     $to_delete = ($contest['delete_after_end'] ?? false) && $contest['end_time'] < time();
 
     $contest['start_time'] = date('Y-m-d H:i:s', $contest['start_time']);
@@ -362,24 +382,29 @@ foreach ($contests as $i => $contest) {
     unset($contest['skip_update_key']);
     unset($contest['delete_after_end']);
 
+    $ignore_times_after_start = pop_item($contest, 'ignore_times_after_start');
+    if ($ignore_times_after_start && strtotime($contest['start_time']) < time()) {
+        $to_update_only = true;
+        unset($contest['start_time']);
+        unset($contest['end_time']);
+    }
+
     $contest = $db->escapeArray($contest);
 
-    if (isset($contest['old_key'])) {
-        $old_key = $contest['old_key'];
+    $old_key = pop_item($contest, 'old_key');
+    if ($old_key) {
         $key = $contest['key'];
-        $old_update = "$update and key = '${old_key}'";
-        if (!$db->query("UPDATE clist_contest SET key = '$key' WHERE $old_update", true)) {
-            $db->query("DELETE FROM clist_contest WHERE $old_update", true);
+        $old_query = "$update and key = '{$old_key}'";
+        if (!$db->query("UPDATE clist_contest SET key = '$key' WHERE $old_query", true)) {
+            delete_contest($old_query);
         }
     }
-    unset($contest['old_key']);
 
-    if (isset($contest['delete_key'])) {
-        $delete_key = $contest['delete_key'];
-        $delete_update = "$update and key = '${delete_key}'";
-        $db->query("DELETE FROM clist_contest WHERE $delete_update", true);
+    $delete_key = pop_item($contest, 'delete_key');
+    if ($delete_key) {
+        $delete_query = "$update and key = '{$delete_key}'";
+        delete_contest($delete_query);
     }
-    unset($contest['delete_key']);
 
     $contest['is_auto_added'] = 1;
     $contest['auto_updated'] = date("Y-m-d H:i:s");
@@ -410,15 +435,15 @@ foreach ($contests as $i => $contest) {
 
     $now = date("Y-m-d H:i:s", time());
 
-    $to_update = !DEBUG && (!isset($_GET['title']) || preg_match($_GET['title'], $contest['title']));
-
     if (is_locked_contest($contest_rid, $contest['key'])) {
         $to_update = false;
     }
 
     if ($to_update) {
         if ($to_delete) {
-            $db->query("DELETE FROM clist_contest WHERE resource_id = ${contest_rid} and key = '${contest['key']}'", true);
+            $db->query("DELETE FROM clist_contest WHERE resource_id = {$contest_rid} and key = '{$contest['key']}'", true);
+        } else if ($to_update_only) {
+            $db->query("UPDATE clist_contest SET $update WHERE resource_id = {$contest_rid} and key = '{$contest['key']}'", true);
         } else {
             $db->query("INSERT INTO clist_contest ($fields) values ($values) ON CONFLICT (resource_id, key) DO UPDATE SET $update");
         }
@@ -437,11 +462,12 @@ foreach ($contests as $i => $contest) {
     }
 
     $duration_human = human_readable_seconds($contest['duration_in_secs']);
+    $contest_start_time_desc = $contest['start_time'] ?? 'notime';
     echo "\t<span style='padding-left: 50px'>" .
         ($duplicate ? "<i>duplicate</i> " : "") .
         ($to_update ? "" : "<i>skip</i> ") .
         ($to_delete ? "<i>delete</i> " : "") .
-        "{$contest['title']} ({$contest['start_time']} | $duration_human) [{$contest['key']}]</span><br>\n";
+        "{$contest['title']} ($contest_start_time_desc | $duration_human) [{$contest['key']}]</span><br>\n";
 }
 if (count($updated_resources)) {
     $resources_filter = '';
@@ -477,7 +503,7 @@ if (count($updated_resources)) {
                 "{$contest['title']} [{$contest['key']}] <{$contest['url']}></span><br>\n";
         }
         if (!DEBUG) {
-            $result = $db->delete("clist_contest", $query, array('ranking_stagecontest' => 'contest_id'));
+            $result = delete_contest($query);
             $deleted = array();
             while ($row = pg_fetch_array($result)) {
                 $deleted[] = $row;

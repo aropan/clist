@@ -77,7 +77,7 @@ class Statistic(BaseModule):
                         full_score = problem.get('current_rate')
                     if full_score is not None:
                         problem['full_score'] = full_score
-                        if full_score and problems_scores and problem['difficulty'] in problems_scores:
+                        if full_score and problems_scores and problems_scores.get(problem['difficulty']):
                             problem['relative_difficulty'] = full_score / problems_scores[problem['difficulty']]
 
                     problems.append(problem)

@@ -1,2 +1,2 @@
-{% create_dict icon="series" title="series" field=series|default:"series" nosmall=nosmall nogroupby=groupby|iffalse nosubmit=nosubmit nomultiply=nomultiply ajax_query="series" values=params.series value_id="slug" value_option="short" with_all_option=True as data %}
+{% create_dict icon="series" title="series" field=series|default:"series" nosmall=nosmall nogroupby=groupby|iffalse nosubmit=nosubmit nomultiply=nomultiply ajax_query="series" values=params.series value_id="slug" value_option="short" with_all_option=with_all as data %}
 {% include "field_to_select.html" with data=data %}

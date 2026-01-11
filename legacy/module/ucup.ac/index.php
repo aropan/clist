@@ -6,7 +6,6 @@ function parse_season($base_url)
 {
     global $RID, $HOST, $TIMEZONE, $contests;
 
-    $seen = [];
     $stage_standings_url = "$base_url/rating";
     $rating_page = curlexec($stage_standings_url);
     preg_match_all(
@@ -24,6 +23,27 @@ function parse_season($base_url)
         $standings[$stage] = ["standings_url" => $standings_url, "title" => $th["title"], "stage" => $stage];
     }
 
+    $contests_url = "https://contest.ucup.ac/contests";
+    $contests_page = curlexec($contests_url);
+    preg_match_all(
+        '#<a[^>]*href="(?P<href>[^"]*/contest/(?P<cid>[0-9]+))"[^>]*>\s*(?P<title>The\b[^<]+:[^<]+)</a>#s',
+        $contests_page,
+        $matches,
+        PREG_SET_ORDER,
+    );
+
+    $standings_canonized_titles = [];
+    foreach ($matches as $match) {
+        $contest_url = url_merge($contests_url, $match["href"]);
+        $title = trim($match["title"]);
+        $standings_url = url_merge($contest_url . "/", "standings");
+        $canonized_title = slugify(trim(preg_replace("#:.*$#", "", $title)));
+        $name = preg_replace("#.*:\s*#", "", $title);
+        $name = preg_replace("#^grand prix of\s*#i", "", $name);
+        $name = preg_replace("#\s*grand prix$#i", "", $name);
+        $standings_canonized_titles[$canonized_title] = ["standings_url" => $standings_url, "name" => $name];
+    }
+
     $stage_url = $base_url;
     $schedule_page = curlexec($stage_url);
 
@@ -37,6 +57,7 @@ function parse_season($base_url)
 
     preg_match_all("#<tr>.*?</tr>#s", $schedule_page, $rows, PREG_SET_ORDER);
     $headers = false;
+    $seen = [];
     foreach ($rows as $row) {
         preg_match_all("#<t[hd][^>]*>(?P<values>.*?)</(?P<tag>t[hd])>#s", $row[0], $cols);
         if ($headers === false || $cols["tag"][0] == "th") {
@@ -55,29 +76,34 @@ function parse_season($base_url)
         $min_count = min(count($headers), count($values));
         $c = array_combine(array_slice($headers, 0, $min_count), array_slice($values, 0, $min_count));
 
-        if (!isset($c["stage"]) || !isset($c["contest"]) || !isset($c["date"])) {
+        if (!isset($c["stage"]) || !isset($c["contest"]) || !isset($c["date"]) || strpos($c["date"], "TBD") !== false) {
             continue;
         }
 
         $stage_parts = preg_split("#[^a-z0-9]+#i", strtolower($c["stage"]));
-        $stage_desc = "stage";
-        if (count($stage_parts) > 1) {
-            if (count($stage_parts) == 2 && $stage_parts[0] == "extra") {
-                $stage_desc = $stage_parts[0] . " stage " . $stage_parts[1];
-            } else {
-                continue;
-            }
+        if (count($stage_parts) == 2 && $stage_parts[0] == "extra") {
+            $stage_desc = $stage_parts[0] . " stage " . $stage_parts[1];
+        } elseif (count($stage_parts) == 1 && is_numeric($stage_parts[0])) {
+            $stage_desc = "stage " . $stage_parts[0];
         } else {
-            $stage_desc .= " " . $c["stage"];
+            continue;
         }
         $stage_title = ucwords($stage_desc);
 
-        $title = "The " . ordinal($season) . " Universal Cup. $stage_title: " . trim($c["contest"]);
+        $name = trim($c["contest"]);
+        $standings_url = isset($c["scoreboard"]) ? $c["scoreboard"] : null;
         $date = $c["date"];
 
-        if (strpos($date, "TBD") !== false) {
-            continue;
+        $title = "The " . ordinal($season) . " Universal Cup. $stage_title";
+        $canonized_title = slugify($title);
+        if (isset($standings_canonized_titles[$canonized_title])) {
+            $standings_info = $standings_canonized_titles[$canonized_title];
+            $standings_url = $standings_info["standings_url"];
+            if ($name == "TBD") {
+                $name = $standings_info["name"];
+            }
         }
+        $title .= ": " . $name;
 
         if (strpos($date, "to") !== false) {
             $date = trim(explode("to", $date)[0]);
@@ -97,7 +123,6 @@ function parse_season($base_url)
         $key = "ucup-" . $season . "-" . $stage_key;
         $info = ["parse" => ["season" => "$season", "stage" => $stage_key]];
 
-        $standings_url = isset($c["scoreboard"]) ? $c["scoreboard"] : null;
         $standings_stage = null;
         foreach ($standings as $stage => $info) {
             if (stripos($info["title"], $c["contest"]) === false) {

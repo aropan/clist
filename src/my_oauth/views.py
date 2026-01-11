@@ -147,8 +147,11 @@ def response(request, name):
     service = get_object_or_404(Service.objects, name=name)
     state = request.session.get(service.state_field, None)
     try:
-        if state is None or state != request.GET.get("state"):
+        if state is None:
             raise KeyError("Not found state")
+        if state != request.GET.get("state"):
+            states = request.GET.getlist("state")
+            raise KeyError(f"State not equal. Received {state}, expected {request.GET.get('state')}, states {states}")
         del request.session["state"]
         args = model_to_dict(service)
         get_args = list(request.GET.items())
