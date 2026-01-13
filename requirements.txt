@@ -85,7 +85,7 @@ lazy-load==0.8.3
 blackboxprotobuf==1.0.1
 traceback-with-variables==2.0.4
 flatten-dict==0.4.2
-filelock==3.20.1
+filelock==3.20.3
 tailslide==0.1.1
 feedgen==1.0.0
 pycountry==24.6.1
