@@ -1648,6 +1648,12 @@ def has_update_statistics_permission(user, contest):
         ret = contest.statistics_set.filter(account__coders=user.coder).exists()
     return ret
 
+@register.simple_tag(takes_context=True)
+def has_permission(context, perm, obj=None):
+    user = context['request'].user
+    if obj:
+        return user.has_perm(perm, obj)
+    return user.has_perm(perm)
 
 @register.filter
 def is_anonymous_user(user):

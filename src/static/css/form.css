@@ -1,4 +1,4 @@
-#form .btn {
+.action-button {
   margin-bottom: 15px;
 }
 
@@ -45,4 +45,12 @@
 .table-credentials tr {
   border-top: 1px solid #ddd;
   border-bottom: 1px solid #ddd;
+}
+
+#form-stats {
+  margin-top: 15px;
+}
+
+.credentials-stat {
+  font-size: 100%;
 }

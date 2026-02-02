@@ -197,6 +197,9 @@ query Profile($id: ID!) {
             '''
             data = {'query': profile_query, 'variables': {'id': member_id}}
             data = REQ.get(Statistic.API_URL, post=json.dumps(data), return_json=True)
+            for error in data.get('errors', []):
+                if error.get("extensions", {}).get("code") == "NOT_FOUND":
+                    return None
             data = data['data']['member']
             account_data = data.pop('account')
             country = account_data.pop('country')

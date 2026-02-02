@@ -70,7 +70,7 @@ class Statistic(BaseModule):
             'учебное зачедение, класс': 'school',
             'регион/статус': 'region',
             'регион': 'region',
-            'имя в таблице': 'handle',
+            'имя в таблице': 'login',
             'uid': 'uid',
         }
 
@@ -248,7 +248,6 @@ class Statistic(BaseModule):
                 'login',
                 'region',
                 'uid',
-                'handle',
                 'diploma_number',
             ],
         }

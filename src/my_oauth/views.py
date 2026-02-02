@@ -8,6 +8,7 @@ from io import StringIO
 from urllib.parse import quote
 
 import requests
+from guardian.decorators import permission_required_or_403
 from django.conf import settings
 from django.contrib import auth, messages
 from django.contrib.auth.decorators import login_required, permission_required
@@ -26,6 +27,7 @@ from clist.templatetags.extras import allowed_redirect
 from my_oauth.models import Credential, Form, Service, Token
 from my_oauth.utils import access_token_from_response, refresh_acccess_token
 from true_coders.models import Coder
+from utils.chart import make_chart
 
 
 def generate_state(size=20, chars=string.ascii_uppercase + string.digits):
@@ -396,4 +398,34 @@ def form(request, uuid):
             "nofavicon": True,
             "nocounter": True,
         },
+    )
+
+
+@login_required
+@permission_required_or_403("my_oauth.view_form_stats", (Form, 'pk', 'uuid'))
+def form_stats(request, uuid):
+    form = get_object_or_404(Form.objects, pk=uuid)
+    credentials = Credential.objects.filter(form=form)
+    credentials = credentials.annotate_choices("state", Credential.State)
+    credentials_stats = credentials.values("state", "state_name").annotate(count=Count("id")).order_by("state")
+
+    chart_credentials = credentials
+    timing = request.get_filtered_value("timing", options=["current", "total"])
+    if timing == "current" or not timing and not form.is_closed():
+        if not form.start_time:
+            request.logger.warning("Form has no start time, showing total statistics instead.")
+        else:
+            chart_credentials = credentials.filter(modified__gte=form.start_time)
+    credentials_chart = make_chart(chart_credentials, "modified", groupby="state_name")
+
+    return render(
+        request,
+        "form_stats.html",
+        {
+            "form": form,
+            "credentials_stats": credentials_stats,
+            "credentials_chart": credentials_chart,
+            "nofavicon": True,
+            "nocounter": True,
+        }
     )

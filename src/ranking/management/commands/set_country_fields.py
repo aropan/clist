@@ -167,6 +167,7 @@ class Command(BaseCommand):
                 def update_rating_fields():
                     qs = resource.account_set.filter(rating__isnull=False, country__isnull=False,
                                                      last_rating_activity__isnull=False)
+                    qs = qs.filter(account_type=resource.default_account_type)
                     qs = qs.values('country', 'rating', 'n_contests', 'last_rating_activity')
                     country_ratings = {}
                     for account_stat in qs:
@@ -177,6 +178,8 @@ class Command(BaseCommand):
                         country_ratings.setdefault(account_stat['country'], []).append((weight, account_stat['rating']))
                     country_accounts_update = []
                     for country, ratings in country_ratings.items():
+                        if country not in country_accounts:
+                            continue
                         raw_rating = get_weighted_rating(ratings, target=0.5, threshold=False)
                         rating = round(raw_rating) or None
                         country_account = CountryAccount(

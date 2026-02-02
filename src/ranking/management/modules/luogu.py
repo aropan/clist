@@ -168,38 +168,21 @@ class Statistic(BaseModule):
     def get_users_infos(users, resource, accounts, pbar=None):
 
         api_user_url = urljoin(resource.url, Statistic.API_USER_URL_FORMAT_)
-        api_rating_elo_url = urljoin(resource.url, Statistic.API_RATING_ELO_URL_FORMAT_)
 
         @RateLimiter(max_calls=2, period=1)
         def fetch_profile(user):
             ret = {'username': user}
 
-            ratings = []
-            n_pages = None
-            page = 0
-            while n_pages is None or page <= n_pages:
-                page += 1
-                url = api_rating_elo_url.format(user=user, page=page)
-                try:
-                    data = Statistic._get(url, return_json=True)
-                except FailOnGetResponse:
-                    return False
-                records = data['records']
-                n_pages = records['count'] / records['perPage']
-                ratings.extend(records['result'])
-            ret['ratings'] = ratings
-
             url = api_user_url.format(user=user)
             try:
-                data = Statistic._get(url, return_json=True)
+                page = Statistic._get(url)
             except FailOnGetResponse:
                 return False
-            if data.get("__no_json"):
-                match = re.search('<script[^>]*id="lentille-context"[^>]*>(?P<data>[^<]*)</script>', data["page"])
-                data = json.loads(match.group("data"))
-                user_data = get_item(data, 'data.user') or {}
-            else:
-                user_data = get_item(data, 'currentData.user') or {}
+            match = re.search('<script[^>]*id="lentille-context"[^>]*>(?P<data>[^<]*)</script>', page)
+            data = json.loads(match.group("data"))
+            ret['ratings'] = get_item(data, 'data.elo') or []
+            user_data = get_item(data, 'data.user') or {}
+
             for k, v in user_data.items():
                 if isinstance(v, (dict, list)):
                     continue

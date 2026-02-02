@@ -477,10 +477,16 @@ if (count($updated_resources)) {
         }
 
         if (isset($auto_remove_started[$resource_id])) {
-            $time_filter = "auto_updated < now() - interval '3 hours' AND now() < end_time";
+            $time_filter = "now() < end_time";
         } else {
-            $time_filter = "auto_updated < now() - interval '3 hours' AND now() < start_time";
+            $time_filter = "now() < start_time";
         }
+        $delay_updated = '3 hours';
+        if (isset($_GET["force_remove"])) {
+            $delay_updated = '1 minutes';
+        }
+        $time_filter = "auto_updated < now() - interval '$delay_updated' AND " . $time_filter;
+
         $resource_filter = "resource_id = $resource_id AND $time_filter";
 
         $skipped_keys = $skipped_resources[$resource_id] ?? [];

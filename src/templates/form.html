@@ -2,27 +2,32 @@
 
 {% block full_ogtitle %}{% block full_title %}{{ form.title|striptags }} - Form - CLIST{% endblock %}{% endblock %}
 {% block end-head %}<link href="{% static_ts 'css/form.css' %}" rel="stylesheet">{% endblock %}
-{% block favicon %}{% endblock %}
-{% block counter %}{% endblock %}
 
 {% block body %}
 <div class="container center-container">
   <div id="form" class="scroll-container">
     <h1>
       {{ form.title|safe }}
-      {% if perms.my_oauth.change_form %}
       <span class="inline-button absolute-button">
+        {% has_permission "my_oauth.view_form_stats" form as can_view_stats %}
+        {% if can_view_stats %}
+        <button class="database-href btn btn-default btn-xs" data-href="{% url 'auth:form_stats' form.id %}">{% icon_to 'charts' 'Statistics' %}</button>
+        {% endif %}
+        {% has_permission "my_oauth.change_form" form as can_change_form %}
+        {% if can_change_form %}
         <button class="database-href btn btn-default btn-xs" data-href="{% url 'admin:my_oauth_form_change' form.id %}">{% icon_to 'database' "Form#"|concat:form.id %}</button>
+        {% endif %}
       </span>
-      {% endif %}
     </h1>
+    {% block form_content %}
+    <div>
     {% if form.is_coming %}
       <div class="alert alert-info">From will open in <a href="{{ form.start_time|get_timeanddate_href }}">{{ form.start_time|hr_timedelta }}<a></div>
     {% elif form.is_closed %}
       <div class="alert alert-warning">This form is closed</div>
     {% else %}
       {% if token %}
-      <div>
+      <div class="action-button">
         <a class="btn btn-default" href="?action=logout">{% icon_to 'logout' '' %} Log out {{ token.email|default:token.data.login }}</a>
       </div>
         {% if credential and credential.is_approved %}
@@ -51,7 +56,7 @@
           </div>
         {% endif %}
       {% else %}
-      <div>
+      <div class="action-button">
         <a class="btn btn-default" href="?action=login">{% icon_to 'login' '' %} Log in with {{ form.service.title }}</a>
       </div>
       {% if form.end_time %}
@@ -61,6 +66,8 @@
       {% endif %}
       {% endif %}
     {% endif %}
+    <div>
+    {% endblock %}
   </div>
 </div>
 {% endblock %}

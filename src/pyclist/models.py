@@ -4,7 +4,7 @@ from django.apps import apps
 from django.contrib.auth.models import AnonymousUser, User
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
-from django.db.models import OuterRef, Subquery, Value
+from django.db.models import Case, CharField, OuterRef, Subquery, Value, When
 from django.db.models.fields import Field
 from django.db.models.lookups import LessThan
 from django.urls import reverse
@@ -127,6 +127,20 @@ class BaseQuerySet(models.QuerySet):
             status=EventStatus.IN_PROGRESS,
         )
         return self.annotate(has_active_executions=Exists(qs))
+
+    def annotate_choices(self, field, choices, annotation_field=None):
+        if annotation_field is None:
+            annotation_field = f'{field}_name'
+
+        if hasattr(choices, 'choices'):
+            choices = choices.choices
+
+        return self.annotate(**{
+            annotation_field: Case(
+                *[When(**{field: k, 'then': Value(v)}) for k, v in choices],
+                output_field=CharField(),
+            )
+        })
 
     class Meta:
         abstract = True

@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib import admin
+from django.contrib.auth import get_permission_codename
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.contenttypes.models import ContentType
@@ -128,6 +129,24 @@ class BaseModelAdmin(GuardedModelAdmin):
                 request.GET = params
                 return redirect(f'{request.path}?{params.urlencode()}')
         return super().changelist_view(request, *args, **kwargs)
+
+    def has_change_permission(self, request, obj=None):
+        if super().has_change_permission(request, obj):
+            return True
+        if obj is not None:
+            opts = self.opts
+            codename = get_permission_codename('change', opts)
+            return request.user.has_perm("%s.%s" % (opts.app_label, codename), obj)
+        return False
+
+    def has_view_permission(self, request, obj=None):
+        if super().has_view_permission(request, obj):
+            return True
+        if obj is not None:
+            opts = self.opts
+            codename = get_permission_codename('view', opts)
+            return request.user.has_perm("%s.%s" % (opts.app_label, codename), obj)
+        return False
 
     class Meta:
         abstract = True

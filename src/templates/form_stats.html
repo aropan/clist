@@ -1,0 +1,30 @@
+{% extends "form.html" %}
+
+{% block full_ogtitle %}{% block full_title %}{{ form.title|striptags }} - Form Stats - CLIST{% endblock %}{% endblock %}
+
+{% block form_content %}
+<div>
+    {% for credentials_stat in credentials_stats %}
+    <span class="credentials-stat label label-info">{{ credentials_stat.state_name }}: {{ credentials_stat.count }}</span>
+    {% endfor %}
+</div>
+
+<div>
+<form class="form-inline" id="form-stats" method="get" action="">
+    <div class="form-group">
+
+        {% create_dict icon="period" title="timing" field="timing" nomultiply=True options="current,total"|split:"," nosmall=nosmall nogroupby=True collapse=False noajax=True as data %}
+        {% include "field_to_select.html" with data=data %}
+
+    </div>
+</form>
+
+{% if credentials_chart %}
+{% include 'chart.html' with chart=credentials_chart without_close_chart=True %}
+{% else %}
+<div class="alert alert-info" role="alert">No credentials statistics to show</div>
+{% endif %}
+
+</div>
+
+{% endblock %}

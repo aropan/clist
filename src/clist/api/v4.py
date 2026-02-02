@@ -68,6 +68,7 @@ class CoderResource(v3.CoderResource):
 
 class ProblemResource(BaseModelResource):
     name = fields.CharField('name')
+    time = fields.DateTimeField('time', null=True)
     contest_ids = fields.ListField('contest_ids', null=True,
                                    help_text="A list of data. Ex: {'abc', 26.73, 8}")
     divisions = fields.ListField('divisions', null=True)
@@ -102,6 +103,7 @@ class ProblemResource(BaseModelResource):
         filtering = {
             'total_count': ['exact'],
             'name': ['exact', 'in'],
+            'time': ['exact', 'gt', 'lt', 'gte', 'lte', 'week_day'],
             'contest_ids': ['exact', 'contains'],
             'resource': ['exact', 'iregex', 'regex', 'in'],
             'resource_id': ['exact', 'in'],
@@ -125,7 +127,7 @@ class ProblemResource(BaseModelResource):
             'user_todo': ['exact'],
             'user_reject': ['exact'],
         }
-        ordering = ['id', 'name', 'slug', 'short', 'url', 'archive_url',
+        ordering = ['id', 'name', 'time', 'slug', 'short', 'url', 'archive_url',
                     'n_attempts', 'n_accepted', 'n_partial', 'n_hidden', 'n_total', 'rating']
 
     def get_object_list(self, request):

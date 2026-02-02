@@ -24,10 +24,6 @@
 
     preg_match_all("#(?<start_time>[^\s]+\s\d+)-(?<end_time>(?:[^\s]+\s)?\d+):(?<title>[^<]*)#", $page, $matches, PREG_SET_ORDER);
 
-    if (count($matches)) {
-        $mindate = strtotime("{$matches[0]['start_time']}, $start_year");
-    }
-
     foreach ($matches as $match)
     {
         $title = trim($match['title']);
@@ -36,7 +32,8 @@
         }
 
         $date = strtotime("{$match['start_time']}, $start_year");
-        $year = $mindate <= $date? $start_year : $end_year;
+        $month = date('n', $date);
+        $year = $month >= 9? $start_year : $end_year;
 
         if (strpos($match['end_time'], ' ') === false) {
             list($month, ) = explode(' ', $match['start_time']);
@@ -45,6 +42,7 @@
 
         $start_time = "{$match['start_time']}, $year";
         $end_time = date('M j, Y', strtotime("{$match['end_time']}, $year") + 24 * 60 * 60);
+        $key = slugify($title . " " . $year);
 
         $c = array(
             'start_time' => $start_time,
@@ -54,7 +52,7 @@
             'host' => $HOST,
             'url' => $URL,
             'timezone' => $TIMEZONE,
-            'key' => $title . " " . $year,
+            'key' => $key,
             'rid' => $RID
         );
 

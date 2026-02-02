@@ -439,6 +439,7 @@ a.database-link {
 }
 
 .chart {
+  position: relative;
   padding: 5px 5px 10px;
 }
 

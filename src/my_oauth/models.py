@@ -116,6 +116,11 @@ class Form(BaseModel):
     start_time = models.DateTimeField(null=True, blank=True)
     end_time = models.DateTimeField(null=True, blank=True)
 
+    class Meta:
+        permissions = (
+            ('view_form_stats', 'Can view form statistics'),
+        )
+
     def save(self, *args, **kwargs):
         if not self.title:
             self.title = self.name
@@ -145,6 +150,8 @@ class Credential(BaseModel):
     password = models.CharField(max_length=255)
     state = models.PositiveSmallIntegerField(choices=State.choices, default=State.UNASSIGNED, db_index=True)
     token = models.ForeignKey(Token, null=True, blank=True, on_delete=models.CASCADE)
+
+    objects = BaseManager()
 
     def is_approved(self):
         return self.state == self.State.APPROVED
