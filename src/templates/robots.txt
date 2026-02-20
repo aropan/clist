@@ -1,9 +1,21 @@
+# Don't forget about Cloudflare's custom robots.txt rule.
+
 User-agent: *
-Crawl-Delay: 120
 Sitemap: https://clist.by/sitemap.xml
 
+Disallow: /login/
+Disallow: /logout/
+Disallow: /signup/
+Disallow: /oauth/
+Disallow: /auth/
+Disallow: /o/
+Disallow: /grafana_auth/
 Disallow: /chat/
+Disallow: /chats/
+
 Disallow: /admin/
+Disallow: /charts/
+Disallow: /get/events/
 Disallow: /solutions/
 Disallow: /settings/
 Disallow: /list/
@@ -11,28 +23,33 @@ Disallow: /calendar/
 Disallow: /messages/
 Disallow: /profile/
 Disallow: /telegram/
-Disallow: /login/
-Disallow: /logout/
-Disallow: /signup/
-Disallow: /oauth/
-Disallow: /auth/
-Disallow: /o/
+Disallow: /versus/
+Disallow: /virtual-start/
 Disallow: /form/
 Disallow: /coder/*/ratings/
 Disallow: /account/*/ratings/
-Disallow: /profile/*/ratings/
 Disallow: /account/*/verification/
+
+Disallow: /send-event-notification/
+Disallow: /change-environment/
+Disallow: /change-debug-toolbar/
+Disallow: /standings/action/
+Disallow: /promotion/skip/
+Disallow: /webpush/
+Disallow: /django-rq/
+Disallow: /silk/
+Disallow: /*/dumpdata/
 
 Allow: /api/v*/doc
 Disallow: /api/
 
-Disallow: *?*&
-Disallow: *?*__*
-Disallow: /standings/*/*?resource=
-Disallow: /coders/*?resource=
-Disallow: /resources/*/*?resource=
-Allow:    *?country=
-Allow:    *?resource=
-Disallow: *?country=*&
-Disallow: *?resource=*&
-Disallow: *?
+Allow: /coders/?country=
+Disallow: /coders/?country=*&
+Allow: /accounts/?country=
+Disallow: /accounts/?country=*&
+Allow: /standings/?resource=
+Disallow: /standings/?resource=*&
+Allow: /problems/?resource=
+Disallow: /problems/?resource=*&
+
+Disallow: /*?

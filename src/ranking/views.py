@@ -37,8 +37,7 @@ from clist.templatetags.extras import (allowed_redirect, as_number, format_time,
 from clist.templatetags.extras import timezone as set_timezone
 from clist.templatetags.extras import toint, url_transform
 from clist.views import get_group_list, get_timeformat, get_timezone
-from pyclist.decorators import (context_pagination, extra_context_without_pagination, inject_contest,
-                                pagination_login_required)
+from pyclist.decorators import context_pagination, extra_context_without_pagination, inject_contest
 from pyclist.middleware import RedirectException
 from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse, ProxyLimitReached
 from ranking.models import (Account, AccountRenaming, Finalist, FinalistResourceInfo, Module, Stage, Statistics,
@@ -1017,7 +1016,6 @@ def get_advancing_contests(contest):
     ("standings_groupby_paging.html", "groupby_paging"),
 ))
 @inject_contest()
-@pagination_login_required
 def standings(request, contest, other_contests=None, template="standings.html", extra_context=None):
     context = {}
     contests_timelines = dict()
@@ -2427,25 +2425,29 @@ def finalists(request, contest, template="finalists.html"):
     resources = request.get_resources()
     resource_fields = finalist_resources
     force = "force" in request.GET and request.user.is_staff
-    update_delay = timedelta(days=1)
-    with_update = timezone.now() < contest.start_time
+    with_update = timezone.now() < contest.end_time
 
     finalists = finalists.prefetch_related("finalistresourceinfo_set")
 
     achievement_statistics = Statistics.objects
-    achievement_statistics = achievement_statistics.select_related("contest", "resource", "account")
+    achievement_statistics = achievement_statistics.select_related("contest__resource", "resource", "account")
     achievement_statistics = achievement_statistics.order_by("-contest__end_time", "place_as_int")
     if resources:
         achievement_statistics = achievement_statistics.filter(resource__in=resources)
     finalists = finalists.prefetch_related(Prefetch("achievement_statistics", queryset=achievement_statistics))
 
+    accounts_queryset = Account.objects.select_related("resource")
+    countries = request.get_filtered_list("country")
+    if countries:
+        accounts_queryset = accounts_queryset.filter(country__in=countries)
+        finalists = finalists.filter(accounts__country__in=countries)
+    accounts_prefetch = Prefetch("accounts", queryset=accounts_queryset, to_attr="filtered_accounts")
+    finalists = finalists.prefetch_related(accounts_prefetch)
+
+    finalists = finalists.prefetch_related("accounts__coders")
     for finalist in finalists:
         accounts = finalist.accounts.all()
-        last_modified = max(a.modified for a in accounts)
-
-        accounts_filter = finalist.accounts.filter(coders=OuterRef("pk"))
-        coders = Coder.objects.annotate(has_finalist_account=SubqueryExists(accounts_filter))
-        coders = coders.filter(has_finalist_account=True)
+        coders = [coder for account in accounts for coder in account.coders.all()]
 
         accounts_filter = Q(pk__in={a.pk for a in accounts})
         accounts_filter |= Q(coders__in=coders)
@@ -2453,37 +2455,6 @@ def finalists(request, contest, template="finalists.html"):
         resource_infos = {}
         for resource_info in finalist.finalistresourceinfo_set.all():
             resource_infos[resource_info.resource_id] = resource_info
-
-        for resource in resource_fields:
-            if resource.id not in resource_infos:
-                resource_info, _ = FinalistResourceInfo.objects.get_or_create(finalist=finalist, resource=resource)
-                resource_infos[resource.id] = resource_info
-            else:
-                resource_info = resource_infos[resource.id]
-
-            if not force:
-                if not with_update or resource_info.updated and last_modified < resource_info.updated + update_delay:
-                    continue
-
-            rating_accounts = resource.account_set.filter(rating__isnull=False)
-            rating_accounts = rating_accounts.filter(accounts_filter)
-            ratings_data = rating_accounts.order_by("-rating").values("rating", "key")
-            if not ratings_data:
-                continue
-
-            rating = round(get_rating([r["rating"] for r in ratings_data]))
-            if len(ratings_data) > 1:
-                rating_infos = []
-                for rating_data in ratings_data:
-                    ratings = [r["rating"] for r in ratings_data if r["key"] != rating_data["key"]]
-                    rating_infos.append({"delta": rating - round(get_rating(ratings)), **rating_data})
-            else:
-                rating_infos = [dict(r) for r in ratings_data]
-
-            resource_info.ratings = rating_infos
-            resource_info.rating = rating
-            resource_info.updated = timezone.now()
-            resource_info.save()
         setattr(finalist, "resource_infos", resource_infos)
 
         n_contests = [a.n_contests for a in accounts] + [c.n_contests for c in coders]
@@ -2517,7 +2488,10 @@ def finalists(request, contest, template="finalists.html"):
         "ach_min_date": ach_min_date,
         "params": {
             "resources": resources,
+            "countries": countries,
         },
         "with_achievements": bool(ach_max_date),
+        "with_fixed_width": contest.finalists_info.get("max_accounts_size") == 1,
+        "has_country": contest.finalists_info.get("has_country"),
     }
     return render(request, template, context)

@@ -707,7 +707,7 @@ function pop_item(&$array, $path, $default = null)
     }
     $result = &$array;
     foreach ($path as $key) {
-        if (!isset($result[$key])) {
+        if (!array_key_exists($key, $result)) {
             return null;
         }
         $last_result = &$result;

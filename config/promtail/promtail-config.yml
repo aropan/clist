@@ -37,6 +37,20 @@ scrape_configs:
             user_agent: http_user_agent
             referer: http_referer
             fwd_for: http_x_forwarded_for
+            cf_connecting_ip: cf_connecting_ip
+            cf_ray: cf_ray
+            cf_ipcountry: cf_ipcountry
+            cf_visitor: cf_visitor
+            cf_verified_bot: cf_verified_bot
+      - template:
+          source: level
+          template: '{{ if regexMatch "^5" .status }}error{{ else if regexMatch "^4" .status }}warn{{ else }}info{{ end }}'
+      - regex:
+          source: user_agent
+          expression: '(?i)(?P<search_engine>Googlebot|Bingbot|Yandex\w*|Baiduspider|DuckDuckBot|Sogou\w*|Exabot|Slurp|facebookexternalhit|AhrefsBot|mj12bot|SemrushBot|DotBot|PetalBot|meta-webindexer|Applebot|Amazonbot|Twitterbot)'
+      - regex:
+          source: user_agent
+          expression: '(?i)(?P<ai_bot>GPTBot|ChatGPT|Claude\w*|Anthropic|CCBot|Google-Extended|OAI-SearchBot|PerplexityBot|Bytespider|cohere|Diffbot|FacebookBot|Applebot-Extended|Timpibot|Grok\w*|YouBot|Gemini\w*|Bard-Ai|meta-externalagent|DataForSeoBot)'
       - timestamp:
           source: ts
           format: RFC3339
@@ -44,6 +58,7 @@ scrape_configs:
           host:
           status:
           method:
+          level:
       - regex:
           source: uri
           expression: '(?P<section>^/[^/]+/)'
@@ -60,6 +75,13 @@ scrape_configs:
           user_agent:
           referer:
           fwd_for:
+          cf_connecting_ip:
+          cf_ray:
+          cf_ipcountry:
+          cf_visitor:
+          cf_verified_bot:
+          search_engine:
+          ai_bot:
           section:
     static_configs:
       - targets: [localhost]

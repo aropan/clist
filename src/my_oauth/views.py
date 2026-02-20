@@ -8,7 +8,6 @@ from io import StringIO
 from urllib.parse import quote
 
 import requests
-from guardian.decorators import permission_required_or_403
 from django.conf import settings
 from django.contrib import auth, messages
 from django.contrib.auth.decorators import login_required, permission_required
@@ -22,6 +21,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from flatten_dict import flatten
+from guardian.decorators import permission_required_or_403
 
 from clist.templatetags.extras import allowed_redirect
 from my_oauth.models import Credential, Form, Service, Token
@@ -373,9 +373,18 @@ def form(request, uuid):
             actions = []
             if form.grant_credentials:
                 login = request.GET.get("login")
-                credential = Credential.objects.get(form=form, login=login)
-                credential.state = Credential.State.APPROVED
-                credential.save(update_fields=["state"])
+
+                with transaction.atomic():
+                    credential_qs = Credential.objects.filter(form=form, login=login)
+                    credential = credential_qs.exclude(state=Credential.State.APPROVED).first()
+                    if not credential:
+                        if credential_qs.first():
+                            return HttpResponseBadRequest("Credential already approved")
+                        else:
+                            return HttpResponseBadRequest("Credential not found")
+                    credential.state = Credential.State.APPROVED
+                    credential.save(update_fields=["state"])
+
                 actions.append({"name": "approve", "login": credential.login})
             if form.registration:
                 register_url = form.register_url.format(**request.GET.dict())

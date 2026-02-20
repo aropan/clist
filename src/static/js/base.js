@@ -848,6 +848,10 @@ $(() => {
 
 function clear_url_parameters() {
   var url = new URL(window.location.href);
+  if (url.searchParams.has("__cf_chk__")) {
+    url.searchParams.delete("__cf_chk__");
+    window.history.replaceState(null, null, url.href);
+  }
   if (url.searchParams.has("search") || url.searchParams.has("sort_order")) {
     var disabled_fields = new Set([
       "timeline",
@@ -1242,3 +1246,26 @@ function add_to_coder_list(element, event) {
 function element_contains_class(element, class_name) {
   return (" " + element.className + " ").indexOf(" " + class_name + " ") > -1;
 }
+
+/*
+ * Cloudflare challenge
+ */
+
+$(() => {
+  $(document).ajaxComplete((event, xhr, settings) => {
+    const responseText = xhr.responseText || "";
+    if (
+      xhr.getResponseHeader("cf-mitigated") === "challenge" ||
+      responseText.indexOf("__cf_chl_managed_challenge_url__") !== -1 ||
+      responseText.indexOf('id="challenge-running"') !== -1 ||
+      responseText.indexOf("cf-turnstile") !== -1 ||
+      responseText.indexOf("_cf_chl_opt") !== -1
+    ) {
+      var url = new URL(window.location.href);
+      if (!url.searchParams.has("__cf_chk__")) {
+        url.searchParams.set("__cf_chk__", "");
+        window.location.href = url.href;
+      }
+    }
+  });
+});

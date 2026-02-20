@@ -50,7 +50,7 @@ from notes.models import Note
 from notification.forms import Notification, NotificationForm
 from notification.models import Calendar, NotificationMessage, Subscription
 from notification.utils import compose_message_by_problems, compose_message_by_submissions, send_messages
-from pyclist.decorators import context_pagination, pagination_login_required
+from pyclist.decorators import context_pagination
 from pyclist.middleware import RedirectException
 from ranking.models import (Account, AccountRenaming, AccountVerification, Module, Rating, Statistics, VerifiedAccount,
                             VirtualStart)
@@ -264,7 +264,6 @@ def my_profile(request):
     return HttpResponseRedirect(url)
 
 
-@pagination_login_required
 @page_template('coders_paging.html')
 @context_pagination()
 def coders(request, template='coders.html'):
@@ -411,7 +410,6 @@ def coders(request, template='coders.html'):
     return template, context
 
 
-@pagination_login_required
 @page_templates((
     ('profile_contests_paging.html', 'contest_page'),
     ('profile_writers_paging.html', 'writers_page'),
@@ -491,7 +489,6 @@ def account_context(request, key, host):
     return context
 
 
-@pagination_login_required
 @page_templates((
     ('profile_contests_paging.html', 'contest_page'),
     ('profile_writers_paging.html', 'writers_page'),
@@ -657,7 +654,6 @@ def _get_data_mixed_profile(request, query, is_team=False):
     }
 
 
-@pagination_login_required
 @page_templates((
     ('profile_contests_paging.html', 'contest_page'),
     ('profile_writers_paging.html', 'writers_page'),
@@ -671,7 +667,6 @@ def profiles(request, query, template='profile_mixed.html'):
     return template, context
 
 
-@pagination_login_required
 @page_templates((
     ('profile_contests_paging.html', 'contest_page'),
 ))
@@ -2629,7 +2624,6 @@ def filter_contests_with_advanced_to_stats(request, params):
     }
 
 
-@pagination_login_required
 @page_template('accounts_paging.html')
 @context_pagination()
 def accounts(request, template='accounts.html'):

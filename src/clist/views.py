@@ -25,7 +25,7 @@ from clist.templatetags.extras import (allowed_redirect, as_number, get_item, ge
 from favorites.models import Activity
 from favorites.templatetags.favorites_extras import activity_icon
 from notification.management.commands import sendout_tasks
-from pyclist.decorators import context_pagination, pagination_login_required
+from pyclist.decorators import context_pagination
 from ranking.models import Account, CountryAccount, Rating, Statistics
 from ranking.utils import get_participation_contests
 from true_coders.models import Coder, CoderList, CoderProblem, Filter, Party
@@ -376,7 +376,6 @@ def resources(request):
     return render(request, 'resources.html', context)
 
 
-@pagination_login_required
 @ratelimit(key="user_or_ip", rate="300/h")
 @page_templates((('resources_account_rating_paging.html', None),))
 @context_pagination()
@@ -451,7 +450,6 @@ def resources_account_ratings(request, template='resources_account_ratings.html'
     return render(request, template, context)
 
 
-@pagination_login_required
 @ratelimit(key="user_or_ip", rate="300/h")
 @page_templates((('resources_country_rating_paging.html', None),))
 @context_pagination()
@@ -543,7 +541,6 @@ def resource_problem_rating_chart(resource):
     return problem_rating_chart
 
 
-@pagination_login_required
 @ratelimit(key="user_or_ip", rate="300/h")
 @page_templates((
     ('resource_country_most_medals.html', 'country_most_medals_page'),
@@ -823,7 +820,6 @@ def resources_dumpdata(request):
     return response
 
 
-@pagination_login_required
 @ratelimit(key="user_or_ip", rate="300/h")
 @page_templates((
     ('problems_paging.html', 'problems_paging'),

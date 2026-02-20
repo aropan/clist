@@ -10,10 +10,20 @@ from django.http import HttpResponse, HttpResponseForbidden
 from django.middleware import csrf
 from django.shortcuts import redirect
 from django.utils import timezone
+from el_pagination.decorators import PAGE_LABEL, QS_KEY
 
 from clist.templatetags.extras import redirect_login
 from true_coders.models import Coder
 from utils.custom_request import CustomRequest
+
+
+def ForbidPostPaginationMiddleware(get_response):
+    def middleware(request):
+        if request.method == 'POST' and (QS_KEY in request.POST or PAGE_LABEL in request.POST):
+            return HttpResponseForbidden()
+        return get_response(request)
+
+    return middleware
 
 
 def DebugPermissionOnlyMiddleware(get_response):

@@ -1,6 +1,6 @@
 /var/log/nginx/*.log /var/log/nginx/*.json {
     daily
-    rotate 7
+    rotate 31
     compress
     delaycompress
     copytruncate

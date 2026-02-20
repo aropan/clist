@@ -192,36 +192,3 @@ def extra_context_without_pagination(perm):
         return decorated
 
     return decorator
-
-
-def pagination_login_required(view):
-    @wraps(view)
-    def decorated(request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            if (
-                QS_KEY in request.GET
-                or QS_KEY in request.POST
-                or PAGE_LABEL in request.GET
-                or PAGE_LABEL in request.POST
-            ):
-                return redirect_login(request)
-
-            n_non_empty = 0
-            for querydict in (request.GET, request.POST):
-                for _, values in querydict.lists():
-                    for value in values:
-                        if value:
-                            n_non_empty += 1
-                            if n_non_empty > 1:
-                                return redirect_login(request)
-
-            if (
-                not request.META.get("HTTP_REFERER") and
-                n_non_empty > 0 and
-                (not isinstance(contest := kwargs.get("contest"), Contest) or contest.is_over())
-            ):
-                return redirect_login(request)
-
-        return view(request, *args, **kwargs)
-
-    return decorated

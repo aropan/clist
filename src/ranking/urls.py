@@ -20,8 +20,8 @@ urlpatterns = [
     re_path(r'^versus/(.+/vs/.+)/$', views.versus, name='versus'),
     re_path(r'^virtual-start/$', views.virtual_start, name='virtual_start'),
 
-    re_path(r'^finalists/(?P<title_slug>[^/]*)-(?P<contest_id>[0-9]+)/$', views.finalists, name='finalists'),
-    re_path(r'^finalists/(?P<contest_id>[0-9]+)/$', views.finalists, name='finalists_by_id'),
-    re_path(r'^finalists/(?P<contests_ids>[0-9]+(?:,[0-9]+)+)/$', views.finalists, name='finalists_by_ids'),
-    re_path(r'^finalists/(?P<title_slug>[^/]+)/$', views.finalists, name='finalists_by_slug'),
+    re_path(r'^participants/(?P<title_slug>[^/]*)-(?P<contest_id>[0-9]+)/$', views.finalists, name='finalists'),
+    re_path(r'^participants/(?P<contest_id>[0-9]+)/$', views.finalists, name='finalists_by_id'),
+    re_path(r'^participants/(?P<contests_ids>[0-9]+(?:,[0-9]+)+)/$', views.finalists, name='finalists_by_ids'),
+    re_path(r'^participants/(?P<title_slug>[^/]+)/$', views.finalists, name='finalists_by_slug'),
 ]

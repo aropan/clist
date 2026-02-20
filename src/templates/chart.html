@@ -287,7 +287,18 @@
           x: {
             {% if chart.x_type %}
             type: '{{ chart.x_type }}',
+            {% if chart.x_type == 'time' %}
+            time: {
+              displayFormats: {
+                millisecond: "HH:mm:ss.SSS",
+                second: "HH:mm:ss",
+                minute: "HH:mm",
+                hour: "HH:mm",
+              },
+            },
             {% endif %}
+            {% endif %}
+
             {% if chart.x_min %}
             min: {{ chart.x_min }},
             {% endif %}

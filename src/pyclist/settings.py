@@ -140,6 +140,7 @@ MIDDLEWARE = (
     'pyclist.middleware.UpdateCoderLastActivity',
     'pyclist.middleware.CustomRequestMiddleware',
     'pyclist.middleware.RequestIsAjaxFunction',
+    'pyclist.middleware.ForbidPostPaginationMiddleware',
     'pyclist.middleware.RedirectMiddleware',
     'pyclist.middleware.SetAsCoder',
     'pyclist.middleware.Lightrope',

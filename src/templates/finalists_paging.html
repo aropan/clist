@@ -7,9 +7,13 @@
   </td>
   {% endif %}
   <td class="participant-column">
-    {% for account in finalist.accounts.all %}
+    {% for account in finalist.filtered_accounts %}
       {% include "account_table_cell.html" with resource=account.resource account=account without_inline_url=True %}
     {% endfor %}
+
+    <span class="inline-button absolute-button">
+      <button data-href="{% url 'admin:ranking_finalist_change' finalist.pk %}" class="database-href btn btn-default btn-xs">{% icon_to 'database' %}</button>
+    </span>
   </td>
   {% for resource in resource_fields %}
   <td class="no-stretch">

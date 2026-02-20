@@ -127,7 +127,7 @@
       </span>
 
       {% if contest.finalists_info %}
-      <a href="{% url 'ranking:finalists' contest.title|slug contest.pk %}" class="badge progress-bar-info">{% icon_to 'finalists' %}</a>
+      <a href="{% url 'ranking:finalists' contest.title|slug contest.pk %}" class="badge progress-bar-info">{% icon_to 'finalists' default='Participants' %}</a>
       {% endif %}
 
       {% if contest.n_problems is not None %}

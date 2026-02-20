@@ -9,6 +9,11 @@ for (;;) {
     $page += 1;
     $url = "$URL?page=$page&_contentOnly";
     $data = curlexec($url, null, ["json_output" => true]);
+    if (!is_array($data)) {
+        trigger_error("Failed to parse url $url = " . json_encode($data), E_USER_WARNING);
+        break;
+    }
+
     $contests_data = pop_item($data, ["currentData", "contests", "result"]);
     $contests_info = pop_item($data, ["currentData", "contests"]);
     if (!$contests_data || !$contests_info) {
@@ -73,4 +78,3 @@ for (;;) {
         break;
     }
 }
-?>

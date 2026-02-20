@@ -71,6 +71,9 @@ services:
       - pgadmin_data:/var/lib/pgadmin
     env_file:
       - ./.env.db
+    environment:
+      - PGADMIN_CONFIG_SESSION_COOKIE_SECURE=True
+      - GUNICORN_CMD_ARGS=--forwarded-allow-ips="*"
     depends_on:
       - db
     restart: unless-stopped
