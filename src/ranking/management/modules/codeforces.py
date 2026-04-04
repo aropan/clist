@@ -16,7 +16,7 @@ import pytz
 from django.db.models import Min
 
 from clist.models import Problem
-from clist.templatetags.extras import as_number, get_division_problems, get_problem_short, is_solved, slug
+from clist.templatetags.extras import as_number, get_division_problems, get_problem_short, is_solved, scoreformat, slug
 from pyclist.middleware import RedirectException
 from ranking.management.modules import conf
 from ranking.management.modules.common import LOG, REQ, UNCHANGED, BaseModule, parsed_table, utc_now
@@ -24,6 +24,7 @@ from ranking.management.modules.excepts import (ExceptionParseAccounts, Exceptio
                                                 InitModuleException)
 from ranking.utils import create_upsolving_statistic
 from utils.aes import AESModeOfOperation
+from utils.mathutils import min_with_none
 from utils.strings import strip_tags
 from utils.timetools import parse_datetime
 
@@ -124,7 +125,7 @@ class Statistic(BaseModule):
         super().__init__(**kwargs)
 
         self.is_spectator_ranklist = self.standings_url and 'spectator/ranklist' in self.standings_url
-        self.is_blitz_cup = 'blitz-cup' in self.key and self.standings_url and '/blog/entry/' in self.standings_url
+        self.is_blitz_cup = 'blitz-cup' in self.key or self.contest.elimination_tournament_info
         if self.is_spectator_ranklist or self.is_blitz_cup:
             return
 
@@ -283,6 +284,89 @@ class Statistic(BaseModule):
 
         info['is_accepted'] = is_accepted
         return info
+
+    def get_blitz_cup_standings(self):
+        if "_bracket_data_url" in self.info:
+            return self.get_blitz_cup_standings_from_json()
+        return self.get_blitz_cup_standings_from_html()
+
+    def get_blitz_cup_standings_from_json(self):
+        now_timestamp = utc_now().timestamp()
+        data = REQ.get(self.info['_bracket_data_url'], return_json=True)
+        result = {}
+        last_round = {}
+        problems_infos = {}
+        delay = None
+        for match in data['matches']:
+            round_data = {}
+            for field in 'index', 'status', 'start_time':
+                round_data[field] = match.pop(field)
+            if round_data['status'] == 'in_progress':
+                delay = min_with_none(delay, 60)
+            if round_data['start_time'] and (delta := round_data['start_time'] - now_timestamp) > 0:
+                delay = min_with_none(delay, delta)
+            problem_name = match.pop('group_name')
+            problem_short = problem_name
+            round_data['problem'] = problem_name
+            problems_infos[problem_name] = {'name': problem_name}
+            advancing_members = round_data.setdefault('advancing_members', [])
+            if 'winner' in match and match['winner']:
+                advancing_members.append(match['winner'])
+
+            single_matches = match.get('single_matches') or []
+            from_rounds = round_data.setdefault('from_rounds', [])
+            for handle in match['participants']:
+                if isinstance(handle, dict) and 'from_match' in handle:
+                    from_rounds.append(handle['from_match'])
+                if not isinstance(handle, str):
+                    continue
+                if handle in last_round:
+                    from_rounds.append(last_round[handle]['index'])
+                last_round[handle] = round_data
+                row = result.setdefault(handle, {'member': handle})
+                row['solving'] = row.get('solving', 0) + 1
+                problems = row.setdefault('problems', {})
+                problem = problems.setdefault(problem_short, {})
+                for single_match in single_matches:
+                    single_match = deepcopy(single_match)
+                    participant_idx = single_match['participants'].index(handle)
+                    for field in 'participants', 'score', 'results':
+                        arr = single_match[field]
+                        if arr:
+                            val = arr.pop(participant_idx)
+                            arr.insert(0, val)
+                    problem['result'] = ' : '.join(map(scoreformat, single_match['score']))
+                    if handle in advancing_members:
+                        problem['result_verdict'] = 'accepted'
+                    elif single_match['status'] != 'finished':
+                        problem['result_verdict'] = 'hidden'
+                    else:
+                        problem['result_verdict'] = 'rejected'
+                    if spectator_ranklist := single_match.get('spectator_ranklist'):
+                        problem['standings_url'] = self.resource.href() + 'spectator/ranklist/' + spectator_ranklist
+                    if round_data['start_time'] and round_data['start_time'] > now_timestamp:
+                        problem['start_time'] = round_data['start_time']
+        for handle, row in result.items():
+            if handle in last_round[handle]['advancing_members']:
+                row['solving'] += 1
+
+        last_rank, last_score = None, None
+        for idx, row in enumerate(sorted(result.values(), key=lambda r: r['solving'], reverse=True), start=1):
+            score = row['solving']
+            if score != last_score:
+                last_rank = idx
+                last_score = score
+            row['place'] = last_rank
+
+        standings = {
+            'result': result,
+            'problems': list(problems_infos.values()),
+            'elimination_tournament_info': {},
+        }
+        if delay is not None:
+            standings['timing_statistic_delta'] = timedelta(seconds=delay)
+            standings['force_timing_statistic_delta'] = True
+        return standings
 
     def get_blitz_cup_standings_from_html(self):
         url = urljoin(self.standings_url, '?lang=ru')
@@ -447,7 +531,7 @@ class Statistic(BaseModule):
             return self.get_standings_from_html()
 
         if self.is_blitz_cup:
-            return self.get_blitz_cup_standings_from_html()
+            return self.get_blitz_cup_standings()
 
         contest_url = self.url.replace('contests', 'contest')
         standings_url = contest_url.rstrip('/') + '/standings'

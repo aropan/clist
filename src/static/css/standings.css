@@ -333,20 +333,19 @@ a.solution:hover span {
  */
 
 .modal-versus-games .panel,
-.modal-versus-games table {
+.modal-versus-games table.table {
   margin: 0;
 }
 
-.modal-versus-games table {
+.modal-versus-games .panel table.table td {
   text-align: center;
+  vertical-align: middle;
+  padding: 2px 5px;
+  height: 20px;
 }
 
-.modal-versus-games table a {
+.modal-versus-games .panel table.table a {
   color: #337ab7 !important;
-}
-
-.modal-versus-games table {
-  text-align: center;
 }
 
 .modal-versus-games .modal-content {
@@ -357,6 +356,25 @@ a.solution:hover span {
 a.versus-games:hover {
   cursor: pointer;
 }
+
+.modal-versus-games .table tr.game-hover > td,
+.modal-versus-games .table tr.game-hover > th {
+  background-color: #f5f5f5;
+}
+.modal-versus-games .table tr.success.game-hover > td,
+.modal-versus-games .table tr.success.game-hover > th {
+  background-color: #d0e9c6;
+}
+.modal-versus-games .table tr.danger.game-hover > td,
+.modal-versus-games .table tr.danger.game-hover > th {
+  background-color: #ebcccc;
+}
+.modal-versus-games .table tr.warning.game-hover > td,
+.modal-versus-games .table tr.warning.game-hover > th {
+  background-color: #faf2cc;
+}
+
+/* END Versus games modal */
 
 #parsed-time .pull-right {
   margin-top: -20px;

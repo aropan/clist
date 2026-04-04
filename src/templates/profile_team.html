@@ -16,7 +16,7 @@
   </a>
 
   {% if perms.true_coders.change_coder %}
-    <a href="{% url 'admin:true_coders_coder_change' coder.id %}" class="database-link invisible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
+    <a href="{% url 'admin:true_coders_coder_change' coder.id %}" class="hover-visible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
   {% endif %}
 </div>
 {% endfor %}

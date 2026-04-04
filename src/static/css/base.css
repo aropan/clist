@@ -361,13 +361,13 @@ html {
   margin-left: -21.5px;
 }
 
-a.database-link {
+.hover-visible {
+  visibility: hidden;
   position: absolute;
   margin-left: 5px;
 }
 
-:hover>a.database-link {
-  color: #337ab7;
+:hover>.hover-visible {
   visibility: visible;
 }
 

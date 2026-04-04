@@ -2,11 +2,12 @@
   {% with win=versus_data_row.win lose=versus_data_row.lose draw=versus_data_row.draw total=versus_data_row.total %}
   <{{ tag }} class="versus-cell">
     {% if versus_data_row.games %}
-      <a class="versus-games" onclick="$('#versus-games-{{ statistic.pk|default:"none" }}').modal('show');">
+      <a class="versus-games" onclick="$('#versus-games-{{ statistic.pk|default:"none" }}').modal('show'); setup_versus_games_hover('#versus-games-{{ statistic.pk|default:"none" }}');">
     {% endif %}
     {{ total }}
+    {% if versus_data_row.games %}</a>{% endif %}
+
     {% if versus_data_row.games %}
-      </a>
       {% if not statistic.my_stat %}
         {% include "standings_versus_games.html" %}
       {% endif %}

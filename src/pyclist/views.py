@@ -6,7 +6,6 @@ from urllib.parse import urlparse
 
 from django.apps import apps
 from django.conf import settings
-from django.contrib.admin.views.decorators import staff_member_required
 from django.db.models import F, Q
 from django.http import HttpResponseBadRequest, HttpResponseRedirect, JsonResponse
 from django.urls import NoReverseMatch, reverse
@@ -14,7 +13,7 @@ from django.utils.timezone import now
 from el_pagination.decorators import page_templates
 
 from clist.templatetags.extras import allowed_redirect, is_yes, timestamp_to_datetime, url_transform
-from pyclist.decorators import context_pagination, extra_context_without_pagination
+from pyclist.decorators import context_pagination, extra_context_without_pagination, superuser_required
 from utils.chart import make_chart
 from utils.db import get_delete_info
 from utils.timetools import parse_duration
@@ -206,7 +205,7 @@ def update_context_by_source(request, context):
     return context
 
 
-@staff_member_required
+@superuser_required
 @page_templates((
     ('charts_paging.html', 'entities_paging'),
 ))
@@ -260,7 +259,7 @@ def charts(request, template='charts.html'):
     return template, context
 
 
-@staff_member_required
+@superuser_required
 def change_environment(request):
     referer_url = request.META.get('HTTP_REFERER')
     if not referer_url:
@@ -276,7 +275,7 @@ def change_environment(request):
     return HttpResponseRedirect(new_url)
 
 
-@staff_member_required
+@superuser_required
 def change_debug_toolbar(request):
     referer_url = request.META.get('HTTP_REFERER')
     if not referer_url:

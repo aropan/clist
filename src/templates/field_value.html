@@ -6,6 +6,10 @@
     {% if value is None %}&mdash;{% else %}{{ template_value }}{% endif %}
   </a>
 {% else %}
+  {% if with_filtration %}
+  <a href="{% url_transform request field value|to_template_filter_value %}">
+  {% endif %}
+
   {% with intvalue=value|toint %}
   {% with types=fields_types|get_item:field %}
     <span
@@ -84,6 +88,10 @@
         {% for object in value.all %}{{ object }}{% endfor %}
       {% elif value|get_type == 'datetime' %}
         <span title="{{ value|timezone:timezone|format_time:timeformat }}" data-toggle="tooltip">{{ value|timezone:timezone|naturalday }}</span>
+      {% elif field == "max_time_usage" %}
+        {{ value|hr_timedelta_small }}
+      {% elif field == "max_memory_usage" %}
+        {{ value|filesizeformat }}
       {% elif value|get_type == 'float' and scorefixedformat %}
         {{ value|scorefixedformat:scorefixedformat }}
       {% elif field in statistic_fields or field in account_fields %}
@@ -94,6 +102,9 @@
     </span>
   {% endwith %}
   {% endwith %}
+  {% if with_filtration %}
+  </a>
+  {% endif %}
 {% endif %}
 </span>
 {% endwith %}

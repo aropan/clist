@@ -3,6 +3,10 @@
 require_once dirname(__FILE__) . "/../../config.php";
 
 $main_page = curlexec($URL);
+if (empty($main_page)) {
+    trigger_error("Failed to fetch main page", E_USER_WARNING);
+    return;
+}
 $_contests = array();
 
 function parse_contest_title($page)
@@ -20,7 +24,6 @@ function parse_contest_title($page)
 function parse_nef()
 {
     global $main_page, $URL, $_contests;
-
 
     preg_match('#<a[^>]*href="(?P<url>[^">]*)"[^>]*>\s*ne\s*finals\s*</a>#si', $main_page, $match);
     $url = url_merge($URL, $match['url']);

@@ -2091,3 +2091,18 @@ function show_score_histories(a, e) {
   e.stopPropagation();
   return false;
 }
+
+function setup_versus_games_hover(selector) {
+  var $modal = $(selector);
+  $modal
+    .off("mouseenter.gameHover", "tr[data-game-class]")
+    .on("mouseenter.gameHover", "tr[data-game-class]", function () {
+      var gameClass = $(this).attr("data-game-class");
+      $modal.find("." + gameClass).addClass("game-hover");
+    })
+    .off("mouseleave.gameHover", "tr[data-game-class]")
+    .on("mouseleave.gameHover", "tr[data-game-class]", function () {
+      var gameClass = $(this).attr("data-game-class");
+      $modal.find("." + gameClass).removeClass("game-hover");
+    });
+}

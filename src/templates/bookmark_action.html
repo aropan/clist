@@ -1,0 +1,9 @@
+{% if request.user.is_authenticated and request.GET %}
+<div class="input-group{% if not nosmall %} input-group-sm{% endif %}">
+  {% with active=request.user.coder.bookmarks|get_item:request.path|is_equal:request.GET.urlencode %}
+  <button class="btn{% if not nosmall %} btn-sm{% endif %} btn-default{% if active %} active{% endif %}" onclick="bookmark_action(this, event)" data-path="{{ request.path }}" data-query="{{ request.GET.urlencode }}">
+    <i class="fa-fw fa-{% if active %}solid{% else %}regular{% endif %} fa-bookmark"></i>
+  </button>
+  {% endwith %}
+</div>
+{% endif %}

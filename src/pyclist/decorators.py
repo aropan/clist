@@ -192,3 +192,23 @@ def extra_context_without_pagination(perm):
         return decorated
 
     return decorator
+
+
+def superuser_required(view_func):
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_superuser:
+            return redirect_login(request)
+        return view_func(request, *args, **kwargs)
+    return wrapper
+
+
+def bookmarked(view_func):
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not request.GET and request.user.is_authenticated and (coder := request.user.coder):
+            bookmark = coder.bookmarks.get(request.path)
+            if bookmark:
+                return redirect(request.path + "?" + bookmark)
+        return view_func(request, *args, **kwargs)
+    return wrapper

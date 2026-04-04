@@ -733,6 +733,8 @@ ENABLE_GLOBAL_RATING_ = False
 CHART_N_BINS_LIMIT = 300
 CHART_N_BINS_DEFAULT = 40
 
+MAX_BOOKMARKS_COUNT = 50
+
 
 FONTAWESOME_ICONS_ = {
     'institution': '<i class="fa-fw fas fa-university"></i>',
@@ -903,6 +905,9 @@ FONTAWESOME_ICONS_ = {
     'debug_toolbar': '<i class="fa-solid fa-toolbox"></i>',
     'account_type': '<i class="fa-regular fa-circle-user"></i>',
     'force_default_scroll': '<i class="fa-fw fa-solid fa-arrow-down-long"></i>',
+    'log_type': '<i class="fa-fw fa-solid fa-list"></i>',
+    'bookmark': '<i class="fa-fw fa-regular fa-bookmark"></i>',
+    'logs': '<i class="fa-regular fa-rectangle-list"></i>',
 }
 
 

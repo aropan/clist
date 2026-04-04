@@ -33,7 +33,7 @@ class TaskNotification(BaseModel):
 
     @property
     def method_type(self):
-        ret, *_ = self.method.split(':', 1)
+        ret, *_ = self.method.split(":", 1)
         return ret
 
     def send(self, message=None, markdown=True, contest=None, **kwargs):
@@ -46,31 +46,30 @@ class TaskNotification(BaseModel):
             Task.create_contest_notification(notification=self, contest=contest)
             self.last_contest = contest
             self.last_update = timezone.now()
-            self.save(update_fields=['last_contest', 'last_update'])
+            self.save(update_fields=["last_contest", "last_update"])
         Task.objects.create(notification=self, message=message, **kwargs)
 
     @property
     def notification_key(self):
-        return f'{self.coder_id}:{self.method}'
+        return f"{self.coder_id}:{self.method}"
 
     class Meta:
         abstract = True
 
 
 class Notification(TaskNotification):
-
-    EVENT = 'event'
-    HOUR = 'hour'
-    DAY = 'day'
-    WEEK = 'week'
-    MONTH = 'month'
+    EVENT = "event"
+    HOUR = "hour"
+    DAY = "day"
+    WEEK = "week"
+    MONTH = "month"
 
     PERIOD_CHOICES = (
-        (EVENT, 'Event'),
-        (HOUR, 'Hour'),
-        (DAY, 'Day'),
-        (WEEK, 'Week'),
-        (MONTH, 'Month'),
+        (EVENT, "Event"),
+        (HOUR, "Hour"),
+        (DAY, "Day"),
+        (WEEK, "Week"),
+        (MONTH, "Month"),
     )
 
     DELTAS = {
@@ -91,14 +90,14 @@ class Notification(TaskNotification):
     secret = models.CharField(max_length=50, blank=True, null=True)
 
     tasks = GenericRelation(
-        'Task',
-        object_id_field='notification_object_id',
-        content_type_field='notification_content_type',
-        related_query_name='periodical_notification',
+        "Task",
+        object_id_field="notification_object_id",
+        content_type_field="notification_content_type",
+        related_query_name="periodical_notification",
     )
 
     def __str__(self):
-        return f'{self.method}@{self.coder}: {self.before} {self.period} Notification#{self.id}'
+        return f"{self.method}@{self.coder}: {self.before} {self.period} Notification#{self.id}"
 
     def save(self, *args, **kwargs):
         if not self.id:
@@ -111,11 +110,8 @@ class Notification(TaskNotification):
         return Notification.DELTAS[self.period]
 
     def clean(self):
-        if (
-            self.method == django_settings.NOTIFICATION_CONF.WEBBROWSER
-            and self.period != Notification.EVENT
-        ):
-            raise ValidationError('WebBrowser method must have Event period.')
+        if self.method == django_settings.NOTIFICATION_CONF.WEBBROWSER and self.period != Notification.EVENT:
+            raise ValidationError("WebBrowser method must have Event period.")
 
 
 class EnabledSubscriptionManager(BaseManager):
@@ -125,23 +121,32 @@ class EnabledSubscriptionManager(BaseManager):
 
 class StatisticsSubscriptionManager(EnabledSubscriptionManager):
     def get_queryset(self):
-        return super().get_queryset().filter(with_statistics=True).annotate(locale=F('coder_list__locale'))
+        return super().get_queryset().filter(with_statistics=True).annotate(locale=F("coder_list__locale"))
 
 
 class UpsolvingSubscriptionManager(EnabledSubscriptionManager):
     def get_queryset(self):
-        return super().get_queryset().filter(with_upsolving=True).annotate(locale=F('coder_list__locale'))
+        return super().get_queryset().filter(with_upsolving=True).annotate(locale=F("coder_list__locale"))
 
 
 class Subscription(TaskNotification):
     resource = models.ForeignKey(Resource, null=True, blank=True, default=None, on_delete=models.CASCADE)
     contest = models.ForeignKey(Contest, null=True, blank=True, default=None, on_delete=models.CASCADE)
-    coders = models.ManyToManyField(Coder, blank=True, related_name='subscribers')
-    accounts = models.ManyToManyField(Account, blank=True, related_name='subscribers')
+    exclude_contest = models.ForeignKey(
+        Contest, null=True, blank=True, default=None, on_delete=models.SET_NULL, related_name="excluded_subscriptions"
+    )
+    coders = models.ManyToManyField(Coder, blank=True, related_name="subscribers")
+    accounts = models.ManyToManyField(Account, blank=True, related_name="subscribers")
     coder_list = models.ForeignKey(CoderList, null=True, blank=True, default=None, on_delete=models.CASCADE)
     coder_chat = models.ForeignKey(CoderChat, null=True, blank=True, default=None, on_delete=models.CASCADE)
-    last_contest = models.ForeignKey(Contest, null=True, blank=True, default=None, on_delete=models.CASCADE,
-                                     related_name='last_contest_subscriptions')
+    last_contest = models.ForeignKey(
+        Contest,
+        null=True,
+        blank=True,
+        default=None,
+        on_delete=models.CASCADE,
+        related_name="last_contest_subscriptions",
+    )
     last_update = models.DateTimeField(null=True, blank=True)
     with_first_accepted = models.BooleanField(default=False)
     top_n = models.IntegerField(null=True, blank=True)
@@ -150,10 +155,10 @@ class Subscription(TaskNotification):
     with_upsolving = models.BooleanField(default=False)
 
     tasks = GenericRelation(
-        'Task',
-        object_id_field='notification_object_id',
-        content_type_field='notification_content_type',
-        related_query_name='subscription',
+        "Task",
+        object_id_field="notification_object_id",
+        content_type_field="notification_content_type",
+        related_query_name="subscription",
     )
 
     objects = BaseManager()
@@ -163,43 +168,45 @@ class Subscription(TaskNotification):
 
     class Meta:
         indexes = [
-            models.Index(fields=['contest']),
-            models.Index(fields=['resource']),
-            models.Index(fields=['enable', 'resource', 'contest', 'with_statistics']),
-            models.Index(fields=['enable', 'resource', 'contest', 'with_upsolving']),
-            models.Index(fields=['resource', 'contest']),
-            models.Index(fields=['resource', 'contest', 'with_first_accepted']),
-            models.Index(fields=['resource', 'contest', 'top_n']),
+            models.Index(fields=["contest"]),
+            models.Index(fields=["resource"]),
+            models.Index(fields=["enable", "resource", "contest", "with_statistics"]),
+            models.Index(fields=["enable", "resource", "contest", "with_upsolving"]),
+            models.Index(fields=["resource", "contest"]),
+            models.Index(fields=["resource", "contest", "with_first_accepted"]),
+            models.Index(fields=["resource", "contest", "top_n"]),
         ]
 
     def __str__(self):
-        ret = f'{self.method}@{self.coder}:'
+        ret = f"{self.method}@{self.coder}:"
         if self.resource_id:
-            ret += f' {self.resource}'
+            ret += f" {self.resource}"
         if self.contest_id:
-            ret += f' {self.contest}'
-        return f'{ret} Subscription#{self.id}'
+            ret += f" {self.contest}"
+        return f"{ret} Subscription#{self.id}"
 
     def form_data(self):
         ret = {}
-        ret['id'] = self.id
-        ret['method'] = {'id': self.method, 'text': self.method}
+        ret["id"] = self.id
+        ret["method"] = {"id": self.method, "text": self.method}
         if self.resource:
-            ret['resource'] = {'id': self.resource.id, 'text': self.resource.host}
+            ret["resource"] = {"id": self.resource.id, "text": self.resource.host}
         if self.contest:
-            ret['contest'] = {'id': self.contest.id, 'text': self.contest.title}
-        accounts = ret.setdefault('accounts', [])
+            ret["contest"] = {"id": self.contest.id, "text": self.contest.title}
+        if self.exclude_contest:
+            ret["exclude_contest"] = {"id": self.exclude_contest.id, "text": self.exclude_contest.title}
+        accounts = ret.setdefault("accounts", [])
         for account in self.accounts.all():
-            accounts.append({'id': account.id, 'text': account.display()})
-        coders = ret.setdefault('coders', [])
+            accounts.append({"id": account.id, "text": account.display()})
+        coders = ret.setdefault("coders", [])
         for coder in self.coders.all():
-            coders.append({'id': coder.id, 'text': coder.detailed_name})
+            coders.append({"id": coder.id, "text": coder.detailed_name})
         if self.coder_list_id:
-            ret['coder_list'] = {'id': self.coder_list.id, 'text': self.coder_list.name}
+            ret["coder_list"] = {"id": self.coder_list.id, "text": self.coder_list.name}
         if self.coder_chat_id:
-            ret['coder_chat'] = {'id': self.coder_chat.id, 'text': self.coder_chat.title}
-        ret['with_first_accepted'] = self.with_first_accepted
-        ret['top_n'] = self.top_n
+            ret["coder_chat"] = {"id": self.coder_chat.id, "text": self.coder_chat.title}
+        ret["with_first_accepted"] = self.with_first_accepted
+        ret["top_n"] = self.top_n
         return ret
 
     def is_empty(self):
@@ -211,8 +218,7 @@ class Subscription(TaskNotification):
     def account_name(self, account) -> Optional[str]:
         if self.with_coder_list_names():
             groups = self.coder_list.groups.filter(name__isnull=False)
-            groups = groups.filter(Q(values__account=account) |
-                                   Q(values__coder__account=account))
+            groups = groups.filter(Q(values__account=account) | Q(values__coder__account=account))
             group = groups.first()
             if group:
                 return group.name
@@ -221,24 +227,24 @@ class Subscription(TaskNotification):
 
 @receiver(m2m_changed, sender=Subscription.accounts.through)
 def update_account_n_subscribers_on_change(**kwargs):
-    update_n_field_on_change(**kwargs, field='n_subscribers')
+    update_n_field_on_change(**kwargs, field="n_subscribers")
 
 
 @receiver(m2m_changed, sender=Subscription.coders.through)
 def update_coder_n_subscribers_on_change(**kwargs):
-    update_n_field_on_change(**kwargs, field='n_subscribers')
+    update_n_field_on_change(**kwargs, field="n_subscribers")
 
 
 @receiver(pre_delete, sender=Subscription)
 def update_n_subscribers_on_delete(instance, **kwargs):
-    update_n_field_on_delete(instance.accounts, field='n_subscribers')
-    update_n_field_on_delete(instance.coders, field='n_subscribers')
+    update_n_field_on_delete(instance.accounts, field="n_subscribers")
+    update_n_field_on_delete(instance.coders, field="n_subscribers")
 
 
 class Task(BaseModel):
     notification_content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     notification_object_id = models.PositiveIntegerField()
-    notification = GenericForeignKey('notification_content_type', 'notification_object_id')
+    notification = GenericForeignKey("notification_content_type", "notification_object_id")
 
     subject = models.CharField(max_length=4096, null=True, blank=True)
     message = models.TextField(null=True, blank=True)
@@ -248,7 +254,7 @@ class Task(BaseModel):
 
     class ObjectsManager(models.Manager):
         def get_queryset(self):
-            return super().get_queryset().prefetch_related('notification__coder')
+            return super().get_queryset().prefetch_related("notification__coder")
 
     class UnsentManager(ObjectsManager):
         def get_queryset(self):
@@ -259,12 +265,12 @@ class Task(BaseModel):
 
     @classmethod
     def create_contest_notification(cls, notification, contest, **kwargs):
-        addition = kwargs.setdefault('addition', {})
-        addition['contests'] = [contest.pk]
+        addition = kwargs.setdefault("addition", {})
+        addition["contests"] = [contest.pk]
         Task.objects.create(notification=notification, **kwargs)
 
     def __str__(self):
-        return 'Task#{0.id} {0.notification}'.format(self)
+        return "Task#{0.id} {0.notification}".format(self)
 
 
 @receiver(pre_delete, sender=Task)
@@ -277,15 +283,15 @@ def delete_task(sender, instance, **kwargs):
         and instance.response
     ):
         from tg.bot import Bot
+
         bot = Bot()
         try:
-            bot.delete_message(instance.response['chat']['id'], instance.response['message_id'])
+            bot.delete_message(instance.response["chat"]["id"], instance.response["message_id"])
         except Exception:
             traceback.print_exc()
 
 
 class Calendar(BaseModel):
-
     class EventDescription(models.IntegerChoices):
         URL = 1
         HOST = 2
@@ -294,11 +300,11 @@ class Calendar(BaseModel):
         @classmethod
         def extract(cls, event, description):
             if description == cls.URL:
-                return f'Link: {event.actual_url}'
+                return f"Link: {event.actual_url}"
             if description == cls.HOST:
-                return f'Host: {event.host}'
+                return f"Host: {event.host}"
             if description == cls.DURATION:
-                return f'Duration: {event.hr_duration}'
+                return f"Duration: {event.hr_duration}"
 
     coder = models.ForeignKey(Coder, on_delete=models.CASCADE)
     name = models.CharField(max_length=64)
@@ -309,18 +315,18 @@ class Calendar(BaseModel):
 
 
 class NotificationMessage(BaseModel):
-    to = models.ForeignKey(Coder, on_delete=models.CASCADE, related_name='messages_set')
+    to = models.ForeignKey(Coder, on_delete=models.CASCADE, related_name="messages_set")
     text = models.TextField()
     level = models.TextField(null=True, blank=True)
     is_read = models.BooleanField(default=False)
     read_at = models.DateTimeField(null=True, blank=True)
-    sender = models.ForeignKey(Coder, null=True, blank=True, on_delete=models.CASCADE, related_name='sender_set')
+    sender = models.ForeignKey(Coder, null=True, blank=True, on_delete=models.CASCADE, related_name="sender_set")
 
     class Meta:
         indexes = [
-            models.Index(fields=['to', 'is_read']),
+            models.Index(fields=["to", "is_read"]),
         ]
-        verbose_name = 'Message'
+        verbose_name = "Message"
 
     @staticmethod
     def link_accounts(to, accounts, message=None, sender=None):
@@ -329,19 +335,19 @@ class NotificationMessage(BaseModel):
 
         text = 'New accounts have been linked to you. Check your <a href="/coder/" class="alert-link">profile page</a>.'
         if message:
-            text += ' ' + message
-        text = f'<div>{text}</div>'
+            text += " " + message
+        text = f"<div>{text}</div>"
 
         for account in accounts:
             context = {
-                'account': account,
-                'resource': account.resource,
-                'with_resource': True,
-                'without_country': True,
-                'with_account_default_url': True,
+                "account": account,
+                "resource": account.resource,
+                "with_resource": True,
+                "without_country": True,
+                "with_account_default_url": True,
             }
-            rendered_account = render_to_string('account_table_cell.html', context)
-            rendered_account = re.sub(r'\s*\n+', r'\n', rendered_account)
-            text += f'<div>{rendered_account}</div>'
+            rendered_account = render_to_string("account_table_cell.html", context)
+            rendered_account = re.sub(r"\s*\n+", r"\n", rendered_account)
+            text += f"<div>{rendered_account}</div>"
 
         NotificationMessage.objects.create(to=to, text=text, sender=sender)

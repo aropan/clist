@@ -4,7 +4,6 @@ import copy
 import hashlib
 import re
 from collections import OrderedDict, defaultdict
-from datetime import timedelta
 from functools import reduce
 
 import arrow
@@ -26,22 +25,39 @@ from django.utils.safestring import mark_safe
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django_ratelimit.decorators import ratelimit
 from el_pagination.decorators import page_template, page_templates
+from guardian.shortcuts import get_objects_for_user
 from sql_util.utils import Exists as SubqueryExists
 
 from clist.models import Contest, ContestSeries, Resource
-from clist.templatetags.extras import (allowed_redirect, as_number, format_time, get_country_name, get_item,
-                                       get_problem_short, get_problem_title, get_standings_divisions_order,
-                                       has_update_statistics_permission, is_ip_field, is_optional_yes, is_private_field,
-                                       is_reject, is_solved, is_yes, redirect_login, time_in_seconds,
-                                       timestamp_to_datetime)
+from clist.templatetags.extras import (
+    allowed_redirect,
+    as_number,
+    format_time,
+    get_cast_func,
+    get_country_name,
+    get_item,
+    get_problem_short,
+    get_problem_title,
+    get_standings_divisions_order,
+    has_update_statistics_permission,
+    is_ip_field,
+    is_optional_yes,
+    is_private_field,
+    is_reject,
+    is_solved,
+    is_yes,
+    redirect_login,
+    time_in_seconds,
+    timestamp_to_datetime,
+    toint,
+    url_transform,
+)
 from clist.templatetags.extras import timezone as set_timezone
-from clist.templatetags.extras import toint, url_transform
 from clist.views import get_group_list, get_timeformat, get_timezone
-from pyclist.decorators import context_pagination, extra_context_without_pagination, inject_contest
+from pyclist.decorators import bookmarked, context_pagination, extra_context_without_pagination, inject_contest
 from pyclist.middleware import RedirectException
 from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse, ProxyLimitReached
-from ranking.models import (Account, AccountRenaming, Finalist, FinalistResourceInfo, Module, Stage, Statistics,
-                            VirtualStart)
+from ranking.models import Account, AccountRenaming, Finalist, Module, Stage, Statistics, StatisticsLog, VirtualStart
 from ranking.utils import get_participation_contests
 from tg.models import Chat
 from true_coders.models import Coder, CoderList, ListGroup, Party
@@ -50,7 +66,6 @@ from utils.chart import make_bins, make_histogram
 from utils.colors import get_n_colors
 from utils.json_field import JSONF
 from utils.mathutils import max_with_none, min_with_none
-from utils.rating import get_rating
 from utils.regex import get_iregex_filter
 
 
@@ -59,7 +74,8 @@ from utils.regex import get_iregex_filter
 @context_pagination()
 def standings_list(request, template="standings_list.html"):
     contests = (
-        Contest.objects.annotate_favorite(request.user)
+        Contest.objects
+        .annotate_favorite(request.user)
         .annotate_active_executions()
         .select_related("resource", "stage")
         .annotate(has_module=Exists(Module.objects.filter(resource=OuterRef("resource_id"))))
@@ -75,7 +91,7 @@ def standings_list(request, template="standings_list.html"):
         coder = None
 
     switch = request.GET.get("switch")
-    if bool(all_standings) == bool(switch) and switch != "all" or switch == "parsed":
+    if (bool(all_standings) == bool(switch) and switch != "all") or switch == "parsed":
         contests = contests.filter(Q(invisible=False) | Q(stage__isnull=False))
         contests = contests.filter(n_statistics__gt=0, has_module=True)
         if request.user.is_authenticated:
@@ -186,15 +202,15 @@ def standings_list(request, template="standings_list.html"):
         qs = contests.prefetch_related(Prefetch("statistics_set", to_attr="medal_scores", queryset=qs))
         qs = qs.order_by("start_time")
 
-        medal_scores_chart = dict(
-            field="medal_scores",
-            type="scatter",
-            show_line=True,
-            legend_position="right",
-            x_type="time",
-            mode="x",
-            hover_mode="x",
-        )
+        medal_scores_chart = {
+            "field": "medal_scores",
+            "type": "scatter",
+            "show_line": True,
+            "legend_position": "right",
+            "x_type": "time",
+            "mode": "x",
+            "hover_mode": "x",
+        }
 
         datas = medal_scores_chart.setdefault("datas", {})
         titles = medal_scores_chart.setdefault("titles", {})
@@ -216,10 +232,9 @@ def standings_list(request, template="standings_list.html"):
                 titles.setdefault(medal, []).append(contest_title)
                 urls.setdefault(medal, []).append(contest.actual_url)
 
-                subtitle = "Score: {:.2f}".format(medal_score.solving)
+                subtitle = f"Score: {medal_score.solving:.2f}"
                 if medal in last_values:
                     delta = medal_value / last_values[medal] - 1
-                    print(contest.start_time, medal_value, last_values[medal], medal_value / last_values[medal], delta)
                     subtitle += f" ({delta:+.2%})"
                 last_values[medal] = medal_value
                 subtitles.setdefault(medal, []).append(subtitle)
@@ -231,7 +246,7 @@ def standings_list(request, template="standings_list.html"):
                 medal_fields.remove(rev_order)
                 medal_fields.insert(0, rev_order)
         medal_scores_chart["fields"] = medal_fields
-        medal_scores_chart["hidden"] = set([f for f in medal_fields if f not in medal_names])
+        medal_scores_chart["hidden"] = {f for f in medal_fields if f not in medal_names}
     else:
         medal_scores_chart = None
 
@@ -333,17 +348,14 @@ def _standings_highlight(contest, statistics, options):
             n_quota[k] = n_quota.get(k, 0) + 1
             if (n_quota[k] > quota or last_hl) and (not more or more["n"] >= more["n_highlight"] or more_last_hl):
                 p_info = participants_info.get(lasts.get(k))
-                if (
-                    not p_info
-                    or last_hl
-                    and (-last_hl["solving"], last_hl["penalty"]) < (-p_info["solving"], p_info["penalty"])
-                ):  # noqa
+                if not p_info or (
+                    last_hl and (-last_hl["solving"], last_hl["penalty"]) < (-p_info["solving"], p_info["penalty"])
+                ):
                     p_info = last_hl
-                if (
-                    not p_info
-                    or more_last_hl
+                if not p_info or (
+                    more_last_hl
                     and (-more_last_hl["solving"], more_last_hl["penalty"]) > (-p_info["solving"], p_info["penalty"])
-                ):  # noqa
+                ):
                     p_info = more_last_hl
 
                 if n_quota[k] <= quota:
@@ -428,13 +440,8 @@ def _get_order_by(fields):
             field = field[1:]
         else:
             desc = False
-
         order_field = models.F(field)
-        if desc:
-            order_field = order_field.desc()
-        else:
-            order_field = order_field.asc()
-
+        order_field = order_field.desc() if desc else order_field.asc()
         order_by.append(order_field)
     return order_by
 
@@ -457,10 +464,10 @@ def standings_charts(request, context):
 
     charts = []
 
-    mapping_fields_values = dict(
-        new_rating="_ratings",
-        old_rating="_ratings",
-    )
+    mapping_fields_values = {
+        "new_rating": "_ratings",
+        "old_rating": "_ratings",
+    }
     fields_values = defaultdict(list)
     fields_types = defaultdict(set)
     problems_values = defaultdict(list)
@@ -473,7 +480,7 @@ def standings_charts(request, context):
     is_stage = hasattr(contest, "stage") and contest.stage is not None
     is_scoring = contest.standings_kind in {"cf", "scoring"}
 
-    full_scores = dict()
+    full_scores = {}
     for problem in problems:
         if "full_score" not in problem:
             continue
@@ -556,13 +563,13 @@ def standings_charts(request, context):
         if int_scores:
             scores_values = [round(x) for x in scores_values]
         hist, bins = make_histogram(scores_values, n_bins=default_n_bins)
-        scores_chart = dict(
-            field="scores",
-            bins=bins,
-            shift_my_value=int_scores and bins[-1] - bins[0] == len(bins) - 1,
-            data=[{"bin": b, "value": v} for v, b in zip(hist, bins)],
-            my_value=my_values.get("score"),
-        )
+        scores_chart = {
+            "field": "scores",
+            "bins": bins,
+            "shift_my_value": int_scores and bins[-1] - bins[0] == len(bins) - 1,
+            "data": [{"bin": b, "value": v} for v, b in zip(hist, bins)],
+            "my_value": my_values.get("score"),
+        }
         charts.append(scores_chart)
 
     if context.get("relative_problem_time"):
@@ -572,20 +579,20 @@ def standings_charts(request, context):
 
     if top_values:
         top_bins = make_bins(0, contest.current_duration, n_bins=default_n_bins)
-        top_chart = dict(
-            field="top_scores",
-            type="scatter",
-            fields=[],
-            labels={},
-            bins=top_bins,
-            datas={},
-            cubic_interpolation=True,
-            point_radius=2,
-            border_width=2,
-            show_line=True,
-            legend_position="right",
-            x_ticks_time_rounding=timeline.get("penalty_rounding", "floor-minute"),
-        )
+        top_chart = {
+            "field": "top_scores",
+            "type": "scatter",
+            "fields": [],
+            "labels": {},
+            "bins": top_bins,
+            "datas": {},
+            "cubic_interpolation": True,
+            "point_radius": 2,
+            "border_width": 2,
+            "show_line": True,
+            "legend_position": "right",
+            "x_ticks_time_rounding": timeline.get("penalty_rounding", "floor-minute"),
+        }
         for scores_info in top_values:
             field = scores_info["key"]
             datas = top_chart["datas"].setdefault(field, {0: 0})
@@ -609,19 +616,19 @@ def standings_charts(request, context):
         return ret
 
     problems_bins = make_bins(0, total_problem_time, n_bins=default_n_bins)
-    problems_chart = dict(
-        field="solved_problems",
-        type="line",
-        accumulate=True,
-        fields=[],
-        labels={},
-        bins=problems_bins,
-        data=[{"bin": timeline_format(b)} for b in problems_bins[:-1]],
-        cubic_interpolation=True,
-        point_radius=0,
-        border_width=2,
-        legend_position="right",
-    )
+    problems_chart = {
+        "field": "solved_problems",
+        "type": "line",
+        "accumulate": True,
+        "fields": [],
+        "labels": {},
+        "bins": problems_bins,
+        "data": [{"bin": timeline_format(b)} for b in problems_bins[:-1]],
+        "cubic_interpolation": True,
+        "point_radius": 0,
+        "border_width": 2,
+        "legend_position": "right",
+    }
     total_values = []
     my_data = []
     for problem in problems:
@@ -654,12 +661,10 @@ def standings_charts(request, context):
     total_scoring_values = []
     if is_scoring and problems_scoring_values:
         problems_scoring_chart = copy.deepcopy(problems_chart)
-        problems_scoring_chart.update(
-            dict(
-                field="scoring_problems",
-                my_dataset=None,
-            )
-        )
+        problems_scoring_chart.update({
+            "field": "scoring_problems",
+            "my_dataset": None,
+        })
 
         for problem in problems:
             short = get_problem_short(problem)
@@ -675,15 +680,13 @@ def standings_charts(request, context):
         charts.append(problems_scoring_chart)
 
     total_solved_chart = copy.deepcopy(problems_chart)
-    total_solved_chart.update(
-        dict(
-            field="total_solved",
-            fields=False,
-            labels=False,
-            my_dataset=None,
-            accumulate=False,
-        )
-    )
+    total_solved_chart.update({
+        "field": "total_solved",
+        "fields": False,
+        "labels": False,
+        "my_dataset": None,
+        "accumulate": False,
+    })
     hist, _ = make_histogram(values=total_values, bins=problems_bins)
     for val, d in zip(hist, total_solved_chart["data"]):
         d["value"] = val
@@ -692,14 +695,12 @@ def standings_charts(request, context):
 
     if is_scoring and total_scoring_values:
         total_scoring_chart = copy.deepcopy(problems_chart)
-        total_scoring_chart.update(
-            dict(
-                field="total_scoring",
-                fields=False,
-                labels=False,
-                my_dataset=None,
-            )
-        )
+        total_scoring_chart.update({
+            "field": "total_scoring",
+            "fields": False,
+            "labels": False,
+            "my_dataset": None,
+        })
         values = [v[0] for v in total_scoring_values]
         deltas = [v[1] for v in total_scoring_values]
         hist, _ = make_histogram(values=values, deltas=deltas, bins=problems_bins)
@@ -714,15 +715,13 @@ def standings_charts(request, context):
 
         _, problems_scores_bins = make_histogram(values=total_scores_values, n_bins=default_n_bins)
         problems_scores_chart = copy.deepcopy(problems_chart)
-        problems_scores_chart.update(
-            dict(
-                field="problems_scores",
-                type="line",
-                bins=problems_scores_bins,
-                data=[{"bin": b} for b in problems_scores_bins[:-1]],
-                my_dataset=None,
-            )
-        )
+        problems_scores_chart.update({
+            "field": "problems_scores",
+            "type": "line",
+            "bins": problems_scores_bins,
+            "data": [{"bin": b} for b in problems_scores_bins[:-1]],
+            "my_dataset": None,
+        })
         for problem in problems:
             short = get_problem_short(problem)
             values = problems_scores_values.get(short, [])
@@ -747,13 +746,13 @@ def standings_charts(request, context):
         else:
             hist, bins = make_histogram(field_values, n_bins=default_n_bins)
 
-        chart = dict(
-            field=field,
-            bins=bins,
-            shift_my_value=field_type is int and bins[-1] - bins[0] == len(bins) - 1,
-            data=[{"bin": b, "value": v} for v, b in zip(hist, bins)],
-            my_value=my_values.get(field),
-        )
+        chart = {
+            "field": field,
+            "bins": bins,
+            "shift_my_value": field_type is int and bins[-1] - bins[0] == len(bins) - 1,
+            "data": [{"bin": b, "value": v} for v, b in zip(hist, bins)],
+            "my_value": my_values.get(field),
+        }
 
         field_types = context["fields_types"].get(field, [])
         if "timestamp" in field_types:
@@ -874,32 +873,32 @@ def get_standings_problems(contest, division):
     problems = contest.info.get("problems", {})
     if "division" in problems:
         if division == "any":
-            _problems = OrderedDict()
+            problems_ = OrderedDict()
             for div in reversed(divisions_order):
                 for p in problems["division"].get(div, []):
                     k = get_problem_short(p)
-                    if k not in _problems:
-                        _problems[k] = p
+                    if k not in problems_:
+                        problems_[k] = p
                     else:
-                        _pk = _problems[k]
+                        problem_ = problems_[k]
                         for f in "n_accepted", "n_teams", "n_partial", "n_total":
                             if f in p:
-                                _pk[f] = _pk.get(f, 0) + p[f]
+                                problem_[f] = problem_.get(f, 0) + p[f]
 
                         if "first_ac" in p:
                             in_seconds = p["first_ac"]["in_seconds"]
-                            if "first_ac" not in _pk or in_seconds + 1e-9 < _pk["first_ac"]["in_seconds"]:
-                                _pk["first_ac"] = copy.deepcopy(p["first_ac"])
-                            elif "first_ac" in _pk and in_seconds - 1e-9 < _pk["first_ac"]["in_seconds"]:
-                                _pk["first_ac"]["accounts"].extend(p["first_ac"]["accounts"])
+                            if "first_ac" not in problem_ or in_seconds + 1e-9 < problem_["first_ac"]["in_seconds"]:
+                                problem_["first_ac"] = copy.deepcopy(p["first_ac"])
+                            elif "first_ac" in problem_ and in_seconds - 1e-9 < problem_["first_ac"]["in_seconds"]:
+                                problem_["first_ac"]["accounts"].extend(p["first_ac"]["accounts"])
 
                         if "full_score" in p:
-                            fs = str(_pk.get("full_score", ""))
+                            fs = str(problem_.get("full_score", ""))
                             if fs:
                                 fs += " "
                             fs += str(p["full_score"])
-                            _pk["full_score"] = fs
-            problems = list(_problems.values())
+                            problem_["full_score"] = fs
+            problems = list(problems_.values())
         else:
             problems = problems["division"][division]
     if division:
@@ -959,19 +958,13 @@ def get_standings_fields(
         if (
             k in fields
             or k in special_fields
-            or not is_private_k
-            and "country" in k
-            and k not in hidden_fields_values
-            or k in ["name", "place", "solving"]
-            and k not in hidden_fields_values
-            or is_private_k
-            and not view_private_fields
-            or k in hidden_fields
-            and k not in hidden_fields_values
-            and k not in fields_values
+            or (not is_private_k and "country" in k and k not in hidden_fields_values)
+            or (k in ["name", "place", "solving"] and k not in hidden_fields_values)
+            or (is_private_k and not view_private_fields)
+            or (k in hidden_fields and k not in hidden_fields_values and k not in fields_values)
         ):
             continue
-        if not is_private_k and with_detail or k in hidden_fields_values or k in fields_values:
+        if (not is_private_k and with_detail) or k in hidden_fields_values or k in fields_values:
             fields[k] = k
         if k not in hidden_fields:
             hidden_fields.append(k)
@@ -1018,10 +1011,10 @@ def get_advancing_contests(contest):
 @inject_contest()
 def standings(request, contest, other_contests=None, template="standings.html", extra_context=None):
     context = {}
-    contests_timelines = dict()
-    contests_ids = dict()
+    contests_timelines = {}
+    contests_ids = {}
     if other_contests is not None:
-        for i, c in enumerate([contest] + other_contests, start=1):
+        for i, c in enumerate([contest, *other_contests], start=1):
             contests_ids[c.pk] = i
             contests_timelines[c.pk] = c.get_timeline_info()
 
@@ -1134,8 +1127,7 @@ def standings(request, contest, other_contests=None, template="standings.html", 
     if (
         contest.n_statistics
         and (
-            contest.n_statistics <= settings.STANDINGS_SMALL_N_STATISTICS
-            and "team_id" in contest_fields
+            (contest.n_statistics <= settings.STANDINGS_SMALL_N_STATISTICS and "team_id" in contest_fields)
             or contest.info.get("grouped_team")
         )
         and not groupby
@@ -1190,9 +1182,13 @@ def standings(request, contest, other_contests=None, template="standings.html", 
     order.append("pk")
     statistics = statistics.order_by(*order)
 
-    if n_advanced := request.GET.get("n_advanced"):
-        if n_advanced.isdigit() and int(n_advanced) and "n_highlight" in options:
-            options["n_highlight"] = int(n_advanced)
+    if (
+        (n_advanced := request.GET.get("n_advanced"))
+        and n_advanced.isdigit()
+        and int(n_advanced)
+        and "n_highlight" in options
+    ):
+        options["n_highlight"] = int(n_advanced)
     n_highlight_context = _standings_highlight(contest, statistics, options) if not contests_ids else {}
 
     # field to select
@@ -1225,11 +1221,34 @@ def standings(request, contest, other_contests=None, template="standings.html", 
         f = f.strip("_")
         fk = f.lower()
         if (
-            is_hidden_field and fk in ["languages", "verdicts"]
-            or fk in ["institution", "room", "affiliation", "city", "school", "class", "job", "region", "location",
-                      "rating_change", "advanced", "company", "language", "league", "onsite", "degree", "university",
-                      "list", "group", "group_ex", "college", "ghost", "badge"]
-            or view_private_fields and is_private_field(fk) and is_hidden_field and f"_{fk}" in fields
+            (is_hidden_field and fk in ["languages", "verdicts"])
+            or fk
+            in [
+                "institution",
+                "room",
+                "affiliation",
+                "city",
+                "school",
+                "class",
+                "job",
+                "region",
+                "location",
+                "rating_change",
+                "advanced",
+                "company",
+                "language",
+                "league",
+                "onsite",
+                "degree",
+                "university",
+                "list",
+                "group",
+                "group_ex",
+                "college",
+                "ghost",
+                "badge",
+            ]
+            or (view_private_fields and is_private_field(fk) and is_hidden_field and f"_{fk}" in fields)
         ):
             add_field_to_select(f)
 
@@ -1302,7 +1321,7 @@ def standings(request, contest, other_contests=None, template="standings.html", 
         else:
             timeline = None
     contest_timeline = contest.get_timeline_info()
-    enable_timeline = enable_timeline and contest_timeline or contest.is_stage()
+    enable_timeline = (enable_timeline and contest_timeline) or contest.is_stage()
 
     problems = get_standings_problems(contest, division)
     mod_penalty = get_standings_mod_penalty(contest, division, problems, statistics)
@@ -1328,10 +1347,8 @@ def standings(request, contest, other_contests=None, template="standings.html", 
             last
             and (last.get("full_score") or last.get("subname"))
             and (
-                "name" in last
-                and last.get("name") == p.get("name")
-                or "group" in last
-                and last.get("group") == p.get("group")
+                ("name" in last and last.get("name") == p.get("name"))
+                or ("group" in last and last.get("group") == p.get("group"))
             )
         ):
             merge_problems = True
@@ -1384,7 +1401,7 @@ def standings(request, contest, other_contests=None, template="standings.html", 
 
     # filter by country
     countries = request.GET.getlist("country")
-    countries = set([c for c in countries if c])
+    countries = {c for c in countries if c}
     if has_country and countries:
         with_row_num = True
         cond = Q(account__country__in=countries)
@@ -1618,7 +1635,7 @@ def standings(request, contest, other_contests=None, template="standings.html", 
         if contest.with_advance:
             statistics = statistics.annotate(n_advanced=Count(Case(When(advanced=True, then=1))))
         elif advanced_by_participants_info:
-            pks = list()
+            pks = []
             for pk, info in participants_info.items():
                 if "n" not in info or info["n"] > info.get("n_highlight", n_highlight):
                     continue
@@ -1634,7 +1651,7 @@ def standings(request, contest, other_contests=None, template="standings.html", 
                     output_field=models.IntegerField(),
                 )
             )
-            orderby = ["league_order"] + orderby
+            orderby = ["league_order", *orderby]
         statistics = statistics.order_by(*orderby)
 
         problems = []
@@ -1661,9 +1678,9 @@ def standings(request, contest, other_contests=None, template="standings.html", 
         find_me_stat = find_me_stat.annotate(statistic_id=F("id"))
         sql_query, sql_params = find_me_stat.query.sql_with_params()
         find_me_stat = Statistics.objects.raw(
-            """
-            SELECT * FROM ({}) ranking_statistics WHERE "statistic_id" = %s
-            """.format(sql_query),
+            f"""
+            SELECT * FROM ({sql_query}) ranking_statistics WHERE "statistic_id" = %s
+            """,
             [*sql_params, find_me],
         )
         find_me_stat = list(find_me_stat)
@@ -1691,7 +1708,7 @@ def standings(request, contest, other_contests=None, template="standings.html", 
         statistics = statistics.annotate(my_stat=SubqueryExists("account__coders", filter=Q(coder=coder)))
         my_statistics = statistics.filter(account__coders=coder).extra(select={"floating": True})
         if my_statistics:
-            my_stat = list(my_statistics)[0]
+            my_stat = next(iter(my_statistics))
             params["find_me"] = my_stat.pk
             if (
                 my_stat.place_as_int
@@ -1701,9 +1718,8 @@ def standings(request, contest, other_contests=None, template="standings.html", 
                 context["my_statistics_rev"] = True
 
     # field_instead_key
-    if field_instead_key := request.GET.get("field_instead_key"):
-        if field_instead_key in contest_fields:
-            context["field_instead_key"] = f"addition__{field_instead_key}"
+    if (field_instead_key := request.GET.get("field_instead_key")) and field_instead_key in contest_fields:
+        context["field_instead_key"] = f"addition__{field_instead_key}"
 
     relative_problem_time = contest.resource.info.get("standings", {}).get("relative_problem_time")
     relative_problem_time = contest.info.get("standings", {}).get("relative_problem_time", relative_problem_time)
@@ -1720,8 +1736,12 @@ def standings(request, contest, other_contests=None, template="standings.html", 
 
     inner_scroll = not request.user_agent.is_mobile and not is_yes(request.GET.get("force_default_scroll"))
     is_charts = is_yes(request.GET.get("charts"))
-    with_table_inner_scroll = (inner_scroll and (not groupby or groupby == "none") and not is_charts
-                               and not contest.elimination_tournament_info)
+    with_table_inner_scroll = (
+        inner_scroll
+        and (not groupby or groupby == "none")
+        and not is_charts
+        and not contest.elimination_tournament_info
+    )
 
     hide_problems = set()
     if my_stat and contest.hide_unsolved_standings_problems and not contest.is_over():
@@ -1995,10 +2015,7 @@ def standings_action(request):
             status, error = 400, "Unknown action"
     except Exception:
         status, error = 500, "Internal error"
-    if error is not None:
-        ret = {"status": "error", "message": error}
-    else:
-        ret = {"status": "success", "message": message}
+    ret = {"status": "error", "message": error} if error else {"status": "success", "message": message}
     return JsonResponse(ret, status=status)
 
 
@@ -2020,9 +2037,9 @@ def get_versus_data(request, query, fields_to_select):
     daterange = request.GET.get("daterange")
     if daterange:
         date_from, date_to = [arrow.get(x).datetime for x in daterange.split(" - ")]
-        base_filter &= Q(contest__start_time__gte=date_from, contest__end_time__lte=date_to) | Q(
-            contest__info__fields__contains="_rating_data"
-        )  # noqa
+        date_filter = Q(contest__start_time__gte=date_from, contest__end_time__lte=date_to)
+        date_filter |= Q(contest__info__fields__contains="_rating_data")
+        base_filter &= date_filter
     else:
         date_from, date_to = None, None
 
@@ -2035,7 +2052,7 @@ def get_versus_data(request, query, fields_to_select):
     display_names = []
     new_query = []
     redirect_new_query = False
-    for idx, whos in enumerate(opponents):
+    for whos in opponents:
         filt = Q()
         us = []
         ds = []
@@ -2236,16 +2253,16 @@ def versus(request, query):
         for idx in indices:
             info = versus_data["infos"][idx]
             info["score"] += 1
-            setattr(info["contests"][contest.pk], "scored_", True)
+            info["contests"][contest.pk].scored_ = True
         scores[contest.pk] = {
             "score": [info["score"] for info in versus_data["infos"]],
             "indices": indices,
         }
 
     ratings_resources = None
-    for idx, info in enumerate(versus_data["infos"]):
+    for info in versus_data["infos"]:
         rdata = info["ratings"]["data"]
-        rdata_resources = {k: sum([len(d) for d in v["data"]]) for k, v in rdata["resources"].items()}
+        rdata_resources = {k: sum(len(d) for d in v["data"]) for k, v in rdata["resources"].items()}
         if ratings_resources is None:
             ratings_resources = rdata_resources
         else:
@@ -2268,7 +2285,7 @@ def versus(request, query):
     ignore_colors = list(ignore_colors.values())
 
     datasets_colors = get_n_colors(n=len(versus_data["infos"]), ignore_colors=ignore_colors)
-    for idx, info in enumerate(versus_data["infos"]):
+    for info in versus_data["infos"]:
         rdata = info["ratings"]["data"]
         for _, resource in ratings_resources:
             rinfo = rdata["resources"][resource]
@@ -2302,7 +2319,7 @@ def versus(request, query):
                     ratings_dates.append(stat["date"])
             resource_info.update(rinfo)
 
-    ratings_data["dates"] = list(sorted(set(ratings_dates)))
+    ratings_data["dates"] = sorted(set(ratings_dates))
     versus_data["ratings"] = ratings_data
 
     context = {
@@ -2320,7 +2337,7 @@ def make_versus(request):
     n_versus = 0
     n_versus_mapping = {}
     opponents = OrderedDict()
-    for key in request.GET.keys():
+    for key in request.GET:
         if not key.startswith("coder") and not key.startswith("account"):
             continue
 
@@ -2375,7 +2392,7 @@ def make_versus(request):
 @context_pagination()
 def virtual_start(request, template="virtual_start.html"):
     coder = request.as_coder or request.user.coder
-    context = {'navbar_admin_model': VirtualStart}
+    context = {"navbar_admin_model": VirtualStart}
     params = context.setdefault("params", {})
     resource = request.GET.get("resource")
     virtual_starts = VirtualStart.filter_by_content_type(Contest).filter(coder=coder).order_by("-start_time")
@@ -2424,7 +2441,7 @@ def finalists(request, contest, template="finalists.html"):
     finalist_resources = Resource.get(contest.finalists_info["resources"])
     resources = request.get_resources()
     resource_fields = finalist_resources
-    force = "force" in request.GET and request.user.is_staff
+    force = "force" in request.GET and request.user.is_superuser
     with_update = timezone.now() < contest.end_time
 
     finalists = finalists.prefetch_related("finalistresourceinfo_set")
@@ -2455,12 +2472,12 @@ def finalists(request, contest, template="finalists.html"):
         resource_infos = {}
         for resource_info in finalist.finalistresourceinfo_set.all():
             resource_infos[resource_info.resource_id] = resource_info
-        setattr(finalist, "resource_infos", resource_infos)
+        finalist.resource_infos = resource_infos
 
         n_contests = [a.n_contests for a in accounts] + [c.n_contests for c in coders]
         n_contests = tuple(sorted(n_contests))
         achievement_hash = hashlib.md5(str(n_contests).encode()).hexdigest()
-        if force or with_update and finalist.achievement_hash != achievement_hash:
+        if force or (with_update and finalist.achievement_hash != achievement_hash):
             account_filter = Q(account__coders__in=coders) | Q(account__in=accounts)
             statistics = Statistics.objects.filter(account_filter)
             statistics = statistics.filter(medal__isnull=False)
@@ -2495,3 +2512,64 @@ def finalists(request, contest, template="finalists.html"):
         "has_country": contest.finalists_info.get("has_country"),
     }
     return render(request, template, context)
+
+
+@login_required
+@bookmarked
+@page_template("statistics_logs_paging.html")
+@context_pagination()
+def statistics_logs(request, template="statistics_logs.html"):
+    logs = StatisticsLog.objects.all()
+    logs = logs.select_related("contest", "resource", "account", "statistic")
+
+    if contests := request.get_contests():
+        contests = get_objects_for_user(request.user, "view_statistics_logs", contests)
+    if resources := request.get_resources():
+        resources = get_objects_for_user(request.user, "view_statistics_logs", resources)
+
+    if contests:
+        logs = logs.filter(Q(contest__in=contests))
+    elif resources:
+        logs = logs.filter(Q(resource__in=resources))
+    else:
+        logs = logs.none()
+
+    if accounts := request.get_filtered_list("account"):
+        accounts = Account.objects.filter(pk__in=accounts).select_related("resource")
+        logs = logs.filter(Q(account__in=accounts))
+
+    log_type_options = StatisticsLog.LogType.values
+    addition_fields_types = {}
+    if log_type := request.get_filtered_value("log_type", options=log_type_options):
+        logs = logs.filter(log_type=log_type)
+        if resources and log_type == StatisticsLog.LogType.SUBMISSION:
+            for resource in resources:
+                addition_fields_types.update(resource.statistics_fields.get("submissions_statistics_types", {}))
+    addition_fields = list(addition_fields_types.keys())
+
+    fields = request.get_filtered_list("field", options=addition_fields)
+    for field in fields:
+        values = request.get_filtered_list(field)
+        if values:
+            field_type = addition_fields_types[field][0]
+            cast_func = get_cast_func(field_type)
+            values = [cast_func(value) for value in values]
+            logs = logs.filter(Q(**{f"data__{field}__in": values}))
+
+    logs = logs.order_by("-updated", "-time")
+
+    context = {
+        "logs": logs,
+        "per_page": 50,
+        "per_page_more": 200,
+        "params": {
+            "resources": resources,
+            "contests": contests,
+        },
+        "accounts": accounts,
+        "addition_fields_types": addition_fields_types,
+        "addition_fields": addition_fields,
+        "fields": fields,
+        "log_type_options": log_type_options,
+    }
+    return template, context

@@ -19,7 +19,7 @@
   {% endif %}
   <a href="{% url 'coder:accounts' %}?list={{ coder_list.uuid }}">{% icon_to 'accounts' %}</a>
   {% if perms.true_coders.change_coderlist %}
-    <a href="{% url 'admin:true_coders_coderlist_change' coder_list.id %}" class="database-link invisible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
+    <a href="{% url 'admin:true_coders_coderlist_change' coder_list.id %}" class="hover-visible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
   {% endif %}
 </h2>
 

@@ -189,6 +189,13 @@ def hr_timedelta(delta, n_significant=2):
 
 
 @register.filter
+def hr_timedelta_small(ms):
+    if ms < 1000:
+        return floatformat(ms, 0) + "ms"
+    return floatformat(ms / 1000, 3) + "s"
+
+
+@register.filter
 def countdown(timer):
     if isinstance(timer, datetime):
         timer = (timer - now()).total_seconds()
@@ -1481,7 +1488,7 @@ def rating_from_probability(b, p, min_rating=0, max_rating=5000):
 
 
 @register.simple_tag
-def icon_to(value, default=None, icons=None, html_class=None, inner='', **kwargs):
+def icon_to(value: str | bool, default=None, icons=None, html_class=None, inner='', **kwargs):
     icons = icons or settings.FONTAWESOME_ICONS_
     if default is None:
         default = value.title().replace('_', ' ')
@@ -1501,6 +1508,8 @@ def icon_to(value, default=None, icons=None, html_class=None, inner='', **kwargs
             html_class = params['class']
         if 'title' in params:
             default = params['title']
+    elif value == 'TEXT':
+        value = title_field(default)
     else:
         value = title_field(value)
     if default:
@@ -1648,12 +1657,14 @@ def has_update_statistics_permission(user, contest):
         ret = contest.statistics_set.filter(account__coders=user.coder).exists()
     return ret
 
+
 @register.simple_tag(takes_context=True)
 def has_permission(context, perm, obj=None):
     user = context['request'].user
     if obj:
         return user.has_perm(perm, obj)
     return user.has_perm(perm)
+
 
 @register.filter
 def is_anonymous_user(user):
@@ -1801,7 +1812,7 @@ def get_admin_url(obj):
 def admin_url(obj):
     url = get_admin_url(obj)
     icon = icon_to('database', '')
-    return mark_safe(f'<a href="{url}" class="database-link invisible" target="_blank" rel="noopener">{icon}</a>')
+    return mark_safe(f'<a href="{url}" class="hover-visible" target="_blank" rel="noopener">{icon}</a>')
 
 
 @register.simple_tag
@@ -2029,8 +2040,8 @@ def capitalize_field(value):
 @register.simple_tag(takes_context=True)
 def field_to_select_values(context):
     data = context['data']
+    field_name = data.get('field_name', context.get('field'))
     if data.get('options') is not None:
-        field_name = data.get('field_name', context['field'])
         values = context['request'].get_filtered_list(field_name, options=data['options'])
         if values:
             return values
@@ -2041,7 +2052,7 @@ def field_to_select_values(context):
         return data['values']
     if 'value' in data:
         return [data['value']]
-    return None
+    return context['request'].get_filtered_list(field_name)
 
 
 @register.simple_tag(takes_context=True)
@@ -2455,8 +2466,8 @@ def standings_statistic_problem(context):
     if (extra_score_val := as_number(stat['extra_score'], force=True)) is not None:
         extra_info_title = ''
         if stat.get('extra_info'):
-                extra_info_html = "".join(f"{html.escape(str(info))}<br/>" for info in stat['extra_info'])
-                extra_info_title = f' data-toggle="tooltip" data-placement="top" data-html="true" title="{extra_info_html}"'
+            extra_info_html = "".join(f"{html.escape(str(info))}<br/>" for info in stat['extra_info'])
+            extra_info_title = f' data-toggle="tooltip" data-placement="top" data-html="true" title="{extra_info_html}"'
         prefix = "+" if extra_score_val > 0 else ""
         html_parts.append(f'<div class="inline"{extra_info_title}>{prefix}{scoreformat(extra_score_val)}</div>')
 
@@ -2468,7 +2479,7 @@ def standings_statistic_problem(context):
 
     if with_admin_url and perms and perms['ranking']['change_statistics'] and statistic:
         admin_change_url = reverse('admin:ranking_statistics_change', args=[statistic.pk])
-        html_parts.append(f'<a href="{admin_change_url}" class="database-link invisible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>')
+        html_parts.append(f'<a href="{admin_change_url}" class="hover-visible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>')
 
     html_parts.append('</div>')
 
@@ -2523,3 +2534,13 @@ def resource_account_types(resource):
     if resource is None or resource.n_team_accounts:
         ret.append('team')
     return ret
+
+
+def get_cast_func(type_name: str):
+    if type_name in ['int', 'float']:
+        return as_number
+    if type_name == 'bool':
+        return is_yes
+    if type_name == 'str':
+        return str
+    return lambda v: v

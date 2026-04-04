@@ -14,7 +14,7 @@ from stringcolor import cs
 from tqdm import tqdm
 
 from clist.models import Contest, Problem, Resource
-from ranking.models import Account, AccountType, Statistics
+from ranking.models import Account, AccountType, Statistics, StatisticsLog
 from utils.attrdict import AttrDict
 
 
@@ -137,6 +137,14 @@ def set_statistics_fields(resources, logger):
                     logger.info(cs(f'- {field}: {orig_types}', 'red'))
                 if new_types:
                     logger.info(cs(f'+ {field}: {new_types}', 'green'))
+
+            if resource.has_submissions_statistics_log:
+                statistic_log = resource.statisticslog_set
+                statistic_log = statistic_log.filter(log_type=StatisticsLog.LogType.SUBMISSION)
+                statistic_log = statistic_log.order_by('-time')
+                statistic_log = statistic_log.first()
+                types = {k: [type(v).__name__] for k, v in statistic_log.data.items()}
+                resource.statistics_fields['submissions_statistics_types'] = types
 
             resource.statistics_fields['types'] = fields_types
             resource.save(update_fields=['statistics_fields'])

@@ -121,7 +121,7 @@
             {% endwith %}
         </span>
         {% if perms.ranking.change_statistics %}
-        <a href="{% url 'admin:ranking_statistics_change' statistic.id %}" class="database-link invisible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
+        <a href="{% url 'admin:ranking_statistics_change' statistic.id %}" class="hover-visible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
         {% endif %}
     </td>
 </tr>

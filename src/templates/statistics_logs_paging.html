@@ -1,0 +1,35 @@
+{% lazy_paginate per_page,per_page_more logs %}
+
+{% for log in logs %}
+{% with contest=log.contest resource=log.resource account=log.account statistic=log.statistic %}
+<tr>
+  <td>
+    <span title="{{ log.time|timezone:timezone|naturalday }}" data-toggle="tooltip">{{ log.time|timezone:timezone|format_time:timeformat }}</span>
+    {% if perms.ranking.change_statistics_log %}
+      <a href="{% url 'admin:ranking_statisticslog_change' log.id %}" class="hover-visible" target="_blank" rel="noopener">{% icon_to "database" "StatisticsLog#"|concat:log.id %}</a>
+    {% endif %}
+  </td>
+  <td>
+    <a href="{% url_transform request "contest" contest.pk %}">{% trim_to contest.title 80 %}</a>
+    <a href="{% if statistic %}{% url 'ranking:standings_by_id' contest.pk %}?find_me={{ statistic.pk }}{% else %}{{ contest.actual_url }}{% endif %}" class="hover-visible" target="_blank" rel="noopener">{% icon_to "extra_url" "" %}</a>
+  </td>
+  <td>
+    {% include "field_value.html" with value=log.data|get_item:"problem" field="problem" with_filtration=True %}
+  </td>
+  <td>
+    <a href="{% url_transform request "account" account.pk %}">{% include "account_table_cell.html" with resource=resource account=account with_wrap=True without_url=True %}
+    <a href="{{ account.url }}" class="hover-visible" target="_blank">{% icon_to "extra_url" "" %}</a>
+  </td>
+  {% for field in fields %}
+  <td>
+    {% include "field_value.html" with value=log.data|get_item:field field=field scorefixedformat=-2 with_filtration=True %}
+  </td>
+  {% endfor %}
+  <td>
+    <span title="{{ log.updated|timezone:timezone|naturalday }}" data-toggle="tooltip">{{ log.updated|timezone:timezone|format_time:timeformat }}</span>
+  </td>
+</tr>
+{% endwith %}
+{% endfor %}
+
+{% show_more_table %}

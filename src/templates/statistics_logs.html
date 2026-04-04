@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block ogtitle %}{% block title %}Statistics logs{% endblock %}{% endblock %}
+
+{% block content %}
+
+<div class="col-xl-10 col-xl-offset-1">
+  {% include "filter_collapse.html" with include_filter="statistics_logs_filters.html" %}
+
+  <script>configure_pagination()</script>
+
+  {% if logs.exists %}
+  <div id="logs" class="panel panel-default table-responsive">
+    <table class="table table-hover table-striped table-float-head">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Contest</th>
+          <th>Problem</th>
+          <th>Account</th>
+          {% for field in fields %}
+          <th>{{ field|title_field_div }}</th>
+          {% endfor %}
+          <th>Updated</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% include "statistics_logs_paging.html" %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="alert alert-warning text-center">No statistics logs found</div>
+  {% endif %}
+</div>
+
+{% endblock %}

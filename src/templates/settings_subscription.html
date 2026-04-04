@@ -2,6 +2,17 @@
   <div class="panel panel-default table-responsive">
     <table class="table">
       <tr>
+        <td colspan="100%">
+          <span>
+            <button href="#" data-id="{{ subscription.id }}" data-name="edit-subscription" data-form="{{ subscription.form_data|jsonify|force_escape }}" class="edit-subscription btn btn-default btn-xs">{% icon_to "edit" "Edit" %}</button>
+            <button href="#" data-id="{{ subscription.id }}" data-action="disable-subscription" data-confirm="false" data-success="$this.addClass('hidden'); $element.find('[data-action=enable-subscription]').removeClass('hidden'); $element.closest('.subscription').addClass('text-muted')" class="action-subscription btn btn-default btn-xs{% if not subscription.enable %} hidden{% endif %}">{% icon_to "on" "Off" %}</button>
+            <button href="#" data-id="{{ subscription.id }}" data-action="enable-subscription" data-confirm="false" data-success="$this.addClass('hidden'); $element.find('[data-action=disable-subscription]').removeClass('hidden'); $element.closest('.subscription').removeClass('text-muted')" class="action-subscription btn btn-default btn-xs{% if subscription.enable %} hidden{% endif %}">{% icon_to "off" "On" %}</button>
+            <button href="#" data-id="{{ subscription.id }}" data-action="view-subscription" data-closest-element=".subscription" class="action-subscription btn btn-default btn-xs">{% icon_to "show" "View" %}</button>
+            <button href="#" data-id="{{ subscription.id }}" data-action="delete-subscription" data-closest-element=".subscription" data-success="$element.remove(); $('#n-subscriptions').text($('.subscription').length)" class="action-subscription btn btn-danger btn-xs"{% icon_to "delete" "Delete" %}</button>
+          </span>
+        </td>
+      </tr>
+      <tr>
         <td class="no-stretch key-column">Method</td>
         <td>{{ subscription.method }}</td>
       </tr>
@@ -25,6 +36,19 @@
           </a>
           <a href="{{ subscription.contest.actual_url }}">
             {{ subscription.contest.title }}
+          </a>
+        </td>
+      </tr>
+      {% endif %}
+      {% if subscription.exclude_contest %}
+      <tr>
+        <td class="no-stretch key-column">Exclude</td>
+        <td>
+          <a href="{% url 'clist:resource' subscription.exclude_contest.resource.host %}" title="{{ subscription.exclude_contest.resource.host }}" data-toggle="tooltip">
+            <img src="{{ subscription.exclude_contest.resource.icon_file.name|media_size:'32x32' }}" width="16" height="16"/>
+          </a>
+          <a href="{{ subscription.exclude_contest.actual_url }}">
+            {{ subscription.exclude_contest.title }}
           </a>
         </td>
       </tr>
@@ -101,17 +125,6 @@
         {% endwith %}
       </tr>
       {% endif %}
-      <tr>
-        <td colspan="100%">
-          <span class="pull-right">
-            <button href="#" data-id="{{ subscription.id }}" data-name="edit-subscription" data-form="{{ subscription.form_data|jsonify|force_escape }}" class="edit-subscription btn btn-default btn-xs">{% icon_to "edit" "Edit" %}</button>
-            <button href="#" data-id="{{ subscription.id }}" data-action="disable-subscription" data-confirm="false" data-success="$this.addClass('hidden'); $element.find('[data-action=enable-subscription]').removeClass('hidden'); $element.closest('.subscription').addClass('text-muted')" class="action-subscription btn btn-default btn-xs{% if not subscription.enable %} hidden{% endif %}">{% icon_to "on" "Off" %}</button>
-            <button href="#" data-id="{{ subscription.id }}" data-action="enable-subscription" data-confirm="false" data-success="$this.addClass('hidden'); $element.find('[data-action=disable-subscription]').removeClass('hidden'); $element.closest('.subscription').removeClass('text-muted')" class="action-subscription btn btn-default btn-xs{% if subscription.enable %} hidden{% endif %}">{% icon_to "off" "On" %}</button>
-            <button href="#" data-id="{{ subscription.id }}" data-action="view-subscription" data-closest-element=".subscription" class="action-subscription btn btn-default btn-xs">{% icon_to "show" "View" %}</button>
-            <button href="#" data-id="{{ subscription.id }}" data-action="delete-subscription" data-closest-element=".subscription" data-success="$element.remove(); $('#n-subscriptions').text($('.subscription').length)" class="action-subscription btn btn-danger btn-xs"{% icon_to "delete" "Delete" %}</button>
-          </span>
-        </td>
-      </tr>
     </table>
   </div>
 </div>

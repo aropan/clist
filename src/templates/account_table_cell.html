@@ -1,4 +1,4 @@
-<span class="nowrap">
+<span{% if not with_wrap %} class="nowrap"{% endif %}>
 {% if with_resource %}
   {% if with_fixed_width %}<div class="resource-width-fixed">{% endif %}
     {% if not without_url_transform and request %}<a href="{% url_transform request resource=resource.pk %}">{% endif %}
@@ -35,7 +35,7 @@
 {% endif %}
 
 {% if not without_url %}
-<a href="{% if with_account_default_url %}{% url 'coder:account' account.key account.resource.host %}{% else %}{{ account.url }}{% endif %}" class="{% coder_color_class resource account.info %}">
+<a href="{% if with_account_default_url %}{% url 'coder:account' account.key resource.host %}{% else %}{{ account.url }}{% endif %}" class="{% coder_color_class resource account.info %}">
 {% else %}
 <span class="{% coder_color_class resource account.info %}">
 {% endif %}

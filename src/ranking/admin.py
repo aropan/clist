@@ -8,7 +8,7 @@ from pyclist.admin import BaseModelAdmin, admin_register
 from ranking.management.commands.parse_statistic import Command as parse_stat
 from ranking.models import (Account, AccountMatching, AccountRenaming, AccountVerification, AutoRating, CountryAccount,
                             Finalist, FinalistResourceInfo, Module, ParseStatistics, Rating, Stage, StageContest,
-                            Statistics, VerifiedAccount, VirtualStart)
+                            Statistics, StatisticsLog, VerifiedAccount, VirtualStart)
 
 
 class HasCoders(admin.SimpleListFilter):
@@ -139,6 +139,16 @@ class StatisticsAdmin(BaseModelAdmin):
         return obj.advanced
     _adv.boolean = True
     _adv.short_description = 'Adv'
+
+
+@admin_register(StatisticsLog)
+class StatistcsLogAdmin(BaseModelAdmin):
+    list_display = ['pk', 'time', 'contest', 'log_type', 'log_id']
+    search_fields = ['=account__key']
+    list_filter = (
+        ('resource', admin.RelatedOnlyFieldListFilter),
+        'log_type',
+    )
 
 
 @admin_register(Stage)

@@ -8,7 +8,7 @@
   <select name="{{ account_id }}" id="{{ account_id }}" onchange="this.form.submit()"{% if not nomultiply %} multiple{% endif %}>
     <option></option>
     {% for account in accounts %}
-    <option value="{{ account.pk }}" selected>{{ account.resource.short_host|default:account.resource.host }}:{{ account.key }}</option>
+    <option value="{{ account.pk }}" selected>{% if not without_resource %}{{ account.resource.short_host|default:account.resource.host }}:{% endif %}{{ account.short_display }}</option>
     {% endfor %}
   </select>
 </div>
@@ -38,6 +38,8 @@
           search: params.term,
           {% if not without_resource %}resource: $('#{{ resource_id }}').val(),{% endif %}
           {% if with_contest %}contest: {{ with_contest.pk }},{% endif %}
+          {% if params.resources %}resources: [{% for r in params.resources %}{{ r.pk }}{% if not forloop.last %},{% endif %}{% endfor %}],{% endif %}
+          {% if params.contests %}contests: [{% for c in params.contests %}{{ c.pk }}{% if not forloop.last %},{% endif %}{% endfor %}],{% endif %}
           page: params.page || 1
         };
       },

@@ -48,6 +48,7 @@ class Coder(BaseModel):
     is_virtual = models.BooleanField(default=False, db_index=True)
     global_rating = models.IntegerField(null=True, blank=True, default=None, db_index=True)
     last_activity = models.DateTimeField(null=True, blank=True, default=None, db_index=True)
+    bookmarks = models.JSONField(default=dict, blank=True)
 
     class Meta:
         indexes = [

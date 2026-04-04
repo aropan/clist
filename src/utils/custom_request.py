@@ -6,7 +6,7 @@ from typing import Optional
 from django.contrib import messages
 from django.db.models import F
 
-from clist.models import Resource
+from clist.models import Contest, Resource
 
 
 class RequestLogger:
@@ -39,11 +39,22 @@ def get_resource(self, field='resource', method='GET') -> Optional[Resource]:
     return Resource.get(resource)
 
 
-def get_resources(self, field='resource', method='GET') -> Optional[Resource]:
+def get_resources(self, field='resource', method='GET', default=None) -> Optional[Resource]:
     if method not in ['GET', 'POST']:
         raise ValueError(f'Invalid method: {method}')
-    resources = getattr(self, method).getlist(field)
+    resources = self.get_filtered_list(field, method=method)
+    if not resources and default is not None:
+        return default
     return Resource.get(resources)
+
+
+def get_contests(self, field='contest', method='GET', default=None) -> Optional[Contest]:
+    if method not in ['GET', 'POST']:
+        raise ValueError(f'Invalid method: {method}')
+    contests = self.get_filtered_list(field, method=method)
+    if not contests and default is not None:
+        return default
+    return Contest.objects.filter(pk__in=contests) if contests else Contest.objects.none()
 
 
 def get_filtered_list(self, field, options: Optional[list[str]] = None, method: str = 'GET',
@@ -104,10 +115,19 @@ def set_security_cookie(request, response, *args, **kwargs):
     response.set_cookie(*args, **kwargs)
 
 
+def as_coder_or_coder(self):
+    if not self.user.is_authenticated:
+        return None
+    if self.as_coder:
+        return self.as_coder
+    return self.user.coder
+
+
 def CustomRequest(request):
     setattr(request, 'logger', RequestLogger(request))
     setattr(request, 'get_resource', partial(get_resource, request))
     setattr(request, 'get_resources', partial(get_resources, request))
+    setattr(request, 'get_contests', partial(get_contests, request))
     setattr(request, 'get_filtered_list', partial(get_filtered_list, request))
     setattr(request, 'get_filtered_value', partial(get_filtered_value, request))
     setattr(request, 'canonical_url', None)
@@ -115,4 +135,5 @@ def CustomRequest(request):
     setattr(request, 'has_contest_perm', partial(has_contest_perm, request))
     setattr(request, 'set_security_cookie', partial(set_security_cookie, request))
     setattr(request, 'get_sort_field', partial(get_sort_field, request))
+    setattr(request, 'as_coder_or_coder', partial(as_coder_or_coder, request))
     return request

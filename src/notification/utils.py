@@ -13,6 +13,7 @@ from django.utils import translation
 from clist.templatetags.extras import (as_number, get_division_problems, get_problem_hash, get_problem_name,
                                        get_problem_short, get_problem_title, get_problem_url, is_hidden, is_partial,
                                        is_solved, md_escape, md_url, md_url_text, scoreformat, solution_time_compare)
+from ranking.models import StatisticsLog
 from utils.translation import localize_data
 
 
@@ -129,6 +130,7 @@ def compose_message_by_problems(
 
 @lazy_compose_message
 def compose_message_by_submissions(resource, account, submissions, subscription, locale) -> str | None:
+    messages = []
     contest_problems = OrderedDict()
     for submission in submissions:
         contest = submission['contest']
@@ -136,6 +138,11 @@ def compose_message_by_submissions(resource, account, submissions, subscription,
         info = submission['info']
         if subscription and subscription.contest_id and subscription.contest_id != contest.id:
             continue
+
+        if problem is None and info.get('type') == StatisticsLog.LogType.GAME:
+            messages.append(resource.plugin.Statistic.compose_message_by_game(resource, contest, info))
+            continue
+
         problem_key = get_problem_hash(contest, problem)
         problems = contest_problems.setdefault(contest, OrderedDict())
 
@@ -146,6 +153,8 @@ def compose_message_by_submissions(resource, account, submissions, subscription,
                 'submissions': [],
             }
         problems[problem_key]['submissions'].append(info)
+    if messages:
+        return messages
     if not contest_problems:
         return
 

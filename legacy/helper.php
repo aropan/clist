@@ -1,5 +1,5 @@
 <?php
-require_once 'libs/SqlFormatter.php';
+require_once __DIR__ . '/libs/SqlFormatter.php';
 
 if (!function_exists('http_parse_headers')) {
     function http_parse_headers($raw_headers)
@@ -835,4 +835,51 @@ function parse_duration($duration)
         $duration = strtotime("01.01.1970 " . $duration . " +0000");
     }
     return $duration;
+}
+
+function hydrate_datetime($times, $alignment = 'right')
+{
+    $tz = null;
+    foreach ($times as &$time) {
+        $time = preg_replace('/[^-:a-z0-9]*$/i', '', $time);
+        $time = preg_replace('/^[^-:a-z0-9]*/i', '', $time);
+        if (preg_match('/([a-z]+|[+-]\d{2}:?\d{2})$/i', $time, $match) && !preg_match('/(am|pm)$/i', $match[1])) {
+            $tz = $match[1];
+            $time = trim(substr($time, 0, -strlen($tz)));
+        }
+    }
+    if ($tz) {
+        $tz = trim(strtoupper($tz));
+        $timezone_map = [
+            'ET' => 'America/New_York',    // Eastern Time
+            'CT' => 'America/Chicago',     // Central Time
+            'MT' => 'America/Denver',      // Mountain Time
+            'PT' => 'America/Los_Angeles', // Pacific Time
+        ];
+        if (isset($timezone_map[$tz])) {
+            $tz = $timezone_map[$tz];
+        }
+        foreach ($times as &$time) {
+            $time .= " $tz";
+        }
+    }
+
+    $base_parts = [];
+    foreach ($times as &$time) {
+        $parts = explode(' ', $time);
+        if (count($parts) > count($base_parts)) {
+            $base_parts = $parts;
+        }
+    }
+
+    foreach ($times as &$time) {
+        $parts = explode(' ', $time);
+        if ($alignment == 'left') {
+            $parts = array_merge($parts, array_slice($base_parts, count($parts)));
+        } else if ($alignment == 'right') {
+            $parts = array_merge(array_slice($base_parts, 0, count($base_parts) - count($parts)), $parts);
+        }
+        $time = implode(' ', $parts);
+    }
+    return $times;
 }

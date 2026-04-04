@@ -485,11 +485,11 @@ function toggle_hidden(element, event) {
 }
 
 $(() => {
-  $(".database-link").each((_, e) => {
-    var between = 10;
+  $(".hover-visible").each((_, e) => {
+    var between = 5;
     var offset = between;
     $(e)
-      .prevAll(".database-link")
+      .prevAll(".hover-visible")
       .each((_, e) => {
         offset += $(e).width() + between;
       });
@@ -1269,3 +1269,37 @@ $(() => {
     }
   });
 });
+
+/*
+ * Bookmark
+ */
+
+function bookmark_action(element, event) {
+  event.preventDefault();
+  var $btn = $(element);
+  $btn.prop("disabled", true);
+  $.ajax({
+    type: "POST",
+    url: change_url,
+    data: {
+      pk: coder_pk,
+      name: "bookmark",
+      action: $btn.hasClass("active") ? "remove" : "add",
+      path: $btn.data("path") || "",
+      query: $btn.data("query") || "",
+    },
+    success: () => {
+      $btn.blur();
+      $btn.toggleClass("active");
+      $btn.find("i").toggleClass("fa-solid").toggleClass("fa-regular");
+    },
+    error: (response) => {
+      $btn.effect("shake");
+      log_ajax_error(response);
+    },
+    complete: () => {
+      $btn.prop("disabled", false);
+    },
+  });
+  return false;
+}

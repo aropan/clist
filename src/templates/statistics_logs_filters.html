@@ -1,0 +1,21 @@
+<form class="form-inline" method="get" action="">
+  {% include "resource_filter.html" with has_statistics_logs=True nomultiply=True %}
+  {% include "contest_filter.html" with has_statistics_logs=True %}
+  {% include "account_filter.html" with without_resource=True %}
+
+  {% create_dict options=log_type_options noajax=True nomultiply=True no_url=True as log_type_select %}
+  {% include "field_to_select.html" with field="log_type" data=log_type_select|simple_select_data %}
+
+  {% if addition_fields %}
+    {% create_dict options=addition_fields noajax=True no_url=True as fields_select %}
+    {% include "field_to_select.html" with field="field" data=fields_select|simple_select_data %}
+  {% endif %}
+  {% for field in fields %}
+    {% if request.GET|get_item:field %}
+      {% create_dict noajax=True no_url=True allow_new=True icon="TEXT" as field_select %}
+      {% include "field_to_select.html" with field=field data=field_select|simple_select_data %}
+    {% endif %}
+  {% endfor %}
+
+  {% include "bookmark_action.html" %}
+</form>

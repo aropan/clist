@@ -26,9 +26,11 @@ foreach ($contests_data as $contest_data) {
         "end_time" => $contest_data["endTime"] / 1000,
         "title" => $contest_data["name"],
         "url" => url_merge($URL, "/$slug-overview"),
+        "standings_url" => url_merge($URL, "/leaderboard?round=$name"),
         "key" => $contest_data["_id"],
         "host" => $HOST,
         "timezone" => $TIMEZONE,
+        "info" => ["parse" => ["name" => $contest_data["name"]]],
         "rid" => $RID,
     ];
 }

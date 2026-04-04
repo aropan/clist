@@ -159,7 +159,7 @@ class ResourceAdmin(BaseModelAdmin):
                                             'has_problem_archive', 'problem_archive_update_time',
                                             'has_upsolving', 'problems_fields',
                                             'problem_rating_predictor']}],
-        ['Statistics information', {'fields': ['allow_delete_archived_statistics', 'statistics_fields']}],
+        ['Statistics information', {'fields': ['allow_delete_archived_statistics', 'has_submissions_statistics_log', 'statistics_fields']}],
         ['Other information', {'fields': ['info']}],
     ]
     list_display = ['host', 'short_host', 'enable', 'n_contests', 'n_accounts', 'n_statistics', 'modified',

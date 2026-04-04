@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-
 from copy import deepcopy
 
 
@@ -16,9 +15,23 @@ def sum_data(a, b):
                 ret[k] = deepcopy(v)
         return ret
     if isinstance(a, list) and isinstance(b, list):
-        assert len(a) == len(b), 'Lists must have the same length'
-        return [sum_data(x, y) for x, y in zip(a, b)]
+        assert len(a) == len(b), "Lists must have the same length"
+        return [sum_data(x, y) for x, y in zip(a, b, strict=True)]
     if isinstance(a, tuple) and isinstance(b, tuple):
-        assert len(a) == len(b), 'Tuples must have the same length'
-        return tuple(sum_data(x, y) for x, y in zip(a, b))
+        assert len(a) == len(b), "Tuples must have the same length"
+        return tuple(sum_data(x, y) for x, y in zip(a, b, strict=True))
     return a + b
+
+
+def deep_iter(data):
+    if isinstance(data, dict):
+        for v in data.values():
+            yield from deep_iter(v)
+    elif isinstance(data, list):
+        for v in data:
+            yield from deep_iter(v)
+    yield data
+
+
+def sum_lists(lists) -> list:
+    return [item for sublist in lists for item in sublist]

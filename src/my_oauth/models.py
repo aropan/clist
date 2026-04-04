@@ -40,7 +40,7 @@ class Service(BaseModel):
     disable = models.BooleanField(default=False)
 
     def __str__(self):
-        return "%s" % (self.name)
+        return f"{self.name}"
 
     objects = BaseManager()
     active_objects = ActiveServiceManager()
@@ -117,9 +117,7 @@ class Form(BaseModel):
     end_time = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        permissions = (
-            ('view_form_stats', 'Can view form statistics'),
-        )
+        permissions = (("view_form_stats", "Can view form statistics"),)
 
     def save(self, *args, **kwargs):
         if not self.title:
@@ -139,7 +137,6 @@ class Form(BaseModel):
 
 
 class Credential(BaseModel):
-
     class State(models.IntegerChoices):
         UNASSIGNED = 1, "Unassigned"
         ASSIGNED = 2, "Assigned"

@@ -735,6 +735,41 @@ def update_account_from_statistic(signal, instance, **kwargs):
         instance.account.update_last_rating_activity(statistic=instance)
 
 
+class StatisticsLog(BaseModel):
+
+    class LogType(models.TextChoices):
+        SUBMISSION = 'SUBMISSION'
+        GAME = 'GAME'
+
+    resource = models.ForeignKey(Resource, on_delete=models.CASCADE, null=True, blank=True, default=None)
+    contest = models.ForeignKey(Contest, on_delete=models.CASCADE, null=True, blank=True, default=None)
+    statistic = models.ForeignKey(Statistics, on_delete=models.CASCADE, null=True, blank=True, default=None)
+    account = models.ForeignKey(Account, on_delete=models.CASCADE, null=True, blank=True, default=None)
+    log_type = models.CharField(max_length=16, choices=LogType.choices)
+    log_id = models.CharField(max_length=255, null=True, blank=True, default=None)
+    time = models.DateTimeField()
+    data = models.JSONField(default=dict)
+    updated = models.DateTimeField()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["resource", "contest", "statistic", "account", "log_type", "log_id"],
+                condition=Q(log_id__isnull=False),
+                name="unique_log_id",
+            ),
+        ]
+
+        indexes = [
+            models.Index(fields=['-time', 'resource', 'log_type', 'id']),
+            models.Index(fields=['-time', 'resource', 'log_type', 'account', 'id']),
+            models.Index(fields=['-time', 'resource', 'log_type', 'contest', 'id']),
+            models.Index(fields=['-updated', '-time', 'resource', 'log_type', 'id']),
+            models.Index(fields=['-updated', '-time', 'resource', 'log_type', 'account', 'id']),
+            models.Index(fields=['-updated', '-time', 'resource', 'log_type', 'contest', 'id']),
+        ]
+
+
 class Module(BaseModel):
     resource = models.OneToOneField(Resource, on_delete=models.CASCADE)
     path = models.CharField(max_length=255)

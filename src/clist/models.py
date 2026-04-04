@@ -46,6 +46,7 @@ contest_and_resource_permissions = (
     ('update_statistics', 'Can update statistics'),
     ('view_private_fields', 'Can view private fields'),
     ('sort_by_fields', 'Can sort by specific fields'),
+    ('view_statistics_logs', 'Can view statistics logs'),
 )
 
 
@@ -143,6 +144,7 @@ class Resource(BaseModel):
     has_country_place = models.BooleanField(null=True, blank=True)
     allow_delete_archived_statistics = models.BooleanField(default=False)
     default_account_type = models.PositiveSmallIntegerField(choices=AccountType.choices, default=AccountType.USER)
+    has_submissions_statistics_log = models.BooleanField(default=False)
 
     RATING_FIELDS = (
         'old_rating', 'new_rating', 'rating', 'rating_perf', 'performance', 'raw_rating',

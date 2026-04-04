@@ -145,6 +145,10 @@ class BaseModule(object, metaclass=ABCMeta):
         raise NotImplementedError()
 
     @staticmethod
+    def compose_message_by_game(*args, **kwargs):
+        raise NotImplementedError()
+
+    @staticmethod
     def get_upsolving_problems(statistics, handle):
         problems = {}
         if statistics and handle in statistics:

@@ -569,7 +569,7 @@ class Statistic(BaseModule):
                     players = sorted(deepcopy(game['players']), key=lambda p: p['position'])
                     players_info = []
                     for player in players:
-                        player_info = f'{player.get("nickname","")}#{player["position"] + 1}'
+                        player_info = f'{player.get("nickname", "")}#{player["position"] + 1}'
                         if player['userId'] == user_id:
                             player_info = f'<strong>{player_info}</strong>'
                         elif player['userId'] == opponent['userId']:

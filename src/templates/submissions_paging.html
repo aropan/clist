@@ -21,7 +21,6 @@
   <td class="account-column">
     {% include "standings_account.html" with statistic=submission.statistic account=submission.account resource=submission.contest.resource contest=submission.contest without_addition_url=True %}
     <a href="{% url 'ranking:standings' submission.contest.title|slug submission.contest.pk %}?find_me={{ submission.statistic.pk }}" class="external-link invisible" target="_blank">{% icon_to "find_me" "View in standings" %}</a>
-
     {% if perms.submissions.change_submission %}
       <a href="{% url 'admin:submissions_submission_change' submission.id %}" class="external-link invisible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
     {% endif %}

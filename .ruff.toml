@@ -1,11 +1,68 @@
+# =============================================================================
+# Ruff Configuration
+# =============================================================================
+
+# Set the maximum line length to 120 characters
 line-length = 120
-extend-exclude = ["*/migrations"]
+
+# Assume Python 3.10+ (change this to match your actual dev environment)
+target-version = "py310"
+
+# Directories to exclude from linting and formatting
+extend-exclude = [
+    "*/migrations", # Ignore Django migrations
+]
 
 [lint]
+# Enable preview features for linting
 preview = true
-select = ["E", "F"]
-extend-ignore = ["I", "E203", "E402", "F401"]
-unfixable = ["F401"]
+
+# Rules to enable
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes (basic syntax/logic errors)
+    "I",   # isort (automatically sort imports)
+
+    # --- Useful additions for a pet project ---
+    "UP",  # pyupgrade (keep python modern, e.g. updating type hints)
+    "B",   # flake8-bugbear (finds common bugs and design issues)
+    "SIM", # flake8-simplify (suggests simpler alternatives for your code)
+    "C4",  # flake8-comprehensions (helps write better list/dict comprehensions)
+
+    # --- Advanced / Framework specific ---
+    "RUF", # Ruff-specific rules (catches common mistakes)
+    "RET", # flake8-return (makes returns more readable and logical)
+    "DJ",  # flake8-django (rules for Django projects)
+    "PT",  # flake8-pytest-style (if using pytest)
+]
+
+# Rules to ignore
+extend-ignore = [
+    "E203", # whitespace before ':' (often conflicts with formatters)
+    "E402", # module level import not at top of file
+    "B905", # zip without strict=True
+    "RET504", # unnecessary assign before return
+]
+
+# Rules that Ruff shouldn't try to fix automatically
+unfixable = [
+    "F401", # Don't auto-remove unused imports (useful when you're still developing a file)
+]
+
+# Per-file ignores allow you to ignore specific rules for specific files
+[lint.per-file-ignores]
+# Allow unused imports in __init__.py files
+"__init__.py" = ["F401"]
+# Allow long lines in Django migrations
+"*/migrations/*" = ["E501"]
 
 [format]
+# Enable preview features for formatting
 preview = true
+
+# Use double quotes for strings (standard Python convention)
+quote-style = "double"
+
+# Indent with spaces
+indent-style = "space"

@@ -109,7 +109,8 @@ class Statistic(BaseModule):
                         continue
 
                     if max_run_id:
-                        problem_submission_infos = [info for info in problem_submission_infos if info["run_id"] <= max_run_id]
+                        problem_submission_infos = [
+                            info for info in problem_submission_infos if info["run_id"] <= max_run_id]
                     for submission_info in problem_submission_infos:
                         already_processed.add(submission_info["run_id"])
 
@@ -248,6 +249,7 @@ class Statistic(BaseModule):
 
                 submission_result = submission["score"]
                 submission_info = {
+                    "problem": short,
                     "submission_id": submission_id,
                     "submission_time": submission_time.timestamp(),
                     "verdict_full": submission["verdict"],
@@ -265,7 +267,8 @@ class Statistic(BaseModule):
                 if (
                     problem
                     and submission_result_value >= problem_result_value
-                    and ("submission_time" not in problem or submission_info["submission_time"] < problem["submission_time"])
+                    and ("submission_time" not in problem
+                         or submission_info["submission_time"] < problem["submission_time"])
                 ):
                     counters["n_updated"] += 1
                     problem.update(submission_info)

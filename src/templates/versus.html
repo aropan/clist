@@ -154,7 +154,7 @@
             </span>
           {% endif %}
           {% if perms.ranking.statistics_change and stat %}
-            <a href="{% url 'admin:ranking_statistics_change' stat.id %}" class="database-link invisible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
+            <a href="{% url 'admin:ranking_statistics_change' stat.id %}" class="hover-visible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>
           {% endif %}
         </div>
         {% if rated %}
