@@ -102,7 +102,7 @@ foreach ($lines as $line) {
         "url" => $URL,
         "host" => $HOST,
         "rid" => $RID,
-        "timezone" => $TIMEZONE,
+        "timezone" => "UTC",
         "key" => $key,
     ];
 }
@@ -115,5 +115,3 @@ if ($proxy) {
     curl_setopt($CID, CURLOPT_PROXY, null);
 }
 curl_setopt($CID, CURLOPT_USERAGENT, $USER_AGENT);
-
-?>

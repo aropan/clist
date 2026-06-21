@@ -690,6 +690,9 @@ function array_pop_assoc(&$array, $key, $default = null)
 
 function get_item($array, $path, $default = null)
 {
+    if (is_string($path)) {
+        $path = explode('.', $path);
+    }
     $result = $array;
     foreach ($path as $key) {
         if (!isset($result[$key])) {

@@ -67,6 +67,7 @@ from utils.colors import get_n_colors
 from utils.json_field import JSONF
 from utils.mathutils import max_with_none, min_with_none
 from utils.regex import get_iregex_filter
+from utils.timetools import parse_datetime
 
 
 @page_template("standings_list_paging.html")
@@ -143,6 +144,8 @@ def standings_list(request, template="standings_list.html"):
                         "suff": "__isnull",
                         "func": lambda v: v not in settings.YES_,
                     },
+                    "start_time": {"fields": ["start_time"], "func": parse_datetime, "suff": "__gte"},
+                    "end_time": {"fields": ["end_time"], "func": parse_datetime, "suff": "__gte"},
                     "n_problems": {"fields": ["n_problems"], "suff": ""},
                 },
                 logger=request.logger,

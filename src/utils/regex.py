@@ -5,6 +5,8 @@ import re
 from django.db.models import Q
 from sql_util.utils import Exists
 
+from utils.timetools import parse_datetime
+
 
 def verify_regex(regex, logger=None):
     try:
@@ -12,7 +14,7 @@ def verify_regex(regex, logger=None):
     except Exception as e:
         if logger:
             logger.warning(f'Regex "{regex}" has error: {e}')
-        regex = re.sub(r'([\{\}\[\]\(\)\\\*\+\?])', r'\\\1', regex)
+        regex = re.sub(r"([\{\}\[\]\(\)\\\*\+\?])", r"\\\1", regex)
     return regex
 
 
@@ -23,39 +25,50 @@ def get_iregex_filter(
     logger=None,
     values=None,
     queryset=None,
-    suffix='__iregex',
+    suffix="__iregex",
 ):
     ret = Q()
     n_exists = 0
-    for dis in expression.split('||'):
+    for dis in expression.split("||"):
         cond = Q()
-        for con in dis.split('&&'):
+        for con in dis.split("&&"):
             r = con.strip()
             fs = fields
             suff = suffix
             neg = False
-            if ':' in r and mapping:
-                k, v = r.split(':', 1)
-                if k.startswith('!'):
+            if ":" in r and mapping:
+                k, v = r.split(":", 1)
+                if k.startswith("!"):
                     k = k[1:].strip()
                     neg = not neg
                 if k in mapping:
                     mapped = mapping[k]
+                elif k in {"modified", "created"}:
+                    mapped = {"fields": [k], "func": parse_datetime, "suff": "__gte"}
+                else:
+                    mapped = None
+                if mapped is not None:
                     try:
-                        fs = mapped['fields']
+                        fs = mapped["fields"]
+                        suff = ""
 
-                        r = mapped['func'](v) if 'func' in mapped else v
+                        if "allowed_suff" in mapped and ":" in v:
+                            suff_, v_ = v.split(":", 1)
+                            if suff_ in mapped["allowed_suff"]:
+                                suff = f"__{suff_}"
+                                v = v_
 
-                        suff = mapped.get('suff', '')
-                        if callable(suff):
+                        r = mapped["func"](v) if "func" in mapped else v
+
+                        if not suff and (suff := mapped.get("suff", "")) and callable(suff):
                             suff = suff(r)
 
-                        exists = mapped.get('exists')
+                        exists = mapped.get("exists")
                         if exists:
-                            if isinstance(r, str) and 'regex' in fs[0]:
+                            if isinstance(r, str) and "regex" in fs[0]:
                                 r = verify_regex(r, logger=logger)
                             n_exists += 1
-                            field = f'exists{n_exists}'
+                            field = f"exists{n_exists}"
                             queryset = queryset.annotate(**{field: Exists(exists, filter=Q(**{fs[0]: r}))})
                             fs = [field]
                             r = True
@@ -66,13 +79,13 @@ def get_iregex_filter(
                     if values is not None:
                         values.setdefault(k, []).append(r)
 
-            if isinstance(r, str) and 'regex' in suff:
-                if r.startswith('!'):
+            if isinstance(r, str) and "regex" in suff:
+                if r.startswith("!"):
                     neg = not neg
                     r = r[1:].strip()
                 r = verify_regex(r, logger=logger)
 
-            cs = [Q(**{f'{field}{suff}': r}) for field in fs]
+            cs = [Q(**{f"{field}{suff}": r}) for field in fs]
             if neg:
                 cond &= functools.reduce(operator.iand, (~c for c in cs))
             else:
@@ -84,5 +97,5 @@ def get_iregex_filter(
 
 
 def get_icontains_filter(*args, **kwargs):
-    kwargs['suffix'] = '__icontains'
+    kwargs["suffix"] = "__icontains"
     return get_iregex_filter(*args, **kwargs)

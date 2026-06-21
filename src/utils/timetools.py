@@ -23,25 +23,25 @@ def parse_duration(value):
 
 
 def parse_datetime_from_url(value, tz=timezone.utc):
-    value = value.replace('&amp;', '&')
+    value = value.replace("&amp;", "&")
     parsed_url = urlparse(value)
     qs = parse_qs(parsed_url.query)
     args = {
         name: int(qs.get(key, [None])[0])
         for name, key in {
-            'year': 'year',
-            'month': 'month',
-            'day': 'day',
-            'hour': 'hour',
-            'minute': 'min',
-            'second': 'sec',
+            "year": "year",
+            "month": "month",
+            "day": "day",
+            "hour": "hour",
+            "minute": "min",
+            "second": "sec",
         }.items()
         if key in qs
     }
-    if 'p1' in qs:
-        p1 = qs['p1'][0]
-        if p1 == '166':
-            tz = pytz.timezone('Europe/Moscow')
+    if "p1" in qs:
+        p1 = qs["p1"][0]
+        if p1 == "166":
+            tz = pytz.timezone("Europe/Moscow")
     return tz.localize(datetime(**args))
 
 
@@ -50,13 +50,13 @@ def parse_datetime(value, tz=None) -> datetime | None:
         return None
     if isinstance(value, (int, float)):
         return arrow.get(value).datetime
-    if 'timeanddate.com' in value:
+    if "timeanddate.com" in value:
         return parse_datetime_from_url(value)
-    if value.endswith('ago'):
+    if value.endswith("ago"):
         return now() - parse_duration(value[:-3].strip())
     if tz:
-        value = f'{value} {tz}'
-    value = re.sub(r'\bUTC\b\s*([+-][:0-9]+)(.*)', r'\2 \1', value, re.IGNORECASE)
+        value = f"{value} {tz}"
+    value = re.sub(r"\bUTC\b\s*([+-][:0-9]+)(.*)", r"\2 \1", value, flags=re.IGNORECASE)
     return dateutil.parser.parse(value).astimezone(tz=timezone.utc)
 
 
@@ -65,11 +65,11 @@ def datetime_from_timestamp(timestamp):
 
 
 def datetime_to_str(dt):
-    return dt.strftime('%Y-%m-%d %H:%M:%S %z')
+    return dt.strftime("%Y-%m-%d %H:%M:%S %z")
 
 
 class Epoch(models.expressions.Func):
-    template = 'EXTRACT(epoch FROM %(expressions)s)::INTEGER'
+    template = "EXTRACT(epoch FROM %(expressions)s)::INTEGER"
     output_field = models.IntegerField()
 
 
@@ -82,7 +82,7 @@ def get_timeformat(request):
     return ret
 
 
-def get_timezone(request):
+def get_timezone(request) -> str | None:
     tz = request.GET.get("timezone")
     if tz:
         result = None
@@ -109,7 +109,7 @@ def get_timezone(request):
                     request.user.coder.save()
                 else:
                     request.session["timezone"] = result
-                return
+                return None
             return result
 
     if request.user.is_authenticated and hasattr(request.user, "coder"):
@@ -123,8 +123,8 @@ def timed_cache(timeout_cache):
     def decorator(func):
         @wraps(func)
         def decorated(*args, **kwargs):
-            key = f'{func.__module__}.{func.__qualname__}.{args}.{kwargs}'
-            key = key.replace(' ', '')
+            key = f"{func.__module__}.{func.__qualname__}.{args}.{kwargs}"
+            key = key.replace(" ", "")
             ret = cache.get(key)
             if ret is None:
                 ret = func(*args, **kwargs)

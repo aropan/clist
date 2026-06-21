@@ -40,6 +40,7 @@
 
                 $title = $c['title'];
 
+                $invisible = preg_match('#^awc[0-9]+$|^adt_#', $k);
                 $contest = array(
                     'start_time' => $c['start_time'],
                     'duration' => $c['duration'],
@@ -47,6 +48,7 @@
                     'url' => url_merge($URL, $c['url']),
                     'host' => $HOST . $host,
                     'rid' => $RID,
+                    'invisible' => $invisible,
                     'timezone' => $TIMEZONE,
                     'key' => $k,
                 );

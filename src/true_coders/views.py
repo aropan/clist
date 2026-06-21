@@ -165,9 +165,10 @@ def get_profile_context(request, statistics, writers, resources):
                 },
                 "stage": {"fields": ["contest__stage"], "suff": "__isnull", "func": lambda v: not is_yes(v)},
                 "place": {
-                    "fields": ["place"],
-                    "func": lambda v: [4, 5, 6, 7, 8, 9, 10] if v == "T10" else v,
+                    "fields": ["place_as_int"],
+                    "func": lambda v: [4, 5, 6, 7, 8, 9, 10] if v == "T10" else int(v),
                     "suff": lambda v: "__in" if isinstance(v, list) else "",
+                    "allowed_suff": ["", "in", "gte", "lte"],
                 },
                 "cid": {"fields": ["contest_id"], "func": lambda v: int(v)},
                 "rid": {"fields": ["contest__resource_id"], "func": lambda v: int(v)},

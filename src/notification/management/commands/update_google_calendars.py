@@ -10,6 +10,7 @@ from pytz import UTC
 from traceback_with_variables import prints_exc
 
 from clist.models import Contest, Resource
+from utils.attrdict import AttrDict
 
 batch = BatchHttpRequest()
 
@@ -20,7 +21,7 @@ def get_all_calendars():
     while True:
         calendar_list = service.calendarList().list(pageToken=page_token).execute()
         ret += calendar_list["items"]
-        page_token = calendar_list.get('nextPageToken')
+        page_token = calendar_list.get("nextPageToken")
         if not page_token:
             break
     return ret
@@ -32,7 +33,7 @@ def get_all_events(**kwargs):
     while True:
         events = service.events().list(pageToken=page_token, **kwargs).execute()
         ret += events["items"]
-        page_token = events.get('nextPageToken')
+        page_token = events.get("nextPageToken")
         if not page_token:
             break
     return ret
@@ -47,9 +48,9 @@ def create_resource_calendar(resource, calendarId=None):
     if calendarId:
         entry = service.calendars().update(calendarId=calendarId, body=body).execute()
         if entry["id"] != resource.uid:
-            raise Exception("Different id calendar for %s, excepted '%s', found '%s'" % (resource,
-                                                                                         resource.uid,
-                                                                                         entry["id"]))
+            raise Exception(
+                "Different id calendar for %s, excepted '%s', found '%s'" % (resource, resource.uid, entry["id"])
+            )
     else:
         entry = service.calendars().insert(body=body).execute()
         resource.uid = entry["id"]
@@ -70,9 +71,9 @@ def create_contest_event(calendarId, contest, eventId=None):
     if eventId:
         entry = service.events().update(calendarId=calendarId, eventId=eventId, body=body).execute()
         if entry["id"] != contest.uid:
-            raise Exception("Different id event for %s, excepted '%s', found '%s'" % (contest,
-                                                                                      contest.uid,
-                                                                                      entry["id"]))
+            raise Exception(
+                "Different id event for %s, excepted '%s', found '%s'" % (contest, contest.uid, entry["id"])
+            )
     else:
         entry = service.events().insert(calendarId=calendarId, body=body).execute()
         contest.uid = entry["id"]
@@ -85,23 +86,34 @@ def get_time_with_tz(time, tz=UTC):
 
 
 class Command(BaseCommand):
-    help = 'Update google calendars'
+    help = "Update google calendars"
+
+    def add_arguments(self, parser):
+        parser.add_argument("-r", "--resources", metavar="HOST", nargs="*", help="host name for update")
+        parser.add_argument("-d", "--days", type=int, default=8, help="number of days to update")
 
     @prints_exc
     def handle(self, *args, **options):
+        args = AttrDict(options)
+
+        if args.resources:
+            resources = Resource.get(args.resources)
+        else:
+            resources = Resource.objects.all()
+
         now = timezone.now()
         print(now)
         print()
-        current = now - timedelta(days=8)
+        current = now - timedelta(days=args.days)
 
         calendars = {entry["id"]: entry for entry in get_all_calendars()}
 
         print(f"Calendars ({len(calendars)}):")
-        for c in sorted(list(calendars.values()), key=lambda c: c['summary']):
+        for c in sorted(list(calendars.values()), key=lambda c: c["summary"]):
             print("    %(summary)s, %(id)s" % c)
 
         resources_uids = set()
-        for r in Resource.objects.all():
+        for r in resources:
             if r.uid:
                 if r.uid not in calendars:
                     raise Exception("Calendar with id='%s' not found, resource %s" % (r.uid, r.host))
@@ -113,14 +125,15 @@ class Command(BaseCommand):
                 create_resource_calendar(r)
             resources_uids.add(r.uid)
 
-        for uid, cal in calendars.items():
-            if cal['summary'] == 'CLIST':
-                continue
-            if uid not in resources_uids:
-                print(f"-   {cal['summary']}")
-                service.calendarList().delete(calendarId=uid).execute()
+        if not args.resources:
+            for uid, cal in calendars.items():
+                if cal["summary"] == "CLIST":
+                    continue
+                if uid not in resources_uids:
+                    print(f"-   {cal['summary']}")
+                    service.calendarList().delete(calendarId=uid).execute()
 
-        for r in Resource.objects.all():
+        for r in resources:
             events = {entry["id"]: entry for entry in get_all_events(calendarId=r.uid, timeMin=current.isoformat())}
             contests = Contest.visible.filter(resource=r, end_time__gt=current)
 

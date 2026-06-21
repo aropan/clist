@@ -1,6 +1,4 @@
-#!/usr/bin/env python2.7
-# -*- coding: utf-8 -*-
-
+#!/usr/bin/env python3
 
 import atexit
 import copy
@@ -43,17 +41,16 @@ from requests.models import Response
 
 from utils.proxy_list import ProxyList
 
-logging.getLogger('chardet.charsetprober').setLevel(logging.INFO)
-logger = logging.getLogger('utils.requester')
+logging.getLogger("chardet.charsetprober").setLevel(logging.INFO)
+logger = logging.getLogger("utils.requester")
 
 
 class BaseException(Exception):
-
     def __init__(self, *args):
         super().__init__(*args)
 
     def __str__(self):
-        return f'{self.__class__.__name__}: {super().__str__()}'
+        return f"{self.__class__.__name__}: {super().__str__()}"
 
 
 class FileWithProxiesNotFound(BaseException):
@@ -69,20 +66,19 @@ class ProxyLimitReached(BaseException):
 
 
 class FailOnGetResponse(BaseException):
-
     @property
     def code(self):
-        return getattr(self.args[0], 'code', None)
+        return getattr(self.args[0], "code", None)
 
     @property
     def url(self):
-        return getattr(self.args[0], 'url', None)
+        return getattr(self.args[0], "url", None)
 
     @property
     def response(self):
-        if not hasattr(self, 'response_'):
+        if not hasattr(self, "response_"):
             err = self.args[0]
-            self.response_ = read_response(err).decode(errors='replace') if hasattr(err, 'fp') else None
+            self.response_ = read_response(err).decode(errors="replace") if hasattr(err, "fp") else None
         return self.response_
 
     def has_message(self, message):
@@ -91,19 +87,18 @@ class FailOnGetResponse(BaseException):
 
 
 class CurlFailedResponse(FailOnGetResponse):
-
     def __getattr__(self, name):
         return getattr(self.args[0], name, None)
 
 
 def raise_fail(err, exc):
     if exc.code or exc.url:
-        msg = f'code = {exc.code}, url = `{exc.url}`'
+        msg = f"code = {exc.code}, url = `{exc.url}`"
         if exc.response:
-            response = exc.response.strip().replace('\n', '\\n')
+            response = exc.response.strip().replace("\n", "\\n")
             if len(response) > 200:
-                response = response[:200] + '...'
-            msg += f', response = `{response}`'
+                response = response[:200] + "..."
+            msg += f", response = `{response}`"
         logger.warning(msg)
     raise exc from err
 
@@ -112,27 +107,27 @@ class NoVerifyWord(Exception):
     pass
 
 
-class Proxer():
+class Proxer:
     DIVIDER = 3
-    LIMIT_TIME = float(environ.get('PROXY_LIMIT_TIME', 3))
+    LIMIT_TIME = float(environ.get("PROXY_LIMIT_TIME", 3))
 
     def load_data(self):
         try:
-            with open(self.file_name, 'r') as fo:
+            with open(self.file_name, "r") as fo:
                 self._data = load(fo)
         except (IOError, ValueError):
             self._data = {}
-        self._data.setdefault('proxies', {})
-        self._data.setdefault('sources', {})
-        self._data.setdefault('deferred', {})
+        self._data.setdefault("proxies", {})
+        self._data.setdefault("sources", {})
+        self._data.setdefault("deferred", {})
 
-        env_proxy = environ.get('REQUESTER_PROXY')
-        if env_proxy and re.match(r'^[0-9]+\.+[0-9]+\.+[0-9]+\.+[0-9]+:[0-9]+$', env_proxy):
-            self._data['proxies'] = {}
+        env_proxy = environ.get("REQUESTER_PROXY")
+        if env_proxy and re.match(r"^[0-9]+\.+[0-9]+\.+[0-9]+\.+[0-9]+:[0-9]+$", env_proxy):
+            self._data["proxies"] = {}
             self.add(env_proxy)
 
-        if environ.get('REQUESTER_PROXY_CLEAR'):
-            self._data['proxies'] = {}
+        if environ.get("REQUESTER_PROXY_CLEAR"):
+            self._data["proxies"] = {}
 
         for proxy in self.proxies.values():
             self.init_proxy(proxy)
@@ -141,37 +136,37 @@ class Proxer():
         created_threshold = self.get_timestamp() - 60 * 60
         removed = []
         for k, v in self.proxies.items():
-            if v['_total_success'] == 0 and v.get('_created', -1) < created_threshold:
+            if v["_total_success"] == 0 and v.get("_created", -1) < created_threshold:
                 removed.append(k)
         for k in removed:
             del self.proxies[k]
-        self.print(f'remove {len(removed)} proxies')
+        self.print(f"remove {len(removed)} proxies")
 
     @property
     def proxies(self):
-        return self._data['proxies']
+        return self._data["proxies"]
 
     @property
     def sources(self):
-        return self._data['sources']
+        return self._data["sources"]
 
     def defer_proxy(self):
-        success = self.proxy.pop('_success')
+        success = self.proxy.pop("_success")
         if success:
-            self.proxy['_n_deferred'] = self.n_deferred
+            self.proxy["_n_deferred"] = self.n_deferred
         else:
-            self.proxy['_n_deferred'] -= 1
-        self._data['deferred'][self.proxy_key] = self.proxy
+            self.proxy["_n_deferred"] -= 1
+        self._data["deferred"][self.proxy_key] = self.proxy
 
     def check_proxy(self):
         with self.lock:
-            if (self.proxy and self.proxy['_fail'] > 0 and self.proxy['_state'] == 0 or self.is_slow_proxy()):
-                if (self.proxy['_success'] or self.proxy['_total_success']) and self.proxy['_n_deferred']:
-                    message = 'defer'
+            if self.proxy and self.proxy["_fail"] > 0 and self.proxy["_state"] == 0 or self.is_slow_proxy():
+                if (self.proxy["_success"] or self.proxy["_total_success"]) and self.proxy["_n_deferred"]:
+                    message = "defer"
                     self.defer_proxy()
                 else:
-                    message = 'remove'
-                self.print(f'{message} {self.proxy_key}, info = {self.proxy}')
+                    message = "remove"
+                self.print(f"{message} {self.proxy_key}, info = {self.proxy}")
                 del self.proxies[self.proxy_key]
                 self.proxy = None
                 self.proxy_key = None
@@ -182,7 +177,7 @@ class Proxer():
 
     def dump_proxy(self):
         if self.dump_proxy_filepath and self.proxy:
-            with open(self.dump_proxy_filepath, 'w') as fo:
+            with open(self.dump_proxy_filepath, "w") as fo:
                 json.dump(self.proxy, fo, indent=2)
 
     def save_data(self):
@@ -195,39 +190,39 @@ class Proxer():
                 ensure_ascii=False,
             )
             os.makedirs(path.dirname(self.file_name), exist_ok=True)
-            with open(self.file_name, 'w') as fo:
+            with open(self.file_name, "w") as fo:
                 fo.write(j)
 
             self.dump_proxy()
 
     def is_slow_proxy(self):
-        if self.proxy and self.proxy.get('_total_count', 0) > 9:
+        if self.proxy and self.proxy.get("_total_count", 0) > 9:
             time = self.time_response()
             return time > self.time_limit
 
     @staticmethod
     def get_timestamp():
-        return int(datetime.utcnow().strftime('%s'))
+        return int(datetime.utcnow().strftime("%s"))
 
     @staticmethod
     def get_score(proxy):
-        return (proxy['_state'], -proxy['_timestamp'])
+        return (proxy["_state"], -proxy["_timestamp"])
 
     def init_proxy(self, proxy):
-        proxy.setdefault('_state', 0)
-        proxy['_success'] = 0
-        proxy['_fail'] = 0
-        proxy.setdefault('_total_success', 0)
-        proxy.setdefault('_total_fail', 0)
-        proxy.setdefault('_created', self.get_timestamp())
-        proxy.setdefault('_timestamp', self.get_timestamp())
-        proxy.setdefault('_n_deferred', self.n_deferred)
+        proxy.setdefault("_state", 0)
+        proxy["_success"] = 0
+        proxy["_fail"] = 0
+        proxy.setdefault("_total_success", 0)
+        proxy.setdefault("_total_fail", 0)
+        proxy.setdefault("_created", self.get_timestamp())
+        proxy.setdefault("_timestamp", self.get_timestamp())
+        proxy.setdefault("_n_deferred", self.n_deferred)
 
     def add(self, proxy):
         if isinstance(proxy, str):
-            addr, port = proxy.split(':')
-            proxy = {'addr': addr, 'port': port}
-        key = f'{proxy["addr"]}:{proxy["port"]}'
+            addr, port = proxy.split(":")
+            proxy = {"addr": addr, "port": port}
+        key = f"{proxy['addr']}:{proxy['port']}"
         value = self.proxies.setdefault(key, {})
         value.update(proxy)
         self.init_proxy(value)
@@ -237,8 +232,8 @@ class Proxer():
             self.add(proxy)
 
     def add_deferred_proxies(self):
-        deferred_proxies = self._data.pop('deferred', {})
-        self._data['deferred'] = {}
+        deferred_proxies = self._data.pop("deferred", {})
+        self._data["deferred"] = {}
 
         for proxy in deferred_proxies.values():
             self.init_proxy(proxy)
@@ -255,7 +250,7 @@ class Proxer():
     @property
     def proxy_address(self):
         try:
-            return '%(addr)s:%(port)s' % self.proxy
+            return "%(addr)s:%(port)s" % self.proxy
         except Exception:
             return None
 
@@ -275,36 +270,36 @@ class Proxer():
                 self.proxy_key = k
         if not self.proxy:
             raise NotFoundProxy()
-        self.proxy['_timestamp'] = self.get_timestamp()
+        self.proxy["_timestamp"] = self.get_timestamp()
         ret = self.proxy_address
-        self.print(f'get = {ret} of {len(self)} (limit = {self.n_limit}), time = {self.time_response()}')
+        self.print(f"get = {ret} of {len(self)} (limit = {self.n_limit}), time = {self.time_response()}")
         return ret
 
     def update_value(self, key, value):
         self.proxy.setdefault(key, 0)
         self.proxy[key] += value
-        if 'source' in self.proxy:
-            source = self.sources.setdefault(self.proxy['source'], {})
+        if "source" in self.proxy:
+            source = self.sources.setdefault(self.proxy["source"], {})
             source.setdefault(key, 0)
             source[key] += value
-            if source.get('_total_count') and source.get('_total_time'):
-                source['_avg_time'] = round(source['_total_time'] / source['_total_count'], 3)
+            if source.get("_total_count") and source.get("_total_time"):
+                source["_avg_time"] = round(source["_total_time"] / source["_total_count"], 3)
 
     def ok(self, proxy, time_response=None):
         with self.lock:
             if not self.proxy or proxy != self.proxy_address:
                 return
-            self.proxy['_state'] += 1
-            self.proxy['_total_success'] += 1
-            self.update_value('_success', 1)
-            if self.proxy['_success'] == 1:
+            self.proxy["_state"] += 1
+            self.proxy["_total_success"] += 1
+            self.update_value("_success", 1)
+            if self.proxy["_success"] == 1:
                 self.dump_proxy()
             if time_response:
-                delta_time = time_response.total_seconds() + time_response.microseconds / 1000000.
-                self.update_value('_total_count', 1)
-                self.update_value('_total_time', delta_time)
-                self.proxy['_avg_time'] = self.time_response()
-            self.print(f'ok, {time_response} with average {self.time_response()}')
+                delta_time = time_response.total_seconds() + time_response.microseconds / 1000000.0
+                self.update_value("_total_count", 1)
+                self.update_value("_total_time", delta_time)
+                self.proxy["_avg_time"] = self.time_response()
+            self.print(f"ok, {time_response} with average {self.time_response()}")
             self.check_proxy()
 
     def fail(self, proxy, force=False) -> bool:
@@ -312,21 +307,21 @@ class Proxer():
             if not self.proxy or proxy != self.proxy_address:
                 return False
             if force:
-                self.proxy['_state'] = 0
+                self.proxy["_state"] = 0
             else:
-                self.proxy['_state'] //= self.DIVIDER
-            self.proxy['_total_fail'] += 1
-            self.update_value('_fail', 1)
+                self.proxy["_state"] //= self.DIVIDER
+            self.proxy["_total_fail"] += 1
+            self.update_value("_fail", 1)
             self.check_proxy()
             return True
 
     def time_response(self):
-        if self.proxy and self.proxy.get('_total_count', 0):
-            return round(self.proxy['_total_time'] / self.proxy['_total_count'], 3)
+        if self.proxy and self.proxy.get("_total_count", 0):
+            return round(self.proxy["_total_time"] / self.proxy["_total_count"], 3)
 
     def print(self, *args):
         if self.logger:
-            self.logger('[proxy]', *args)
+            self.logger("[proxy]", *args)
 
     def get_connect_ret(self):
         return self.connect_ret
@@ -361,7 +356,7 @@ class Proxer():
         dump_proxy_filepath=None,
     ):
         self.logger = logger
-        self.file_name = file_name + '.json'
+        self.file_name = file_name + ".json"
         self.time_limit = time_limit
         self.n_limit = n_limit
         self.n_deferred = n_deferred
@@ -373,13 +368,13 @@ class Proxer():
         self.load_data()
         self.clear_data()
         if path.exists(file_name):
-            with open(file_name, 'r') as fo:
+            with open(file_name, "r") as fo:
                 for line in fo:
                     line = line.strip()
                     if not line:
                         continue
                     self.add(line)
-            open(file_name, 'w').close()
+            open(file_name, "w").close()
         self.proxy = None
         self.lock = threading.RLock()
 
@@ -419,48 +414,50 @@ def encode_multipart(fields=None, files=None, boundary=None):
     >>> len(body)
     193
     """
+
     def escape_quote(s):
         return s.replace('"', '\\"')
 
     if boundary is None:
-        boundary = ''.join(random.choice(string.digits + string.ascii_letters) for i in range(30))
+        boundary = "".join(random.choice(string.digits + string.ascii_letters) for i in range(30))
     lines = []
 
     fields = fields or {}
     for name, value in fields.items():
         lines.extend((
-            '--{0}'.format(boundary),
+            "--{0}".format(boundary),
             'Content-Disposition: form-data; name="{0}"'.format(escape_quote(name)),
-            '',
+            "",
             str(value),
         ))
 
     files = files or {}
     for name, value in files.items():
-        filename = value['filename']
-        if 'mimetype' in value:
-            mimetype = value['mimetype']
+        filename = value["filename"]
+        if "mimetype" in value:
+            mimetype = value["mimetype"]
         else:
-            mimetype = mimetypes.guess_type(filename)[0] or 'application/octet-stream'
+            mimetype = mimetypes.guess_type(filename)[0] or "application/octet-stream"
         lines.extend((
-            '--{0}'.format(boundary),
+            "--{0}".format(boundary),
             'Content-Disposition: form-data; name="{0}"; filename="{1}"'.format(
-                    escape_quote(name), escape_quote(filename)),
-            'Content-Type: {0}'.format(mimetype),
-            '',
-            value['content'],
+                escape_quote(name), escape_quote(filename)
+            ),
+            "Content-Type: {0}".format(mimetype),
+            "",
+            value["content"],
         ))
 
     lines.extend((
-        '--{0}--'.format(boundary),
-        '',
+        "--{0}--".format(boundary),
+        "",
     ))
-    body = '\r\n'.join(lines)
-    body = body.encode('utf8')
+    body = "\r\n".join(lines)
+    body = body.encode("utf8")
 
     headers = {
-        'Content-Type': 'multipart/form-data; boundary={0}'.format(boundary),
-        'Content-Length': len(body),
+        "Content-Type": "multipart/form-data; boundary={0}".format(boundary),
+        "Content-Length": len(body),
     }
 
     return body, headers
@@ -469,13 +466,13 @@ def encode_multipart(fields=None, files=None, boundary=None):
 @contextmanager
 def get_response_buffer(response):
     content_encoding = response.info().get("Content-Encoding", None)
-    if content_encoding == 'gzip':
+    if content_encoding == "gzip":
         buf = BytesIO(response.read())
         with GzipFile(fileobj=buf) as f:
             yield f
-    elif content_encoding == 'deflate':
+    elif content_encoding == "deflate":
         yield BytesIO(zlib.decompress(response.read(), -zlib.MAX_WBITS))
-    elif content_encoding == 'br':
+    elif content_encoding == "br":
         yield BytesIO(brotli.decompress(response.read()))
     else:
         yield response
@@ -487,42 +484,42 @@ def read_response(response):
 
 
 def curl_response(url, headers=None, cookie_file=None, curl_args=None, post=None):
-    args = ['curl', '--include', url, '--location', '--compressed']
+    args = ["curl", "--include", url, "--location", "--compressed"]
     if cookie_file:
-        args.extend(['--cookie', cookie_file, '--cookie-jar', cookie_file])
+        args.extend(["--cookie", cookie_file, "--cookie-jar", cookie_file])
     if curl_args:
         args.extend(shlex.split(curl_args))
     if headers:
         for k, v in headers.items():
-            args.extend(['--header', f'{k}: {v}'])
+            args.extend(["--header", f"{k}: {v}"])
     if post:
-        args.extend(['--data-raw', post])
+        args.extend(["--data-raw", post])
     process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = process.communicate()
 
-    output = stdout.decode('utf-8')
-    headers_raw, body = output.split('\r\n\r\n', 1)
-    headers_lines = headers_raw.split('\r\n')
+    output = stdout.decode("utf-8")
+    headers_raw, body = output.split("\r\n\r\n", 1)
+    headers_lines = headers_raw.split("\r\n")
 
     response = Response()
-    response._content = body.encode('utf-8')
+    response._content = body.encode("utf-8")
 
     for header in headers_lines[1:]:
         key, value = header.split(": ", 1)
-        if key.lower() == 'content-encoding':
+        if key.lower() == "content-encoding":
             continue
         response.headers[key] = value
 
-    status_line = headers_lines[0].split(' ')
+    status_line = headers_lines[0].split(" ")
     response.code = int(status_line[1])
-    response.reason = ' '.join(status_line[2:])
+    response.reason = " ".join(status_line[2:])
     response.url = url
     response.info = lambda *args, **kwargs: response.headers
     response.read = lambda: response._content
     return response
 
 
-class requester():
+class requester:
     cache_timeout = 10940
     caching = True
     assert_on_fail = True
@@ -538,22 +535,24 @@ class requester():
     limit_file_cache = 200
     counter_file_cache = 0
     verify_word = None
-    n_attempts = int(environ.get('REQUESTER_N_ATTEMPTS', 1))
-    attempt_delay = int(environ.get('REQUESTER_ATTEMPT_DELAY', 2))
+    n_attempts = int(environ.get("REQUESTER_N_ATTEMPTS", 1))
+    attempt_delay = int(environ.get("REQUESTER_ATTEMPT_DELAY", 2))
     additional_lock = threading.Lock()
 
     def print(self, *objs, force=False):
         if self.debug_output or force:
             print(datetime.utcnow(), *objs, file=stderr)
 
-    def __init__(self,
-                 proxy=environ.get('REQUESTER_PROXY'),
-                 cookie_filename=environ.get('REQUESTER_COOKIE_FILENAME'),
-                 caching=None,
-                 user_agent=None,
-                 headers=None,
-                 proxy_filepath=default_filepath_proxies,
-                 insecure=strtobool(environ.get('REQUESTER_INSECURE', '0'))):
+    def __init__(
+        self,
+        proxy=environ.get("REQUESTER_PROXY"),
+        cookie_filename=environ.get("REQUESTER_COOKIE_FILENAME"),
+        caching=None,
+        user_agent=None,
+        headers=None,
+        proxy_filepath=default_filepath_proxies,
+        insecure=strtobool(environ.get("REQUESTER_INSECURE", "0")),
+    ):
         if cookie_filename:
             self.cookie_filename = cookie_filename
         if caching is not None:
@@ -562,15 +561,16 @@ class requester():
             self.headers = headers
         else:
             self.headers = [
-                ('Accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'),
-                ('Accept-Encoding', 'gzip, deflate, br'),
-                ('Accept-Language', 'ru-ru,ru;q=0.8,en-us;q=0.5,en;q=0.3'),
-                ('Connection', 'keep-alive'),
+                ("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"),
+                ("Accept-Encoding", "gzip, deflate, br"),
+                ("Accept-Language", "ru-ru,ru;q=0.8,en-us;q=0.5,en;q=0.3"),
+                ("Connection", "keep-alive"),
                 (
-                    'User-Agent',
-                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36'  # noqa
-                    if user_agent is None else user_agent
-                )
+                    "User-Agent",
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36"  # noqa
+                    if user_agent is None
+                    else user_agent,
+                ),
             ]
         self.insecure = insecure
         self._init_opener_headers = self.headers
@@ -589,7 +589,7 @@ class requester():
 
         http_cookie_processor = urllib.request.HTTPCookieProcessor(self.cookiejar)
         context = ssl.create_default_context()
-        context.set_ciphers('DEFAULT')
+        context.set_ciphers("DEFAULT")
         if self.insecure:
             context.check_hostname = False
             context.verify_mode = ssl.CERT_NONE
@@ -599,16 +599,19 @@ class requester():
         self.proxy = None
 
     def set_proxy(self, proxy, filepath_proxies=default_filepath_proxies, **kwargs):
-        if proxy is True or proxy == 'true':
+        if proxy is True or proxy == "true":
             self.proxer = Proxer(filepath_proxies, callback_new_proxy=self.set_proxy, logger=self.print, **kwargs)
             proxy = self.proxer.get()
 
         if proxy:
+
             def set_proxy(proxy):
-                self.opener.add_handler(urllib.request.ProxyHandler({
-                    'http': proxy,
-                    'https': proxy,
-                }))
+                self.opener.add_handler(
+                    urllib.request.ProxyHandler({
+                        "http": proxy,
+                        "https": proxy,
+                    })
+                )
                 self.proxy = proxy
 
             set_proxy(proxy)
@@ -652,37 +655,37 @@ class requester():
     ):
         prefix = "local-file:"
         if url.startswith(prefix):
-            with open(url[len(prefix):], "r") as fo:
+            with open(url[len(prefix) :], "r") as fo:
                 page = fo.read().decode("utf8")
                 self.last_page = page
             return page
 
-        if not url.startswith('http') and self.last_url:
+        if not url.startswith("http") and self.last_url:
             url = urllib.parse.urljoin(self.last_url, url)
         if caching is None:
             caching = self.caching
-        url = url.replace('&amp;', '&')
-        url = url.replace(' ', '%20')
+        url = url.replace("&amp;", "&")
+        url = url.replace(" ", "%20")
 
         makedirs(self.dir_cache, mode=0o777, exist_ok=True)
 
-        files = files or isinstance(post, dict) and post.pop('files__', None)
+        files = files or isinstance(post, dict) and post.pop("files__", None)
 
         if post and isinstance(post, dict):
-            post_urlencoded = urllib.parse.urlencode(post).encode('utf-8')
+            post_urlencoded = urllib.parse.urlencode(post).encode("utf-8")
         elif isinstance(post, str):
-            post_urlencoded = post.encode('utf8')
+            post_urlencoded = post.encode("utf8")
         else:
             post_urlencoded = post
 
         if params:
-            url = f'{url}?{urllib.parse.urlencode(params)}'
+            url = f"{url}?{urllib.parse.urlencode(params)}"
 
         try:
-            file_cache = ''.join((
+            file_cache = "".join((
                 self.dir_cache,
                 md5((md5_file_cache or url + (post_urlencoded or "")).encode()).hexdigest(),
-                ("/" + url[url.find("//") + 2:].split("?", 2)[0]).replace("/", "_"),
+                ("/" + url[url.find("//") + 2 :].split("?", 2)[0]).replace("/", "_"),
                 ".html",
             ))
         except Exception:
@@ -713,7 +716,7 @@ class requester():
             if self.last_url:
                 prev = urllib.parse.urlparse(self.last_url)
                 curr = urllib.parse.urlparse(url)
-                if with_referer and 'Referer' not in headers and prev.netloc == curr.netloc:
+                if with_referer and "Referer" not in headers and prev.netloc == curr.netloc:
                     headers.update({"Referer": self.last_url})
                 if prev.netloc != curr.netloc or prev.path != curr.path:
                     self.opener.addheaders = self._init_opener_headers
@@ -724,7 +727,7 @@ class requester():
                 h.update(headers)
                 self.opener.addheaders = list(h.items())
 
-            if content_type == 'multipart/form-data' and post or files:
+            if content_type == "multipart/form-data" and post or files:
                 post_urlencoded, multipart_headers = encode_multipart(fields=post, files=files)
                 headers.update(multipart_headers)
             elif content_type:
@@ -749,8 +752,13 @@ class requester():
                     proxy = self.proxy
 
                     if with_curl:
-                        response = curl_response(url, headers=headers, cookie_file=curl_cookie_file,
-                                                 curl_args=curl_args, post=post_urlencoded if post else None)
+                        response = curl_response(
+                            url,
+                            headers=headers,
+                            cookie_file=curl_cookie_file,
+                            curl_args=curl_args,
+                            post=post_urlencoded if post else None,
+                        )
                         if response.code != 200:
                             raise CurlFailedResponse(response)
                         last_url = url
@@ -777,7 +785,7 @@ class requester():
                             self.proxer.ok(proxy=str(proxy), time_response=datetime.utcnow() - time_start)
                         raise_fail(err, FailOnGetResponse(err))
                     else:
-                        self.print(f'[error] code = {error_code}, response = {str(err)[:200]}')
+                        self.print(f"[error] code = {error_code}, response = {str(err)[:200]}")
                         self.error = err
                         proxy_failed = self.proxy_fail(proxy)
 
@@ -785,11 +793,10 @@ class requester():
 
                         if additional_attempts and error_code in additional_attempts:
                             additional_attempt = additional_attempts[error_code]
-                            if (
-                                additional_attempt['count'] > 0 and
-                                ('func' not in additional_attempt or additional_attempt['func'](error_exception))
+                            if additional_attempt["count"] > 0 and (
+                                "func" not in additional_attempt or additional_attempt["func"](error_exception)
                             ):
-                                additional_attempt['count'] -= 1
+                                additional_attempt["count"] -= 1
                                 attempt -= 1
                                 with self.additional_lock:
                                     sleep(additional_delay)
@@ -800,8 +807,8 @@ class requester():
                         if attempt < n_attempts:
                             sleep(attempt_delay)
                             continue
-                        if (fp := os.environ.get('REQUESTER_PAGE_ON_FAIL')) and error_exception.response:
-                            with open(fp, 'w') as fo:
+                        if (fp := os.environ.get("REQUESTER_PAGE_ON_FAIL")) and error_exception.response:
+                            with open(fp, "w") as fo:
                                 fo.write(error_exception.response)
                         if self.assert_on_fail:
                             raise_fail(err, error_exception)
@@ -814,18 +821,18 @@ class requester():
             if page and self.verify_word and self.verify_word not in page:
                 raise NoVerifyWord("No verify word '%s', size page = %d" % (self.verify_word, len(page)))
 
-            response_content_type = response.info().get('Content-Type')
+            response_content_type = response.info().get("Content-Type")
 
             try:
                 if file_cache and caching:
                     cookie_write = True
-                    if response_content_type.startswith('application/json'):
+                    if response_content_type.startswith("application/json"):
                         page = dumps(loads(page), indent=4)
                         cookie_write = False
-                    if response_content_type.startswith('image/'):
+                    if response_content_type.startswith("image/"):
                         cookie_write = False
                     with open(file_cache, "w") as f:
-                        f.write(page.decode('utf8'))
+                        f.write(page.decode("utf8"))
                         if cookie_write:
                             f.write("\n\n" + dumps(self.get_cookies(), indent=4))
             except Exception:
@@ -835,31 +842,31 @@ class requester():
             if self.proxer and not self.error:
                 self.proxer.ok(proxy=str(proxy), time_response=self.time_response)
 
-            if page and (not response_content_type or not response_content_type.startswith('image/')):
+            if page and (not response_content_type or not response_content_type.startswith("image/")):
                 matches = re.findall(r'charset=["\']?(?P<charset>[^"\'\s\.>;,]{3,}\b)', str(page), re.IGNORECASE)
                 if matches and detect_charsets is not None:
                     charsets = [c.lower() for c in matches]
                     if len(charsets) > 1 and len(set(charsets)) > 1:
-                        self.print(f'[WARNING] set multi charset values: {charsets}')
+                        self.print(f"[WARNING] set multi charset values: {charsets}")
                     charset = charsets[-1].lower()
                 else:
-                    charset = 'utf-8'
+                    charset = "utf-8"
 
                 if detect_charsets:
                     try:
                         charset_detect = chardet.detect(page)
-                        if charset_detect and charset_detect['confidence'] > 0.98:
-                            charset = charset_detect['encoding']
+                        if charset_detect and charset_detect["confidence"] > 0.98:
+                            charset = charset_detect["encoding"]
                     except Exception as e:
-                        self.print('exception on charset detect:', str(e))
+                        self.print("exception on charset detect:", str(e))
 
-                if charset in ('utf-8', 'utf8'):
-                    page = page.decode('utf-8', 'replace')
-                elif charset in ('windows-1251', 'cp1251'):
-                    page = page.decode('cp1251', 'replace')
+                if charset in ("utf-8", "utf8"):
+                    page = page.decode("utf-8", "replace")
+                elif charset in ("windows-1251", "cp1251"):
+                    page = page.decode("cp1251", "replace")
                 else:
                     try:
-                        page = page.decode(charset, 'replace')
+                        page = page.decode(charset, "replace")
                     except LookupError:
                         pass
 
@@ -873,10 +880,10 @@ class requester():
             self.last_url = last_url
 
         if page and return_json:
-            if response_content_type.startswith('application/json') or force_json:
+            if response_content_type.startswith("application/json") or force_json:
                 page = json.loads(page)
             else:
-                page = {'page': page, '__no_json': True}
+                page = {"page": page, "__no_json": True}
 
         if not return_url and not return_code:
             return page
@@ -911,9 +918,10 @@ class requester():
             <a[^>]*href="(?P<href>[^"]*)"[^>]*>\s*
                 (?:</?[^a][^>]*>\s*)*
                 %s
-            """ % text.replace(" ", r"\s"),
+            """
+            % text.replace(" ", r"\s"),
             page,
-            re.VERBOSE
+            re.VERBOSE,
         )
         if not match:
             return
@@ -925,13 +933,13 @@ class requester():
             self.get(url)
         return self.last_page
 
-    def form(self, page=None, name=None, action='', limit=1, fid=None, selectors=(), enctype=False):
+    def form(self, page=None, name=None, action="", limit=1, fid=None, selectors=(), enctype=False):
         if page is None:
             page = self.last_page
         selectors = list(selectors)
         selectors += ['''method=["'](?P<method>post|get)"''']
         if action is not None:
-            selectors += [f'''action=["'](?P<url>[^"']*{action}[^"']*)["']''']
+            selectors += [f"""action=["'](?P<url>[^"']*{action}[^"']*)["']"""]
             limit += 1
         if fid is not None:
             selectors.append(f'id="{fid}"')
@@ -943,12 +951,12 @@ class requester():
             selectors.append('name="(?P<name>[^"]*)"')
             limit += 1
 
-        selector = '|[^>]*'.join(selectors)
-        regex = f'''
+        selector = "|[^>]*".join(selectors)
+        regex = f"""
             <form([^>]*{selector}){{{limit}}}[^>]*>
             .*?
             </form>
-        '''
+        """
         match = re.search(regex, page, re.DOTALL | re.VERBOSE | re.IGNORECASE)
         if not match:
             return None
@@ -956,16 +964,16 @@ class requester():
         result = match.groupdict()
         post = {}
         fields = re.finditer(
-            r'''
+            r"""
             (?:
                 type=["'](?P<type>[^"']*)["']\s*|
                 value=["'](?P<value>[^"']*)["']\s*|
                 name=["'](?P<name>[^"']*)["']\s*|
                 [-a-z]+=["'][^"']*["']\s*|
                 (?P<checked>checked)\s*
-            ){2,}''',
+            ){2,}""",
             page,
-            re.VERBOSE | re.IGNORECASE
+            re.VERBOSE | re.IGNORECASE,
         )
 
         unchecked = []
@@ -976,27 +984,27 @@ class requester():
             if field["type"] == "checkbox" and field["checked"] is None:
                 unchecked.append(field)
             else:
-                post[field['name']] = html.unescape(field['value'])
+                post[field["name"]] = html.unescape(field["value"])
 
-        fields = re.finditer(r'''<select[^>]*name="(?P<name>[^"]*)"[^>]*>''', page, re.VERBOSE)
+        fields = re.finditer(r"""<select[^>]*name="(?P<name>[^"]*)"[^>]*>""", page, re.VERBOSE)
         for field in fields:
-            post[field.group('name')] = ''
+            post[field.group("name")] = ""
 
-        result['post'] = post
+        result["post"] = post
         if unchecked:
-            result['unchecked'] = unchecked
+            result["unchecked"] = unchecked
         return result
 
     def submit_form(self, data, *args, url=None, form=None, **kwargs):
         form = form or self.form(*args, **kwargs)
-        form['post'].update(data)
-        data_urlencoded = urllib.parse.urlencode(form['post']).encode('utf-8')
-        url = url or form.get('url') or self.current_url
-        content_type = form.get('enctype')
+        form["post"].update(data)
+        data_urlencoded = urllib.parse.urlencode(form["post"]).encode("utf-8")
+        url = url or form.get("url") or self.current_url
+        content_type = form.get("enctype")
         ret = {
-            'get': lambda: self.get(urllib.parse.urljoin(url, f'?{data_urlencoded}'), content_type=content_type),
-            'post': lambda: self.get(url, form['post'], content_type=content_type),
-        }[form['method'].lower()]()
+            "get": lambda: self.get(urllib.parse.urljoin(url, f"?{data_urlencoded}"), content_type=content_type),
+            "post": lambda: self.get(url, form["post"], content_type=content_type),
+        }[form["method"].lower()]()
         return ret
 
     def file_cache_clear(self):
@@ -1006,7 +1014,7 @@ class requester():
                 stat_file = stat(self.dir_cache + file_cache)
                 file_list.append((stat_file.st_atime, file_cache))
             file_list.sort(reverse=True)
-            for atime, file_cache in file_list[self.limit_file_cache:]:
+            for atime, file_cache in file_list[self.limit_file_cache :]:
                 remove(self.dir_cache + file_cache)
         self.counter_file_cache += 1
 
@@ -1015,11 +1023,9 @@ class requester():
             yield c
 
     def get_cookies(self, domain_regex=None):
-        return dict((
-            (i.name, i.value)
-            for i in self.cookiejar
-            if domain_regex is None or re.search(domain_regex, i.domain)
-        ))
+        return dict(
+            ((i.name, i.value) for i in self.cookiejar if domain_regex is None or re.search(domain_regex, i.domain))
+        )
 
     def get_cookie(self, name, *args, **kwargs):
         return self.get_cookies(*args, **kwargs).get(name, None)
@@ -1035,7 +1041,7 @@ class requester():
     def update_cookie(self, c):
         self.cookiejar.set_cookie(c)
 
-    def add_cookie(self, name, value, domain=None, path='/', expires=None):
+    def add_cookie(self, name, value, domain=None, path="/", expires=None):
         if expires is None:
             expires = (datetime.now() + timedelta(days=365)).timestamp()
 
@@ -1055,7 +1061,7 @@ class requester():
             discard=False,
             comment=None,
             comment_url=None,
-            rest={'HttpOnly': None},
+            rest={"HttpOnly": None},
             rfc2109=False,
         )
         self.cookiejar.set_cookie(c)
@@ -1063,10 +1069,10 @@ class requester():
     @staticmethod
     def rand_string(length):
         a = ascii_letters + digits
-        return ''.join([choice(a) for i in range(length)])
+        return "".join([choice(a) for i in range(length)])
 
     def save_cookie(self):
-        if self.cookie_filename and hasattr(self, 'cookiejar'):
+        if self.cookie_filename and hasattr(self, "cookiejar"):
             lock = FileLock(self.cookie_filename)
             with lock.acquire(timeout=60):
                 self.cookiejar.save(self.cookie_filename, ignore_discard=True, ignore_expires=True)
@@ -1088,10 +1094,10 @@ class requester():
         for field, value in kwargs.items():
             orig_attributes[field] = getattr(self, field, None)
             setattr(self, field, value)
-        setattr(self, 'orig_attributes', orig_attributes)
+        setattr(self, "orig_attributes", orig_attributes)
 
     def restore_attributes(self):
-        orig_attributes = getattr(self, 'orig_attributes', None)
+        orig_attributes = getattr(self, "orig_attributes", None)
         if orig_attributes:
             for field, value in orig_attributes.items():
                 setattr(self, field, value)
@@ -1127,6 +1133,6 @@ class requester():
             return
 
         for file_cache in listdir(self.dir_cache):
-            diff_time = (datetime.now() - datetime.fromtimestamp(getctime(self.dir_cache + file_cache)))
+            diff_time = datetime.now() - datetime.fromtimestamp(getctime(self.dir_cache + file_cache))
             if diff_time.seconds >= self.cache_timeout:
                 remove(self.dir_cache + file_cache)

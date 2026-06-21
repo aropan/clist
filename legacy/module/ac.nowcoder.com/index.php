@@ -16,15 +16,18 @@
             $data = html_entity_decode($data);
             $data = json_decode($data, true);
 
-            $type = pop_item($data, 'type');
+            $type = get_item($data, 'type');
             if ($type == 0) {
                 $kind = 'ACM';
                 $standings_kind = 'icpc';
+            } elseif ($type == 2) {
+                $kind = 'OI';
+                $standings_kind = 'scoring';
             } elseif ($type == 3) {
                 $kind = 'IOI';
                 $standings_kind = 'scoring';
-            } elseif ($type == 2) {
-                $kind = 'OI';
+            } elseif ($type == 4) {
+                $kind = 'IOI';
                 $standings_kind = 'scoring';
             } else {
                 $kind = null;
