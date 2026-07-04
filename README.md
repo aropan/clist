@@ -1,82 +1,50 @@
 # CLIST
 
-> **CLIST** is your comprehensive guide to global programming contests. It aggregates upcoming programming contests from various websites, allowing you to track competitive programming events and coding challenges.
-
-## Table of Contents
-- [Prerequisites](#prerequisites)
-- [Development Setup](#development-setup)
-  - [1. Fork the Repository](#1-fork-the-repository)
-  - [2. Clone Your Fork](#2-clone-your-fork)
-  - [3. Run `configure.py`](#3-run-configurepy)
-  - [4. Start the Development Container](#4-start-the-development-container)
-  - [5. Access the Application](#5-access-the-application)
-- [Contributing](#contributing)
-
----
+> CLIST aggregates competitive-programming contests and standings from hundreds of
+> judges into one calendar, with per-resource leaderboards, unified coder profiles, and
+> ratings. See [`docs/project-context.md`](docs/project-context.md) for the full
+> overview (modern Django app + legacy PHP app).
 
 ## Prerequisites
 
 - [Python 3.10](https://www.python.org/downloads/)
 - [Docker (with Docker Compose v2)](https://www.docker.com/products/docker-desktop)
 
----
+## Development setup
 
-## Development Setup
-
-### 1. Fork the Repository
-
-If you plan to contribute changes, first **fork** this repository on GitHub. Otherwise, you can simply clone the main repository directly (see step 2).
-
-### 2. Clone Your Fork
-
-Make sure to include the `--recursive` flag to clone any submodules:
-
-```
+```bash
+# 1. Fork on GitHub, then clone your fork (submodules included):
 git clone --recursive https://github.com/<your-username>/clist.git
-```
-
-Then change to the project directory:
-
-```
 cd clist
-```
 
-### 3. Run `configure.py`
-
-This script sets up default environment variables. You can usually press Enter to accept the defaults:
-
-```
+# 2. Generate default environment files (press Enter to accept defaults):
 python3 ./configure.py
-```
 
-### 4. Start the Development Container
-
-Use Docker Compose to build and run the development container:
-
-```
+# 3. Build and start the long-running dev container:
 docker compose up --build dev
+
+# 4. Open the app:
+#    http://localhost:10042/
 ```
 
-### 5. Access the Application
+## Going further
 
-Open your web browser and go to [http://localhost:10042/](http://localhost:10042/) to start using the application.
+| Want to… | Read |
+|----------|------|
+| Run management commands, get a Django shell | [`docs/development-environment.md`](docs/development-environment.md) |
+| Find where something lives / what's risky to touch | [`docs/repository-map.md`](docs/repository-map.md) |
+| Run tests, lint, format | [`docs/testing.md`](docs/testing.md), [`docs/linting-formatting.md`](docs/linting-formatting.md) |
+| Add or fix a judge parser | [`docs/parsers.md`](docs/parsers.md) + the `add-parser` skill |
+| Change the DB schema | [`docs/migrations.md`](docs/migrations.md) + the `safe-migration` skill |
+| Understand the production stack | [`docs/infrastructure.md`](docs/infrastructure.md) |
 
----
+**AI coding agents** start in [`AGENTS.md`](AGENTS.md) — the short operating contract
+that links into the same `docs/` tree.
 
 ## Contributing
 
-1. **Create a new branch** for your feature or fix:
-   ```
-   git checkout -b my-new-feature
-   ```
-2. **Commit your changes**:
-   ```
-   git commit -m "Add some feature"
-   ```
-3. **Push to the branch**:
-   ```
-   git push origin my-new-feature
-   ```
-4. **Open a Pull Request** on GitHub to merge your changes back into the main repository.
+1. Branch off `master`: `git checkout -b my-new-feature`
+2. Commit, push, and open a Pull Request.
 
-> **Note**: We appreciate any contributions—whether it’s improving the code, documentation, or other parts of the project!
+For the detailed git policy and safety rules, see
+[`docs/git-and-safety.md`](docs/git-and-safety.md).
