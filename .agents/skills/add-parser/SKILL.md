@@ -11,7 +11,7 @@ description: >-
 # Add or fix a CLIST parser
 
 Each judge is one module in `src/ranking/management/modules/<host>.py` exposing a
-`Statistic` class that subclasses `BaseModule`. There are 88+ existing modules —
+`Statistic` class that subclasses `BaseModule`. There are 85 existing modules —
 **always read 2–3 similar ones first and copy their conventions.**
 
 ## The contract

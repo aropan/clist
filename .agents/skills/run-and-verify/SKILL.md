@@ -14,6 +14,13 @@ commands **inside** it; don't start a second server.
 
 ## Choose the narrowest check first, then widen
 
+> **Reality check on the test suite:** CLIST's `<app>/tests.py` files are mostly
+> stubs (`SimpleTest` doing `assertEqual(1, 1)`). Real coverage is near zero, so a
+> green test run is **weak evidence** of correctness. Treat it as a smoke check that
+> the app imports and the runner works — **the real verification is running the
+> actual management command / RQ job / parser in the dev container** and inspecting
+> its output. Add real tests alongside new behavior when feasible.
+
 **Tests** (Django runner; `<app>/tests.py`):
 ```bash
 docker compose exec dev ./manage.py test <app>.tests.SomeTest.test_x   # one test
