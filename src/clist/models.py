@@ -1168,6 +1168,15 @@ class Contest(BaseModel):
             return qs.order_by("-end_time").first()
         return None
 
+    def get_attribute(self, item: str, default=None):
+        ret = get_item(self, item)
+        if ret is not None:
+            return ret
+        ret = get_item(self.resource, item)
+        if ret is not None:
+            return ret
+        return default
+
 
 class ContestSeries(BaseModel):
     name = models.TextField(unique=True, db_index=True, null=False)

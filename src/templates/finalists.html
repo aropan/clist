@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block ogtitle %}{% block title %}{{ contest.title }} - Finalists{% endblock %}{% endblock %}
+{% block ogtitle %}{% block title %}{{ contest.title }} - Participants{% endblock %}{% endblock %}
 {% block description %}View finalists table for {{ contest.title }} from {{ contest.resource.host }}.{% endblock %}
 
 {% block end-head %}
@@ -9,6 +9,7 @@
 
 <script src="{% static_ts 'js/jquery.timeago.js' %}"></script>
 <script src="{% static_ts 'js/countdown.js' %}"></script>
+<script src="{% static_ts 'js/finalists.js' %}"></script>
 
 {% endblock %}
 
@@ -22,7 +23,7 @@
     {% endif %}
 
     <div>
-      Finalists of
+      Participants of
       <a class="standings-resource" href="{% url 'clist:resource' contest.resource.host %}" data-toggle="tooltip" data-placement="top" title="{{ contest.resource.host }}"><img src="{{ contest.resource.icon_file.name|media_size:'32x32' }}" width="24" height="24"/></a>
       <span id="standings-url"></span>
       {% comment %} <a href="{% if other_contests %}{% url 'ranking:standings_by_id' contest.pk %}{% else %}{{ contest.standings_url|default:contest.url }}{% endif %}">{{ contest.title }}</a> {% endcomment %}
@@ -155,7 +156,14 @@
             </th>
             {% endfor %}
             {% if with_achievements %}
-            <th>Achievements</th>
+            <th class="achievements-column">
+              <div>Achievements</div>
+              <div class="timeline-axis">
+                {% for tick in ach_timeline_ticks %}
+                <span class="timeline-tick text-muted" style="left: {{ tick.percent }}%; transform: translateX(-{{ tick.percent }}%);">{{ tick.label }}</span>
+                {% endfor %}
+              </div>
+            </th>
             {% endif %}
           </tr>
         </thead>

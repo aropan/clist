@@ -1,14 +1,11 @@
 {% if user|has_update_statistics_permission:contest %}
-<span class="inline-button absolute-button">
+<span class="inline-button{% if not without_absolute %} absolute-button{% endif %}">
     {% url 'ranking:standings_list' as standings_list_url %}
     {% if request.path == standings_list_url %}
     <button class="database-href btn btn-default btn-xs" data-href="{% url 'ranking:standings_by_id' contest.pk %}">{% icon_to 'extra_url' %}</button>
     {% endif %}
 
-    <button class="reset-timing-statistic btn btn-default btn-xs" data-contest-id="{{ contest.pk }}">
-        <!-- <i class="fas fa-sync-alt"></i> -->
-        {% icon_to 'update' contest.statistic_timing|naturaltime|to_str %}
-    </button>
+    <button class="reset-timing-statistic btn btn-default btn-xs" data-contest-id="{{ contest.pk }}">{% icon_to 'update' contest.statistic_timing|naturaltime|to_str %}</button>
 
     {% if perms.clist.change_contest %}
     <button class="database-href btn btn-default btn-xs" data-href="{% url 'admin:clist_contest_change' contest.id %}">{% icon_to 'database' "Contest#"|concat:contest.id %}</button>
@@ -28,6 +25,10 @@
 
     {% if perms.ranking.view_accountmatching and contest.set_matched_coders_to_members %}
     <button class="database-href btn btn-default btn-xs" data-href="{% url 'admin:ranking_accountmatching_changelist' %}?contest__id__exact={{ contest.pk }}" target="_blank">{% icon_to 'matching' "Account matching" %}</button>
+    {% endif %}
+
+    {% if contest.finalists_info %}
+    <button class="database-href btn btn-default btn-xs" data-href="{% url 'ranking:finalists' contest.title|slug contest.pk %}">{% icon_to 'finalists' default='Participants' %}</button>
     {% endif %}
 
     <button onclick="copyElementToClipboard(event, this)" class="btn btn-default btn-xs copy-to-clipboard" data-text="{{ contest.pk }}">{% icon_to 'copy' contest.pk %}</button>

@@ -4,6 +4,7 @@ import copy
 import hashlib
 import re
 from collections import OrderedDict, defaultdict
+from datetime import timedelta
 from functools import reduce
 
 import arrow
@@ -75,8 +76,7 @@ from utils.timetools import parse_datetime
 @context_pagination()
 def standings_list(request, template="standings_list.html"):
     contests = (
-        Contest.objects
-        .annotate_favorite(request.user)
+        Contest.objects.annotate_favorite(request.user)
         .annotate_active_executions()
         .select_related("resource", "stage")
         .annotate(has_module=Exists(Module.objects.filter(resource=OuterRef("resource_id"))))
@@ -297,11 +297,13 @@ def standings_list(request, template="standings_list.html"):
             values.pop(-1)
         running_contests = running_contests_
 
-        context.update({
-            "grouped_running_contests": grouped_running_contests,
-            "running_contests": running_contests,
-            "contests": contests,
-        })
+        context.update(
+            {
+                "grouped_running_contests": grouped_running_contests,
+                "running_contests": running_contests,
+                "contests": contests,
+            }
+        )
 
     return template, context
 
@@ -364,16 +366,18 @@ def _standings_highlight(contest, statistics, options):
                 if n_quota[k] <= quota:
                     n_highlight += 1
 
-                info.update({
-                    "n": n_highlight,
-                    "out_of_highlight": True,
-                    "t_solving": p_info["solving"] - solving,
-                    "t_penalty": (
-                        p_info["penalty"] - penalty - round((p_info["solving"] - solving) * contest_penalty_time)
-                        if penalty is not None
-                        else None
-                    ),
-                })
+                info.update(
+                    {
+                        "n": n_highlight,
+                        "out_of_highlight": True,
+                        "t_solving": p_info["solving"] - solving,
+                        "t_penalty": (
+                            p_info["penalty"] - penalty - round((p_info["solving"] - solving) * contest_penalty_time)
+                            if penalty is not None
+                            else None
+                        ),
+                    }
+                )
             elif n_quota[k] <= quota:
                 n_highlight += 1
                 lasts[k] = s.id
@@ -387,12 +391,14 @@ def _standings_highlight(contest, statistics, options):
             elif more and more["n"] < more["n_highlight"]:
                 more["n"] += 1
                 lasts[k] = s.id
-                info.update({
-                    "n": more["n"],
-                    "solving": solving,
-                    "penalty": penalty,
-                    "n_highlight": more["n_highlight"],
-                })
+                info.update(
+                    {
+                        "n": more["n"],
+                        "solving": solving,
+                        "penalty": penalty,
+                        "n_highlight": more["n_highlight"],
+                    }
+                )
                 if "n_highlight_prefix" in more:
                     info["prefix"] = more["n_highlight_prefix"]
                 if more["n"] == more["n_highlight"]:
@@ -428,10 +434,12 @@ def _standings_highlight(contest, statistics, options):
                         ret.setdefault("statistics_ids", set()).add(s.id)
                         if param.get("all"):
                             counter["_last"] = last_score
-    ret.update({
-        "data_1st_u": data_1st_u,
-        "participants_info": participants_info,
-    })
+    ret.update(
+        {
+            "data_1st_u": data_1st_u,
+            "participants_info": participants_info,
+        }
+    )
     return ret
 
 
@@ -664,10 +672,12 @@ def standings_charts(request, context):
     total_scoring_values = []
     if is_scoring and problems_scoring_values:
         problems_scoring_chart = copy.deepcopy(problems_chart)
-        problems_scoring_chart.update({
-            "field": "scoring_problems",
-            "my_dataset": None,
-        })
+        problems_scoring_chart.update(
+            {
+                "field": "scoring_problems",
+                "my_dataset": None,
+            }
+        )
 
         for problem in problems:
             short = get_problem_short(problem)
@@ -683,13 +693,15 @@ def standings_charts(request, context):
         charts.append(problems_scoring_chart)
 
     total_solved_chart = copy.deepcopy(problems_chart)
-    total_solved_chart.update({
-        "field": "total_solved",
-        "fields": False,
-        "labels": False,
-        "my_dataset": None,
-        "accumulate": False,
-    })
+    total_solved_chart.update(
+        {
+            "field": "total_solved",
+            "fields": False,
+            "labels": False,
+            "my_dataset": None,
+            "accumulate": False,
+        }
+    )
     hist, _ = make_histogram(values=total_values, bins=problems_bins)
     for val, d in zip(hist, total_solved_chart["data"]):
         d["value"] = val
@@ -698,12 +710,14 @@ def standings_charts(request, context):
 
     if is_scoring and total_scoring_values:
         total_scoring_chart = copy.deepcopy(problems_chart)
-        total_scoring_chart.update({
-            "field": "total_scoring",
-            "fields": False,
-            "labels": False,
-            "my_dataset": None,
-        })
+        total_scoring_chart.update(
+            {
+                "field": "total_scoring",
+                "fields": False,
+                "labels": False,
+                "my_dataset": None,
+            }
+        )
         values = [v[0] for v in total_scoring_values]
         deltas = [v[1] for v in total_scoring_values]
         hist, _ = make_histogram(values=values, deltas=deltas, bins=problems_bins)
@@ -718,13 +732,15 @@ def standings_charts(request, context):
 
         _, problems_scores_bins = make_histogram(values=total_scores_values, n_bins=default_n_bins)
         problems_scores_chart = copy.deepcopy(problems_chart)
-        problems_scores_chart.update({
-            "field": "problems_scores",
-            "type": "line",
-            "bins": problems_scores_bins,
-            "data": [{"bin": b} for b in problems_scores_bins[:-1]],
-            "my_dataset": None,
-        })
+        problems_scores_chart.update(
+            {
+                "field": "problems_scores",
+                "type": "line",
+                "bins": problems_scores_bins,
+                "data": [{"bin": b} for b in problems_scores_bins[:-1]],
+                "my_dataset": None,
+            }
+        )
         for problem in problems:
             short = get_problem_short(problem)
             values = problems_scores_values.get(short, [])
@@ -1007,10 +1023,12 @@ def get_advancing_contests(contest):
 
 
 @ratelimit(key="user_or_ip", rate="300/h")
-@page_templates((
-    ("standings_paging.html", "standings_paging"),
-    ("standings_groupby_paging.html", "groupby_paging"),
-))
+@page_templates(
+    (
+        ("standings_paging.html", "standings_paging"),
+        ("standings_groupby_paging.html", "groupby_paging"),
+    )
+)
 @inject_contest()
 def standings(request, contest, other_contests=None, template="standings.html", extra_context=None):
     context = {}
@@ -1031,11 +1049,13 @@ def standings(request, contest, other_contests=None, template="standings.html", 
             updated_orderby = []
         else:
             orderby_set = set()
-            unique_orderby = reversed([
-                f
-                for k, f in [(f.lstrip("-"), f) for f in reversed(orderby)]
-                if k not in orderby_set and not orderby_set.add(k)
-            ])
+            unique_orderby = reversed(
+                [
+                    f
+                    for k, f in [(f.lstrip("-"), f) for f in reversed(orderby)]
+                    if k not in orderby_set and not orderby_set.add(k)
+                ]
+            )
             updated_orderby = [f for f in unique_orderby if not f.startswith("--")]
 
         if updated_orderby != orderby:
@@ -1631,9 +1651,9 @@ def standings(request, contest, other_contests=None, template="standings.html", 
         if "medal" in contest_fields:
             for medal in settings.ORDERED_MEDALS_:
                 n_medal = f"n_{medal}"
-                statistics = statistics.annotate(**{
-                    f"{n_medal}": Count(Case(When(addition__medal__iexact=medal, then=1)))
-                })
+                statistics = statistics.annotate(
+                    **{f"{n_medal}": Count(Case(When(addition__medal__iexact=medal, then=1)))}
+                )
 
         if contest.with_advance:
             statistics = statistics.annotate(n_advanced=Count(Case(When(advanced=True, then=1))))
@@ -1754,72 +1774,74 @@ def standings(request, contest, other_contests=None, template="standings.html", 
             if not is_solved(my_stat_problems.get(short)):
                 hide_problems.add(short)
 
-    context.update({
-        "has_versus": has_versus,
-        "versus_data": versus_data,
-        "versus_statistic_id": versus_statistic_id,
-        "standings_options": options,
-        "has_alternative_result": with_detail and options.get("alternative_result_field"),
-        "mod_penalty": mod_penalty,
-        "freeze_duration": freeze_duration,
-        "t_freeze": t_freeze,
-        "colored_by_group_score": mod_penalty or options.get("colored_by_group_score"),
-        "contest": contest,
-        "division": division,
-        "contests_ids": contests_ids,
-        "other_contests": other_contests,
-        "contests_timelines": contests_timelines,
-        "statistics": statistics,
-        "my_statistics": my_statistics,
-        "virtual_start": virtual_start,
-        "virtual_start_statistics": virtual_start.statistics() if with_virtual_start else None,
-        "with_virtual_start": with_virtual_start,
-        "problems": problems,
-        "hide_problems": hide_problems,
-        "params": params,
-        "settings_standings_fields": settings.STANDINGS_FIELDS_,
-        "problem_user_solution_size_limit": settings.PROBLEM_USER_SOLUTION_SIZE_LIMIT,
-        "fields": fields,
-        "fields_types": fields_types,
-        "hidden_fields": hidden_fields,
-        "divisions_order": divisions_order,
-        "has_country": has_country,
-        "per_page": per_page,
-        "per_page_more": per_page_more,
-        "paginate_on_scroll": paginate_on_scroll,
-        "force_both_scroll": force_both_scroll,
-        "with_row_num": with_row_num,
-        "merge_problems": merge_problems,
-        "default_rowspan": mark_safe(' rowspan="2"') if merge_problems else "",
-        "fields_to_select": fields_to_select,
-        "add_to_list": add_to_list,
-        "truncatechars_name_problem": 10 * (2 if merge_problems else 1),
-        "with_detail": with_detail,
-        "with_solution": with_solution,
-        "with_autoreload": with_autoreload,
-        "groupby": groupby,
-        "pie_limit_rows_groupby": 50,
-        "labels_groupby": labels_groupby,
-        "num_rows_groupby": num_rows_groupby,
-        "map_colors_groupby": map_colors_groupby,
-        "advance": contest.info.get("advance"),
-        "timezone": get_timezone(request),
-        "timeformat": get_timeformat(request),
-        "with_neighbors": request.GET.get("neighbors") == "on",
-        "without_neighbors_aligment": not inner_scroll or "safari" in request.user_agent.browser.family.lower(),
-        "with_table_inner_scroll": with_table_inner_scroll,
-        "enable_timeline": enable_timeline,
-        "contest_timeline": contest_timeline,
-        "timeline": timeline,
-        "timeline_durations": [("100", "100 ms"), ("500", "500 ms"), ("2000", "2 sec"), ("4000", "4 sec")],
-        "timeline_steps": [("0.001", "0.1%"), ("0.01", "1%"), ("0.05", "5%"), ("0.1", "10%"), ("0.2", "20%")],
-        "timeline_delays": [("500", "500 ms"), ("1000", "1 sec"), ("2000", "2 sec"), ("4000", "4 sec")],
-        "timeline_freeze": [("0", "0%"), ("0.2", "20%"), ("01:00:00", "1h"), ("0.5", "50%"), ("1.0", "100%")],
-        "timeline_follow": [("1", "1 sec"), ("10", "10 sec"), ("60", "1 min"), ("300", "5 min"), ("0", "disable")],
-        "groupby_data": statistics,
-        "groupby_fields": fields,
-        "always_show_fields": always_show_fields,
-    })
+    context.update(
+        {
+            "has_versus": has_versus,
+            "versus_data": versus_data,
+            "versus_statistic_id": versus_statistic_id,
+            "standings_options": options,
+            "has_alternative_result": with_detail and options.get("alternative_result_field"),
+            "mod_penalty": mod_penalty,
+            "freeze_duration": freeze_duration,
+            "t_freeze": t_freeze,
+            "colored_by_group_score": mod_penalty or options.get("colored_by_group_score"),
+            "contest": contest,
+            "division": division,
+            "contests_ids": contests_ids,
+            "other_contests": other_contests,
+            "contests_timelines": contests_timelines,
+            "statistics": statistics,
+            "my_statistics": my_statistics,
+            "virtual_start": virtual_start,
+            "virtual_start_statistics": virtual_start.statistics() if with_virtual_start else None,
+            "with_virtual_start": with_virtual_start,
+            "problems": problems,
+            "hide_problems": hide_problems,
+            "params": params,
+            "settings_standings_fields": settings.STANDINGS_FIELDS_,
+            "problem_user_solution_size_limit": settings.PROBLEM_USER_SOLUTION_SIZE_LIMIT,
+            "fields": fields,
+            "fields_types": fields_types,
+            "hidden_fields": hidden_fields,
+            "divisions_order": divisions_order,
+            "has_country": has_country,
+            "per_page": per_page,
+            "per_page_more": per_page_more,
+            "paginate_on_scroll": paginate_on_scroll,
+            "force_both_scroll": force_both_scroll,
+            "with_row_num": with_row_num,
+            "merge_problems": merge_problems,
+            "default_rowspan": mark_safe(' rowspan="2"') if merge_problems else "",
+            "fields_to_select": fields_to_select,
+            "add_to_list": add_to_list,
+            "truncatechars_name_problem": 10 * (2 if merge_problems else 1),
+            "with_detail": with_detail,
+            "with_solution": with_solution,
+            "with_autoreload": with_autoreload,
+            "groupby": groupby,
+            "pie_limit_rows_groupby": 50,
+            "labels_groupby": labels_groupby,
+            "num_rows_groupby": num_rows_groupby,
+            "map_colors_groupby": map_colors_groupby,
+            "advance": contest.info.get("advance"),
+            "timezone": get_timezone(request),
+            "timeformat": get_timeformat(request),
+            "with_neighbors": request.GET.get("neighbors") == "on",
+            "without_neighbors_aligment": not inner_scroll or "safari" in request.user_agent.browser.family.lower(),
+            "with_table_inner_scroll": with_table_inner_scroll,
+            "enable_timeline": enable_timeline,
+            "contest_timeline": contest_timeline,
+            "timeline": timeline,
+            "timeline_durations": [("100", "100 ms"), ("500", "500 ms"), ("2000", "2 sec"), ("4000", "4 sec")],
+            "timeline_steps": [("0.001", "0.1%"), ("0.01", "1%"), ("0.05", "5%"), ("0.1", "10%"), ("0.2", "20%")],
+            "timeline_delays": [("500", "500 ms"), ("1000", "1 sec"), ("2000", "2 sec"), ("4000", "4 sec")],
+            "timeline_freeze": [("0", "0%"), ("0.2", "20%"), ("01:00:00", "1h"), ("0.5", "50%"), ("1.0", "100%")],
+            "timeline_follow": [("1", "1 sec"), ("10", "10 sec"), ("60", "1 min"), ("300", "5 min"), ("0", "disable")],
+            "groupby_data": statistics,
+            "groupby_fields": fields,
+            "always_show_fields": always_show_fields,
+        }
+    )
 
     context.update(n_highlight_context)
 
@@ -2126,12 +2148,14 @@ def get_versus_data(request, query, fields_to_select):
 
         ratings_data = get_ratings_data(request=request, statistics=qs, date_from=date_from, date_to=date_to)
 
-        infos.append({
-            "score": 0,
-            "contests": {s.contest_id: s for s in qs},
-            "divisions": {(s.contest_id, s.addition.get("division")) for s in qs},
-            "ratings": ratings_data,
-        })
+        infos.append(
+            {
+                "score": 0,
+                "contests": {s.contest_id: s for s in qs},
+                "divisions": {(s.contest_id, s.addition.get("division")) for s in qs},
+                "ratings": ratings_data,
+            }
+        )
         for s in qs:
             if s.addition.get("medal"):
                 medal_contests_ids.add(s.contest_id)
@@ -2438,9 +2462,42 @@ def virtual_start(request, template="virtual_start.html"):
     return template, context
 
 
+def finalists_timeline_ticks(min_date, max_date, count=4):
+    """Build a few evenly spaced date marks for the achievements timeline header.
+
+    Orientation matches the trophy dots: newest date at 0% (left), oldest at 100% (right).
+    The label format adapts to the covered span so the axis stays uncluttered.
+    """
+    if not max_date:
+        return []
+    total = (max_date - min_date).total_seconds()
+    if total <= 0:
+        return [{"percent": 0, "label": max_date.strftime("%b %-d, %Y")}]
+
+    days = total / 86400
+    if days > 730:
+        fmt = "%Y"
+    elif days > 90:
+        fmt = "%b %Y"
+    else:
+        fmt = "%b %-d"
+
+    ticks = []
+    prev_label = None
+    for i in range(count):
+        frac = i / (count - 1)
+        label = (max_date - timedelta(seconds=frac * total)).strftime(fmt)
+        if label == prev_label:
+            continue
+        ticks.append({"percent": frac * 100, "label": label})
+        prev_label = label
+    return ticks
+
+
 @inject_contest()
 def finalists(request, contest, template="finalists.html"):
-    finalists = contest.finalist_set.order_by("created")
+    finalists_order_by = contest.finalists_info.get("order_by") or ["created"]
+    finalists = contest.finalist_set.order_by(*finalists_order_by)
     finalist_resources = Resource.get(contest.finalists_info["resources"])
     resources = request.get_resources()
     resource_fields = finalist_resources
@@ -2506,6 +2563,7 @@ def finalists(request, contest, template="finalists.html"):
         "resource_fields": resource_fields,
         "ach_max_date": ach_max_date,
         "ach_min_date": ach_min_date,
+        "ach_timeline_ticks": finalists_timeline_ticks(ach_min_date, ach_max_date),
         "params": {
             "resources": resources,
             "countries": countries,

@@ -21,9 +21,51 @@ table.finalists .participant-column {
 .timeline-dot {
   position: absolute;
   top: 50%;
-  transform: translateY(-50%);
   width: 10px;
   height: 10px;
   border-radius: 50%;
   cursor: pointer;
+  /* Light ring separates overlapping coins; the semi-transparent shadow accumulates where
+     dots pile up, so a bigger cluster reads as a heavier, denser blob. */
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.85), 0 0 3px rgba(0, 0, 0, 0.35);
+  transform: translate(0, -50%);
+  transition: transform 0.25s ease, box-shadow 0.15s ease;
+}
+
+.timeline-container:hover .timeline-dot {
+  transform: translate(var(--spread-x, 0px), -50%);
+}
+
+.timeline-dot:hover {
+  z-index: 50;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9), 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.timeline-axis {
+  position: relative;
+  min-width: 300px;
+  margin-right: 20px;
+  height: 1.4em;
+  margin-top: 3px;
+}
+
+.timeline-axis::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  border-top: 1px solid rgba(128, 128, 128, 0.35);
+}
+
+.timeline-tick {
+  position: absolute;
+  top: 50%;
+  margin-top: -0.65em;
+  line-height: 1.3em;
+  padding: 0 4px;
+  font-size: 10px;
+  font-weight: normal;
+  white-space: nowrap;
+  background-color: #fff;
 }
