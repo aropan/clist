@@ -155,9 +155,19 @@ function curlexec(&$url, $postfields = NULL, $params = array())
 {
     global $CID;
     global $COOKIE;
+    global $CURLEXEC_REPLAY_RESPONSE_CODE;
     $prev_url = curl_getinfo($CID, CURLINFO_EFFECTIVE_URL);
     if (!parse_url($url, PHP_URL_HOST) && isset($prev_url) && $prev_url) {
         $url = url_merge($prev_url, $url);
+    }
+
+    $curlexec_cache_file = false;
+    if (CURLEXEC_CACHE_MODE) {
+        $curlexec_requested_url = $url;
+        $curlexec_postfields = $postfields === NULL ? '' : (is_array($postfields) ? http_build_query($postfields) : $postfields);
+        $curlexec_cache_name = CURLEXEC_CACHE_DIR . "/" . parse_url($url, PHP_URL_HOST) . "-" . md5($url . "\n" . $curlexec_postfields);
+        $curlexec_cache_file = $curlexec_cache_name . ".html.gz";
+        $curlexec_meta_file = $curlexec_cache_name . ".meta.json";
     }
 
     if (DEBUG) {
@@ -196,7 +206,19 @@ function curlexec(&$url, $postfields = NULL, $params = array())
 
     $with_curl = isset($params["with_curl"]) && $params["with_curl"];
 
-    if (CACHE && $postfields === NULL && file_exists($cachefile)) {
+    if (CURLEXEC_CACHE_MODE === "replay") {
+        if (!file_exists($curlexec_cache_file) || !file_exists($curlexec_meta_file)) {
+            fwrite(STDERR, "curlexec replay miss: `$url` ($curlexec_cache_file)\n");
+            exit(1);
+        }
+        $page = gzdecode(file_get_contents($curlexec_cache_file));
+        $curlexec_meta = json_decode(file_get_contents($curlexec_meta_file), true);
+        if ($page === false || !is_array($curlexec_meta)) {
+            fwrite(STDERR, "curlexec replay corrupted cache: `$url` ($curlexec_cache_file)\n");
+            exit(1);
+        }
+        $CURLEXEC_REPLAY_RESPONSE_CODE = $curlexec_meta['response_code'];
+    } else if (CACHE && $postfields === NULL && file_exists($cachefile)) {
         $page = file_get_contents($cachefile);
     } else {
         if ($with_curl) {
@@ -236,8 +258,10 @@ function curlexec(&$url, $postfields = NULL, $params = array())
             }
         }
     }
+    $curlexec_raw_page = $page;
+
     if (!isset($params["no_logmsg"])) {
-        logmsg("URL: " . (CACHE ? "[cached] " : "") . "`$url`");
+        logmsg("URL: " . (CURLEXEC_CACHE_MODE === "replay" ? "[replay] " : (CACHE ? "[cached] " : "")) . "`$url`");
     }
     if (curl_errno($CID)) {
         logmsg('ERROR ' . curl_errno($CID) . ': ' . curl_error($CID));
@@ -269,7 +293,9 @@ function curlexec(&$url, $postfields = NULL, $params = array())
             $COOKIE[$k] = $v;
         }
     }
-    if ($with_curl) {
+    if (CURLEXEC_CACHE_MODE === "replay") {
+        $url = $curlexec_meta['effective_url'];
+    } else if ($with_curl) {
         if (isset($header['location'])) {
             $url = $header['location'];
             if (is_array($url)) {
@@ -279,12 +305,26 @@ function curlexec(&$url, $postfields = NULL, $params = array())
     } else {
         $url = curl_getinfo($CID, CURLINFO_EFFECTIVE_URL);
     }
+    if (CURLEXEC_CACHE_MODE === "record") {
+        // never record server-issued cookies: fixtures are committed to the repo
+        $curlexec_raw_page = preg_replace('/^set-cookie:[^\r\n]*\r?\n/mi', '', $curlexec_raw_page);
+        file_put_contents($curlexec_cache_file, gzencode($curlexec_raw_page, 9));
+        file_put_contents($curlexec_meta_file, json_encode(array(
+            'url' => $curlexec_requested_url,
+            'effective_url' => $url,
+            'response_code' => response_code(),
+        ), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+    }
     return $page;
 }
 
 function response_code()
 {
     global $CID;
+    global $CURLEXEC_REPLAY_RESPONSE_CODE;
+    if (CURLEXEC_CACHE_MODE === "replay") {
+        return $CURLEXEC_REPLAY_RESPONSE_CODE;
+    }
     return curl_getinfo($CID, CURLINFO_RESPONSE_CODE);
 }
 

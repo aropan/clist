@@ -216,4 +216,6 @@ class db
         $this->close();
     }
 }
-$db = new db();
+if (!defined('SKIP_DB_CONNECT')) {
+    $db = new db();
+}

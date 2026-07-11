@@ -8,6 +8,9 @@ RUN docker-php-ext-install iconv
 RUN apt install -y libicu-dev && docker-php-ext-install intl
 RUN apt install -y libpq-dev && docker-php-ext-configure pgsql -with-pgsql=/usr/local/pgsql && docker-php-ext-install pgsql
 
+# Freeze time() for offline schedule parser fixture replay (tests/run.php)
+RUN apt install -y faketime
+
 # Curl
 ENV CURL_VERSION=8.9.1
 RUN curl -L https://github.com/stunnel/static-curl/releases/download/${CURL_VERSION}/curl-linux-aarch64-${CURL_VERSION}.tar.xz --output /tmp/curl.tar.xz && \

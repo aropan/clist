@@ -132,3 +132,54 @@ also prints temporary paths, standings keys, and cache-file counts.
 The same offline test command is suitable for application CI. The current GitHub
 workflow only runs CodeQL and does not provision the Django/PostgreSQL environment,
 so parser tests are not attached to that workflow.
+
+## Legacy schedule parser tests
+
+Contest schedule parsing lives in legacy PHP (`legacy/module/<host>/index.php`,
+driven by `legacy/update.php`). Offline regression fixtures replay recorded HTTP
+responses against a single module and diff its normalized raw `$contests[]` output
+with a golden snapshot. PHP exists only in the `legacy` container:
+
+```bash
+docker compose exec legacy php tests/run.php              # replay all fixtures
+docker compose exec legacy php tests/run.php atcoder.jp   # one fixture
+```
+
+Fixtures live in `legacy/tests/fixtures/<host>/`:
+
+- `meta.json` — resolved resource globals (`rid`, `path`, `parse_url` with the raw
+  `${YEAR}` placeholder, timezone, info) plus `recorded_at`;
+- `httpcache/` — one gzipped raw response per request (`*.html.gz`, Git LFS) plus a
+  plain `*.meta.json` sidecar (`url`, `effective_url`, `response_code`), keyed by
+  url + postfields, so POST/GraphQL parsers replay too;
+- `expected_contests.json` — normalized golden snapshot (plain JSON, reviewable).
+
+Replay is strictly offline: a cache miss is a fatal `curlexec replay miss` error.
+Each fixture runs in its own subprocess wrapped in `faketime <recorded_at>` so
+modules that infer the year from the current date stay deterministic; if `faketime`
+is missing from the image, the runner warns and uses the live clock, which may fail
+year-sensitive fixtures — rebuild the legacy image or re-record. Re-record a fixture
+when its module or the site intentionally changes:
+
+```bash
+docker compose exec legacy php tests/record.php leetcode.com [--parse-full-list]
+```
+
+Recording performs live requests, needs DB access for the resource row, refuses
+0-contest output, and immediately replays offline before replacing the fixture.
+Limitations: regexp-only resources (`clist_resource.regexp`, parsed inline in
+`update.php`) are not covered; two identical requests in one run replay the same
+response.
+
+## Schedule parsing breakage detection
+
+`legacy/update.php` writes per-resource stats (`n_contests_parsed`,
+`n_contests_upserted`, `elapsed`) to `legacy/logs/update_stats.json` on every full
+run. The `check_schedule_parsing` management command (cron, every 15 minutes) reads
+it and alerts via Telegram admin message + `EventLog` when the run is stale, a
+resource that recently produced contests now parses zero, or parsed contests stop
+being upserted. Test it against a synthetic stats file:
+
+```bash
+docker compose exec dev ./manage.py check_schedule_parsing --stats-file <path> --dryrun
+```

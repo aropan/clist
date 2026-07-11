@@ -2,11 +2,14 @@
     require_once dirname(__FILE__) . '/../../config.php';
 
     $preparers = array();
-    foreach (['', '&order=UPDATE_TIME_DESC'] as $params) {
-        $url = $URL . $params;
+    foreach (['', 'order=UPDATE_TIME_DESC'] as $params) {
+        $url = $URL;
+        if ($params) {
+            $url .= (strpos($url, '?') === false ? '?' : '&') . $params;
+        }
         $page = curlexec($url);
         preg_match_all(
-            '#<tr[^>]*data-contestId="(?<key>[^"]*)"[^>]*>.*?Prepared\s*by[^<]*<a[^>]*href="/profile/(?P<preparer>[^"]*)/?"[^>]*>#s',
+            '#<tr[^>]*data-contestId="(?<key>[^"]*)"[^>]*>(?:(?!</tr>).)*?(?:Prepared\s*by|Подготовил[а]?)[^<]*<a[^>]*href="/profile/(?P<preparer>[^"/]+)/?"[^>]*>#si',
             $page,
             $matches,
             PREG_SET_ORDER,
@@ -47,7 +50,7 @@
     $authors = array();
     $chunks = array_chunk($contest_ids, 3);
     foreach ($chunks as $index => $chunk) {
-        $url = 'https://codeforces.com/contests/' . implode(',', $chunk);
+        $url = 'https://codeforces.com/contests/' . implode(',', $chunk) . '?locale=en';
         $page = curlexec($url);
 
         preg_match_all(
@@ -58,7 +61,7 @@
         );
         foreach ($matches as $match) {
             $k = $match['key'];
-            if (preg_match_all('#<a[^>]*href="/profile/(?<handle>[^"]*)/?"[^>]*>(?P<name>.*?)</a>#', $match['authors'], $m)) {
+            if (preg_match_all('#<a[^>]*href="/profile/(?<handle>[^"/]+)/?"[^>]*>(?P<name>.*?)</a>#', $match['authors'], $m)) {
                 $authors[$k] = $m['handle'];
             } else {
                 $authors[$k] = array();
@@ -66,7 +69,7 @@
         }
 
         preg_match_all(
-            '#<tr[^>]*data-contestId="(?<key>[^"]*)"[^>]*>.*?Prepared\s*by[^<]*<a[^>]*href="/profile/(?P<preparer>[^"]*)/?"[^>]*>#s',
+            '#<tr[^>]*data-contestId="(?<key>[^"]*)"[^>]*>(?:(?!</tr>).)*?(?:Prepared\s*by|Подготовил[а]?)[^<]*<a[^>]*href="/profile/(?P<preparer>[^"/]+)/?"[^>]*>#si',
             $page,
             $matches,
             PREG_SET_ORDER,

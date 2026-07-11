@@ -8,6 +8,8 @@ define("ISCLI", isset($_SERVER['argv']));
 define("DEBUG", isset($_GET['debug']) && isset($_SERVER['argv']));
 define("CACHE", DEBUG);
 define("CACHEDIR", dirname(__FILE__) . "/cache");
+define("CURLEXEC_CACHE_MODE", getenv("CURLEXEC_CACHE_MODE") ?: "");  // "" | "record" | "replay"
+define("CURLEXEC_CACHE_DIR", getenv("CURLEXEC_CACHE_DIR") ?: "");
 define("IGNOREVALUE", "__IGNORE__");
 
 require_once "db.class.php";

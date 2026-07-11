@@ -48,6 +48,10 @@ if (isset($_GET['id'])) {
 
 echo "<i>" . date("r") . "</i><br><br>\n\n";
 
+$parse_stats = array();
+$parse_stats_started = time();
+$parse_stats_enabled = !DEBUG && !isset($_GET['host']) && !isset($_GET['id']) && !isset($_GET['title']) && !isset($_GET['enable']);
+
 $resources_hosts = array();
 $auto_remove_started = array();
 foreach ($resources as $resource) {
@@ -189,6 +193,15 @@ foreach ($resources as $resource) {
     $elapsed_time = microtime(true) - $start_parsing_time;
     $elapsed_time_human_readable = sprintf("%0.3f", $elapsed_time);
     echo " (" . (count($contests) - $preCountContests) . ") [<i title=\"" . human_readable_seconds($elapsed_time) . "\">" . number_format($elapsed_time, 3) . "</i>]<br>\n";
+
+    if ($parse_stats_enabled) {
+        $parse_stats[$resource['id']] = array(
+            'rid' => (int)$resource['id'],
+            'host' => $resource['host'],
+            'n_contests_parsed' => count($contests) - $preCountContests,
+            'elapsed' => round($elapsed_time, 3),
+        );
+    }
 }
 
 $last_resource = "";
@@ -447,6 +460,9 @@ foreach ($contests as $i => $contest) {
         } else {
             $db->query("INSERT INTO clist_contest ($fields) values ($values) ON CONFLICT (resource_id, key) DO UPDATE SET $update");
         }
+        if ($parse_stats_enabled && !$to_delete && isset($parse_stats[$contest_rid])) {
+            $parse_stats[$contest_rid]['n_contests_upserted'] = ($parse_stats[$contest_rid]['n_contests_upserted'] ?? 0) + 1;
+        }
     } else {
         $skipped_resources[$contest_rid][] = $contest['key'];
     }
@@ -519,5 +535,16 @@ if (count($updated_resources)) {
             }
         }
     }
+}
+
+if ($parse_stats_enabled) {
+    $parse_stats_file = dirname(LOGFILE) . "/update_stats.json";
+    $parse_stats_data = array(
+        'started_at' => $parse_stats_started,
+        'finished_at' => time(),
+        'resources' => array_values($parse_stats),
+    );
+    file_put_contents($parse_stats_file . ".tmp", json_encode($parse_stats_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+    rename($parse_stats_file . ".tmp", $parse_stats_file);
 }
 logmsg();
