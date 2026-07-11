@@ -91,7 +91,7 @@ class Statistic(BaseModule):
         match = re.search(regex, page, re.DOTALL)
         if match:
             html_table = match.group(0)
-            table = parsed_table.ParsedTable(html_table, without_header=True, ignore_wrong_header_number=False)
+            table = parsed_table.ParsedTable(html_table, without_header=True)
             infos = {}
             for r in table:
                 k, v = [col.value for col in r.columns]

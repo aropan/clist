@@ -693,7 +693,7 @@ class Statistic(BaseModule):
                     unhack = row["unsuccessfulHackCount"]
 
                     problems = {}
-                    if limited and handle in statistics:
+                    if limited and statistics and handle in statistics:
                         problems = deepcopy(statistics[handle].get("problems", {}))
                     problems = r.setdefault("problems", problems)
                     for i, s in enumerate(row["problemResults"]):
@@ -899,15 +899,19 @@ class Statistic(BaseModule):
             standings["default_problem_full_score"] = "max" if first_score > last_score else "min"
 
         if re.search("^educational codeforces round", self.name, re.IGNORECASE):
-            standings["options"].setdefault("timeline", {}).update({
-                "attempt_penalty": 10 * 60,
-                "challenge_score": False,
-            })
+            standings["options"].setdefault("timeline", {}).update(
+                {
+                    "attempt_penalty": 10 * 60,
+                    "challenge_score": False,
+                }
+            )
         elif re.search(r"\<div\.\s*3\>", self.name, re.IGNORECASE):
-            standings["options"].setdefault("timeline", {}).update({
-                "attempt_penalty": 10 * 60,
-                "challenge_score": False,
-            })
+            standings["options"].setdefault("timeline", {}).update(
+                {
+                    "attempt_penalty": 10 * 60,
+                    "challenge_score": False,
+                }
+            )
 
         if phase != "FINISHED" and self.end_time + timedelta(hours=1) > now:
             standings["timing_statistic_delta"] = timedelta(minutes=5)
@@ -1112,11 +1116,13 @@ class Statistic(BaseModule):
                     else:
                         raise ExceptionParseAccounts("Not found problem")
 
-                    ret.setdefault("submissions", []).append({
-                        "contest": contest,
-                        "problem": problem,
-                        "info": submission_info,
-                    })
+                    ret.setdefault("submissions", []).append(
+                        {
+                            "contest": contest,
+                            "problem": problem,
+                            "info": submission_info,
+                        }
+                    )
 
                 if not submission_info.get("updated"):
                     continue

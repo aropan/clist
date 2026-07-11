@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
 import atexit
+import base64
 import copy
+import gzip
 import html
 import json
 import logging
@@ -43,6 +45,26 @@ from utils.proxy_list import ProxyList
 
 logging.getLogger("chardet.charsetprober").setLevel(logging.INFO)
 logger = logging.getLogger("utils.requester")
+
+
+def redact_url(url):
+    if not url:
+        return url
+    try:
+        parsed = urllib.parse.urlsplit(str(url))
+        query = urllib.parse.parse_qsl(parsed.query, keep_blank_values=True)
+        query = [
+            (
+                key,
+                "<redacted>"
+                if re.search(r"(?:api.?key|api.?sig|authorization|cookie|password|secret|session|token)", key, re.I)
+                else value,
+            )
+            for key, value in query
+        ]
+        return urllib.parse.urlunsplit((*parsed[:3], urllib.parse.urlencode(query), parsed.fragment))
+    except ValueError:
+        return str(url)
 
 
 class BaseException(Exception):
@@ -91,9 +113,28 @@ class CurlFailedResponse(FailOnGetResponse):
         return getattr(self.args[0], name, None)
 
 
+class CachedResponse(BytesIO):
+    def __init__(self, content, url, code=200, reason=None, content_type=None):
+        super().__init__(content)
+        self.code = code
+        self.status = code
+        self.reason = reason
+        self.url = url
+        self.headers = {"Content-Type": content_type}
+
+    def getheaders(self):
+        return list(self.headers.items())
+
+    def geturl(self):
+        return self.url
+
+    def info(self):
+        return self.headers
+
+
 def raise_fail(err, exc):
     if exc.code or exc.url:
-        msg = f"code = {exc.code}, url = `{exc.url}`"
+        msg = f"code = {exc.code}, url = `{redact_url(exc.url)}`"
         if exc.response:
             response = exc.response.strip().replace("\n", "\\n")
             if len(response) > 200:
@@ -522,6 +563,7 @@ def curl_response(url, headers=None, cookie_file=None, curl_args=None, post=None
 class requester:
     cache_timeout = 10940
     caching = True
+    cache_errors = False
     assert_on_fail = True
     time_out = 4
     debug_output = True
@@ -690,21 +732,145 @@ class requester:
             ))
         except Exception:
             file_cache = None
+        file_cache_metadata = f"{file_cache}.meta.json" if file_cache else None
+
+        def cache_file_path():
+            if not file_cache:
+                return None
+            if path.isfile(file_cache):
+                return file_cache
+            gzip_file_cache = f"{file_cache}.gz"
+            return gzip_file_cache if path.isfile(gzip_file_cache) else file_cache
+
+        def encode_cache_page(cache_page, response_content_type):
+            if response_content_type and response_content_type.startswith("application/json"):
+                try:
+                    return dumps(loads(cache_page), indent=4), "text"
+                except (TypeError, UnicodeDecodeError, ValueError):
+                    pass
+
+            if isinstance(cache_page, bytes):
+                try:
+                    return cache_page.decode("utf8"), "text"
+                except UnicodeDecodeError:
+                    return base64.b64encode(cache_page).decode("ascii"), "base64"
+
+            return cache_page, "text"
+
+        def decode_response_page(page, response_content_type):
+            if not page or (response_content_type and response_content_type.startswith("image/")):
+                return page
+            if not isinstance(page, bytes):
+                return page
+
+            matches = re.findall(r'charset=["\']?(?P<charset>[^"\'\s\.>;,]{3,}\b)', str(page), re.IGNORECASE)
+            if matches and detect_charsets is not None:
+                charsets = [c.lower() for c in matches]
+                if len(charsets) > 1 and len(set(charsets)) > 1:
+                    self.print(f"[WARNING] set multi charset values: {charsets}")
+                charset = charsets[-1].lower()
+            else:
+                charset = "utf-8"
+
+            if detect_charsets:
+                try:
+                    charset_detect = chardet.detect(page)
+                    if charset_detect and charset_detect["confidence"] > 0.98:
+                        charset = charset_detect["encoding"]
+                except Exception as e:
+                    self.print("exception on charset detect:", str(e))
+
+            if charset in ("utf-8", "utf8"):
+                page = page.decode("utf-8", "replace")
+            elif charset in ("windows-1251", "cp1251"):
+                page = page.decode("cp1251", "replace")
+            else:
+                try:
+                    page = page.decode(charset, "replace")
+                except LookupError:
+                    pass
+
+            return page
+
+        def write_cache(cache_page, cache_response, response_content_type, failed=False):
+            try:
+                if not file_cache or not caching:
+                    return
+                cache_page, cache_encoding = encode_cache_page(cache_page, response_content_type)
+                with open(file_cache, "w") as f:
+                    f.write(cache_page)
+                with open(file_cache_metadata, "w") as f:
+                    json.dump(
+                        {
+                            "code": getattr(cache_response, "code", None),
+                            "content_type": response_content_type,
+                            "encoding": cache_encoding,
+                            "failed": failed,
+                            "reason": getattr(cache_response, "reason", None),
+                        },
+                        f,
+                        indent=2,
+                        sort_keys=True,
+                    )
+            except Exception:
+                traceback.print_exc()
+                self.print("[cache] ERROR: write to", file_cache)
 
         caching = file_cache and caching and self.cache_timeout > 0
 
         from_cache = caching
+        metadata = {}
         if caching:
-            if not path.isfile(file_cache):
+            existing_file_cache = cache_file_path()
+            if not path.isfile(existing_file_cache):
                 from_cache = False
             else:
-                diff_time = datetime.now() - datetime.fromtimestamp(path.getctime(file_cache))
+                diff_time = datetime.now() - datetime.fromtimestamp(path.getctime(existing_file_cache))
                 from_cache = diff_time.seconds < self.cache_timeout
-        self.print(("[cache] " if from_cache else "") + url, force=from_cache)
+        if from_cache and path.isfile(file_cache_metadata):
+            try:
+                with open(file_cache_metadata) as f:
+                    metadata = load(f)
+            except (OSError, ValueError):
+                pass
+        cached_code = metadata.get("code") or 200
+        cached_failure = metadata.get("failed", cached_code >= 400)
+        if from_cache and cached_failure and not self.cache_errors:
+            from_cache = False
+        self.print(("[cache] " if from_cache else "") + redact_url(url), force=from_cache)
         page, self.error, response, last_url, proxy = None, None, None, None, None
         if from_cache:
-            with open(file_cache, "r") as f:
+            existing_file_cache = cache_file_path()
+            opener = gzip.open if existing_file_cache.endswith(".gz") else open
+            with opener(existing_file_cache, "rt") as f:
                 page = f.read()
+            page = base64.b64decode(page) if metadata.get("encoding") == "base64" else page.encode()
+            response = CachedResponse(
+                page,
+                url,
+                code=cached_code,
+                reason=metadata.get("reason"),
+                content_type=metadata.get("content_type"),
+            )
+            last_url = url
+            response_content_type = metadata.get("content_type")
+            if response.code >= 400:
+                force_json = False
+                if not (ignore_codes and response.code in ignore_codes):
+                    error = urllib.error.HTTPError(
+                        url,
+                        response.code,
+                        response.reason or "cached response",
+                        response.headers,
+                        BytesIO(page),
+                    )
+                    if (raise_codes and response.code in raise_codes) or self.assert_on_fail:
+                        raise_fail(error, FailOnGetResponse(error))
+                    self.error = error
+                    return None
+            if return_last_url:
+                return last_url
+            page = decode_response_page(page, response_content_type)
         else:
             if self.proxer and not self.proxer.is_alive():
                 raise ProxyLimitReached()
@@ -773,6 +939,8 @@ class requester:
                     if return_last_url:
                         return last_url
                     page = read_response(response)
+                except AssertionError:
+                    raise
                 except Exception as err:
                     with_error_code = isinstance(err, (urllib.error.HTTPError, CurlFailedResponse))
                     error_code = err.code if with_error_code else None
@@ -781,9 +949,13 @@ class requester:
                         response = err
                         page = read_response(response)
                     elif raise_codes and error_code in raise_codes:
+                        error_exception = FailOnGetResponse(err)
+                        if self.cache_errors and error_exception.response is not None:
+                            response_content_type = err.info().get("Content-Type") if hasattr(err, "info") else None
+                            write_cache(error_exception.response, err, response_content_type, failed=True)
                         if self.proxer:
                             self.proxer.ok(proxy=str(proxy), time_response=datetime.utcnow() - time_start)
-                        raise_fail(err, FailOnGetResponse(err))
+                        raise_fail(err, error_exception)
                     else:
                         self.print(f"[error] code = {error_code}, response = {str(err)[:200]}")
                         self.error = err
@@ -810,6 +982,9 @@ class requester:
                         if (fp := os.environ.get("REQUESTER_PAGE_ON_FAIL")) and error_exception.response:
                             with open(fp, "w") as fo:
                                 fo.write(error_exception.response)
+                        if self.cache_errors and error_exception.response is not None:
+                            response_content_type = err.info().get("Content-Type") if hasattr(err, "info") else None
+                            write_cache(error_exception.response, err, response_content_type, failed=True)
                         if self.assert_on_fail:
                             raise_fail(err, error_exception)
                         else:
@@ -822,53 +997,12 @@ class requester:
                 raise NoVerifyWord("No verify word '%s', size page = %d" % (self.verify_word, len(page)))
 
             response_content_type = response.info().get("Content-Type")
-
-            try:
-                if file_cache and caching:
-                    cookie_write = True
-                    if response_content_type.startswith("application/json"):
-                        page = dumps(loads(page), indent=4)
-                        cookie_write = False
-                    if response_content_type.startswith("image/"):
-                        cookie_write = False
-                    with open(file_cache, "w") as f:
-                        f.write(page.decode("utf8"))
-                        if cookie_write:
-                            f.write("\n\n" + dumps(self.get_cookies(), indent=4))
-            except Exception:
-                traceback.print_exc()
-                self.print("[cache] ERROR: write to", file_cache)
+            write_cache(page, response, response_content_type)
 
             if self.proxer and not self.error:
                 self.proxer.ok(proxy=str(proxy), time_response=self.time_response)
 
-            if page and (not response_content_type or not response_content_type.startswith("image/")):
-                matches = re.findall(r'charset=["\']?(?P<charset>[^"\'\s\.>;,]{3,}\b)', str(page), re.IGNORECASE)
-                if matches and detect_charsets is not None:
-                    charsets = [c.lower() for c in matches]
-                    if len(charsets) > 1 and len(set(charsets)) > 1:
-                        self.print(f"[WARNING] set multi charset values: {charsets}")
-                    charset = charsets[-1].lower()
-                else:
-                    charset = "utf-8"
-
-                if detect_charsets:
-                    try:
-                        charset_detect = chardet.detect(page)
-                        if charset_detect and charset_detect["confidence"] > 0.98:
-                            charset = charset_detect["encoding"]
-                    except Exception as e:
-                        self.print("exception on charset detect:", str(e))
-
-                if charset in ("utf-8", "utf8"):
-                    page = page.decode("utf-8", "replace")
-                elif charset in ("windows-1251", "cp1251"):
-                    page = page.decode("cp1251", "replace")
-                else:
-                    try:
-                        page = page.decode(charset, "replace")
-                    except LookupError:
-                        pass
+            page = decode_response_page(page, response_content_type)
 
         self.file_cache_clear()
 
@@ -880,7 +1014,7 @@ class requester:
             self.last_url = last_url
 
         if page and return_json:
-            if response_content_type.startswith("application/json") or force_json:
+            if (response_content_type and response_content_type.startswith("application/json")) or force_json:
                 page = json.loads(page)
             else:
                 page = {"page": page, "__no_json": True}
@@ -1011,11 +1145,16 @@ class requester:
         if self.limit_file_cache and self.counter_file_cache % self.limit_file_cache == 0:
             file_list = []
             for file_cache in listdir(self.dir_cache):
+                if file_cache.endswith(".meta.json"):
+                    continue
                 stat_file = stat(self.dir_cache + file_cache)
                 file_list.append((stat_file.st_atime, file_cache))
             file_list.sort(reverse=True)
             for atime, file_cache in file_list[self.limit_file_cache :]:
                 remove(self.dir_cache + file_cache)
+                metadata_file_cache = self.dir_cache + file_cache + ".meta.json"
+                if path.isfile(metadata_file_cache):
+                    remove(metadata_file_cache)
         self.counter_file_cache += 1
 
     def get_raw_cookies(self):
@@ -1133,6 +1272,11 @@ class requester:
             return
 
         for file_cache in listdir(self.dir_cache):
+            if file_cache.endswith(".meta.json"):
+                continue
             diff_time = datetime.now() - datetime.fromtimestamp(getctime(self.dir_cache + file_cache))
             if diff_time.seconds >= self.cache_timeout:
                 remove(self.dir_cache + file_cache)
+                metadata_file_cache = self.dir_cache + file_cache + ".meta.json"
+                if path.isfile(metadata_file_cache):
+                    remove(metadata_file_cache)

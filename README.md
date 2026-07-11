@@ -38,6 +38,16 @@ docker compose up --build dev
 | Change the DB schema | [`docs/migrations.md`](docs/migrations.md) + the `safe-migration` skill |
 | Understand the production stack | [`docs/infrastructure.md`](docs/infrastructure.md) |
 
+For repeated local test runs, preserve the migrated test database:
+
+```bash
+docker compose exec dev ./manage.py test --keepdb
+```
+
+The first run creates and migrates the test database; later runs reuse it and apply
+only new migrations. See [`docs/testing.md`](docs/testing.md) for narrower test
+commands.
+
 **AI coding agents** start in [`AGENTS.md`](AGENTS.md) — the short operating contract
 that links into the same `docs/` tree.
 

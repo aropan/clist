@@ -597,6 +597,7 @@ if DEBUG:
     DEBUG_TOOLBAR_CONFIG = {
         'SHOW_TOOLBAR_CALLBACK': show_toolbar_callback,
         'DISABLE_PANELS': DEBUG_TOOLBAR_DISABLE_PANELS,
+        'IS_RUNNING_TESTS': False,
     }
 
 

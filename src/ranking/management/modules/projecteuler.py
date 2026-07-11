@@ -18,47 +18,46 @@ from ranking.management.modules.excepts import ExceptionParseStandings
 
 
 class Statistic(BaseModule):
-
     def get_standings(self, **kwargs):
         if not self.standings_url:
-            self.standings_url = f'https://projecteuler.net/fastest={self.key}'
+            self.standings_url = f"https://projecteuler.net/fastest={self.key}"
 
-        user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36'  # noqa
+        user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36"  # noqa
 
         def get_standings_page(req):
-            page = req.get(self.standings_url, headers={'User-Agent': user_agent})
+            page = req.get(self.standings_url, headers={"User-Agent": user_agent})
 
             unauthorized = not re.search('<form[^>]*action="sign_out"[^>]*>', page)
             if unauthorized:
                 for attempt in range(20):
                     while True:
-                        value = f'{random.random():.16f}'
-                        image_bytes = req.get(f'https://projecteuler.net/captcha/show_captcha.php?{value}')
+                        value = f"{random.random():.16f}"
+                        image_bytes = req.get(f"https://projecteuler.net/captcha/show_captcha.php?{value}")
                         image_stream = io.BytesIO(image_bytes)
                         image_rgb = Image.open(image_stream)
-                        text = pytesseract.image_to_string(image_rgb, config='--oem 0 --psm 13 digits')
+                        text = pytesseract.image_to_string(image_rgb, config="--oem 0 --psm 13 digits")
                         text = text.strip()
-                        if re.match('^[0-9]{5}$', text):
+                        if re.match("^[0-9]{5}$", text):
                             break
 
-                    req.get('https://projecteuler.net/sign_in')
+                    req.get("https://projecteuler.net/sign_in")
                     page = req.submit_form(
-                        name='sign_in_form',
+                        name="sign_in_form",
                         action=None,
                         data={
-                            'username': conf.PROJECTEULER_USERNAME,
-                            'password': conf.PROJECTEULER_PASSWORD,
-                            'captcha': text,
-                            'remember_me': '1',
+                            "username": conf.PROJECTEULER_USERNAME,
+                            "password": conf.PROJECTEULER_PASSWORD,
+                            "captcha": text,
+                            "remember_me": "1",
                         },
                     )
                     match = re.search('<p[^>]*class="warning"[^>]*>(?P<message>[^<]*)</p>', page)
                     if match:
-                        req.print(match.group('message'))
+                        req.print(match.group("message"))
                     else:
                         break
                 else:
-                    raise ExceptionParseStandings('Did not recognize captcha for sign in')
+                    raise ExceptionParseStandings("Did not recognize captcha for sign in")
                 page = req.get(self.standings_url)
 
             return page
@@ -66,8 +65,8 @@ class Statistic(BaseModule):
         with REQ.with_proxy(
             time_limit=5,
             n_limit=25,
-            filepath_proxies='sharedfiles/resource/projecteuler/proxies',
-            dump_proxy_filepath='logs/legacy/projecteuler.proxy',
+            filepath_proxies="sharedfiles/resource/projecteuler/proxies",
+            dump_proxy_filepath="logs/legacy/projecteuler.proxy",
             connect=get_standings_page,
         ) as req:
             page = req.proxer.get_connect_ret()
@@ -76,73 +75,76 @@ class Statistic(BaseModule):
 
         problem_key = self.key
         problem_info = {
-            'code': problem_key,
-            'url': self.url,
-            'n_total': 100,
+            "code": problem_key,
+            "url": self.url,
+            "n_total": 100,
         }
-        if '. ' in self.name:
-            problem_info['name'] = self.name.split('. ', 1)[1].strip()
+        if ". " in self.name:
+            problem_info["name"] = self.name.split(". ", 1)[1].strip()
         problems_info = [problem_info]
 
-        regex = '<table[^>]*>.*?</table>'
-        page = re.sub('<span[^>]*class="[^"]*tooltiptext_narrow[^"]*"[^>]*>[^<]*</span>', '', page)
+        regex = "<table[^>]*>.*?</table>"
+        page = re.sub('<span[^>]*class="[^"]*tooltiptext_narrow[^"]*"[^>]*>[^<]*</span>', "", page)
         html_table = re.search(regex, page, re.DOTALL)
 
         if html_table:
-            table = parsed_table.ParsedTable(html_table.group(0))
+            table = parsed_table.ParsedTable(html_table.group(0), without_header=True)
+            header = ["place", "user", "country", "level", "language", "time to solve"]
             for r in table:
-                row = OrderedDict()
-                row['solving'] = 1
+                r = dict(zip(header, r.columns))
 
-                problems = row.setdefault('problems', {})
+                row = OrderedDict()
+                row["solving"] = 1
+
+                problems = row.setdefault("problems", {})
                 problem = problems.setdefault(problem_key, {})
-                problem['result'] = '+'
-                problem['binary'] = True
+                problem["result"] = "+"
+                problem["binary"] = True
 
                 for k, v in r.items():
-                    if isinstance(v, list):
-                        place, country = v
-                        row['place'] = re.match('[0-9]+', place.value).group(0)
-                        country = first(country.column.node.xpath('.//@title'))
+                    if k == "place":
+                        row["place"] = re.match("[0-9]+", v.value).group(0)
+                    elif k == "country":
+                        country = first(v.node.xpath(".//@title"))
                         if country:
-                            row['country'] = str(country)
-                    elif k == 'Time To Solve':
+                            row["country"] = str(country)
+                    elif k == "time to solve":
                         params = {}
-                        for x in v.value.split(', '):
+                        for x in v.value.split(", "):
                             value, field = x.split()
-                            if field[-1] != 's':
-                                field += 's'
+                            if field[-1] != "s":
+                                field += "s"
                             params[field] = int(value)
                         rel_delta = relativedelta(**params)
                         now = timezone.now()
                         delta = now - (now - rel_delta)
-                        row['penalty'] = problem['time_in_seconds'] = int(delta.total_seconds())
-                    elif k == 'User':
-                        member = first(v.column.node.xpath('.//@title')) or v.value
-                        row['member'] = member
+                        row["penalty"] = problem["time_in_seconds"] = int(delta.total_seconds())
+                    elif k == "user":
+                        member = first(v.node.xpath(".//@title")) or v.value
+                        row["member"] = member
                     else:
                         row[k.lower()] = v.value
-                if 'member' not in row:
+                if "member" not in row:
                     continue
-                result[row['member']] = row
+                result[row["member"]] = row
 
         standings = {
-            'result': result,
-            'url': self.standings_url,
-            'problems': problems_info,
-            'fields_types': {'penalty': ['timedelta']},
-            'keep_results_to_skip': True,
+            "result": result,
+            "url": self.standings_url,
+            "problems": problems_info,
+            "fields_types": {"penalty": ["timedelta"]},
+            "keep_results_to_skip": True,
         }
 
         delta = timezone.now() - self.start_time
         if len(result) < 100 and (result or delta < timedelta(days=365)):
             if delta < timedelta(days=1):
-                standings['timing_statistic_delta'] = timedelta(minutes=60)
+                standings["timing_statistic_delta"] = timedelta(minutes=60)
             elif delta < timedelta(days=30):
-                standings['timing_statistic_delta'] = timedelta(days=1)
+                standings["timing_statistic_delta"] = timedelta(days=1)
             elif delta < timedelta(days=365):
-                standings['timing_statistic_delta'] = timedelta(days=7)
+                standings["timing_statistic_delta"] = timedelta(days=7)
             else:
-                standings['timing_statistic_delta'] = timedelta(days=30)
+                standings["timing_statistic_delta"] = timedelta(days=30)
 
         return standings

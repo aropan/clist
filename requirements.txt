@@ -82,6 +82,7 @@ channels-redis==4.2.0
 fire==0.6.0
 strictfire==0.4.1
 lazy-load==0.8.3
+lazy-object-proxy==1.12.0
 blackboxprotobuf==1.0.1
 traceback-with-variables==2.0.4
 flatten-dict==0.4.2

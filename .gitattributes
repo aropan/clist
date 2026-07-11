@@ -1,0 +1,2 @@
+src/ranking/tests/fixtures/parsers/**/*.html.gz filter=lfs diff=lfs merge=lfs -text
+src/ranking/tests/fixtures/parsers/**/expected_standings.json.gz filter=lfs diff=lfs merge=lfs -text

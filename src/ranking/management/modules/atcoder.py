@@ -88,10 +88,12 @@ class Statistic(BaseModule):
         page = req.get(*args, raise_codes={404}, **kwargs)
         form = req.form(limit=2, page=page, selectors=['class="form-horizontal"'])
         if form:
-            form["post"].update({
-                "username": conf.ATCODER_HANDLE,
-                "password": conf.ATCODER_PASSWORD,
-            })
+            form["post"].update(
+                {
+                    "username": conf.ATCODER_HANDLE,
+                    "password": conf.ATCODER_PASSWORD,
+                }
+            )
             page = req.get(form["url"], post=form["post"])
         return page
 

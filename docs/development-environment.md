@@ -36,6 +36,7 @@ The most common ones:
 | Command | Purpose |
 |---------|---------|
 | `parse_statistic` | The well-known contest-scraper entry point (see [parsers.md](parsers.md)) |
+| `dump_parser_fixture` | Record or update an offline parser regression fixture |
 | `parse_accounts_infos` | Refresh account info (RQ-scheduled) |
 | `parse_live_statistics` | Parse live/running contest statistics |
 | `parse_finalists` | Parse finalists (`Finalist` / `FinalistResourceInfo`) |
@@ -58,4 +59,3 @@ Every command exposes `--help`. For `parse_statistic` specifically, common flags
 
 To add or fix a management command (CLIST house style + cron/Sentry monitor wiring),
 follow the [`add-management-command` skill](../.agents/skills/add-management-command/SKILL.md).
-
