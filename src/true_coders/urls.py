@@ -36,5 +36,5 @@ urlpatterns = [
     re_path(r'^list/([^/]*)/$', views.view_list, name='list'),
     re_path(r'^promotion/skip/$', views.skip_promotion, name='skip-promotion'),
 
-    re_path(r'^grafana_auth/$', views.grafana_auth, name='grafana-auth'),
+    re_path(r'^service_auth/(?P<service>[a-z]+)/$', views.service_auth, name='service-auth'),
 ]

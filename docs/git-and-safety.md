@@ -20,7 +20,7 @@ the subject short and imperative; reference PR/issue numbers when relevant.
 ## <a id="off-limits"></a>Off-limits — never print, commit, or expose
 
 - The `.env*` files
-- `*_conf` docker secrets (`db_conf`, `sentry_conf`, …)
+- `*_conf` docker secrets (`db_conf`, `monitoring_conf`, …)
 - Cookies, tokens, API keys
 - Anything under `volumes/`
 - Anything under `logs/`

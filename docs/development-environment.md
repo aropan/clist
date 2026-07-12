@@ -57,5 +57,5 @@ Every command exposes `--help`. For `parse_statistic` specifically, common flags
 `-r <host>`, `-l <limit>`, `-e <event-regex>`, `-y <year>`, `-u <users>`, `--reparse`,
 `--no-update-results`.
 
-To add or fix a management command (CLIST house style + cron/Sentry monitor wiring),
+To add or fix a management command (CLIST house style + cron/Healthchecks monitor wiring),
 follow the [`add-management-command` skill](../.agents/skills/add-management-command/SKILL.md).

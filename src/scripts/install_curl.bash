@@ -4,7 +4,7 @@ set -e -x
 
 pushd $(dirname "$0")
 
-curl_version="8.17.0"
+curl_version="8.21.0"
 os_arch=$(uname -m)
 os_name=$(uname -s)
 if [ "$os_name" = "Linux" ]; then

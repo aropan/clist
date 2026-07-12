@@ -5,12 +5,12 @@ description: >-
   src/ranking/management/commands/ — wiring add_arguments, the CLIST
   command skeleton (AttrDict(options), getLogger, print_sql_decorator), the
   EventLog/failed_on_exception monitoring idiom, Resource.get() host filtering,
-  or wiring a cron entry with a Sentry monitor in config/cron. Keywords:
-  management command, BaseCommand, add_arguments, cron, Sentry monitor,
+  or wiring a cron entry with a Healthchecks monitor in config/cron. Keywords:
+  management command, BaseCommand, add_arguments, cron, Healthchecks monitor,
   run-manage.bash, EventLog, tqdm.
 ---
 
-# Add a CLIST management command (+ cron/Sentry monitor)
+# Add a CLIST management command (+ cron/Healthchecks monitor)
 
 Management commands live in `src/ranking/management/commands/` (16 existing).
 They back the cron schedule (`config/cron`) and the RQ workers. **Always read
@@ -141,27 +141,28 @@ resources = resources.filter(resource_filter)
   `--dryrun` (gated by `if args.dryrun: continue` before `.save()` calls) for any
   mutating command.
 
-## Wiring a cron entry + Sentry monitor
+## Wiring a cron entry + Healthchecks monitor
 
 Cron jobs live in `config/cron` and go through `src/run-manage.bash`, which flocks
-on `/tmp/<name>.lock`, loads `/run/secrets/sentry_conf`, tees to
-`logs/manage/<name>.log`, and optionally wraps the command in a Sentry
-**cron monitor**:
+on `/tmp/<name>.lock`, loads `/run/secrets/monitoring_conf`, tees to
+`logs/manage/<name>.log`, and optionally pings a self-hosted **Healthchecks**
+check (dead-man's-switch):
 
 ```
-<schedule>  env MONITOR_NAME=SENTRY_CRON_MONITOR_<NAME>  /usr/src/clist/run-manage.bash <command> [args]
+<schedule>  env MONITOR_NAME=<check-slug>  /usr/src/clist/run-manage.bash <command> [args]
 ```
 
-- `MONITOR_NAME` is the **name of an env var** (defined in the prod environment),
-  whose **value** is the real Sentry monitor ID. `run-manage.bash` resolves it via
-  `${!MONITOR_NAME}` (indirection).
-- If no Sentry monitor is needed, omit the `env MONITOR_NAME=...` prefix — the
-  command still runs (logged + flocked).
-- Existing env-var names: `SENTRY_CRON_MONITOR_PARSING_STATISTICS`,
-  `..._PARSING_ACCOUNTS`, `..._CALENDAR_UPDATE`, `..._SENDING_NOTIFICATIONS`,
-  `..._CREATING_NOTIFICATIONS`, `..._CHECKING_LOGS`, `..._SET_ACCOUNT_RANK`,
-  `..._SET_COUNTRY_FIELDS`, `..._UPDATE_AUTO_RATING`, `..._PARSE_ARCHIVE_PROBLEMS`,
-  `..._DETECT_MAJOR_CONTESTS`.
+- `MONITOR_NAME` is the Healthchecks **check slug** (kebab-case). `run-manage.bash`
+  builds the ping URL as `$HEALTHCHECKS_PING_URL/$HEALTHCHECKS_PING_KEY/<slug>`
+  (both vars come from `.env.monitoring`), sends `/start?create=1` before the
+  command and `/<exit-code>` after — so the check is **auto-created on first
+  ping**; set its schedule/grace in the Healthchecks UI afterwards.
+- If no monitor is needed, omit the `env MONITOR_NAME=...` prefix — the command
+  still runs (logged + flocked).
+- Existing slugs: `parsing-statistics`, `parsing-accounts`, `calendar-update`,
+  `sending-notifications`, `creating-notifications`, `checking-logs`,
+  `set-account-rank`, `set-country-fields`, `update-auto-rating`,
+  `parse-archive-problems`, `check-schedule-parsing` (see `config/cron`).
 
 ## Test loop (safe, narrow)
 
@@ -179,6 +180,6 @@ skill.
 
 ## When done, report
 
-Command file added/changed, argument surface, whether an `EventLog`/cron/Sentry
+Command file added/changed, argument surface, whether an `EventLog`/cron/Healthchecks
 entry was wired, the exact verification command(s) run + result, and any manual
 DB step still needed.

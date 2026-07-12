@@ -28,9 +28,6 @@ ENV UV_LINK_MODE=copy
 COPY requirements.txt overrides.txt .
 RUN --mount=type=cache,target=/root/.cache/uv uv pip install -r requirements.txt --override overrides.txt
 
-# Sentry CLI
-RUN curl -sL https://sentry.io/get-cli/ | SENTRY_CLI_VERSION="2.20.7" sh
-
 # Curl
 COPY src/scripts/install_curl.bash src/scripts/install_curl.sums ./
 RUN ./install_curl.bash

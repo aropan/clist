@@ -36,7 +36,7 @@ SHARED_DIR = os.path.join(BASE_DIR, 'sharedfiles')
 env = Env()
 env.read_env(env('DJANGO_ENV_FILE'))
 env.read_env(env('DJANGO_DB_CONF', default='/run/secrets/db_conf'))
-env.read_env(env('DJANGO_SENTRY_CONF', default='/run/secrets/sentry_conf'))
+env.read_env(env('DJANGO_MONITORING_CONF', default='/run/secrets/monitoring_conf'))
 
 ADMINS = conf.ADMINS
 
@@ -667,7 +667,8 @@ FAVORITE_SETTINGS_ = {
 }
 DEFAULT_TIME_ZONE_ = 'UTC'
 CHANING_HOSTS_ = ['clist.by', 'dev.clist.by']
-ALLOWED_REDIRECT_HOSTS_ = {'clist.by', 'dev.clist.by', 'grafana.clist.by'}
+ALLOWED_REDIRECT_HOSTS_ = {'clist.by', 'dev.clist.by', 'grafana.clist.by', 'bugsink.clist.by',
+                           'healthchecks.clist.by', 'pgadmin.clist.by'}
 HOST_ = 'dev.clist.by' if DEBUG else 'clist.by'
 HTTPS_HOST_URL_ = 'https://' + HOST_
 MAIN_HOST_URL_ = 'https://clist.by'
@@ -969,7 +970,7 @@ SHELL_PLUS_IMPORTS = [
 FORM_LOGOUT_DELAY_IN_MINUTES = 10
 
 
-# Sentry
+# Error tracking (Bugsink, sentry-sdk compatible)
 if not DEBUG:
     sentry_sdk.init(
         dsn=env('SENTRY_DSN'),
@@ -977,8 +978,6 @@ if not DEBUG:
             DjangoIntegration(),
             LoggingIntegration(level=logging.INFO, event_level=logging.ERROR),
         ],
-        traces_sample_rate=0.005,
-        profiles_sample_rate=0.005,
         send_default_pii=True,
-        environment='development' if DEBUG else 'production',
+        environment='production',
     )

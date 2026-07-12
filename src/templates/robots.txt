@@ -9,7 +9,7 @@ Disallow: /signup/
 Disallow: /oauth/
 Disallow: /auth/
 Disallow: /o/
-Disallow: /grafana_auth/
+Disallow: /service_auth/
 Disallow: /chat/
 Disallow: /chats/
 

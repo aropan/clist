@@ -20,8 +20,6 @@ WEBPUSH_SETTINGS = {
     'VAPID_ADMIN_EMAIL': '{str}',
 }
 
-SENTRY_DNS = '{str}'
-
 GEOIP_ACCOUNT_ID = '{str}'
 GEOIP_LICENSE_KEY = '{str}'
 

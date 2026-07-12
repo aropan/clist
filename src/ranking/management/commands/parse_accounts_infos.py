@@ -28,6 +28,7 @@ from true_coders.models import Coder, CoderList
 from utils.attrdict import AttrDict
 from utils.countrier import Countrier
 from utils.mathutils import min_with_none
+from utils.rq import get_resource_job_id
 from utils.strings import sanitize_data, sanitize_text
 from utils.traceback_with_vars import colored_format_exc
 
@@ -442,8 +443,7 @@ class Command(BaseCommand):
         if args.split_by_resource:
             queue = django_rq.get_queue('parse_accounts')
             for resource in active_resources:
-                resource_host = resource.host.split('/')[0]
-                job_id = f'parse_accounts_{resource_host}'
+                job_id = get_resource_job_id('parse_accounts', resource.host)
 
                 job = queue.fetch_job(job_id)
                 if not job or job.is_finished or job.is_failed:

@@ -18,6 +18,11 @@ How CLIST is containerized and operated. **High-risk area** — change only with
 | `netdata` | System metrics |
 | `legacy` | Legacy PHP app (`legacy/Dockerfile`, `php:8-fpm`) served alongside Django |
 | `loki`, `promtail`, `grafana` | Log aggregation + dashboards |
+| `bugsink` | Self-hosted error tracking (sentry-sdk compatible), DB in `db`; env in `.env.bugsink` |
+| `healthchecks` | Self-hosted cron monitoring (pinged by `run-manage.bash`), DB in `db`; env in `.env.healthchecks` |
+
+The app-side error-tracking DSN and Healthchecks ping key live in `.env.monitoring`
+(mounted into `prod`/`dev`/`legacy` as the `monitoring_conf` docker secret).
 
 Static network `10.42.0.x`. `dev` mounts `./src/:/usr/src/clist/`.
 

@@ -66,7 +66,7 @@ hand. This table just documents what exists.
 | Skill | Use it for |
 |-------|------------|
 | [`add-parser`](.agents/skills/add-parser/SKILL.md) | Add / fix / debug a judge parser in `src/ranking/management/modules/` |
-| [`add-management-command`](.agents/skills/add-management-command/SKILL.md) | Add / fix a batch management command + cron / Sentry monitor wiring |
+| [`add-management-command`](.agents/skills/add-management-command/SKILL.md) | Add / fix a batch management command + cron / Healthchecks monitor wiring |
 | [`safe-migration`](.agents/skills/safe-migration/SKILL.md) | Any Django schema or data migration |
 | [`run-and-verify`](.agents/skills/run-and-verify/SKILL.md) | Pick & run the right narrow checks (tests / lint) after a change |
 

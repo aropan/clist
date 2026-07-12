@@ -12,15 +12,13 @@ RUN apt install -y libpq-dev && docker-php-ext-configure pgsql -with-pgsql=/usr/
 RUN apt install -y faketime
 
 # Curl
-ENV CURL_VERSION=8.9.1
-RUN curl -L https://github.com/stunnel/static-curl/releases/download/${CURL_VERSION}/curl-linux-aarch64-${CURL_VERSION}.tar.xz --output /tmp/curl.tar.xz && \
-    tar -xvf /tmp/curl.tar.xz -C /tmp && \
-    sha256sum /tmp/curl | grep -q "eff254056270ded081d677f2f04847817a1be692283bd5b37fbc379bed8d5461" && \
-    mv /tmp/curl /usr/local/bin/curl && \
-    rm /tmp/curl.tar.xz
+RUN apt install -y wget
+COPY src/scripts/install_curl.bash src/scripts/install_curl.sums ./
+RUN ./install_curl.bash
+RUN rm install_curl.bash install_curl.sums
 
 # Configure python
-COPY requirements.txt .
+COPY legacy/requirements.txt .
 RUN apt install -y python3 python3-pip python3-venv && \
     python3 -m venv /venv/legacy && \
     /venv/legacy/bin/pip install -U pip && \
@@ -29,13 +27,10 @@ ENV PATH="/venv/legacy/bin/:$PATH"
 
 # Configure cron
 RUN apt install -y cron
-COPY cron /etc/cron.d/clist
+COPY legacy/cron /etc/cron.d/clist
 RUN echo "PATH=$PATH" | cat - /etc/cron.d/clist > temp && mv temp /etc/cron.d/clist
 RUN chmod 0644 /etc/cron.d/clist
 RUN crontab /etc/cron.d/clist
-
-# Sentry CLI
-RUN curl -sL https://sentry.io/get-cli/ | SENTRY_CLI_VERSION="2.20.7" sh
 
 ENV APPDIR=/usr/src/legacy
 WORKDIR $APPDIR

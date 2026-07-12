@@ -65,6 +65,7 @@ from utils.attrdict import AttrDict
 from utils.countrier import Countrier
 from utils.logger import suppress_db_logging_context
 from utils.mathutils import min_with_none
+from utils.rq import get_resource_job_id
 from utils.timetools import parse_datetime
 from utils.tools import sum_data, sum_lists
 from utils.traceback_with_vars import colored_format_exc
@@ -385,8 +386,7 @@ class Command(BaseCommand):
         if split_by_resource:
             queue = django_rq.get_queue("parse_statistics")
             for resource in resources:
-                resource_host = resource.host.split("/")[0]
-                job_id = f"parse_statistics_{resource_host}"
+                job_id = get_resource_job_id("parse_statistics", resource.host)
 
                 job = queue.fetch_job(job_id)
                 if not job or job.is_finished or job.is_failed:

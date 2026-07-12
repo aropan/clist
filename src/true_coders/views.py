@@ -3034,11 +3034,12 @@ def skip_promotion(request):
     return response
 
 
-def grafana_auth(request):
+def service_auth(request, service):
     if not request.user.is_authenticated:
         return HttpResponse(status=401)
-    if not request.user.has_perm("true_coders.can_grafana_auth"):
+    if not request.user.has_perm(f"true_coders.can_{service}_auth"):
         return HttpResponse(status=403)
     response = HttpResponse(status=200)
     response["Remote-User"] = request.user.username
+    response["Remote-Email"] = request.user.email
     return response

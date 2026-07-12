@@ -7,21 +7,27 @@ flock -n 200 || { date; echo "Script is already running"; exit 0; }
 
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
-SENTRY_CONF_FILE=/run/secrets/sentry_conf
-if [ -f $SENTRY_CONF_FILE ]; then
-  export $(cat $SENTRY_CONF_FILE | xargs)
+MONITORING_CONF_FILE=/run/secrets/monitoring_conf
+if [ -f $MONITORING_CONF_FILE ]; then
+  export $(cat $MONITORING_CONF_FILE | xargs)
 fi
 
 run_command() {
   cmd=$1
-  monitor_id=$2
-  if [ -n "$monitor_id" ]; then
-    sentry-cli monitors run $monitor_id -- $cmd
-  else
-    $cmd
+  monitor_name=$2
+  ping_url=
+  if [ -n "$monitor_name" ] && [ -n "$HEALTHCHECKS_PING_URL" ] && [ -n "$HEALTHCHECKS_PING_KEY" ]; then
+    ping_url=$HEALTHCHECKS_PING_URL/$HEALTHCHECKS_PING_KEY/$monitor_name
+    curl -fsS -m 10 --retry 3 -o /dev/null "$ping_url/start?create=1" || true
   fi
+  rc=0
+  $cmd || rc=$?
+  if [ -n "$ping_url" ]; then
+    curl -fsS -m 10 --retry 3 -o /dev/null "$ping_url/$rc" || true
+  fi
+  return $rc
 }
 
 python3 api/google_calendar/common.py
 
-run_command "php -f update.php 2>&1" "$SENTRY_CRON_MONITOR_LIST_UPDATE" | tee logs/update.log
+run_command "php -f update.php 2>&1" list-update | tee logs/update.log

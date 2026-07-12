@@ -19,7 +19,7 @@ services:
       - redis
     secrets:
       - db_conf
-      - sentry_conf
+      - monitoring_conf
     restart: unless-stopped
   dev:
     build:
@@ -42,7 +42,7 @@ services:
       - redis
     secrets:
       - db_conf
-      - sentry_conf
+      - monitoring_conf
     restart: unless-stopped
   redis:
     image: redis
@@ -50,7 +50,9 @@ services:
       - clist_network
     restart: unless-stopped
   legacy:
-    build: ./legacy
+    build:
+      context: .
+      dockerfile: legacy/Dockerfile
     networks:
       clist_network:
         ipv4_address: 10.42.0.104
@@ -61,7 +63,7 @@ services:
       - db
     secrets:
       - db_conf
-      - sentry_conf
+      - monitoring_conf
     restart: unless-stopped
   pgadmin:
     image: dpage/pgadmin4:latest
@@ -76,6 +78,34 @@ services:
       - GUNICORN_CMD_ARGS=--forwarded-allow-ips="*"
     depends_on:
       - db
+    restart: unless-stopped
+  bugsink:
+    image: bugsink/bugsink:2
+    networks:
+      - clist_network
+    volumes:
+      - ./config/bugsink/clist_settings.py:/app/clist_settings.py:ro
+    environment:
+      - DJANGO_SETTINGS_MODULE=clist_settings
+    env_file:
+      - ./.env.bugsink
+    depends_on:
+      - db
+    cpus: 1.0
+    mem_limit: 512m
+    restart: unless-stopped
+  healthchecks:
+    image: healthchecks/healthchecks:latest
+    networks:
+      - clist_network
+    volumes:
+      - ./config/healthchecks/local_settings.py:/opt/healthchecks/hc/local_settings.py:ro
+    env_file:
+      - ./.env.healthchecks
+    depends_on:
+      - db
+    cpus: 0.5
+    mem_limit: 384m
     restart: unless-stopped
   db:
     build:
@@ -121,7 +151,7 @@ services:
       - certbot_conf:/etc/letsencrypt/
     depends_on:
       - nginx
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 1d & wait $${!}; done;'"
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --max-log-backups 14; sleep 1d & wait $${!}; done;'"
     restart: unless-stopped
   netdata:
     image: netdata/netdata:latest
@@ -200,8 +230,8 @@ networks:
 secrets:
   db_conf:
     file: ./.env.db
-  sentry_conf:
-    file: ./.env.sentry
+  monitoring_conf:
+    file: ./.env.monitoring
 
 volumes:
   postgres_data:
