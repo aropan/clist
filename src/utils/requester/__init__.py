@@ -67,6 +67,18 @@ def redact_url(url):
         return str(url)
 
 
+def redact_headers(headers):
+    sensitive_header = re.compile(r"(?:authorization|cookie|password|secret|session|token)", re.I)
+    items = headers.items() if hasattr(headers, "items") else headers or []
+    return [(key, "<redacted>" if sensitive_header.search(key) else value) for key, value in items]
+
+
+def redact_proxy(proxy):
+    if not proxy:
+        return None
+    return re.sub(r"(?<=//)[^/@]+@", "<redacted>@", str(proxy))
+
+
 class BaseException(Exception):
     def __init__(self, *args):
         super().__init__(*args)
@@ -465,12 +477,14 @@ def encode_multipart(fields=None, files=None, boundary=None):
 
     fields = fields or {}
     for name, value in fields.items():
-        lines.extend((
-            "--{0}".format(boundary),
-            'Content-Disposition: form-data; name="{0}"'.format(escape_quote(name)),
-            "",
-            str(value),
-        ))
+        lines.extend(
+            (
+                "--{0}".format(boundary),
+                'Content-Disposition: form-data; name="{0}"'.format(escape_quote(name)),
+                "",
+                str(value),
+            )
+        )
 
     files = files or {}
     for name, value in files.items():
@@ -479,20 +493,19 @@ def encode_multipart(fields=None, files=None, boundary=None):
             mimetype = value["mimetype"]
         else:
             mimetype = mimetypes.guess_type(filename)[0] or "application/octet-stream"
-        lines.extend((
-            "--{0}".format(boundary),
-            'Content-Disposition: form-data; name="{0}"; filename="{1}"'.format(
-                escape_quote(name), escape_quote(filename)
-            ),
-            "Content-Type: {0}".format(mimetype),
-            "",
-            value["content"],
-        ))
+        lines.extend(
+            (
+                "--{0}".format(boundary),
+                'Content-Disposition: form-data; name="{0}"; filename="{1}"'.format(
+                    escape_quote(name), escape_quote(filename)
+                ),
+                "Content-Type: {0}".format(mimetype),
+                "",
+                value["content"],
+            )
+        )
 
-    lines.extend((
-        "--{0}--".format(boundary),
-        "",
-    ))
+    lines.extend(("--{0}--".format(boundary), ""))
     body = "\r\n".join(lines)
     body = body.encode("utf8")
 
@@ -648,12 +661,7 @@ class requester:
         if proxy:
 
             def set_proxy(proxy):
-                self.opener.add_handler(
-                    urllib.request.ProxyHandler({
-                        "http": proxy,
-                        "https": proxy,
-                    })
-                )
+                self.opener.add_handler(urllib.request.ProxyHandler({"http": proxy, "https": proxy}))
                 self.proxy = proxy
 
             set_proxy(proxy)
@@ -694,6 +702,7 @@ class requester:
         curl_args=None,
         with_referer=True,
         curl_cookie_file=None,
+        verbose=False,
     ):
         prefix = "local-file:"
         if url.startswith(prefix):
@@ -724,12 +733,14 @@ class requester:
             url = f"{url}?{urllib.parse.urlencode(params)}"
 
         try:
-            file_cache = "".join((
-                self.dir_cache,
-                md5((md5_file_cache or url + (post_urlencoded or "")).encode()).hexdigest(),
-                ("/" + url[url.find("//") + 2 :].split("?", 2)[0]).replace("/", "_"),
-                ".html",
-            ))
+            file_cache = "".join(
+                (
+                    self.dir_cache,
+                    md5((md5_file_cache or url + (post_urlencoded or "")).encode()).hexdigest(),
+                    ("/" + url[url.find("//") + 2 :].split("?", 2)[0]).replace("/", "_"),
+                    ".html",
+                )
+            )
         except Exception:
             file_cache = None
         file_cache_metadata = f"{file_cache}.meta.json" if file_cache else None
@@ -854,6 +865,22 @@ class requester:
             )
             last_url = url
             response_content_type = metadata.get("content_type")
+            if verbose:
+                self.print(
+                    "[request]",
+                    f"method={'POST' if post else 'GET'}",
+                    "transport=cache",
+                    f"url={redact_url(url)}",
+                    force=True,
+                )
+                self.print(
+                    "[response]",
+                    f"code={response.code}",
+                    f"url={redact_url(last_url)}",
+                    f"headers={redact_headers(response.info())}",
+                    f"size={len(page)}",
+                    force=True,
+                )
             if response.code >= 400:
                 force_json = False
                 if not (ignore_codes and response.code in ignore_codes):
@@ -900,6 +927,24 @@ class requester:
                 headers.update({"Content-Type": content_type})
 
             n_attempts = n_attempts or self.n_attempts
+            if verbose:
+                effective_headers = {} if with_curl else dict(self.opener.addheaders)
+                effective_headers.update(headers)
+                cookie_names = sorted(f"{cookie.domain}:{cookie.name}" for cookie in self.cookiejar)
+                cookies = "<curl-cookie-file>" if curl_cookie_file else []
+                if not with_curl:
+                    cookies = cookie_names
+                self.print(
+                    "[request]",
+                    f"method={'POST' if post else 'GET'}",
+                    f"transport={'curl' if with_curl else 'urllib'}",
+                    f"url={redact_url(url)}",
+                    f"headers={redact_headers(effective_headers)}",
+                    f"cookies={cookies}",
+                    f"proxy={redact_proxy(self.proxy)}",
+                    f"attempts={n_attempts}",
+                    force=True,
+                )
             attempt = 0
             while attempt < n_attempts:
                 page, self.error, response, last_url, proxy = None, None, None, None, None
@@ -997,6 +1042,16 @@ class requester:
                 raise NoVerifyWord("No verify word '%s', size page = %d" % (self.verify_word, len(page)))
 
             response_content_type = response.info().get("Content-Type")
+            if verbose:
+                self.print(
+                    "[response]",
+                    f"code={response.code}",
+                    f"url={redact_url(last_url)}",
+                    f"headers={redact_headers(response.info())}",
+                    f"size={len(page) if page is not None else 0}",
+                    f"elapsed={self.time_response.total_seconds():.3f}s",
+                    force=True,
+                )
             write_cache(page, response, response_content_type)
 
             if self.proxer and not self.error:

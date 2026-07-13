@@ -705,22 +705,22 @@ $(() => {
 
   function process_list() {
     const name = $(this).attr("data-name");
-    value = $(this).attr("data-value") || "";
-    access_level = $(this).attr("data-access-level") || ACCESS_LEVELS[0].id;
-    shared_with = JSON.parse($(this).attr("data-shared-with") || "[]");
-    id = $(this).attr("data-id") || "";
-    custom_names = $(this).attr("data-custom-names") === "true";
+    const value = $(this).attr("data-value") || "";
+    const access_level = $(this).attr("data-access-level") || ACCESS_LEVELS[0].id;
+    const shared_with = JSON.parse($(this).attr("data-shared-with") || "[]");
+    const id = $(this).attr("data-id") || "";
+    const custom_names = $(this).attr("data-custom-names") === "true";
 
     const access_level_select_options = ACCESS_LEVELS.map(
       (level) => `
-            <option value="${level.id}" ${level.id === access_level ? "selected" : ""}>${level.text}</option>
+            <option value="${escape_html(level.id)}" ${level.id === access_level ? "selected" : ""}>${escape_html(level.text)}</option>
         `,
     ).join("");
 
     const shared_with_select_options = shared_with
       .map(
         (user) => `
-            <option value="${user.id}" selected>${user.username}</option>
+            <option value="${escape_html(user.id)}" selected>${escape_html(user.username)}</option>
         `,
       )
       .join("");
@@ -823,11 +823,11 @@ $(() => {
 
   function process_calendar() {
     const name = $(this).attr("data-name");
-    id = $(this).attr("data-id") || "";
-    value = $(this).attr("data-value") || "";
-    category = $(this).attr("data-category") || "";
-    resources = JSON.parse($(this).attr("data-resources") || "[]");
-    descriptions = JSON.parse($(this).attr("data-descriptions") || "[]");
+    const id = $(this).attr("data-id") || "";
+    let value = $(this).attr("data-value") || "";
+    let category = $(this).attr("data-category") || "";
+    let resources = JSON.parse($(this).attr("data-resources") || "[]");
+    let descriptions = JSON.parse($(this).attr("data-descriptions") || "[]");
 
     var category_select = "<option></option>";
     CATEGORIES.forEach((el) => {
@@ -883,7 +883,7 @@ $(() => {
             <div class="form-group">
               <label class="control-label">Calendar name</label>
               <input class="form-control" placeholder="Name" autocomplete="off" name="name" value="` +
-        value +
+        escape_html(value) +
         `" required maxlength="64">
               <small class="form-text text-muted">Required field</small>
             </div>

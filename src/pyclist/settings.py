@@ -210,7 +210,7 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            'hosts': [('localhost', 6379)],
+            'hosts': [{'host': 'localhost', 'port': 6379, 'socket_timeout': 10}],
             'capacity': CHANNEL_LAYERS_CAPACITY,
         },
     },
@@ -668,7 +668,7 @@ FAVORITE_SETTINGS_ = {
 DEFAULT_TIME_ZONE_ = 'UTC'
 CHANING_HOSTS_ = ['clist.by', 'dev.clist.by']
 ALLOWED_REDIRECT_HOSTS_ = {'clist.by', 'dev.clist.by', 'grafana.clist.by', 'bugsink.clist.by',
-                           'healthchecks.clist.by', 'pgadmin.clist.by'}
+                           'healthchecks.clist.by', 'pgadmin.clist.by', 'netdata.clist.by'}
 HOST_ = 'dev.clist.by' if DEBUG else 'clist.by'
 HTTPS_HOST_URL_ = 'https://' + HOST_
 MAIN_HOST_URL_ = 'https://clist.by'

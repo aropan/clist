@@ -3,6 +3,7 @@ services:
     build:
       context: .
       target: prod
+      provenance: disabled=true
     networks:
       clist_network:
         ipv4_address: 10.42.0.102
@@ -25,6 +26,7 @@ services:
     build:
       context: .
       target: dev
+      provenance: disabled=true
     networks:
       clist_network:
         ipv4_address: 10.42.0.103
@@ -53,6 +55,7 @@ services:
     build:
       context: .
       dockerfile: legacy/Dockerfile
+      provenance: disabled=true
     networks:
       clist_network:
         ipv4_address: 10.42.0.104
@@ -111,6 +114,7 @@ services:
     build:
       context: .
       target: postgres
+      provenance: disabled=true
     networks:
       clist_network:
         ipv4_address: 10.42.0.105
@@ -126,6 +130,7 @@ services:
     build:
       context: .
       target: nginx
+      provenance: disabled=true
     networks:
       clist_network:
         ipv4_address: 10.42.0.101

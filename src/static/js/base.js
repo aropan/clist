@@ -188,7 +188,7 @@ function confirm_action() {
       var message = $(this).attr("data-message") || `Are you sure you want to ${(action || "do this").toLowerCase()}?`;
       var confirm_class = $(this).attr("data-confirm-class") || "btn-primary";
 
-      message = $("<div>").html(message);
+      message = $("<div>").text(message);
 
       var pre_action = $(this).attr("data-pre-action");
       if (pre_action) {

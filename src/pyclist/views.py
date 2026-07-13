@@ -280,6 +280,9 @@ def change_debug_toolbar(request):
     referer_url = request.META.get('HTTP_REFERER')
     if not referer_url:
         return HttpResponseBadRequest('No referer')
+    redirect_response = allowed_redirect(referer_url)
+    if redirect_response.status_code != 302:
+        return redirect_response
     debug_toolbar_status = bool(request.session.get('debug_toolbar'))
     request.session['debug_toolbar'] = not debug_toolbar_status
-    return HttpResponseRedirect(referer_url)
+    return redirect_response

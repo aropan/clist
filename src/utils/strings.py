@@ -74,6 +74,57 @@ def cut_prefix(text, prefix, strip=True):
     return text
 
 
+def split_team_name_and_members(value):
+    value = value.rstrip()
+    if not value.endswith(')'):
+        return None
+
+    depth = 0
+    opening_index = None
+    for index in range(len(value) - 1, -1, -1):
+        char = value[index]
+        if char == ')':
+            depth += 1
+        elif char == '(':
+            depth -= 1
+            if depth == 0:
+                opening_index = index
+                break
+            if depth < 0:
+                return None
+
+    if opening_index is None:
+        return None
+
+    members_value = value[opening_index + 1:-1]
+    members = []
+    member_start = 0
+    depth = 0
+    for index, char in enumerate(members_value):
+        if char == '(':
+            if depth:
+                return None
+            depth = 1
+        elif char == ')':
+            if not depth:
+                return None
+            depth = 0
+        elif char == ',' and depth == 0:
+            member = members_value[member_start:index].strip()
+            if member:
+                members.append(member)
+            member_start = index + 1
+    if depth:
+        return None
+
+    member = members_value[member_start:].strip()
+    if member:
+        members.append(member)
+
+    name = value[:opening_index].strip()
+    return name, members
+
+
 def print_diff(p, q):
     if isinstance(p, str):
         p = p.splitlines()

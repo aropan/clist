@@ -13,7 +13,7 @@ from django.db.models import Q
 from clist.templatetags.extras import as_number, get_item, is_yes, slug
 from ranking.management.modules.common import LOG, REQ, BaseModule, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse
-from utils.strings import string_iou, strip_tags
+from utils.strings import split_team_name_and_members, string_iou, strip_tags
 
 
 def extract_team_name(name):
@@ -367,11 +367,10 @@ class Statistic(BaseModule):
                 return
             if not account.name:
                 return
-            match = re.search(r'^(?P<name>.*)\((?P<members>(?:[^\(\)]*|\([^\(\)]*\))*)\)$', account.name)
-            if not match:
+            parsed_name = split_team_name_and_members(account.name)
+            if not parsed_name:
                 return
-            name = match.group('name').strip()
-            members = [member.strip() for member in match.group('members').split(',')]
+            name, members = parsed_name
 
             qs = resource.account_set.filter(key__startswith='team-')
             while name and not qs.filter(name__contains=name).exists() and ':' in name:

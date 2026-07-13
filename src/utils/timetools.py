@@ -50,7 +50,8 @@ def parse_datetime(value, tz=None) -> datetime | None:
         return None
     if isinstance(value, (int, float)):
         return arrow.get(value).datetime
-    if "timeanddate.com" in value:
+    hostname = urlparse(value).hostname
+    if hostname == "timeanddate.com" or (hostname and hostname.endswith(".timeanddate.com")):
         return parse_datetime_from_url(value)
     if value.endswith("ago"):
         return now() - parse_duration(value[:-3].strip())
