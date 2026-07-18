@@ -17,16 +17,25 @@ mkdir -p $logdir
 rm -f $logfile
 echo -e "BEGIN $(date)\n\n" >>$logfile
 
+# Best-effort Healthchecks ping (never fails the script); extra curl args + URL.
+hc_ping() { curl -fsS -m 10 --retry 3 -o /dev/null "$@" || true; }
+
 cmd="./manage.py $@"
 ping_url=
 if [ -n "$MONITOR_NAME" ] && [ -n "$HEALTHCHECKS_PING_URL" ] && [ -n "$HEALTHCHECKS_PING_KEY" ]; then
   ping_url=$HEALTHCHECKS_PING_URL/$HEALTHCHECKS_PING_KEY/$MONITOR_NAME
-  curl -fsS -m 10 --retry 3 -o /dev/null "$ping_url/start?create=1" || true
+  hc_ping "$ping_url/start"
 fi
 $cmd 2>&1 | tee -a $logfile
 rc=${PIPESTATUS[0]}
 if [ -n "$ping_url" ]; then
-  curl -fsS -m 10 --retry 3 -o /dev/null "$ping_url/$rc" || true
+  if [ "$rc" -eq 0 ]; then
+    hc_ping "$ping_url/$rc"
+  else
+    # On failure attach the log tail as the body so the traceback shows on the
+    # check page (capped server-side by PING_BODY_LIMIT, default 10000).
+    tail -c 10000 "$logfile" | hc_ping --data-binary @- "$ping_url/$rc"
+  fi
 fi
 
 echo -e "\n\nEND $(date)" >>$logfile

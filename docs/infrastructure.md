@@ -24,6 +24,19 @@ How CLIST is containerized and operated. **High-risk area** — change only with
 The app-side error-tracking DSN and Healthchecks ping key live in `.env.monitoring`
 (mounted into `prod`/`dev`/`legacy` as the `monitoring_conf` docker secret).
 
+Healthchecks retention, per-check schedule/grace/description and the Telegram alert
+channel live in the DB, not in settings. They are pinned as config-as-code in
+[`config/healthchecks/provision.py`](../config/healthchecks/provision.py), mounted into
+the `healthchecks` container. It is **not** applied automatically — run it by hand
+(idempotent) after editing it or after adding a monitored cron:
+
+```
+docker compose exec healthchecks sh -c 'python manage.py shell < /opt/healthchecks/provision.py'
+```
+
+On failure `run-manage.bash` posts the tail of the command log as the ping body, so the
+traceback is visible on the check page (capped by `PING_BODY_LIMIT`).
+
 Static network `10.42.0.x`. `dev` mounts `./src/:/usr/src/clist/`.
 
 ## Dockerfile ([`Dockerfile`](../Dockerfile))

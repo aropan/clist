@@ -1860,7 +1860,11 @@ class Command(BaseCommand):
                             if (
                                 statistics_to_delete
                                 and not without_delete_statistics
-                                and (first_deleted := Statistics.objects.filter(pk__in=statistics_to_delete).first())
+                                and (
+                                    first_deleted := Statistics.objects.filter(
+                                        pk__in=statistics_to_delete, skip_in_stats=False
+                                    ).first()
+                                )
                             ):
                                 self.logger.info(f"First deleted: {first_deleted}")
                                 prefix_size = 5

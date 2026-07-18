@@ -48,12 +48,9 @@ def api_query(
     key, secret = api_key
     params = dict(params)
 
-    if (
-        method == "contest.standings"
-        and (contest_id := params.pop("contestId", None))
-        and re.match(r"^\d{1,5}$", contest_id)
-    ):
+    if method == "contest.standings" and (contest_id := params.get("contestId")) and re.match(r"^\d{1,5}$", contest_id):
         new_params = {"contestId": contest_id}
+        params.pop("contestId")
         LOG.warning(f"Ignore params {params} for method contest.standings")
         params = new_params
     else:

@@ -103,6 +103,7 @@ services:
       - clist_network
     volumes:
       - ./config/healthchecks/local_settings.py:/opt/healthchecks/hc/local_settings.py:ro
+      - ./config/healthchecks/provision.py:/opt/healthchecks/provision.py:ro
     env_file:
       - ./.env.healthchecks
     depends_on:
