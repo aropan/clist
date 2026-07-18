@@ -6,6 +6,7 @@ import arrow
 from django.conf import settings
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.contenttypes.models import ContentType
+from django.core.cache import cache
 from django.core.management.commands import dumpdata
 from django.db.models import Avg, Count, F, FloatField, Max, Min, OuterRef, Prefetch, Q, Subquery
 from django.db.models.functions import Cast
@@ -18,10 +19,29 @@ from django_ratelimit.decorators import ratelimit
 from el_pagination.decorators import QS_KEY, page_templates
 from sql_util.utils import Exists, SubqueryCount, SubqueryMin
 
-from clist.models import (Banner, Contest, ContestSeries, Problem, ProblemTag, ProblemVerdict, PromoLink, Promotion,
-                          Resource)
-from clist.templatetags.extras import (allowed_redirect, as_number, get_item, get_problem_key, get_timezone_offset,
-                                       is_yes, media_size, rating_from_probability, redirect_login, win_probability)
+from clist.models import (
+    Banner,
+    Contest,
+    ContestSeries,
+    Problem,
+    ProblemTag,
+    ProblemVerdict,
+    PromoLink,
+    Promotion,
+    Resource,
+)
+from clist.templatetags.extras import (
+    allowed_redirect,
+    as_number,
+    get_item,
+    get_problem_key,
+    get_timezone_offset,
+    is_yes,
+    media_size,
+    rating_from_probability,
+    redirect_login,
+    win_probability,
+)
 from favorites.models import Activity
 from favorites.templatetags.favorites_extras import activity_icon
 from notification.management.commands import sendout_tasks
@@ -541,6 +561,69 @@ def resource_problem_rating_chart(resource):
     return problem_rating_chart
 
 
+def resource_account_rating_chart(resource, accounts, resource_ratings, logger, use_cache=False):
+    if use_cache:
+        cache_key = f'resource-rating-chart:{resource.pk}'
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return cached
+
+        lock_key = f'{cache_key}:lock'
+        if not cache.add(lock_key, True, timeout=settings.RESOURCE_RATING_CHART_CACHE_LOCK_TIMEOUT):
+            return None
+
+    values = resource.account_set.aggregate(min_rating=Min('rating'), max_rating=Max('rating'))
+    min_rating = values['min_rating']
+    max_rating = values['max_rating']
+
+    ratings = accounts.filter(rating__isnull=False)
+    n_bins, step = resource.rating_step()
+
+    coloring_field = get_item(resource.info, 'ratings.chartjs.coloring_field')
+    if coloring_field:
+        ratings = ratings.filter(**{f'info__{coloring_field}__isnull': False})
+        ratings = ratings.annotate(_rank=Cast(JSONF(f'info__{coloring_field}'), FloatField()))
+        aggregations = {'coloring_field': Avg('_rank')}
+    else:
+        aggregations = None
+
+    try:
+        rating_chart = make_chart(ratings, 'rating', n_bins=n_bins, step=step, aggregations=aggregations)
+    except TooManyBinsException as e:
+        rating_chart = None
+        logger.error(f'Rating chart for {resource} failed: {e}')
+
+    if rating_chart:
+        if use_cache:
+            # Avoid retaining and pickling the full account queryset in the cached chart.
+            rating_chart.pop('queryset', None)
+        data = rating_chart['data']
+        for row in data:
+            row['rating'] = row.pop('bin')
+            row['count'] = row.pop('value')
+
+        idx = 0
+        for row in data:
+            if coloring_field:
+                if 'coloring_field' not in row or row['coloring_field'] is None:
+                    row['hex_rgb'] = '#eee'
+                    continue
+                val = row['coloring_field']
+            else:
+                val = int(row['rating'])
+            while idx + 1 < len(resource_ratings) and val >= resource_ratings[idx]['high']:
+                idx += 1
+            while idx > 0 and val < resource_ratings[idx]['low']:
+                idx -= 1
+            row['hex_rgb'] = resource_ratings[idx]['hex_rgb']
+
+    result = {'chart': rating_chart, 'min': min_rating, 'max': max_rating}
+    if use_cache:
+        cache.set(cache_key, result, timeout=settings.RESOURCE_RATING_CHART_CACHE_TIMEOUT)
+        cache.delete(lock_key)
+    return result
+
+
 @ratelimit(key="user_or_ip", rate="300/h")
 @page_templates((
     ('resource_country_most_medals.html', 'country_most_medals_page'),
@@ -595,6 +678,7 @@ def resource(request, resource, template='resource.html', extra_context=None):
 
     params = {}
     mute_country_rating = False
+    has_requested_account_filters = False
 
     contests = resource.contest_set.all()
 
@@ -604,6 +688,7 @@ def resource(request, resource, template='resource.html', extra_context=None):
         accounts = accounts.filter(account_type=account_type)
         params['account_type'] = account_type_value
         mute_country_rating = True
+        has_requested_account_filters = True
     elif resource.has_account_types:
         params['account_type'] = Account.get_type_value(resource.default_account_type)
         accounts = accounts.filter(account_type=resource.default_account_type)
@@ -612,6 +697,7 @@ def resource(request, resource, template='resource.html', extra_context=None):
         accounts = Account.apply_coder_kind(accounts, coder_kind, logger=request.logger)
         params['coder_kind'] = coder_kind
         mute_country_rating = True
+        has_requested_account_filters = True
 
     has_country = accounts.filter(country__isnull=False).exists()
     countries = request.GET.getlist('country')
@@ -620,6 +706,7 @@ def resource(request, resource, template='resource.html', extra_context=None):
         params['countries'] = countries
         accounts = accounts.filter(country__in=countries)
         country_accounts = country_accounts.filter(country__in=countries)
+        has_requested_account_filters = True
 
     period = request.GET.get('period')
     deltas_period = {
@@ -632,6 +719,7 @@ def resource(request, resource, template='resource.html', extra_context=None):
     if delta_period:
         accounts = accounts.filter(last_activity__gte=now - delta_period)
         mute_country_rating = True
+        has_requested_account_filters = True
     period_select = {
         'options': list(deltas_period.keys()),
         'nomultiply': True,
@@ -644,6 +732,7 @@ def resource(request, resource, template='resource.html', extra_context=None):
         accounts_annotate = CoderList.accounts_annotate(list_uuids)
         accounts = accounts.annotate(value_instead_key=accounts_annotate)
         mute_country_rating = True
+        has_requested_account_filters = True
 
     default_variables = resource.info.get('default_variables', {})
     range_filter_values = {}
@@ -656,6 +745,7 @@ def resource(request, resource, template='resource.html', extra_context=None):
         value = as_number(request.GET.get(field), force=True)
         if value is not None:
             range_filter_values[field] = value
+            has_requested_account_filters = True
         else:
             value = default_variables.get(field)
         if value is not None:
@@ -670,49 +760,17 @@ def resource(request, resource, template='resource.html', extra_context=None):
     if not resource_ratings and resource.has_rating_history:
         resource_ratings = [{'low': float('-inf'), 'high': float('inf'), 'hex_rgb': '#999'}]
     if resource_ratings and not page_template:
-        values = resource.account_set.aggregate(min_rating=Min('rating'), max_rating=Max('rating'))
-        min_rating = values['min_rating']
-        max_rating = values['max_rating']
-
-        ratings = accounts.filter(rating__isnull=False)
-        rating_field = 'rating'
-
-        n_bins, step = resource.rating_step()
-
-        coloring_field = get_item(resource.info, 'ratings.chartjs.coloring_field')
-        if coloring_field:
-            ratings = ratings.filter(**{f'info__{coloring_field}__isnull': False})
-            ratings = ratings.annotate(_rank=Cast(JSONF(f'info__{coloring_field}'), FloatField()))
-            aggregations = {'coloring_field': Avg('_rank')}
-        else:
-            aggregations = None
-
-        try:
-            rating_chart = make_chart(ratings, rating_field, n_bins=n_bins, step=step, aggregations=aggregations)
-        except TooManyBinsException as e:
-            rating_chart = None
-            request.logger.error(f'Rating chart for {resource} failed: {e}')
-
-        if rating_chart:
-            data = rating_chart['data']
-            for idx, row in enumerate(data):
-                row['rating'] = row.pop('bin')
-                row['count'] = row.pop('value')
-
-            idx = 0
-            for row in data:
-                if coloring_field:
-                    if 'coloring_field' not in row or row['coloring_field'] is None:
-                        row['hex_rgb'] = '#eee'
-                        continue
-                    val = row['coloring_field']
-                else:
-                    val = int(row['rating'])
-                while idx + 1 < len(resource_ratings[idx]) and val >= resource_ratings[idx]['high']:
-                    idx += 1
-                while idx - 1 > 0 and val < resource_ratings[idx]['low']:
-                    idx -= 1
-                row['hex_rgb'] = resource_ratings[idx]['hex_rgb']
+        rating = resource_account_rating_chart(
+            resource,
+            accounts,
+            resource_ratings,
+            request.logger,
+            use_cache=not has_requested_account_filters,
+        )
+        rating = rating or {'chart': None, 'min': None, 'max': None}
+        rating_chart = rating['chart']
+        min_rating = rating['min']
+        max_rating = rating['max']
     else:
         rating_chart = None
         min_rating = None

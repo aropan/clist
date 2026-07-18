@@ -45,6 +45,7 @@ services:
     secrets:
       - db_conf
       - monitoring_conf
+    mem_limit: 1g
     restart: unless-stopped
   redis:
     image: redis
