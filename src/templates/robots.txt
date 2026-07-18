@@ -22,6 +22,7 @@ Disallow: /list/
 Disallow: /calendar/
 Disallow: /messages/
 Disallow: /profile/
+Disallow: /account/
 Disallow: /telegram/
 Disallow: /versus/
 Disallow: /virtual-start/

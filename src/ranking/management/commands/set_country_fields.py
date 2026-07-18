@@ -18,7 +18,7 @@ from logify.utils import failed_on_exception
 from ranking.models import CountryAccount
 from utils.attrdict import AttrDict
 from utils.json_field import CharJSONF
-from utils.logger import suppress_db_logging_context
+from utils.logger import measure_time, suppress_db_logging_context
 from utils.rating import get_last_activity_weight, get_n_contests_weight, get_weighted_rating
 from utils.timetools import parse_duration
 
@@ -85,28 +85,31 @@ class Command(BaseCommand):
         resource_rank = Window(expression=Rank(), order_by=F('rating').desc())
 
         for resource in tqdm(resources, total=len(resources), desc='resources'):
+            self.logger.info(f'set country fields for resource = {resource}')
             event_log = EventLog.objects.create(name='set_country_fields',
                                                 related=resource, status=EventStatus.IN_PROGRESS)
             with failed_on_exception(event_log):
-                qs = resource.account_set.filter(country__isnull=False, account_type=resource.default_account_type)
-                qs = qs.values('country').annotate(count=Count('country'))
-                country_accounts = []
-                for country_stat in qs:
-                    country_account = CountryAccount(
-                        resource=resource,
-                        country=country_stat['country'],
-                        n_accounts=country_stat['count'],
-                    )
-                    country_accounts.append(country_account)
-                with suppress_db_logging_context():
-                    country_accounts = CountryAccount.objects.bulk_create(country_accounts,
-                                                                          update_conflicts=True,
-                                                                          unique_fields=['resource', 'country'],
-                                                                          update_fields=['n_accounts'])
-                    countries = {c.country for c in country_accounts}
-                    country_accounts = CountryAccount.objects.filter(resource=resource, country__in=countries)
-                    country_accounts = {c.country: c for c in country_accounts}
-                    CountryAccount.objects.filter(resource=resource).exclude(country__in=country_accounts).delete()
+                with measure_time('country_accounts', logger=self.logger):
+                    qs = resource.account_set.filter(country__isnull=False, account_type=resource.default_account_type)
+                    qs = qs.values('country').annotate(count=Count('country'))
+                    country_accounts = []
+                    for country_stat in qs:
+                        country_account = CountryAccount(
+                            resource=resource,
+                            country=country_stat['country'],
+                            n_accounts=country_stat['count'],
+                        )
+                        country_accounts.append(country_account)
+                    self.logger.info(f'country accounts count = {len(country_accounts)}')
+                    with suppress_db_logging_context():
+                        country_accounts = CountryAccount.objects.bulk_create(country_accounts,
+                                                                              update_conflicts=True,
+                                                                              unique_fields=['resource', 'country'],
+                                                                              update_fields=['n_accounts'])
+                        countries = {c.country for c in country_accounts}
+                        country_accounts = CountryAccount.objects.filter(resource=resource, country__in=countries)
+                        country_accounts = {c.country: c for c in country_accounts}
+                        CountryAccount.objects.filter(resource=resource).exclude(country__in=country_accounts).delete()
 
                 def statistics_base_queryset():
                     ret = resource.statistics_set.annotate(country=Case(
@@ -168,14 +171,13 @@ class Command(BaseCommand):
                     qs = resource.account_set.filter(rating__isnull=False, country__isnull=False,
                                                      last_rating_activity__isnull=False)
                     qs = qs.filter(account_type=resource.default_account_type)
-                    qs = qs.values('country', 'rating', 'n_contests', 'last_rating_activity')
+                    qs = qs.values_list('country', 'rating', 'n_contests', 'last_rating_activity')
                     country_ratings = {}
-                    for account_stat in qs:
-                        weight = 1
-                        weight *= get_n_contests_weight(account_stat['n_contests'])
-                        weight *= get_last_activity_weight(account_stat['last_rating_activity'],
-                                                           base=last_rated_contest.end_time)
-                        country_ratings.setdefault(account_stat['country'], []).append((weight, account_stat['rating']))
+                    base = last_rated_contest.end_time
+                    for country, rating, n_contests, last_rating_activity in qs.iterator(chunk_size=2000):
+                        weight = get_n_contests_weight(n_contests)
+                        weight *= get_last_activity_weight(last_rating_activity, base=base)
+                        country_ratings.setdefault(country, []).append((weight, rating))
                     country_accounts_update = []
                     for country, ratings in country_ratings.items():
                         if country not in country_accounts:
@@ -210,13 +212,16 @@ class Command(BaseCommand):
                     n_first_places=None, n_second_places=None, n_third_places=None, n_top_ten_places=None,
                 )
                 if resource.has_country_medal:
-                    update_medal_fields()
+                    with measure_time('update_medal_fields', logger=self.logger):
+                        update_medal_fields()
                 if resource.has_country_place:
-                    update_n_place_fields()
+                    with measure_time('update_n_place_fields', logger=self.logger):
+                        update_n_place_fields()
 
                 last_rated_contest = resource.major_contests().filter(is_rated=True).order_by('-end_time').first()
                 if resource.has_country_rating and last_rated_contest:
-                    update_rating_fields()
+                    with measure_time('update_rating_fields', logger=self.logger):
+                        update_rating_fields()
                 else:
                     CountryAccount.objects.filter(resource=resource).update(rating=None, n_rating_accounts=0,
                                                                             raw_rating=None, resource_rank=None)

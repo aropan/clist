@@ -7,15 +7,20 @@ global $URL, $RID, $HOST, $TIMEZONE, $contests;
 $page = 0;
 for (;;) {
     $page += 1;
-    $url = "$URL?page=$page&_contentOnly";
-    $data = curlexec($url, null, ["json_output" => true]);
+    $url = "$URL?page=$page";
+    $page_html = curlexec($url);
+    if (!preg_match('#<script[^>]*id="lentille-context"[^>]*>(?P<json>[^<]*)</script>#', $page_html, $match)) {
+        trigger_error("Failed to find lentille-context on url $url", E_USER_WARNING);
+        break;
+    }
+    $data = json_decode($match['json'], true);
     if (!is_array($data)) {
-        trigger_error("Failed to parse url $url = " . json_encode($data), E_USER_WARNING);
+        trigger_error("Failed to decode lentille-context json from $url", E_USER_WARNING);
         break;
     }
 
-    $contests_data = pop_item($data, ["currentData", "contests", "result"]);
-    $contests_info = pop_item($data, ["currentData", "contests"]);
+    $contests_info = get_item($data, ["data", "contests"]);
+    $contests_data = get_item($contests_info, "result");
     if (!$contests_data || !$contests_info) {
         trigger_error("Failed to parse contests data = " . json_encode($data), E_USER_WARNING);
         break;
@@ -28,7 +33,10 @@ for (;;) {
         $kind = null;
         $standings_kind = null;
 
-        $rule_type = array_pop_assoc($c, "ruleType");
+        $rule_type = get_item($c, "method");
+        if ($rule_type) {
+            $c["rule_type"] = $rule_type;
+        }
         if ($rule_type == 2) {
             $kind = "ICPC";
             $standings_kind = "icpc";
@@ -44,16 +52,22 @@ for (;;) {
         } elseif ($rule_type == 3) {
             $kind = "LEDO";
             $standings_kind = "scoring";
-        } else {
-            $c["ruleType"] = $rule_type;
         }
 
         $tags = [];
-        if (array_pop_assoc($c, "rated")) {
+        $rated = get_item($c, "rated");
+        if ($rated == 3) {
+            // 计入等级分 — counts for the competitive rating (in the CF sense).
             $tags[] = "rated";
+        } elseif ($rated == 1) {
+            // 计入咕值 — counts for Luogu's participation score ("咕值"), not the rating.
+            $tags[] = "guzhi";
         }
         if ($kind) {
             $tags[] = strtolower($kind);
+        }
+        if (get_item($c, "squad")) {
+            $tags[] = "squad";
         }
 
         if ($tags) {

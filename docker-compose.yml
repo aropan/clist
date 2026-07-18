@@ -61,6 +61,7 @@ services:
         ipv4_address: 10.42.0.104
     volumes:
       - ./legacy:/usr/src/legacy/
+      - ./src/scripts:/usr/src/legacy/scripts:ro
       - shared_files:/sharedfiles/
     depends_on:
       - db
@@ -103,7 +104,8 @@ services:
       - clist_network
     volumes:
       - ./config/healthchecks/local_settings.py:/opt/healthchecks/hc/local_settings.py:ro
-      - ./config/healthchecks/provision.py:/opt/healthchecks/provision.py:ro
+      # Directory (not single-file) mount so file replacements are seen live.
+      - ./config/healthchecks:/opt/healthchecks/provisioning:ro
     env_file:
       - ./.env.healthchecks
     depends_on:

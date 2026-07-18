@@ -6,18 +6,22 @@ channel. Scalar knobs are read from the environment (HC_* / TELEGRAM_* in
 .env.healthchecks); the per-check schedule table lives in MONITORS below. Applied
 idempotently.
 
-This file is mounted into the healthchecks container; it is NOT applied
-automatically. Run it by hand after editing (or after adding a monitored cron):
+This directory is mounted into the healthchecks container at
+/opt/healthchecks/provisioning; this file is NOT applied automatically. Run it by
+hand after editing (or after adding a monitored cron):
 
-    docker compose exec healthchecks sh -c 'python manage.py shell < /opt/healthchecks/provision.py'
+    docker compose exec healthchecks sh -c 'python manage.py shell < /opt/healthchecks/provisioning/provision.py'
 
 Notes
 -----
-* This script is the only thing that creates checks (name == slug == MONITOR_NAME, see
-  config/cron); run-manage.bash only pings existing checks (no `create=1`), so run it
-  after adding a monitored cron, before that cron's pings start.
-* The prod container that runs config/cron is on UTC, so schedules use tz "UTC".
-* run-manage.bash uses `flock -n` and sends no ping when a run is skipped because the
+* This script is the only thing that creates checks (name == slug == the monitor
+  name); the runners -- run-manage.bash (config/cron) and the legacy update.bash
+  (legacy/cron), which share src/scripts/healthchecks.bash -- only ping existing
+  checks (no `create=1`), so run it after adding a monitored cron, before that
+  cron's pings start.
+* The prod and legacy containers that run the crons are on UTC, so schedules use
+  tz "UTC".
+* The runners use `flock -n` and send no ping when a run is skipped because the
   previous one is still running, so `grace` is set generously to absorb skipped runs
   and occasional overruns without false DOWN alerts.
 * Telegram is provisioned as an outbound-only channel with a known chat_id; we never
@@ -103,6 +107,12 @@ MONITORS = {
         timedelta(minutes=40),
         "update_auto_rating: recomputes auto ratings hourly at :15.",
     ),
+    # Legacy PHP runner (legacy/update.bash via legacy/cron), not a manage.py command.
+    "list-update": (
+        "7,25,42 * * * *",
+        timedelta(minutes=30),
+        "update.php: legacy contest list / schedule parser; runs at :07, :25 and :42.",
+    ),
 }
 
 # --- telegram --------------------------------------------------------------
@@ -184,7 +194,7 @@ if settings.TELEGRAM_TOKEN:
 else:
     print(f"  {paint('skipped'.ljust(9), '90')}  {'telegram'.ljust(COL)}  TELEGRAM_TOKEN not set")
 
-# 3) checks: create if missing, pin schedule / tz / grace / desc, then wire channels
+# 3) checks: create if missing, pin schedule / tz / grace / desc, wire channels on new
 print(paint("checks", "1"))
 for name, (schedule, grace, desc) in MONITORS.items():
     check, created = Check.objects.get_or_create(
@@ -208,11 +218,11 @@ for name, (schedule, grace, desc) in MONITORS.items():
         setattr(check, field, new)
     check.save()
 
-    before = set(check.channel_set.values_list("id", flat=True))
-    check.assign_all_channels()
-    after = set(check.channel_set.values_list("id", flat=True))
-    if before != after:
-        changes.append(f"channels={len(after)}")
+    # Wire alert channels only for brand-new checks; existing checks keep whatever
+    # integrations were set up in the UI (easier to manage them there).
+    if created:
+        check.assign_all_channels()
+        changes.append(f"channels={check.channel_set.count()}")
 
     row(created, changes, name, ", ".join(changes))
 
