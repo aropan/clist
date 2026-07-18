@@ -15,40 +15,40 @@ from ranking.management.modules.common.locator import Locator
 
 
 class Statistic(BaseModule):
-    API_ROOM_URL_FORMAT_ = 'https://api.binarysearch.io/rooms/{channelSlug}?slug={slug}'
-    API_RANKING_URL_FORMAT_ = 'https://api.binarysearch.io/rooms/{id}/sessions/{sid}/leaderboards?page={page}'
-    API_PROFILE_URL_FORMAT_ = 'https://api.binarysearch.io/users/{user}/profile'
+    API_ROOM_URL_FORMAT_ = "https://api.binarysearch.io/rooms/{channelSlug}?slug={slug}"
+    API_RANKING_URL_FORMAT_ = "https://api.binarysearch.io/rooms/{id}/sessions/{sid}/leaderboards?page={page}"
+    API_PROFILE_URL_FORMAT_ = "https://api.binarysearch.io/users/{user}/profile"
 
     def get_standings(self, users=None, statistics=None, **kwargs):
         per_page = 10
         stop = False
 
-        url = self.API_ROOM_URL_FORMAT_.format(**self.info['parse'])
+        url = self.API_ROOM_URL_FORMAT_.format(**self.info["parse"])
         page = REQ.get(url)
         room_data = json.loads(page)
         results = OrderedDict()
         problems_info = OrderedDict()
 
-        for session in room_data['sessions']:
-            total = len(session['players']) + len(room_data.get('participants', 0))
+        for session in room_data["sessions"]:
+            total = len(session["players"]) + len(room_data.get("participants", 0))
             problems_ids = []
-            for idx, problems_set in enumerate(session['questionsets']):
-                problem = problems_set['question']
+            for idx, problems_set in enumerate(session["questionsets"]):
+                problem = problems_set["question"]
                 info = {
-                    'code': str(problem['id']),
-                    'name': problem['title'],
-                    'url': f'{self.url}?questionsetIndex={idx}'
+                    "code": str(problem["id"]),
+                    "name": problem["title"],
+                    "url": f"{self.url}?questionsetIndex={idx}",
                 }
-                if problem.get('difficulty') is not None:
-                    info['full_score'] = problem['difficulty'] + 3
-                problems_info[info['code']] = info
-                problems_ids.append(info['code'])
+                if problem.get("difficulty") is not None:
+                    info["full_score"] = problem["difficulty"] + 3
+                problems_info[info["code"]] = info
+                problems_ids.append(info["code"])
 
             def fetch_results(page):
                 nonlocal stop
                 if stop:
                     return
-                url = self.API_RANKING_URL_FORMAT_.format(id=self.key, sid=session['id'], page=page)
+                url = self.API_RANKING_URL_FORMAT_.format(id=self.key, sid=session["id"], page=page)
                 page = REQ.get(url)
                 data = json.loads(page)
                 return data
@@ -60,45 +60,45 @@ class Statistic(BaseModule):
                     rank = 0
                     idx = 0
                     last = None
-                    for data in tqdm(executor.map(fetch_results, range(n_page)), total=n_page, desc='getting results'):
-                        if not data or not data['leaders']:
+                    for data in tqdm(executor.map(fetch_results, range(n_page)), total=n_page, desc="getting results"):
+                        if not data or not data["leaders"]:
                             stop = True
                             break
-                        for row in data['leaders']:
+                        for row in data["leaders"]:
                             idx += 1
-                            score = (row['score'], row['durationTime'])
+                            score = (row["score"], row["durationTime"])
                             if last != score:
                                 rank = idx
                                 last = score
 
-                            handle = row.pop('username')
+                            handle = row.pop("username")
                             if users and handle not in users:
                                 continue
                             r = results.setdefault(handle, {})
-                            r['member'] = handle
-                            r['solving'] = row.pop('score')
-                            r['place'] = rank
-                            r['penalty'] = self.to_time(row.pop('durationTime'))
+                            r["member"] = handle
+                            r["solving"] = row.pop("score")
+                            r["place"] = rank
+                            r["penalty"] = self.to_time(row.pop("durationTime"))
 
                             solved = 0
-                            problems = r.setdefault('problems', {})
+                            problems = r.setdefault("problems", {})
                             for code, duration, attempts in zip(
-                                problems_ids, row.pop('durationTimes'), row.pop('attempts')
+                                problems_ids, row.pop("durationTimes"), row.pop("attempts")
                             ):
                                 p = problems.setdefault(code, {})
                                 if duration:
-                                    p['result'] = '+'
-                                    p['time'] = self.to_time(duration)
-                                    p['binary'] = True
+                                    p["result"] = "+"
+                                    p["time"] = self.to_time(duration)
+                                    p["binary"] = True
                                     if attempts > 1:
-                                        p['penalty_score'] = attempts - 1
+                                        p["penalty_score"] = attempts - 1
                                     solved += 1
                                 elif attempts:
-                                    p['result'] = f'-{attempts}'
+                                    p["result"] = f"-{attempts}"
                                 elif not p:
                                     problems.pop(code)
-                            r['solved'] = {'solving': solved}
-                            r['info'] = {'stat': row.pop('stat')}
+                            r["solved"] = {"solving": solved}
+                            r["info"] = {"stat": row.pop("stat")}
 
                             if not problems:
                                 results.pop(handle)
@@ -106,12 +106,12 @@ class Statistic(BaseModule):
 
                             if statistics is not None and handle in statistics:
                                 stat = statistics[handle]
-                                for k in 'old_rating', 'rating_change', 'new_rating':
+                                for k in "old_rating", "rating_change", "new_rating":
                                     if k in stat and k not in r:
                                         r[k] = stat[k]
         standings = {
-            'result': results,
-            'problems': list(problems_info.values()),
+            "result": results,
+            "problems": list(problems_info.values()),
         }
         return standings
 
@@ -146,41 +146,41 @@ class Statistic(BaseModule):
                     break
                 if not data:
                     if data is None:
-                        yield {'delete': True}
+                        yield {"delete": True}
                     else:
-                        yield {'skip': True}
+                        yield {"skip": True}
                     continue
-                profile = data['profile']
-                data = data['user']
-                assert user == data['username']
-                data = {k: v for k, v in data.items() if k == 'stat' or not isinstance(v, (dict, list))}
-                location = data.get('location')
+                profile = data["profile"]
+                data = data["user"]
+                assert user == data["username"]
+                data = {k: v for k, v in data.items() if k == "stat" or not isinstance(v, (dict, list))}
+                location = data.get("location")
                 if (
-                    location and
-                    location.lower() != 'planet earth' and
-                    (not account.country or account.info.get('country') != location)
+                    location
+                    and location.lower() != "planet earth"
+                    and (not account.country or account.info.get("country") != location)
                 ):
                     country = locator.get_country(location)
                     if country:
-                        data['country'] = country
+                        data["country"] = country
 
                 contest_addition_update = {}
-                for rating in profile['ratings']:
-                    if not rating.get('participated'):
+                for rating in profile["ratings"]:
+                    if not rating.get("participated"):
                         continue
-                    title = rating['name']
+                    title = rating["name"]
                     update = contest_addition_update.setdefault(title, OrderedDict())
-                    update['old_rating'] = rating['rating'] - rating['gain']
-                    update['rating_change'] = rating['gain']
-                    update['new_rating'] = rating['rating']
-                    data['rating'] = update['new_rating']
+                    update["old_rating"] = rating["rating"] - rating["gain"]
+                    update["rating_change"] = rating["gain"]
+                    update["new_rating"] = rating["rating"]
+                    data["rating"] = update["new_rating"]
 
                 ret = {
-                    'info': data,
-                    'contest_addition_update_params': {
-                        'update': contest_addition_update,
-                        'by': 'title',
-                        'clear_rating_change': True,
+                    "info": data,
+                    "contest_addition_update_params": {
+                        "update": contest_addition_update,
+                        "by": "title",
+                        "clear_rating_change": True,
                     },
                 }
 

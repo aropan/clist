@@ -16,11 +16,10 @@ from ranking.management.modules.excepts import InitModuleException
 
 
 class Statistic(BaseModule):
-
     def __init__(self, **kwargs):
         super(Statistic, self).__init__(**kwargs)
-        if '//stats.ioinformatics.org/olympiads/' not in self.url:
-            raise InitModuleException(f'Url {self.url} should be contains stats.ioinformatics.org/olympiads')
+        if "//stats.ioinformatics.org/olympiads/" not in self.url:
+            raise InitModuleException(f"Url {self.url} should be contains stats.ioinformatics.org/olympiads")
 
     def get_standings(self, users=None, statistics=None, **kwargs):
         result = {}
@@ -35,46 +34,49 @@ class Statistic(BaseModule):
             nonlocal row_index
             if not v.value:
                 row_index += 1
-                member = f'{year}-{row_index:06d}'
-                row['member'] = member
-                info = row.setdefault('info', {})
-                info['is_virtual'] = True
+                member = f"{year}-{row_index:06d}"
+                row["member"] = member
+                info = row.setdefault("info", {})
+                info["is_virtual"] = True
             else:
-                url = first(v.column.node.xpath('a[@href]/@href'))
-                member = url.strip('/').split('/')[-1]
-                row['member'] = member
-                row['name'] = v.value
+                url = first(v.column.node.xpath("a[@href]/@href"))
+                member = url.strip("/").split("/")[-1]
+                row["member"] = member
+                row["name"] = v.value
                 if statistics and member in statistics:
-                    row['problems'] = statistics[member].get('problems', {})
+                    row["problems"] = statistics[member].get("problems", {})
 
         if not self.standings_url:
-            self.standings_url = self.url.replace('/olympiads/', '/results/')
+            self.standings_url = self.url.replace("/olympiads/", "/results/")
 
-        url = self.url.replace('/olympiads/', '/tasks/')
+        url = self.url.replace("/olympiads/", "/tasks/")
         page = REQ.get(url)
-        regex = '<table[^>]*>.*?</table>'
+        regex = "<table[^>]*>.*?</table>"
         found = re.search(regex, page, re.DOTALL)
         if found:
             table = parsed_table.ParsedTable(found.group(0))
             short_names = []
             for r in table:
-                href = first(r['Name'].column.node.xpath('.//a/@href'))
-                url = urljoin(self.standings_url, '/' + href.lstrip('/'))
-                short = url.rstrip('/').rsplit('/', 1)[-1]
+                href = first(r["Name"].column.node.xpath(".//a/@href"))
+                url = urljoin(self.standings_url, "/" + href.lstrip("/"))
+                short = url.rstrip("/").rsplit("/", 1)[-1]
 
                 short_names.append(short)
-                d = problems_info.setdefault(short, {
-                    'short': short,
-                    'name': html.unescape(r['Name'].value),
-                    'url': url,
-                })
+                d = problems_info.setdefault(
+                    short,
+                    {
+                        "short": short,
+                        "name": html.unescape(r["Name"].value),
+                        "url": url,
+                    },
+                )
 
-                full_score = as_number(r['Max. Score'].value, force=True)
+                full_score = as_number(r["Max. Score"].value, force=True)
                 if full_score is not None:
-                    d['full_score'] = full_score
+                    d["full_score"] = full_score
 
         page = REQ.get(self.standings_url)
-        regex = '<table[^>]*>.*?</table>'
+        regex = "<table[^>]*>.*?</table>"
         found = re.search(regex, page, re.DOTALL)
         if found:
             table = parsed_table.ParsedTable(found.group(0), as_list=True)
@@ -85,69 +87,69 @@ class Statistic(BaseModule):
 
         for r in table:
             row = OrderedDict()
-            problems = row.setdefault('problems', {})
+            problems = row.setdefault("problems", {})
             for k, v in r:
-                if 'taskscore' in v.header.attrs.get('class', '').split():
-                    url = v.header.node.xpath('.//a/@href')[0]
-                    assert 'tasks/' in url
-                    short = url.rstrip('/').rsplit('/', 1)[-1]
+                if "taskscore" in v.header.attrs.get("class", "").split():
+                    url = v.header.node.xpath(".//a/@href")[0]
+                    assert "tasks/" in url
+                    short = url.rstrip("/").rsplit("/", 1)[-1]
                     d = problems_info[short]
                     score = as_number(v.value, force=True)
                     if score:
                         p = problems.setdefault(short, {})
-                        p['result'] = score
-                        p['partial'] = score < d['full_score']
-                elif k == 'Abs.':
-                    row['solving'] = float(v.value)
-                elif k == 'Rank':
-                    row['place'] = v.value.strip('*').strip('.')
-                elif k == 'Contestant':
+                        p["result"] = score
+                        p["partial"] = score < d["full_score"]
+                elif k == "Abs.":
+                    row["solving"] = float(v.value)
+                elif k == "Rank":
+                    row["place"] = v.value.strip("*").strip(".")
+                elif k == "Contestant":
                     set_member(v, row)
-                elif k == 'Country':
-                    country = re.sub(r'\s*[0-9]+$', '', v.value)
+                elif k == "Country":
+                    country = re.sub(r"\s*[0-9]+$", "", v.value)
                     if country:
-                        row['country'] = country
+                        row["country"] = country
                 else:
                     val = v.value.strip()
-                    if k in ('Medal', 'Award'):
-                        k = 'medal'
+                    if k in ("Medal", "Award"):
+                        k = "medal"
                         val = val.lower()
-                        if val == 'honourable mention':
-                            val = 'honorable'
+                        if val == "honourable mention":
+                            val = "honorable"
                     if val:
                         row[k.lower()] = val
             for k in row.keys():
                 hidden_fields[k] = False
-            result[row['member']] = row
+            result[row["member"]] = row
 
-        url = self.url.replace('/olympiads/', '/contestants/')
+        url = self.url.replace("/olympiads/", "/contestants/")
         page = REQ.get(url)
-        regex = '<table[^>]*>.*?</table>'
+        regex = "<table[^>]*>.*?</table>"
         found = re.search(regex, page, re.DOTALL)
         if found:
             table = parsed_table.ParsedTable(found.group(0))
             for idx, r in enumerate(table):
-                contestant = r.pop('Contestant', None)
+                contestant = r.pop("Contestant", None)
                 if contestant is None:
                     continue
                 row = OrderedDict()
                 set_member(contestant, row)
-                row = result.setdefault(row['member'], row)
+                row = result.setdefault(row["member"], row)
 
                 for k, v in r.items():
-                    k = k.strip('▲').strip()
-                    if re.search('[a-z]', k):
-                        k = k.replace(' ', '_').lower()
+                    k = k.strip("▲").strip()
+                    if re.search("[a-z]", k):
+                        k = k.replace(" ", "_").lower()
                     else:
-                        k = k.replace(' ', '')
-                    hidden_fields.setdefault(k, k not in ['country'])
+                        k = k.replace(" ", "")
+                    hidden_fields.setdefault(k, k not in ["country"])
 
                     href = first(v.column.node.xpath('.//a[contains(@class, "tableimglink")]/@href'))
                     if href:
-                        value = href.strip('/').rsplit('/', 2)[-1]
+                        value = href.strip("/").rsplit("/", 2)[-1]
                         row[k] = value
-                    elif k == 'country':
-                        row[k] = re.sub(r'\s*[0-9]+$', '', v.value)
+                    elif k == "country":
+                        row[k] = re.sub(r"\s*[0-9]+$", "", v.value)
                     elif k not in row and v.value:
                         row[k] = v.value
 
@@ -159,27 +161,27 @@ class Statistic(BaseModule):
                 response = REQ.get(urljoin(ranking_url, path), return_json=True, force_json=True, ignore_codes={404})
             except json.decoder.JSONDecodeError:
                 return None
-            if isinstance(response, dict) and response.get('__no_json'):
+            if isinstance(response, dict) and response.get("__no_json"):
                 return None
             return response
 
-        ranking_url = self.info.get('_official_website_ranking')
+        ranking_url = self.info.get("_official_website_ranking")
         if not ranking_url:
             page = REQ.get(self.url)
             sample = re.search(r'<a[^>]*href="(?P<href>[^"]*)"[^>]*>\s*official\s*website<\s*/a>', page, re.I)
             if sample:
-                ranking_url = sample.group('href').replace('//', '//ranking.')
+                ranking_url = sample.group("href").replace("//", "//ranking.")
 
         if ranking_url:
             ranking_url = REQ.geturl(ranking_url)
-            users = get_ranking_url('users/')
+            users = get_ranking_url("users/")
         else:
             users = None
 
         if users:
             team_data = {}
-            team_data.update(self.info.get('_official_specific_team_data') or {})
-            teams = get_ranking_url('teams/')
+            team_data.update(self.info.get("_official_specific_team_data") or {})
+            teams = get_ranking_url("teams/")
             for team, team_info in teams.items():
                 team_data[team] = {"country": team_info["name"]}
 
@@ -187,7 +189,7 @@ class Statistic(BaseModule):
                 ret = Multiset()
                 value = value.lower()
                 for i in range(len(value)):
-                    w = ''
+                    w = ""
                     for c in value[i:]:
                         if not c.isalpha():
                             break
@@ -202,7 +204,7 @@ class Statistic(BaseModule):
                 return hash(ret)
 
             user_mapping = dict()
-            rows = {k: v['name'] for k, v in result.items() if 'name' in v}
+            rows = {k: v["name"] for k, v in result.items() if "name" in v}
             rows_sets = dict()
             for member, name in rows.items():
                 name_set = get_alpha_substring_multiset(name)
@@ -232,8 +234,8 @@ class Statistic(BaseModule):
                 mapping = []
                 max_iou = -1
                 for user, info in list(users.items()):
-                    info_name = info['f_name'] + ' ' + info['l_name']
-                    info_team = info['team']
+                    info_name = info["f_name"] + " " + info["l_name"]
+                    info_team = info["team"]
                     info_set = get_alpha_substring_multiset(info_name)
                     info_set_hash = multiset_hash(info_set)
                     if info_set_hash in rows_sets:
@@ -256,126 +258,126 @@ class Statistic(BaseModule):
                     continue
                 for user, info in list(users.items()):
                     member = f"{year}{user}"
-                    info_name = info['f_name'] + ' ' + info['l_name']
-                    info_team = info['team']
-                    result[member] = {'member': member, 'name': info_name}
+                    info_name = info["f_name"] + " " + info["l_name"]
+                    info_team = info["team"]
+                    result[member] = {"member": member, "name": info_name}
                     add_mapping(user, member, info_team)
 
-            contests = get_ranking_url('contests/')
+            contests = get_ranking_url("contests/")
             duration_in_secs = 0
             for contest in contests.values():
-                contest['time_shift'] = duration_in_secs
-                duration_in_secs += contest['end'] - contest['begin']
-                if 'score_precision' in contest:
-                    global_score_precision = max(global_score_precision or 0, contest.get('score_precision', 0))
+                contest["time_shift"] = duration_in_secs
+                duration_in_secs += contest["end"] - contest["begin"]
+                if "score_precision" in contest:
+                    global_score_precision = max(global_score_precision or 0, contest.get("score_precision", 0))
 
-            tasks = get_ranking_url('tasks/')
+            tasks = get_ranking_url("tasks/")
             if isinstance(tasks, dict):
                 tasks = list(tasks.values())
-            tasks.sort(key=lambda t: (t['contest'], t['order']))
-            tasks = {t['short_name']: t for t in tasks}
+            tasks.sort(key=lambda t: (t["contest"], t["order"]))
+            tasks = {t["short_name"]: t for t in tasks}
             if not has_standings_table:
                 for task in tasks.values():
-                    problems_info[task['short_name']] = {
-                        'name': task['name'],
-                        'short': task['short_name'],
-                        'full_score': task['max_score'],
+                    problems_info[task["short_name"]] = {
+                        "name": task["name"],
+                        "short": task["short_name"],
+                        "full_score": task["max_score"],
                     }
             for task in tasks.values():
-                short = task['short_name']
+                short = task["short_name"]
                 if short not in problems_info:
                     continue
                 problem_info = problems_info[short]
                 for key, field in (
-                    ('extra_headers', 'subtasks'),
-                    ('order', 'order'),
-                    ('score_mode', 'score_mode'),
-                    ('score_precision', 'score_precision'),
+                    ("extra_headers", "subtasks"),
+                    ("order", "order"),
+                    ("score_mode", "score_mode"),
+                    ("score_precision", "score_precision"),
                 ):
                     if key in task:
                         problem_info[field] = task[key]
 
-            history = get_ranking_url('history')
+            history = get_ranking_url("history")
             history.sort(key=lambda x: x[2])
             for user, short, timestamp, score in history:
                 member = user_mapping[user]
                 row = result[member]
                 task = tasks[short]
 
-                problems = row.setdefault('problems', {})
+                problems = row.setdefault("problems", {})
                 problem = problems.setdefault(short, {})
                 problem_info = problems_info[short]
 
-                if 'score_precision' in problem_info:
-                    score = round(score, problem_info['score_precision'])
+                if "score_precision" in problem_info:
+                    score = round(score, problem_info["score_precision"])
 
-                if score > as_number(problem.get('result', -1)):
-                    problem.pop('time', None)
-                    problem['result'] = score
+                if score > as_number(problem.get("result", -1)):
+                    problem.pop("time", None)
+                    problem["result"] = score
 
-                problem['partial'] = problem['result'] < problem_info['full_score']
-                contest = contests[task['contest']]
-                custom_start_time = max(custom_start_time, contest['end'] - duration_in_secs)
-                time_in_seconds = timestamp - contest['begin']
-                if problem['result'] == score and 'time' not in problem:
-                    problem['time_in_seconds'] = time_in_seconds
-                    problem['time'] = self.to_time(time_in_seconds, num=3)
-                    problem['absolute_time'] = self.to_time(contest['time_shift'] + time_in_seconds, num=3)
-                if problem.get('_attempt_time', -1) < time_in_seconds:
-                    problem.setdefault('attempt', 0)
-                    problem['attempt'] += 1
-                    problem['_attempt_time'] = time_in_seconds
+                problem["partial"] = problem["result"] < problem_info["full_score"]
+                contest = contests[task["contest"]]
+                custom_start_time = max(custom_start_time, contest["end"] - duration_in_secs)
+                time_in_seconds = timestamp - contest["begin"]
+                if problem["result"] == score and "time" not in problem:
+                    problem["time_in_seconds"] = time_in_seconds
+                    problem["time"] = self.to_time(time_in_seconds, num=3)
+                    problem["absolute_time"] = self.to_time(contest["time_shift"] + time_in_seconds, num=3)
+                if problem.get("_attempt_time", -1) < time_in_seconds:
+                    problem.setdefault("attempt", 0)
+                    problem["attempt"] += 1
+                    problem["_attempt_time"] = time_in_seconds
 
             if not has_standings_table:
-                scores = get_ranking_url('scores')
+                scores = get_ranking_url("scores")
                 for user, score in scores.items():
                     member = user_mapping[user]
                     solving = sum(score.values())
                     if global_score_precision is not None:
                         solving = round(solving, global_score_precision)
-                    result[member]['solving'] = solving
+                    result[member]["solving"] = solving
                 for row in result.values():
-                    row.setdefault('solving', 0)
+                    row.setdefault("solving", 0)
 
                 place = None
                 last = None
-                sorted_result = sorted(result.values(), key=lambda row: row['solving'], reverse=True)
+                sorted_result = sorted(result.values(), key=lambda row: row["solving"], reverse=True)
                 for idx, row in enumerate(sorted_result, start=1):
-                    if last != row['solving']:
-                        last = row['solving']
+                    if last != row["solving"]:
+                        last = row["solving"]
                         place = idx
-                    row['place'] = place
+                    row["place"] = place
 
                 medal_percentage = []
                 n_participants = len(result)
                 last = 0
-                for medal, divider in (('gold', 12), ('silver', 4), ('bronze', 2), ('honorable', 1)):
+                for medal, divider in (("gold", 12), ("silver", 4), ("bronze", 2), ("honorable", 1)):
                     curr = (n_participants - 1) // divider + 1
                     medal_percentage.append((medal, curr, curr - last))
                     last = curr
 
                 for row in result.values():
                     for medal, rank, number in medal_percentage:
-                        if row['place'] <= rank:
-                            row['medal_percentage'] = {
-                                'medal': medal,
-                                'percent': (rank - row['place'] + 1) / number,
-                                'info': f'{rank - number + 1}-{rank}',
+                        if row["place"] <= rank:
+                            row["medal_percentage"] = {
+                                "medal": medal,
+                                "percent": (rank - row["place"] + 1) / number,
+                                "info": f"{rank - number + 1}-{rank}",
                             }
                             break
 
         standings = {
-            'result': result,
-            'url': self.standings_url,
-            'problems': list(problems_info.values()),
-            'hidden_fields': [k for k, v in hidden_fields.items() if v],
-            'custom_start_time': custom_start_time if custom_start_time else None,
-            'series': 'ioi',
-            'options': {'score_precision': global_score_precision},
+            "result": result,
+            "url": self.standings_url,
+            "problems": list(problems_info.values()),
+            "hidden_fields": [k for k, v in hidden_fields.items() if v],
+            "custom_start_time": custom_start_time if custom_start_time else None,
+            "series": "ioi",
+            "options": {"score_precision": global_score_precision},
         }
 
         if duration_in_secs is not None:
-            standings['duration_in_secs'] = duration_in_secs
+            standings["duration_in_secs"] = duration_in_secs
 
         return standings
 
@@ -383,7 +385,7 @@ class Statistic(BaseModule):
     def get_users_infos(users, resource, accounts, pbar=None):
 
         def fetch_ratings(user, account):
-            if account.info.get('is_virtual'):
+            if account.info.get("is_virtual"):
                 return user, False
 
             url = resource.profile_url.format(**account.dict_with_info())
@@ -392,20 +394,23 @@ class Statistic(BaseModule):
             info = {}
             samples = re.finditer('<div[^>]*class="(?P<key>[^"]*)"[^>]*>(?P<value>[^<]*)</div>', page)
             for sample in samples:
-                key = sample.group('key').lower()
-                if key in ['sorttriangle', 'mainheader']:
+                key = sample.group("key").lower()
+                if key in ["sorttriangle", "mainheader"]:
                     continue
-                value = html.unescape(sample.group('value'))
+                value = html.unescape(sample.group("value"))
                 info[key] = value
 
             sample = re.search('<img[^>]*class="[^"]*participantflag[^"]*"[^>]*src="(?P<src>[^"]*)"[^>]*>', page)
             if sample:
-                info['avatar_url'] = urljoin(url, '/' + sample.group('src').lstrip('/'))
+                info["avatar_url"] = urljoin(url, "/" + sample.group("src").lstrip("/"))
 
-            samples = re.finditer(r'<a[^>]*href="(?P<href>[^>]*)"[^>]*>\s*<img[^>]*src="[^"]*/contacts/[^"]*"[^>]*alt="(?P<name>[^"]*)"[^>]*>', page)  # noqa
+            samples = re.finditer(
+                r'<a[^>]*href="(?P<href>[^>]*)"[^>]*>\s*<img[^>]*src="[^"]*/contacts/[^"]*"[^>]*alt="(?P<name>[^"]*)"[^>]*>',
+                page,
+            )  # noqa
             for sample in samples:
-                key = sample.group('name').lower()
-                info.setdefault('contacts', {})[key] = sample.group('href')
+                key = sample.group("name").lower()
+                info.setdefault("contacts", {})[key] = sample.group("href")
 
             return user, info
 
@@ -415,9 +420,9 @@ class Statistic(BaseModule):
                     pbar.update()
                 if not info:
                     if info is None:
-                        yield {'delete': True}
+                        yield {"delete": True}
                     else:
-                        yield {'skip': True}
+                        yield {"skip": True}
                     continue
-                info = {'info': info}
+                info = {"info": info}
                 yield info

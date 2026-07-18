@@ -29,8 +29,8 @@ from utils.timetools import datetime_from_timestamp
 
 
 def get_headers():
-    if not hasattr('get_headers', '_headers'):
-        headers_filepath = 'sharedfiles/resource/leetcode/headers.json'
+    if not hasattr("get_headers", "_headers"):
+        headers_filepath = "sharedfiles/resource/leetcode/headers.json"
         if os.path.exists(headers_filepath):
             with open(headers_filepath) as file:
                 get_headers._headers = json.load(file)
@@ -40,8 +40,8 @@ def get_headers():
 
 
 def get_curl_args():
-    if not hasattr('get_curl_args', '_curl_args'):
-        curl_args_filepath = 'sharedfiles/resource/leetcode/curl.args'
+    if not hasattr("get_curl_args", "_curl_args"):
+        curl_args_filepath = "sharedfiles/resource/leetcode/curl.args"
         if os.path.exists(curl_args_filepath):
             with open(curl_args_filepath) as file:
                 get_curl_args._curl_args = file.read().strip()
@@ -51,25 +51,29 @@ def get_curl_args():
 
 
 class Statistic(BaseModule):
-    API_REGION_SUFFIX = '_v2'
-    API_RANKING_URL_FORMAT_ = 'https://leetcode.com/contest/api/ranking/{key}/?pagination={{}}&region=global{region_suffix}'  # noqa E501
-    QUESTIONS_URL_FORMAT_ = 'https://leetcode.com/contest/api/info/{key}/'
-    RANKING_URL_FORMAT_ = '{url}/ranking'
-    API_SUBMISSION_URL_FORMAT_ = 'https://leetcode{}/api/submissions/{}/'
-    STATE_FILE = os.path.join(os.path.dirname(__file__), '.leetcode.yaml')
-    DOMAINS = {'': '.com', 'us': '.com', 'cn': '.cn', 'ly': '.com'}
-    API_SUBMISSIONS_URL_FORMAT_ = 'https://leetcode.com/api/submissions/?offset={}&limit={}'
+    API_REGION_SUFFIX = "_v2"
+    API_RANKING_URL_FORMAT_ = (
+        "https://leetcode.com/contest/api/ranking/{key}/?pagination={{}}&region=global{region_suffix}"  # noqa E501
+    )
+    QUESTIONS_URL_FORMAT_ = "https://leetcode.com/contest/api/info/{key}/"
+    RANKING_URL_FORMAT_ = "{url}/ranking"
+    API_SUBMISSION_URL_FORMAT_ = "https://leetcode{}/api/submissions/{}/"
+    STATE_FILE = os.path.join(os.path.dirname(__file__), ".leetcode.yaml")
+    DOMAINS = {"": ".com", "us": ".com", "cn": ".cn", "ly": ".com"}
+    API_SUBMISSIONS_URL_FORMAT_ = "https://leetcode.com/api/submissions/?offset={}&limit={}"
 
     @staticmethod
     def _external_standings_urls(contest):
         ret = []
         try:
             contest_name_slug = contest.key
-            count = REQ.get(f'https://lccn.lbao.site/api/v1/contest-records/count?contest_name={contest_name_slug}')
-            if re.match('^[0-9]+$', count) and int(count):
-                ret.append({'name': 'lccn.lbao.site',
-                            'url': f'https://lccn.lbao.site/predicted/{contest_name_slug}',
-                            'count': int(count)})
+            count = REQ.get(f"https://lccn.lbao.site/api/v1/contest-records/count?contest_name={contest_name_slug}")
+            if re.match("^[0-9]+$", count) and int(count):
+                ret.append({
+                    "name": "lccn.lbao.site",
+                    "url": f"https://lccn.lbao.site/predicted/{contest_name_slug}",
+                    "count": int(count),
+                })
         except FailOnGetResponse:
             pass
         return ret
@@ -78,34 +82,34 @@ class Statistic(BaseModule):
     def _get(*args, req=None, n_addition_attempts=10, **kwargs):
         req = req or REQ
 
-        headers = kwargs.setdefault('headers', {})
+        headers = kwargs.setdefault("headers", {})
         headers.update(get_headers())
 
         url = args[0]
-        if '/api/' in url:
-            headers['Accept'] = 'application/json, text/javascript, */*; q=0.01'
-            headers['Content-Type'] = 'application/json'
-            headers['X-Requested-With'] = 'XMLHttpRequest'
+        if "/api/" in url:
+            headers["Accept"] = "application/json, text/javascript, */*; q=0.01"
+            headers["Content-Type"] = "application/json"
+            headers["X-Requested-With"] = "XMLHttpRequest"
 
-        kwargs['with_curl'] = req.proxer is None
-        kwargs['curl_args'] = get_curl_args()
-        kwargs['curl_cookie_file'] = 'sharedfiles/resource/leetcode/cookies.txt'
-        kwargs['with_referer'] = False
+        kwargs["with_curl"] = req.proxer is None
+        kwargs["curl_args"] = get_curl_args()
+        kwargs["curl_cookie_file"] = "sharedfiles/resource/leetcode/cookies.txt"
+        kwargs["with_referer"] = False
 
-        additional_attempts = {code: {'count': n_addition_attempts} for code in [429, 403]}
+        additional_attempts = {code: {"count": n_addition_attempts} for code in [429, 403]}
         response = req.get(*args, **kwargs, additional_attempts=additional_attempts, additional_delay=5)
         return response
 
     @staticmethod
     def _get_proxies_file(region):
-        region = region or 'DEFAULT'
-        return f'sharedfiles/resource/leetcode/proxies.{region.lower()}',
+        region = region or "DEFAULT"
+        return (f"sharedfiles/resource/leetcode/proxies.{region.lower()}",)
 
     @staticmethod
     def fetch_submission(submission, req=REQ, raise_on_error=False, n_attempts=1):
-        data_region = submission['data_region']
+        data_region = submission["data_region"]
         domain = Statistic.DOMAINS[data_region.lower()]
-        url = Statistic.API_SUBMISSION_URL_FORMAT_.format(domain, submission['submission_id'])
+        url = Statistic.API_SUBMISSION_URL_FORMAT_.format(domain, submission["submission_id"])
         try:
             content = Statistic._get(url, req=req, n_attempts=n_attempts, n_addition_attempts=0)
             content = json.loads(content)
@@ -118,7 +122,7 @@ class Statistic(BaseModule):
 
     def get_standings(self, users=None, statistics=None, more_statistics=None, **kwargs):
         standings_url = self.standings_url or self.RANKING_URL_FORMAT_.format(**self.__dict__)
-        region_suffix = Statistic.API_REGION_SUFFIX if self.contest.is_over() else ''
+        region_suffix = Statistic.API_REGION_SUFFIX if self.contest.is_over() else ""
         api_ranking_url_format = self.API_RANKING_URL_FORMAT_.format(region_suffix=region_suffix, **self.__dict__)
 
         stop_fetch_standings = False
@@ -134,31 +138,33 @@ class Statistic(BaseModule):
                 data = json.loads(content)
                 if not data:
                     stop_fetch_standings = True
-                data['_page'] = page + 1
+                data["_page"] = page + 1
                 return data
 
         data = fetch_standings_page(0)
         if stop_fetch_standings:
-            return {'result': {}, 'url': standings_url}
+            return {"result": {}, "url": standings_url}
 
         questions_url = self.QUESTIONS_URL_FORMAT_.format(**self.__dict__)
         page = Statistic._get(questions_url)
         questions_data = json.loads(page)
 
-        problems_info = OrderedDict((
+        problems_info = OrderedDict(
             (
-                str(p['question_id']),
-                {
-                    'code': p['question_id'],
-                    'short': f'Q{i}',
-                    'name': p['title'],
-                    'url': os.path.join(self.url, 'problems', p['title_slug']),
-                    'full_score': p['credit'],
-                    'slug': p['title_slug'],
-                }
+                (
+                    str(p["question_id"]),
+                    {
+                        "code": p["question_id"],
+                        "short": f"Q{i}",
+                        "name": p["title"],
+                        "url": os.path.join(self.url, "problems", p["title_slug"]),
+                        "full_score": p["credit"],
+                        "slug": p["title_slug"],
+                    },
+                )
+                for i, p in enumerate(questions_data["questions"], start=1)
             )
-            for i, p in enumerate(questions_data['questions'], start=1)
-        ))
+        )
 
         with PoolExecutor(max_workers=8) as executor:
             problems_info_list = list(problems_info.values())
@@ -167,7 +173,7 @@ class Statistic(BaseModule):
                 if fetched_info is not None:
                     info.update(fetched_info)
 
-        n_top_submissions = get_item(self.resource.info, 'statistics.n_top_download_submissions')
+        n_top_submissions = get_item(self.resource.info, "statistics.n_top_download_submissions")
 
         hidden_fields = set()
         parsed_domains = set()
@@ -183,8 +189,8 @@ class Statistic(BaseModule):
 
                 def fetch_ranking(domain, region, n_page=None):
                     nonlocal api_ranking_url_format, stop_fetch_standings
-                    api_ranking_url_format = re.sub('[.][^./]+(?=/)', domain, api_ranking_url_format)
-                    api_ranking_url_format = re.sub('&region=[^&]+', f'&region={region}', api_ranking_url_format)
+                    api_ranking_url_format = re.sub("[.][^./]+(?=/)", domain, api_ranking_url_format)
+                    api_ranking_url_format = re.sub("&region=[^&]+", f"&region={region}", api_ranking_url_format)
 
                     stop_fetch_standings = False
 
@@ -196,20 +202,20 @@ class Statistic(BaseModule):
                         raise e
                     if not data:
                         return
-                    if 'questions' in data:
-                        for p in data['questions']:
-                            if str(p['question_id']) not in problems_info:
+                    if "questions" in data:
+                        for p in data["questions"]:
+                            if str(p["question_id"]) not in problems_info:
                                 return
 
-                    per_page = len(data['total_rank'])
-                    n_page = n_page or (data['user_num'] - 1) // per_page + 1
+                    per_page = len(data["total_rank"])
+                    n_page = n_page or (data["user_num"] - 1) // per_page + 1
 
                     if users and more_statistics:
                         pages = []
                         for more_stat in more_statistics.values():
-                            place = as_number(more_stat['place'], force=True)
+                            place = as_number(more_stat["place"], force=True)
                             if place is None:
-                                raise ExceptionParseStandings(f'Invalid place {more_stat["place"]}')
+                                raise ExceptionParseStandings(f"Invalid place {more_stat['place']}")
                             base_page = (place - 1) // per_page
                             for page_delta in (0, -1, +1, -2, +2):
                                 page = base_page + page_delta
@@ -223,51 +229,51 @@ class Statistic(BaseModule):
                     for data in tqdm.tqdm(
                         executor.map(fetch_standings_page, pages),
                         total=n_page,
-                        desc=f'parsing statistics paging from {domain}',
+                        desc=f"parsing statistics paging from {domain}",
                     ):
                         if stop_fetch_standings:
                             break
                         n_added = 0
-                        if 'submissions' not in data:
-                            data['submissions'] = [r.pop('submissions') for r in data['total_rank']]
-                        for row, submissions in zip(data['total_rank'], data['submissions']):
-                            handle = row.pop('user_slug').lower()
-                            data_region = row.pop('data_region').lower()
+                        if "submissions" not in data:
+                            data["submissions"] = [r.pop("submissions") for r in data["total_rank"]]
+                        for row, submissions in zip(data["total_rank"], data["submissions"]):
+                            handle = row.pop("user_slug").lower()
+                            data_region = row.pop("data_region").lower()
                             data_domain = Statistic.DOMAINS[data_region]
-                            member = f'{handle}@{data_domain}'
+                            member = f"{handle}@{data_domain}"
                             already_added = member in result
                             if users is not None and member not in users:
                                 continue
-                            row.pop('contest_id', None)
-                            row.pop('global_ranking', None)
+                            row.pop("contest_id", None)
+                            row.pop("global_ranking", None)
 
                             r = result.setdefault(member, OrderedDict())
 
                             skip = False
                             solved = 0
-                            problems = r.setdefault('problems', get_item(statistics, (member, 'problems'), {}))
+                            problems = r.setdefault("problems", get_item(statistics, (member, "problems"), {}))
                             submitted_keys = set()
                             for k, s in submissions.items():
-                                short = problems_info[k]['short']
+                                short = problems_info[k]["short"]
                                 submitted_keys.add(short)
                                 p = problems.setdefault(short, {})
-                                time = datetime.fromtimestamp(s['date']) - start_time
-                                p['time_in_seconds'] = time.total_seconds()
-                                p['time'] = self.to_time(time)
-                                if 'status' not in s or s['status'] == 10:
+                                time = datetime.fromtimestamp(s["date"]) - start_time
+                                p["time_in_seconds"] = time.total_seconds()
+                                p["time"] = self.to_time(time)
+                                if "status" not in s or s["status"] == 10:
                                     solved += 1
-                                    p['result'] = '+' + str(s['fail_count'] or '')
+                                    p["result"] = "+" + str(s["fail_count"] or "")
                                 else:
-                                    p['result'] = f'-{s["fail_count"]}'
-                                if s.get('lang'):
-                                    p['language'] = s['lang'].lower()
-                                if 'submission_id' in s:
-                                    p['submission_id'] = s['submission_id']
-                                    p['external_solution'] = True
-                                    p['data_region'] = data_region
+                                    p["result"] = f"-{s['fail_count']}"
+                                if s.get("lang"):
+                                    p["language"] = s["lang"].lower()
+                                if "submission_id" in s:
+                                    p["submission_id"] = s["submission_id"]
+                                    p["external_solution"] = True
+                                    p["data_region"] = data_region
 
-                                    skip = skip or p['submission_id'] in solutions_ids
-                                    solutions_ids.add(p['submission_id'])
+                                    skip = skip or p["submission_id"] in solutions_ids
+                                    solutions_ids.add(p["submission_id"])
                             clear_problems_fields(problems, submitted_keys=submitted_keys)
 
                             if already_added:
@@ -282,49 +288,49 @@ class Statistic(BaseModule):
                                 result.pop(member)
                                 continue
 
-                            r['_ranking_domain'] = domain
-                            r['member'] = member
-                            r['solving'] = row.pop('score')
-                            r['name'] = row.pop('username')
-                            rank = int(row.pop('rank'))
+                            r["_ranking_domain"] = domain
+                            r["member"] = member
+                            r["solving"] = row.pop("score")
+                            r["name"] = row.pop("username")
+                            rank = int(row.pop("rank"))
                             rank_index0 |= rank == 0
-                            rank += (1 if rank_index0 else 0)
-                            r['place'] = rank
+                            rank += 1 if rank_index0 else 0
+                            r["place"] = rank
 
-                            r['info'] = {'profile_url': {'_domain': data_domain, '_handle': handle}}
-                            if 'avatar_url' in row:
-                                r['info']['userAvatar'] = row.pop('avatar_url')
+                            r["info"] = {"profile_url": {"_domain": data_domain, "_handle": handle}}
+                            if "avatar_url" in row:
+                                r["info"]["userAvatar"] = row.pop("avatar_url")
 
                             url = f"{standings_url.rstrip('/')}/{data['_page']}"
-                            url = re.sub('[.][^./]+(?=/)', domain, url)
-                            r['url'] = url
+                            url = re.sub("[.][^./]+(?=/)", domain, url)
+                            r["url"] = url
 
                             country = None
-                            for field in 'country_code', 'country_name':
+                            for field in "country_code", "country_name":
                                 country_value = row.pop(field, None)
                                 country = country or country_value
                             if country:
-                                r['country'] = country
+                                r["country"] = country
 
-                            r['solved'] = {'solving': solved}
-                            penalty_time = datetime.fromtimestamp(row.pop('finish_time')) - start_time
-                            r['penalty'] = self.to_time(penalty_time)
+                            r["solved"] = {"solving": solved}
+                            penalty_time = datetime.fromtimestamp(row.pop("finish_time")) - start_time
+                            r["penalty"] = self.to_time(penalty_time)
                             times[member] = penalty_time
 
-                            if get_item(row, 'user_badge.icon'):
-                                row['badge'] = {
-                                    'icon': urljoin(standings_url, row['user_badge']['icon']),
-                                    'title': row['user_badge']['display_name'],
+                            if get_item(row, "user_badge.icon"):
+                                row["badge"] = {
+                                    "icon": urljoin(standings_url, row["user_badge"]["icon"]),
+                                    "title": row["user_badge"]["display_name"],
                                 }
-                                badges.add(row['badge']['title'])
-                            if row.get('badge') or not row.get('user_badge'):
-                                row.pop('user_badge', None)
+                                badges.add(row["badge"]["title"])
+                            if row.get("badge") or not row.get("user_badge"):
+                                row.pop("user_badge", None)
 
                             for k in set(row):
                                 hidden_fields.add(k)
                             if statistics and member in statistics:
                                 stat = statistics[member]
-                                for k in ('rating_change', 'new_rating', 'raw_rating', '_rank'):
+                                for k in ("rating_change", "new_rating", "raw_rating", "_rank"):
                                     if k in stat:
                                         r[k] = stat[k]
                             n_added += 1
@@ -333,34 +339,36 @@ class Statistic(BaseModule):
                         if n_added == 0 and not users:
                             stop_fetch_standings = True
 
-                fetch_ranking(domain='.com', region=f'global{region_suffix}')
+                fetch_ranking(domain=".com", region=f"global{region_suffix}")
                 if users is None or users:
-                    fetch_ranking(domain='.cn', region=f'local{region_suffix}')
+                    fetch_ranking(domain=".cn", region=f"local{region_suffix}")
 
                 if len(parsed_domains) > 1:
+
                     def get_key(row):
-                        return (-row['solving'], times[row['member']])
+                        return (-row["solving"], times[row["member"]])
+
                     last = None
                     for rank, row in enumerate(sorted(result.values(), key=get_key), start=1):
                         value = get_key(row)
                         if value != last:
                             place = rank
                             last = value
-                        row['place'] = place
+                        row["place"] = place
 
                 to_get_solutions = (
-                    os.environ.get('SKIP_GET_SOLUTIONS') is None and
-                    self.contest.parsed_time is not None and
-                    self.contest.end_time + timedelta(minutes=20) < self.contest.parsed_time
+                    os.environ.get("SKIP_GET_SOLUTIONS") is None
+                    and self.contest.parsed_time is not None
+                    and self.contest.end_time + timedelta(minutes=20) < self.contest.parsed_time
                 )
                 solutions_for_get = []
                 if to_get_solutions:
                     for r in result.values():
-                        has_download_submissions = n_top_submissions and r['place'] <= n_top_submissions
+                        has_download_submissions = n_top_submissions and r["place"] <= n_top_submissions
                         if not has_download_submissions:
                             continue
-                        for p in r['problems'].values():
-                            if 'submission_id' in p and 'language' not in p:
+                        for p in r["problems"].values():
+                            if "submission_id" in p and "language" not in p:
                                 solutions_for_get.append(p)
                 if solutions_for_get:
                     try:
@@ -371,28 +379,28 @@ class Statistic(BaseModule):
                         for submission, data in tqdm.tqdm(
                             executor.map(fetch_submission_func, solutions_for_get),
                             total=len(solutions_for_get),
-                            desc='fetching submissions',
+                            desc="fetching submissions",
                         ):
-                            if 'code' in data:
-                                submission['solution'] = data['code']
-                            if 'lang' in data:
-                                submission['language'] = data['lang']
+                            if "code" in data:
+                                submission["solution"] = data["code"]
+                            if "lang" in data:
+                                submission["language"] = data["lang"]
                     except Exception as e:
-                        LOG.warning(f'Failed to fetch submissions: {e}')
+                        LOG.warning(f"Failed to fetch submissions: {e}")
 
         standings = {
-            'result': result,
-            'url': standings_url,
-            'hidden_fields': hidden_fields,
-            'problems': list(problems_info.values()),
-            'badges': list(sorted(badges)),
-            'info_fields': ['badges'],
+            "result": result,
+            "url": standings_url,
+            "hidden_fields": hidden_fields,
+            "problems": list(problems_info.values()),
+            "badges": list(sorted(badges)),
+            "info_fields": ["badges"],
         }
 
         external_standings_urls = self._external_standings_urls(self.contest)
         if external_standings_urls:
-            options = standings.setdefault('options', {})
-            options['external_urls'] = external_standings_urls
+            options = standings.setdefault("options", {})
+            options["external_urls"] = external_standings_urls
 
         return standings
 
@@ -403,20 +411,20 @@ class Statistic(BaseModule):
             with REQ.with_proxy(
                 time_limit=10,
                 n_limit=30,
-                filepath_proxies=Statistic._get_proxies_file(problem.get('data_region')),
+                filepath_proxies=Statistic._get_proxies_file(problem.get("data_region")),
                 connect=partial(Statistic.fetch_submission, problem, raise_on_error=True),
             ) as req:
                 _, data = req.proxer.get_connect_ret()
             if not data:
                 return {}
 
-        data['solution'] = data.pop('code', None)
-        data['language'] = data.pop('lang', None)
+        data["solution"] = data.pop("code", None)
+        data["language"] = data.pop("lang", None)
         return data
 
     @staticmethod
     def is_china(account):
-        return account.key.endswith('.cn')
+        return account.key.endswith(".cn")
 
     @staticmethod
     def get_users_infos(users, resource, accounts, pbar=None):
@@ -424,30 +432,30 @@ class Statistic(BaseModule):
         rate_limiter = RateLimiter(max_calls=1, period=2)
 
         @lru_cache()
-        def get_all_contests(data_region=''):
+        def get_all_contests(data_region=""):
             domain = Statistic.DOMAINS[data_region]
             page = Statistic._get(
-                f'https://leetcode{domain}/graphql',
+                f"https://leetcode{domain}/graphql",
                 post=b'{"variables":{},"query":"{allContests{titleSlug}}"}',
-                content_type='application/json',
+                content_type="application/json",
             )
-            return json.loads(page)['data']
+            return json.loads(page)["data"]
 
         def fetch_profile_data(req, account, raise_on_error=False, **kwargs):
             nonlocal stop
             nonlocal global_ranking_users
             nonlocal rate_limiter
 
-            profile_url = account.info.setdefault('profile_url', {})
-            if '_domain' not in profile_url:
-                handle, domain = account.key.split('@')
-                profile_url['_domain'] = domain
-                profile_url['_handle'] = handle
-                LOG.warning(f'No domain for account {account.key}, set profile_url to {profile_url}')
-            key = (profile_url['_domain'], profile_url['_handle'])
+            profile_url = account.info.setdefault("profile_url", {})
+            if "_domain" not in profile_url:
+                handle, domain = account.key.split("@")
+                profile_url["_domain"] = domain
+                profile_url["_handle"] = handle
+                LOG.warning(f"No domain for account {account.key}, set profile_url to {profile_url}")
+            key = (profile_url["_domain"], profile_url["_handle"])
             if key in global_ranking_users:
                 return account, global_ranking_users[key]
-            handle = profile_url['_handle']
+            handle = profile_url["_handle"]
 
             if stop:
                 return account, False
@@ -463,10 +471,13 @@ class Statistic(BaseModule):
                         if account_is_china:
                             ret = {}
 
-                            post = '''
+                            post = (
+                                '''
                             {
                                 "operationName":"userProfilePublicProfile",
-                                "variables":{"userSlug":"''' + handle + '''"},
+                                "variables":{"userSlug":"'''
+                                + handle
+                                + """"},
                                 "query":"
                                 query userProfilePublicProfile($userSlug: String!) {
                                   userProfilePublicProfile(userSlug: $userSlug) {
@@ -531,26 +542,30 @@ class Statistic(BaseModule):
                                     }
                                   }
                                 }
-                            "}'''
-                            post = re.sub(r'\s+', ' ', post)
+                            "}"""
+                            )
+                            post = re.sub(r"\s+", " ", post)
 
                             page = Statistic._get(
-                                'https://leetcode.cn/graphql',
+                                "https://leetcode.cn/graphql",
                                 post=post.encode(),
-                                content_type='application/json',
+                                content_type="application/json",
                                 # req=req,  FIXME: enable proxy if needed
                                 **kwargs,
                             )
                             profile_data = json.loads(page)
-                            if profile_data['data']['userProfilePublicProfile'] is None:
+                            if profile_data["data"]["userProfilePublicProfile"] is None:
                                 page = None
                                 break
 
-                            ret = profile_data['data']['userProfilePublicProfile']
-                            ret['profile']['slug'] = ret['profile'].pop('userSlug')
+                            ret = profile_data["data"]["userProfilePublicProfile"]
+                            ret["profile"]["slug"] = ret["profile"].pop("userSlug")
 
-                            post = '''
-                            {"operationName":"userContestRankingInfo","variables":{"userSlug":"''' + handle + '''"},"query":"
+                            post = (
+                                '''
+                            {"operationName":"userContestRankingInfo","variables":{"userSlug":"'''
+                                + handle
+                                + """"},"query":"
                                 query userContestRankingInfo($userSlug: String!) {
                                   userContestRanking(userSlug: $userSlug) {
                                     attendedContestsCount
@@ -571,47 +586,51 @@ class Statistic(BaseModule):
                                     }
                                   }
                                 }
-                            "}'''  # noqa: E501
-                            post = re.sub(r'\s+', ' ', post)
+                            "}"""
+                            )  # noqa: E501
+                            post = re.sub(r"\s+", " ", post)
                             page = Statistic._get(
-                                'https://leetcode.cn/graphql/noj-go/',
+                                "https://leetcode.cn/graphql/noj-go/",
                                 post=post.encode(),
-                                content_type='application/json',
+                                content_type="application/json",
                                 # req=req,  FIXME: enable proxy if needed
                                 **kwargs,
                             )
                             ranking_data = json.loads(page)
-                            ret['ranking'] = ranking_data['data']['userContestRanking']
-                            ret['history'] = ranking_data['data']['userContestRankingHistory']
+                            ret["ranking"] = ranking_data["data"]["userContestRanking"]
+                            ret["history"] = ranking_data["data"]["userContestRankingHistory"]
                             page = ret
                         else:
                             profile_page = Statistic._get(
-                                'https://leetcode.com/graphql',
+                                "https://leetcode.com/graphql",
                                 post=b'''
-                                {"operationName":"userPublicProfile","variables":{"username":"''' + handle.encode() + b'''"},"query":"    query userPublicProfile($username: String!) {  matchedUser(username: $username) {    username    profile {      ranking      userAvatar      realName      aboutMe      school      websites      countryName      company      jobTitle      skillTags      postViewCount      postViewCountDiff      reputation      reputationDiff      solutionCount      solutionCountDiff      categoryDiscussCount      categoryDiscussCountDiff    }  }}    "
-}''',  # noqa: E501
-                                content_type='application/json',
+                                {"operationName":"userPublicProfile","variables":{"username":"'''
+                                + handle.encode()
+                                + b""""},"query":"    query userPublicProfile($username: String!) {  matchedUser(username: $username) {    username    profile {      ranking      userAvatar      realName      aboutMe      school      websites      countryName      company      jobTitle      skillTags      postViewCount      postViewCountDiff      reputation      reputationDiff      solutionCount      solutionCountDiff      categoryDiscussCount      categoryDiscussCountDiff    }  }}    "
+}""",  # noqa: E501
+                                content_type="application/json",
                             )
                             profile_data = json.loads(profile_page)
                             user_does_not_exist = any([
-                                'user does not exist' in e['message']
-                                for e in profile_data.get('errors', [])
+                                "user does not exist" in e["message"] for e in profile_data.get("errors", [])
                             ])
                             if user_does_not_exist:
                                 page = None
                                 break
-                            ret = profile_data['data']['matchedUser']
-                            ret['profile']['slug'] = ret.pop('username')
+                            ret = profile_data["data"]["matchedUser"]
+                            ret["profile"]["slug"] = ret.pop("username")
 
                             contest_page = Statistic._get(
-                                'https://leetcode.com/graphql',
+                                "https://leetcode.com/graphql",
                                 post=b'''
-                                {"operationName":"getContentRankingData","variables":{"username":"''' + handle.encode() + b'''"},"query":"query getContentRankingData($username: String!) {  userContestRanking(username: $username) {  attendedContestsCount    rating    globalRanking    __typename  }  userContestRankingHistory(username: $username) {    contest {      title      startTime      __typename    }   rating    ranking    attended    __typename  }}"}''',  # noqa: E501
-                                content_type='application/json',
+                                {"operationName":"getContentRankingData","variables":{"username":"'''
+                                + handle.encode()
+                                + b""""},"query":"query getContentRankingData($username: String!) {  userContestRanking(username: $username) {  attendedContestsCount    rating    globalRanking    __typename  }  userContestRankingHistory(username: $username) {    contest {      title      startTime      __typename    }   rating    ranking    attended    __typename  }}"}""",  # noqa: E501
+                                content_type="application/json",
                             )
-                            contest_data = json.loads(contest_page)['data']
-                            ret['ranking'] = contest_data['userContestRanking']
-                            ret['history'] = contest_data['userContestRankingHistory']
+                            contest_data = json.loads(contest_page)["data"]
+                            ret["ranking"] = contest_data["userContestRanking"]
+                            ret["history"] = contest_data["userContestRankingHistory"]
                             page = ret
                     break
                 except FailOnGetResponse as e:
@@ -648,11 +667,14 @@ class Statistic(BaseModule):
 
             while True:
                 try:
-                    post = '''{
+                    post = (
+                        """{
                         "operationName":"null",
                         "variables":{},
                         "query":"{
-                            globalRanking(page: ''' + str(page_index) + ''') {
+                            globalRanking(page: """
+                        + str(page_index)
+                        + """) {
                                 rankingNodes {
                                     dataRegion
                                     user {
@@ -675,17 +697,18 @@ class Statistic(BaseModule):
                                 }
                             }
                         }"
-                    }'''
-                    post = re.sub(r'\s+', ' ', post)
+                    }"""
+                    )
+                    post = re.sub(r"\s+", " ", post)
 
                     page = Statistic._get(
-                        'https://leetcode.cn/graphql',
+                        "https://leetcode.cn/graphql",
                         post=post.encode(),
-                        content_type='application/json',
+                        content_type="application/json",
                         req=req,
                         **kwargs,
                     )
-                    data = json.loads(page)['data']
+                    data = json.loads(page)["data"]
                     break
                 except FailOnGetResponse as e:
                     if raise_on_error:
@@ -699,19 +722,22 @@ class Statistic(BaseModule):
 
             return page_index, data
 
-        with REQ.with_proxy(
-            time_limit=10,
-            n_limit=30,
-            inplace=False,
-            filepath_proxies='sharedfiles/resource/leetcode/proxies',
-        ) as req, PoolExecutor(max_workers=8) as executor:
+        with (
+            REQ.with_proxy(
+                time_limit=10,
+                n_limit=30,
+                inplace=False,
+                filepath_proxies="sharedfiles/resource/leetcode/proxies",
+            ) as req,
+            PoolExecutor(max_workers=8) as executor,
+        ):
             if os.path.exists(Statistic.STATE_FILE):
-                with open(Statistic.STATE_FILE, 'r') as fo:
+                with open(Statistic.STATE_FILE, "r") as fo:
                     state = yaml.safe_load(fo)
             else:
                 state = {}
 
-            last_page = state.setdefault('last_page', 0)
+            last_page = state.setdefault("last_page", 0)
 
             # n_accounts_to_paging = state.setdefault('n_accounts_to_paging', 1000)
             # pages_per_update = state.setdefault('pages_per_update', 200)
@@ -748,7 +774,7 @@ class Statistic(BaseModule):
             global_ranking_users = {}
             n_data = 0
             fetch_global_ranking_users_func = partial(fetch_global_ranking_users, req)
-            with tqdm.tqdm(desc='global rank paging', total=len(pages)) as pb:
+            with tqdm.tqdm(desc="global rank paging", total=len(pages)) as pb:
                 for page, data in map(fetch_global_ranking_users_func, sorted(pages)):
                     pb.set_postfix(page=page, last_page=last_page, n_data=n_data)
                     pb.update()
@@ -756,30 +782,30 @@ class Statistic(BaseModule):
                         break
                     n_data += 1
                     if data:
-                        data = data['globalRanking']['rankingNodes']
+                        data = data["globalRanking"]["rankingNodes"]
                     if data:
                         if page == last_page + 1:
                             last_page = page
-                            state['last_page'] = last_page
+                            state["last_page"] = last_page
                         for node in data:
-                            data_region = node['dataRegion'].lower()
+                            data_region = node["dataRegion"].lower()
                             data_domain = Statistic.DOMAINS[data_region]
-                            username = node['user']['profile']['userSlug'].lower()
+                            username = node["user"]["profile"]["userSlug"].lower()
                             global_ranking_users[(data_domain, username)] = {
-                                'profile': {'userProfilePublicProfile': node['user']},
+                                "profile": {"userProfilePublicProfile": node["user"]},
                             }
                     else:
-                        state['last_page'] = 0
-                        state['next_time'] = datetime.now() + timedelta(hours=8)
+                        state["last_page"] = 0
+                        state["next_time"] = datetime.now() + timedelta(hours=8)
 
                         if stop:
                             for a in accounts:
-                                a.updated = state['next_time']
+                                a.updated = state["next_time"]
                                 a.save()
                         break
 
             if stop:
-                with open(Statistic.STATE_FILE, 'w') as fo:
+                with open(Statistic.STATE_FILE, "w") as fo:
                     yaml.dump(state, fo, indent=2)
 
             fetch_profile_data_func = partial(fetch_profile_data, req)
@@ -790,36 +816,36 @@ class Statistic(BaseModule):
 
                 if not page:
                     if page is None:
-                        yield {'delete': True}
+                        yield {"delete": True}
                     else:
-                        yield {'skip': True}
+                        yield {"skip": True}
                     continue
 
                 contest_addition_update_by = None
                 ratings, rankings, contest_keys = [], [], []
 
-                info = page.pop('profile')
-                if info is None or info.get('slug') == 'deleted_user':
-                    yield {'delete': True}
+                info = page.pop("profile")
+                if info is None or info.get("slug") == "deleted_user":
+                    yield {"delete": True}
                     continue
-                history = page.pop('history') or []
-                info.update(page.pop('ranking') or {})
-                if info.get('rating'):
-                    info['rating'] = round(info['rating'])
-                if real_name := info.get('realName'):
-                    info['name'] = real_name
+                history = page.pop("history") or []
+                info.update(page.pop("ranking") or {})
+                if info.get("rating"):
+                    info["rating"] = round(info["rating"])
+                if real_name := info.get("realName"):
+                    info["name"] = real_name
 
-                contest_addition_update_by = 'start_time'
+                contest_addition_update_by = "start_time"
                 for h in history:
-                    if not h['attended']:
+                    if not h["attended"]:
                         continue
-                    rankings.append(h['ranking'])
-                    ratings.append(h['rating'])
-                    start_time = h['contest']['startTime']
+                    rankings.append(h["ranking"])
+                    ratings.append(h["rating"])
+                    start_time = h["contest"]["startTime"]
                     start_time = datetime_from_timestamp(start_time)
                     contest_keys.append(start_time)
 
-                for k in ('profile_url', ):
+                for k in ("profile_url",):
                     if k in account.info:
                         info[k] = account.info[k]
 
@@ -830,86 +856,95 @@ class Statistic(BaseModule):
                         continue
                     int_rating = round(rating)
                     update = contest_addition_update.setdefault(contest_key, OrderedDict())
-                    update['rating_change'] = int_rating - last_rating if last_rating is not None else None
-                    update['new_rating'] = int_rating
-                    update['raw_rating'] = rating
-                    update['_rank'] = ranking
+                    update["rating_change"] = int_rating - last_rating if last_rating is not None else None
+                    update["new_rating"] = int_rating
+                    update["raw_rating"] = rating
+                    update["_rank"] = ranking
                     if Statistic.is_china(account):
-                        update['_rank_field'] = 'addition___rank'
+                        update["_rank_field"] = "addition___rank"
                     last_rating = int_rating
-                if last_rating and 'rating' not in info:
-                    info['rating'] = last_rating
-                if account.key.startswith('@_deleted_user_'):
-                    info['rating'] = None
+                if last_rating and "rating" not in info:
+                    info["rating"] = last_rating
+                if account.key.startswith("@_deleted_user_"):
+                    info["rating"] = None
 
-                if 'global_ranking' in info:
-                    global_ranking = int(re.split('[^0-9]', str(info['global_ranking']))[0])
-                elif 'globalRanking' in info:
-                    global_ranking = info['globalRanking']
+                if "global_ranking" in info:
+                    global_ranking = int(re.split("[^0-9]", str(info["global_ranking"]))[0])
+                elif "globalRanking" in info:
+                    global_ranking = info["globalRanking"]
                 else:
                     global_ranking = None
                 if global_ranking:
-                    info['global_ranking'] = global_ranking
+                    info["global_ranking"] = global_ranking
                     page = (int(global_ranking) + 24) // 25
-                    info['global_ranking_page'] = page
+                    info["global_ranking_page"] = page
 
                 ret = {
-                    'info': info,
-                    'contest_addition_update_params': {
-                        'update': contest_addition_update,
-                        'by': contest_addition_update_by,
-                        'clear_rating_change': True,
-                        'try_renaming_check': True,
-                        'try_fill_missed_ranks': True,
+                    "info": info,
+                    "contest_addition_update_params": {
+                        "update": contest_addition_update,
+                        "by": contest_addition_update_by,
+                        "clear_rating_change": True,
+                        "try_renaming_check": True,
+                        "try_fill_missed_ranks": True,
                     },
                 }
 
-                profile_url = account.info.setdefault('profile_url', {})
-                handle = profile_url['_handle']
-                assert info and info['slug'].lower() == handle, \
-                    f'Account handle {handle} should be equal username {info["slug"]}'
+                profile_url = account.info.setdefault("profile_url", {})
+                handle = profile_url["_handle"]
+                assert info and info["slug"].lower() == handle, (
+                    f"Account handle {handle} should be equal username {info['slug']}"
+                )
 
                 yield ret
 
     @transaction.atomic()
     @staticmethod
     def update_submissions(account, resource, **kwargs):
-        info = deepcopy(account.info.setdefault('submissions_', {}))
-        leetcode_session = account.info.get('variables_', {}).get('LEETCODE_SESSION', None)
+        info = deepcopy(account.info.setdefault("submissions_", {}))
+        leetcode_session = account.info.get("variables_", {}).get("LEETCODE_SESSION", None)
         if leetcode_session:
-            leetcode_session_hash = hashlib.md5(leetcode_session['value'].encode()).hexdigest()
-            if info.get('leetcode_session_hash') != leetcode_session_hash:
-                info['leetcode_session_hash'] = leetcode_session_hash
-                info.pop('submission_id', None)
-        last_submission_id = info.setdefault('submission_id', -1)
+            leetcode_session_hash = hashlib.md5(leetcode_session["value"].encode()).hexdigest()
+            if info.get("leetcode_session_hash") != leetcode_session_hash:
+                info["leetcode_session_hash"] = leetcode_session_hash
+                info.pop("submission_id", None)
+        last_submission_id = info.setdefault("submission_id", -1)
 
-        profile_url = account.info.setdefault('profile_url', {})
-        handle = profile_url['_handle']
+        profile_url = account.info.setdefault("profile_url", {})
+        handle = profile_url["_handle"]
 
         def recent_accepted_submissions(req=REQ):
 
             if Statistic.is_china(account):
-                post = '''
-                {"query":"query recentAcSubmissions($userSlug: String!) { recentACSubmissions(userSlug: $userSlug) { submissionId submitTime question { title translatedTitle titleSlug questionFrontendId } } } ","variables":{"userSlug":"''' + handle + '''"},"operationName":"recentAcSubmissions"}
-                '''  # noqa: E501
+                post = (
+                    '''
+                {"query":"query recentAcSubmissions($userSlug: String!) { recentACSubmissions(userSlug: $userSlug) { submissionId submitTime question { title translatedTitle titleSlug questionFrontendId } } } ","variables":{"userSlug":"'''
+                    + handle
+                    + """"},"operationName":"recentAcSubmissions"}
+                """
+                )  # noqa: E501
                 page = Statistic._get(
-                    'https://leetcode.cn/graphql/noj-go/',
-                    content_type='application/json',
+                    "https://leetcode.cn/graphql/noj-go/",
+                    content_type="application/json",
                     post=post.encode(),
                     req=req,
                 )
-                data = json.loads(page)['data']['recentACSubmissions']
+                data = json.loads(page)["data"]["recentACSubmissions"]
             else:
-                post = '''
-                {"query":"query recentAcSubmissions($username: String!, $limit: Int!) { recentAcSubmissionList(username: $username, limit: $limit) { id title titleSlug timestamp } } ","variables":{"username":"''' + handle + '''","limit":20},"operationName":"recentAcSubmissions"}
-                '''  # noqa: E501
+                post = (
+                    '''
+                {"query":"query recentAcSubmissions($username: String!, $limit: Int!) { recentAcSubmissionList(username: $username, limit: $limit) { id title titleSlug timestamp } } ","variables":{"username":"'''
+                    + handle
+                    + """","limit":20},"operationName":"recentAcSubmissions"}
+                """
+                )  # noqa: E501
                 page = Statistic._get(
-                    'https://leetcode.com/graphql',
-                    content_type='application/json',
+                    "https://leetcode.com/graphql",
+                    content_type="application/json",
                     post=post.encode(),
                     req=req,
                 )
-                data = json.loads(page)['data']['recentAcSubmissionList']
+                data = json.loads(page)["data"]["recentAcSubmissionList"]
             return data
 
         ret = defaultdict(int)
@@ -928,34 +963,34 @@ class Statistic(BaseModule):
                         if field in submission:
                             return submission.pop(field)
                     if raise_not_found:
-                        raise KeyError(f'No field {fields} in {submission}')
+                        raise KeyError(f"No field {fields} in {submission}")
 
-                if 'question' in submission:
-                    submission.update(submission.pop('question'))
-                submission_timestamp = int(get_field('timestamp', 'submitTime'))
-                submission_id = get_field('id', 'submissionId')
+                if "question" in submission:
+                    submission.update(submission.pop("question"))
+                submission_timestamp = int(get_field("timestamp", "submitTime"))
+                submission_id = get_field("id", "submissionId")
                 if submission_id is None:
                     continue
                 submission_id = int(submission_id)
-                status_display = get_field('status', raise_not_found=status_raise_not_found)
+                status_display = get_field("status", raise_not_found=status_raise_not_found)
                 is_accepted = status_display in {None, 10}
 
                 if with_last_submission and submission_id <= last_submission_id:
                     return False
 
-                title_slug = get_field('titleSlug', 'title_slug')
+                title_slug = get_field("titleSlug", "title_slug")
                 if title_slug in wrong_problems:
                     continue
 
-                regex = '/' + re.escape(title_slug) + '/?$'
+                regex = "/" + re.escape(title_slug) + "/?$"
                 qs = resource.problem_set.filter(url__regex=regex)
                 problems = qs[:2]
                 if len(problems) != 1:
-                    LOG.warning(f'Wrong problems = {problems} for title slug = {title_slug}')
+                    LOG.warning(f"Wrong problems = {problems} for title slug = {title_slug}")
                     if not problems:
-                        ret['n_missing_problem'] += 1
+                        ret["n_missing_problem"] += 1
                     else:
-                        ret['n_many_problems'] += 1
+                        ret["n_many_problems"] += 1
                     wrong_problems.add(title_slug)
                     continue
                 problem = problems[0]
@@ -963,8 +998,8 @@ class Statistic(BaseModule):
                 if problem.contest:
                     contests.add(problem.contest)
                 if len(contests) != 1:
-                    LOG.warning(f'Wrong contests = {contests} for problem = {problem}')
-                    ret['n_missing_contest'] += 1
+                    LOG.warning(f"Wrong contests = {contests} for problem = {problem}")
+                    ret["n_missing_contest"] += 1
                     wrong_problems.add(title_slug)
                     continue
                 contest = next(iter(contests))
@@ -972,41 +1007,41 @@ class Statistic(BaseModule):
 
                 submission_time = arrow.get(submission_timestamp).datetime
                 if submission_time < contest.end_time:
-                    ret['n_contest_submissions'] += 1
+                    ret["n_contest_submissions"] += 1
                     continue
 
-                title = get_field('title')
+                title = get_field("title")
                 if problem.name != title:
-                    LOG.warning(f'Problem {problem} has wrong name: {title} vs {problem.name}')
-                    ret['n_wrong_problem_name'] += 1
+                    LOG.warning(f"Problem {problem} has wrong name: {title} vs {problem.name}")
+                    ret["n_wrong_problem_name"] += 1
                     wrong_problems.add(title_slug)
                     continue
 
-                if with_last_submission and submission_id > info['submission_id']:
-                    info['submission_id'] = submission_id
+                if with_last_submission and submission_id > info["submission_id"]:
+                    info["submission_id"] = submission_id
                     save_account = True
 
                 submission = dict(
                     binary=is_accepted,
-                    result='+' if is_accepted else '-',
+                    result="+" if is_accepted else "-",
                     submission_id=submission_id,
                     submission_time=submission_timestamp,
                 )
 
                 stat, _ = create_upsolving_statistic(resource=resource, contest=contest, account=account)
-                problems = stat.addition.setdefault('problems', {})
+                problems = stat.addition.setdefault("problems", {})
                 problem = problems.setdefault(short, {})
                 if not is_improved_solution(submission, problem) or is_solved(problem):
-                    ret['n_already_solved'] += 1
+                    ret["n_already_solved"] += 1
                     continue
 
-                upsolving = problem.setdefault('upsolving', {})
+                upsolving = problem.setdefault("upsolving", {})
                 if not is_improved_solution(submission, upsolving):
-                    ret['n_already_upsolving'] += 1
+                    ret["n_already_upsolving"] += 1
                     continue
 
-                problem['upsolving'] = submission
-                ret['n_updated'] += 1
+                problem["upsolving"] = submission
+                ret["n_updated"] += 1
                 stat.save()
 
                 if not account.last_submission or account.last_submission < submission_time:
@@ -1017,89 +1052,89 @@ class Statistic(BaseModule):
         submissions = recent_accepted_submissions()
         process_submission(submissions, with_last_submission=False, status_raise_not_found=False)
 
-        if leetcode_session and not leetcode_session.get('disabled'):
+        if leetcode_session and not leetcode_session.get("disabled"):
             req = copy.copy(REQ)
             req.cookie_filename = None
             req.init_opener()
-            req.add_cookie('LEETCODE_SESSION', leetcode_session['value'], domain='.leetcode.com')
-            offset = info.pop('offset', 0)
+            req.add_cookie("LEETCODE_SESSION", leetcode_session["value"], domain=".leetcode.com")
+            offset = info.pop("offset", 0)
             limit = 20
-            info.pop('error', None)
+            info.pop("error", None)
             while True:
                 url = Statistic.API_SUBMISSIONS_URL_FORMAT_.format(offset, limit)
                 try:
                     submissions_page = Statistic._get(url, req=req, n_attempts=5)
                 except FailOnGetResponse as e:
                     if e.code == 401:
-                        leetcode_session['disabled'] = True
+                        leetcode_session["disabled"] = True
                         save_account = True
-                    info['error'] = str(e)
-                    info['offset'] = offset
-                    info['submission_id'] = last_submission_id
+                    info["error"] = str(e)
+                    info["offset"] = offset
+                    info["submission_id"] = last_submission_id
                     break
                 submissions_data = json.loads(submissions_page)
-                submissions = submissions_data['submissions_dump']
+                submissions = submissions_data["submissions_dump"]
                 need_more = process_submission(submissions)
-                if not need_more or not submissions_data['has_next']:
+                if not need_more or not submissions_data["has_next"]:
                     break
                 offset += limit
 
         if save_account:
-            account.info['submissions_'] = info
-            account.save(update_fields=['info', 'last_submission'])
+            account.info["submissions_"] = info
+            account.save(update_fields=["info", "last_submission"])
         return ret
 
     def get_problem_info_from_dict(question):
         ret = dict(
-            tags=[t['name'].lower() for t in question['topicTags']],
-            difficulty=question['difficulty'].lower(),
-            hints=question['hints'],
-            premium=question['isPaidOnly'],
-            accepted_rate=round_sig(question['acRate'], 3),
-            id=as_number(question['questionFrontendId']),
-            likes=as_number(question['likes']),
-            dislikes=as_number(question['dislikes']),
-            has_text_editorial=question['hasSolution'],
-            has_video_editorial=question['hasVideoSolution'],
-            has_editorial=question['hasSolution'] or question['hasVideoSolution'],
+            tags=[t["name"].lower() for t in question["topicTags"]],
+            difficulty=question["difficulty"].lower(),
+            hints=question["hints"],
+            premium=question["isPaidOnly"],
+            accepted_rate=round_sig(question["acRate"], 3),
+            id=as_number(question["questionFrontendId"]),
+            likes=as_number(question["likes"]),
+            dislikes=as_number(question["dislikes"]),
+            has_text_editorial=question["hasSolution"],
+            has_video_editorial=question["hasVideoSolution"],
+            has_editorial=question["hasSolution"] or question["hasVideoSolution"],
         )
 
-        if ret['likes'] or ret['dislikes']:
-            ret['likes_percent'] = round_sig(ret['likes'] * 100 / (ret['likes'] + ret['dislikes']), 4)
-            ret['dislikes_percent'] = round_sig(ret['dislikes'] * 100 / (ret['likes'] + ret['dislikes']), 4)
+        if ret["likes"] or ret["dislikes"]:
+            ret["likes_percent"] = round_sig(ret["likes"] * 100 / (ret["likes"] + ret["dislikes"]), 4)
+            ret["dislikes_percent"] = round_sig(ret["dislikes"] * 100 / (ret["likes"] + ret["dislikes"]), 4)
 
-        if question.get('stats'):
-            stats = json.loads(question['stats'])
-            ret['n_accepted_submissions'] = stats['totalAcceptedRaw']
-            ret['n_total_submissions'] = stats['totalSubmissionRaw']
+        if question.get("stats"):
+            stats = json.loads(question["stats"])
+            ret["n_accepted_submissions"] = stats["totalAcceptedRaw"]
+            ret["n_total_submissions"] = stats["totalSubmissionRaw"]
 
-        if 'categoryTitle' in question:
+        if "categoryTitle" in question:
             kinds = []
-            kind = question.get('categoryTitle')
+            kind = question.get("categoryTitle")
             if kind:
                 kind = kind.lower()
-                if kind not in ['algorithms']:
-                    if kind not in ret['tags']:
-                        ret['tags'].append(kind)
+                if kind not in ["algorithms"]:
+                    if kind not in ret["tags"]:
+                        ret["tags"].append(kind)
                     kinds.append(kind)
-            ret['kinds'] = kinds
+            ret["kinds"] = kinds
         return ret
 
     @staticmethod
     def get_problem_info(problem, **kwargs):
-        slug = get_item(problem, 'slug')
+        slug = get_item(problem, "slug")
         params = {
-            'operationName': 'questionData',
-            'variables': {'titleSlug': slug},
-            'query': 'query questionData($titleSlug: String!) { question(titleSlug: $titleSlug) { questionId difficulty topicTags { name } hints acRate questionFrontendId isPaidOnly hasVideoSolution hasSolution likes dislikes stats } }',  # noqa: E501
+            "operationName": "questionData",
+            "variables": {"titleSlug": slug},
+            "query": "query questionData($titleSlug: String!) { question(titleSlug: $titleSlug) { questionId difficulty topicTags { name } hints acRate questionFrontendId isPaidOnly hasVideoSolution hasSolution likes dislikes stats } }",  # noqa: E501
         }
         page = Statistic._get(
-            'https://leetcode.com/graphql',
-            content_type='application/json',
-            post=json.dumps(params).encode('utf-8'),
+            "https://leetcode.com/graphql",
+            content_type="application/json",
+            post=json.dumps(params).encode("utf-8"),
             n_attempts=3,
         )
-        question = json.loads(page)['data']['question']
+        question = json.loads(page)["data"]["question"]
         if not question:
             return None
 
@@ -1113,10 +1148,7 @@ class Statistic(BaseModule):
             per_page = min(per_page, limit)
         archive_problems = []
         total = None
-        while (
-            (not limit or len(archive_problems) < limit) and
-            (not total or len(archive_problems) < total)
-        ):
+        while (not limit or len(archive_problems) < limit) and (not total or len(archive_problems) < total):
             params = {
                 "query": """
                 query problemsetQuestionList($categorySlug: String, $limit: Int, $skip: Int, $filters: QuestionListFilterInput) {
@@ -1135,33 +1167,30 @@ class Statistic(BaseModule):
                     "categorySlug": "all-code-essentials",
                     "skip": n_page * per_page,
                     "limit": per_page,
-                    "filters": {
-                        "orderBy": "FRONTEND_ID",
-                        "sortOrder": "DESCENDING"
-                    }
+                    "filters": {"orderBy": "FRONTEND_ID", "sortOrder": "DESCENDING"},
                 },
-                "operationName": "problemsetQuestionList"
+                "operationName": "problemsetQuestionList",
             }
             page = Statistic._get(
-                'https://leetcode.com/graphql',
-                content_type='application/json',
-                post=json.dumps(params).encode('utf-8'),
+                "https://leetcode.com/graphql",
+                content_type="application/json",
+                post=json.dumps(params).encode("utf-8"),
                 n_attempts=3,
             )
             data = json.loads(page)
-            data = data['data']['problemsetQuestionList']
-            total = data['total']
-            questions = data['questions']
+            data = data["data"]["problemsetQuestionList"]
+            total = data["total"]
+            questions = data["questions"]
             for question in questions:
                 info = Statistic.get_problem_info_from_dict(question)
-                kinds = info.pop('kinds', [])
+                kinds = info.pop("kinds", [])
                 problem = dict(
-                    key=question['questionId'],
-                    name=question['title'],
-                    slug=question['titleSlug'],
+                    key=question["questionId"],
+                    name=question["title"],
+                    slug=question["titleSlug"],
                     kinds=kinds,
-                    n_accepted_submissions=info.pop('n_accepted_submissions', None),
-                    n_total_submissions=info.pop('n_total_submissions', None),
+                    n_accepted_submissions=info.pop("n_accepted_submissions", None),
+                    n_total_submissions=info.pop("n_total_submissions", None),
                     info=info,
                 )
                 archive_problems.append(problem)

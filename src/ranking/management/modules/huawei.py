@@ -7,10 +7,9 @@ from ranking.management.modules.common import BaseModule
 
 
 class Statistic(BaseModule):
-
     def __new__(cls, **kwargs):
-        contest = kwargs.get('contest')
+        contest = kwargs.get("contest")
         if contest:
-            if urlparse(contest.url).netloc.endswith('.kattis.com'):
+            if urlparse(contest.url).netloc.endswith(".kattis.com"):
                 return open_kattis.Statistic(**kwargs)
         return super().__new__(cls)

@@ -9,31 +9,31 @@ from filelock import FileLock
 from geopy.extra.rate_limiter import RateLimiter
 from geopy.geocoders import Nominatim
 
-logging.getLogger('geopy').setLevel(logging.INFO)
+logging.getLogger("geopy").setLevel(logging.INFO)
 
 
 class Locator:
-    location_fields = ['country', 'city', 'region', 'district', 'location']
+    location_fields = ["country", "city", "region", "district", "location"]
 
     def __init__(
         self,
-        locations_file='sharedfiles/locator/data.yaml',
+        locations_file="sharedfiles/locator/data.yaml",
         default_locations=None,
     ):
         self.locations_file = locations_file
         geolocator = Nominatim(user_agent="clist.by", timeout=5)
         self.geocode = RateLimiter(geolocator.geocode, min_delay_seconds=1, max_retries=3)
-        self.lock = FileLock(os.path.realpath(self.locations_file) + '.lock')
+        self.lock = FileLock(os.path.realpath(self.locations_file) + ".lock")
         self.locations = None
         self.default_locations = default_locations
 
-    def get_address(self, location, lang='en'):
+    def get_address(self, location, lang="en"):
         if not location:
             return
 
-        location = re.sub(r'(\bг\.|\bг\b)', '', location)
-        location = re.sub(r'<[^>]*>', ' ', location)
-        location = re.sub(r'[.,\s]+', ' ', location)
+        location = re.sub(r"(\bг\.|\bг\b)", "", location)
+        location = re.sub(r"<[^>]*>", " ", location)
+        location = re.sub(r"[.,\s]+", " ", location)
         location = location.strip()
 
         location_lower = location.lower()
@@ -45,8 +45,8 @@ class Locator:
         if self.locations is None or location not in self.locations:
             try:
                 location_info = {
-                    'en': self.geocode(location, language='en').address,
-                    'ru': self.geocode(location, language='ru').address,
+                    "en": self.geocode(location, language="en").address,
+                    "ru": self.geocode(location, language="ru").address,
                 }
             except Exception:
                 location_info = None
@@ -57,58 +57,58 @@ class Locator:
 
         return location_info[lang] if location_info else None
 
-    def get_country(self, location, lang='en'):
+    def get_country(self, location, lang="en"):
         address = self.get_address(location=location, lang=lang)
         if not address:
             return
-        *_, country = map(str.strip, address.split(','))
-        if country.startswith('The '):
+        *_, country = map(str.strip, address.split(","))
+        if country.startswith("The "):
             country = country[4:]
         return country
 
-    def get_city(self, location, lang='en'):
+    def get_city(self, location, lang="en"):
         address = self.get_address(location=location, lang=lang)
-        if not address or ',' not in address:
+        if not address or "," not in address:
             return
-        *parts, _ = map(str.strip, address.split(','))
+        *parts, _ = map(str.strip, address.split(","))
         for city in parts:
-            name = city.split(' ')[-1].lower()
-            if not city or name in ['район', 'district', 'область', 'обл', 'region']:
+            name = city.split(" ")[-1].lower()
+            if not city or name in ["район", "district", "область", "обл", "region"]:
                 continue
             return city
 
-    def get_additional_info(self, location, lang='en'):
+    def get_additional_info(self, location, lang="en"):
         address = self.get_address(location=location, lang=lang)
-        if not address or ',' not in address:
+        if not address or "," not in address:
             return
-        *parts, _ = map(str.strip, address.split(','))
+        *parts, _ = map(str.strip, address.split(","))
         ret = {}
         for part in parts:
-            name = part.split(' ')[-1].lower()
+            name = part.split(" ")[-1].lower()
             if not part:
                 continue
-            if name in ['район', 'district']:
-                ret['district'] = part
-            elif name in ['область', 'обл', 'region']:
-                ret['region'] = part
+            if name in ["район", "district"]:
+                ret["district"] = part
+            elif name in ["область", "обл", "region"]:
+                ret["region"] = part
         return ret
 
-    def get_location_dict(self, location, lang='en'):
+    def get_location_dict(self, location, lang="en"):
         ret = {}
 
         address = self.get_address(location, lang=lang)
         if not address:
             return ret
 
-        ret['location'] = location
+        ret["location"] = location
 
         country = self.get_country(location, lang=lang)
         if country:
-            ret['country'] = country
+            ret["country"] = country
 
         city = self.get_city(location, lang=lang)
         if city:
-            ret['city'] = city
+            ret["city"] = city
 
         ret.update(self.get_additional_info(location, lang=lang))
         return ret
@@ -117,7 +117,7 @@ class Locator:
         with self.lock.acquire(timeout=60):
             self.locations = {}
             if os.path.exists(self.locations_file):
-                with open(self.locations_file, 'r') as fo:
+                with open(self.locations_file, "r") as fo:
                     data = yaml.safe_load(fo) or dict()
                     self.locations = {k: v for k, v in data.items() if v}
             if self.locations is None:
@@ -126,8 +126,8 @@ class Locator:
     def write(self):
         if self.locations is not None:
             with self.lock.acquire(timeout=60):
-                with open(self.locations_file, 'wb') as fo:
-                    yaml.dump(self.locations, fo, encoding='utf8', allow_unicode=True)
+                with open(self.locations_file, "wb") as fo:
+                    yaml.dump(self.locations, fo, encoding="utf8", allow_unicode=True)
 
     def __enter__(self):
         self.lock.acquire()

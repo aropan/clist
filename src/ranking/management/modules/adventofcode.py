@@ -21,56 +21,60 @@ from ranking.models import Account, Statistics, VirtualStart
 
 
 class Statistic(BaseModule):
-    PROBLEM_YEAR_STATS_URL_FORMAT = 'https://adventofcode.com/{year}/stats'
+    PROBLEM_YEAR_STATS_URL_FORMAT = "https://adventofcode.com/{year}/stats"
 
     def get_standings(self, *args, **kwargs):
-        is_private = '/private/' in self.url
+        is_private = "/private/" in self.url
         func = self._get_private_standings if is_private else self._get_global_standings
         standings = func(*args, **kwargs)
 
-        self._set_medals(standings['result'], n_medals=is_private)
+        self._set_medals(standings["result"], n_medals=is_private)
         return standings
 
     @staticmethod
-    def _get_problem_stats(year, day='[0-9]+'):
+    def _get_problem_stats(year, day="[0-9]+"):
         url = Statistic.PROBLEM_YEAR_STATS_URL_FORMAT.format(year=year)
         page, code = REQ.get(url, ignore_codes={404}, return_code=True)
         if code == 404:
             return {}
-        matches = re.finditer(rf'''
+        matches = re.finditer(
+            rf"""
             <a[^>]*href="[^"]*{year}/day/[0-9]+"[^>]*>
             \s*(?P<day>{day})\s*
             <span[^>]*class="stats-both"[^>]*>\s*(?P<both>[0-9]+)</span>\s*
             <span[^>]*class="stats-firstonly"[^>]*>\s*(?P<firstonly>[0-9]+)</span>
-            ''', page, re.VERBOSE)
+            """,
+            page,
+            re.VERBOSE,
+        )
         ret = {}
         for match in matches:
-            day = match.group('day')
-            n_both = int(match.group('both'))
-            n_firstonly = int(match.group('firstonly'))
+            day = match.group("day")
+            n_both = int(match.group("both"))
+            n_firstonly = int(match.group("firstonly"))
             ret[day] = {
-                'n_solved_both': n_both,
-                'n_solved_firstonly': n_firstonly,
-                'n_solved_total': n_both + n_firstonly,
+                "n_solved_both": n_both,
+                "n_solved_firstonly": n_firstonly,
+                "n_solved_total": n_both + n_firstonly,
             }
         return ret
 
     @staticmethod
     def _set_medals(result, n_medals=False):
         for row in result.values():
-            for problem in row.get('problems', {}).values():
-                if 'rank' not in problem:
+            for problem in row.get("problems", {}).values():
+                if "rank" not in problem:
                     continue
-                rank = problem['rank']
+                rank = problem["rank"]
                 if rank == 1:
-                    problem['first_ac'] = True
+                    problem["first_ac"] = True
                 if rank <= 3:
-                    medal = ['gold', 'silver', 'bronze'][rank - 1]
-                    problem['medal'] = medal
-                    problem['_class'] = f'{medal}-medal'
+                    medal = ["gold", "silver", "bronze"][rank - 1]
+                    problem["medal"] = medal
+                    problem["_class"] = f"{medal}-medal"
 
                     if n_medals:
-                        key = f'n_{medal}_problems'
+                        key = f"n_{medal}_problems"
                         row.setdefault(key, 0)
                         row[key] += 1
 
@@ -78,11 +82,11 @@ class Statistic(BaseModule):
         session = get_item(self, "info.standings._session")
         if not session:
             raise ExceptionParseStandings("No session cookie for private leaderboard")
-        REQ.add_cookie('session', session, '.adventofcode.com')
-        page = REQ.get(self.url.rstrip('/') + '.json')
+        REQ.add_cookie("session", session, ".adventofcode.com")
+        page = REQ.get(self.url.rstrip("/") + ".json")
         data = json.loads(page)
 
-        year = int(data['event'])
+        year = int(data["event"])
 
         problems_infos = OrderedDict()
 
@@ -90,46 +94,46 @@ class Statistic(BaseModule):
             return sorted(d.items(), key=lambda i: int(i[0]))
 
         result = defaultdict(dict)
-        total_members = len(data['members'])
+        total_members = len(data["members"])
         local_best_score = total_members
         global_best_score = 100
         tz = timezone(timedelta(hours=-5))
 
-        contests = Contest.objects.filter(resource=self.resource, slug__startswith=f'advent-of-code-{year}-day-')
+        contests = Contest.objects.filter(resource=self.resource, slug__startswith=f"advent-of-code-{year}-day-")
         contests = {c.start_time: c for c in contests}
 
-        handles = {str(r['id']) for r in data['members'].values()}
+        handles = {str(r["id"]) for r in data["members"].values()}
         qs = Account.objects.filter(resource=self.resource, key__in=handles, coders__isnull=False)
-        qs = qs.values('coders', 'key')
+        qs = qs.values("coders", "key")
         account_coders = defaultdict(list)
         for a in qs:
-            account_coders[a['key']].append(a['coders'])
+            account_coders[a["key"]].append(a["coders"])
 
         has_virtual = False
         divisions_order = []
-        for division in 'virtual', 'diff', 'main':
-            is_virtual = division == 'virtual'
-            is_diff = division == 'diff'
+        for division in "virtual", "diff", "main":
+            is_virtual = division == "virtual"
+            is_diff = division == "diff"
             times = defaultdict(list)
-            rows = list(data['members'].values())
+            rows = list(data["members"].values())
             division_result = {}
             for r in tqdm.tqdm(rows, total=len(rows)):
                 r = deepcopy(r)
-                handle = str(r.pop('id'))
+                handle = str(r.pop("id"))
                 row = division_result.setdefault(handle, OrderedDict())
-                row['_skip_for_problem_stat'] = True
-                if 'global_score' in r:
-                    row['_global_score'] = r.pop('global_score')
+                row["_skip_for_problem_stat"] = True
+                if "global_score" in r:
+                    row["_global_score"] = r.pop("global_score")
                 if not is_diff:
-                    row['global_score'] = 0
-                row['member'] = handle
-                row['_local_score'] = r.pop('local_score')
-                row['name'] = r.pop('name')
-                row['stars'] = r.pop('stars')
-                ts = int(r.pop('last_star_ts'))
+                    row["global_score"] = 0
+                row["member"] = handle
+                row["_local_score"] = r.pop("local_score")
+                row["name"] = r.pop("name")
+                row["stars"] = r.pop("stars")
+                ts = int(r.pop("last_star_ts"))
                 if ts:
-                    row['last_star'] = ts
-                solutions = r.pop('completion_day_level')
+                    row["last_star"] = ts
+                solutions = r.pop("completion_day_level")
                 if not solutions:
                     division_result.pop(handle)
                     continue
@@ -137,22 +141,26 @@ class Statistic(BaseModule):
 
                 if is_virtual and handle in account_coders:
                     virtual_starts = VirtualStart.filter_by_content_type(Contest)
-                    virtual_starts = virtual_starts.filter(object_id__in={c.pk for c in contests.values()},
-                                                           coder__in=account_coders[handle])
-                    virtual_starts = {vs.entity.start_time: vs.start_time for vs in virtual_starts
-                                      if vs.start_time >= vs.entity.start_time}
+                    virtual_starts = virtual_starts.filter(
+                        object_id__in={c.pk for c in contests.values()}, coder__in=account_coders[handle]
+                    )
+                    virtual_starts = {
+                        vs.entity.start_time: vs.start_time
+                        for vs in virtual_starts
+                        if vs.start_time >= vs.entity.start_time
+                    }
                 else:
                     virtual_starts = {}
 
                 for start_time, virtual_start_time in virtual_starts.items():
                     day = str(start_time.day)
-                    for star in ['1', '2']:
+                    for star in ["1", "2"]:
                         solution = solutions.setdefault(day, {})
                         if star not in solution:
-                            solution[star] = {'hidden': True, 'virtual_start': virtual_start_time.timestamp()}
+                            solution[star] = {"hidden": True, "virtual_start": virtual_start_time.timestamp()}
                             break
 
-                problems = row.setdefault('problems', OrderedDict())
+                problems = row.setdefault("problems", OrderedDict())
                 for day, solution in items_sort(solutions):
                     if not solution:
                         continue
@@ -163,30 +171,32 @@ class Statistic(BaseModule):
                     prev_time_in_seconds = None
                     for star, res in items_sort(solution):
                         star = str(star)
-                        k = f'{day}.{star}'
+                        k = f"{day}.{star}"
                         if k not in problems_infos:
-                            problems_infos[k] = {'name': contest.title.split('. ', 3)[-1],
-                                                 'short': k,
-                                                 'code': f'Y{year}D{day}',
-                                                 'group': day,
-                                                 'subname': '*',
-                                                 'subname_class': 'first-star' if star == '1' else 'both-stars',
-                                                 'url': urljoin(self.url, f'/{year}/day/{day}'),
-                                                 '_order': (-int(day), int(star)),
-                                                 'skip_in_stats': True}
-                            if star == '1':
-                                problems_infos[k]['skip_for_divisions'] = ['diff']
+                            problems_infos[k] = {
+                                "name": contest.title.split(". ", 3)[-1],
+                                "short": k,
+                                "code": f"Y{year}D{day}",
+                                "group": day,
+                                "subname": "*",
+                                "subname_class": "first-star" if star == "1" else "both-stars",
+                                "url": urljoin(self.url, f"/{year}/day/{day}"),
+                                "_order": (-int(day), int(star)),
+                                "skip_in_stats": True,
+                            }
+                            if star == "1":
+                                problems_infos[k]["skip_for_divisions"] = ["diff"]
 
-                        if res.get('hidden'):
+                        if res.get("hidden"):
                             problem = {
-                                'result': '?',
-                                'is_virtual': True,
-                                'virtual_start_ts': res['virtual_start'],
+                                "result": "?",
+                                "is_virtual": True,
+                                "virtual_start_ts": res["virtual_start"],
                             }
                             problems[k] = problem
                             continue
 
-                        time = datetime.fromtimestamp(res['get_star_ts'], tz=timezone.utc)
+                        time = datetime.fromtimestamp(res["get_star_ts"], tz=timezone.utc)
                         virtual_start = virtual_starts.get(contest.start_time)
                         if is_virtual and virtual_start and virtual_start < time:
                             time -= virtual_start - day_start_time
@@ -197,7 +207,7 @@ class Statistic(BaseModule):
 
                         time_in_seconds = (time - day_start_time.replace(day=1)).total_seconds()
                         if is_diff:
-                            if star == '1':
+                            if star == "1":
                                 prev_time_in_seconds = time_in_seconds
                                 continue
                             time_in_seconds = time_in_seconds - prev_time_in_seconds
@@ -206,74 +216,74 @@ class Statistic(BaseModule):
                             prev_time_in_seconds = None
 
                         problem = {
-                            'time_index': res['star_index'],
-                            'time_in_seconds': time_in_seconds,
-                            'time': self.to_time(time - day_start_time),
-                            'absolute_time': self.to_time(time_in_seconds),
-                            'result_name': '*',
-                            'result_name_class': 'first-star' if star == '1' else 'both-stars',
-                            '_solution_priority': 2 if star == '1' else 1,
+                            "time_index": res["star_index"],
+                            "time_in_seconds": time_in_seconds,
+                            "time": self.to_time(time - day_start_time),
+                            "absolute_time": self.to_time(time_in_seconds),
+                            "result_name": "*",
+                            "result_name_class": "first-star" if star == "1" else "both-stars",
+                            "_solution_priority": 2 if star == "1" else 1,
                         }
                         if prev_time_in_seconds:
-                            problem['delta_time'] = '+' + self.to_time(time_in_seconds - prev_time_in_seconds)
+                            problem["delta_time"] = "+" + self.to_time(time_in_seconds - prev_time_in_seconds)
                         if problem_is_virtual:
-                            problem['is_virtual'] = True
+                            problem["is_virtual"] = True
                         problems[k] = problem
 
-                        times[k].append((problem['time_in_seconds'], problem['time_index']))
+                        times[k].append((problem["time_in_seconds"], problem["time_index"]))
                         prev_time_in_seconds = time_in_seconds
                 if not problems:
                     division_result.pop(handle)
 
             global_times = deepcopy(times)
             stats = Statistics.objects.filter(contest__in=contests.values())
-            stats = stats.values('contest__key', 'addition__problems', 'account__key')
+            stats = stats.values("contest__key", "addition__problems", "account__key")
             for stat in stats:
-                day = stat['contest__key'].split()[-1]
-                account = stat['account__key']
-                for star, p in stat['addition__problems'].items():
+                day = stat["contest__key"].split()[-1]
+                account = stat["account__key"]
+                for star, p in stat["addition__problems"].items():
                     star = 3 - int(star)
-                    k = f'{day}.{star}'
-                    if account in division_result and k in division_result[account]['problems']:
-                        division_result[account]['problems'][k].update({
-                            'global_rank': p['rank'],
-                            'global_score': p['result'],
+                    k = f"{day}.{star}"
+                    if account in division_result and k in division_result[account]["problems"]:
+                        division_result[account]["problems"][k].update({
+                            "global_rank": p["rank"],
+                            "global_score": p["result"],
                         })
-                    elif 'time_in_seconds' in p:
-                        global_times[k].append((p['time_in_seconds'], -1))
+                    elif "time_in_seconds" in p:
+                        global_times[k].append((p["time_in_seconds"], -1))
 
             for t in (times, global_times):
                 for v in t.values():
                     v.sort()
             for row in division_result.values():
-                problems = row.setdefault('problems', {})
-                for k, p in row['problems'].items():
+                problems = row.setdefault("problems", {})
+                for k, p in row["problems"].items():
                     if is_hidden(p):
                         continue
-                    time_value = (p['time_in_seconds'], p['time_index'])
+                    time_value = (p["time_in_seconds"], p["time_index"])
                     rank = times[k].index(time_value) + 1
                     score = max(local_best_score - rank + 1, 0)
-                    p['rank'] = rank
-                    p['result'] = score
-                    p['result_rank'] = rank
+                    p["rank"] = rank
+                    p["result"] = score
+                    p["result_rank"] = rank
 
                     if not is_diff:
                         global_rank = global_times[k].index(time_value) + 1
                         global_score = max(global_best_score - global_rank + 1, 0)
-                        if global_score and 'global_rank' not in p:
-                            p['global_rank'] = global_rank
-                            p['global_score'] = global_score
-                        row['global_score'] += p.get('global_score', 0)
+                        if global_score and "global_rank" not in p:
+                            p["global_rank"] = global_rank
+                            p["global_score"] = global_score
+                        row["global_score"] += p.get("global_score", 0)
 
             for row in division_result.values():
-                row['solving'] = sum(p['result'] for p in row['problems'].values() if not is_hidden(p))
+                row["solving"] = sum(p["result"] for p in row["problems"].values() if not is_hidden(p))
 
             last = None
-            for idx, r in enumerate(sorted(division_result.values(), key=lambda r: -r['solving']), start=1):
-                if r['solving'] != last:
-                    last = r['solving']
+            for idx, r in enumerate(sorted(division_result.values(), key=lambda r: -r["solving"]), start=1):
+                if r["solving"] != last:
+                    last = r["solving"]
                     rank = idx
-                r['place'] = rank
+                r["place"] = rank
 
             if is_virtual and not has_virtual:
                 continue
@@ -282,25 +292,25 @@ class Statistic(BaseModule):
                     result[k].update(v)
             self._set_medals(division_result, n_medals=True)
             for k, v in division_result.items():
-                result[k].setdefault('_division_addition', {}).update({division: v})
+                result[k].setdefault("_division_addition", {}).update({division: v})
             divisions_order.append(division)
 
-        problems = list(sorted(problems_infos.values(), key=lambda p: p['_order']))
+        problems = list(sorted(problems_infos.values(), key=lambda p: p["_order"]))
         for p in problems:
-            p.pop('_order')
+            p.pop("_order")
 
         ret = {
-            'hidden_fields': {'last_star', 'stars', 'ranks', 'local_score'},
-            'options': {
-                'fixed_fields': ['global_score'] + [f'n_{medal}_problems' for medal in ['gold', 'silver', 'bronze']],
-                'alternative_result_field': 'global_score',
+            "hidden_fields": {"last_star", "stars", "ranks", "local_score"},
+            "options": {
+                "fixed_fields": ["global_score"] + [f"n_{medal}_problems" for medal in ["gold", "silver", "bronze"]],
+                "alternative_result_field": "global_score",
             },
-            'result': result,
-            'fields_types': {'last_star': ['timestamp']},
-            'problems': problems,
+            "result": result,
+            "fields_types": {"last_star": ["timestamp"]},
+            "problems": problems,
         }
         if len(divisions_order) > 1:
-            ret['divisions_order'] = divisions_order
+            ret["divisions_order"] = divisions_order
 
         now = datetime.now(tz=tz)
         if now.year == year and now.month == 12:
@@ -314,7 +324,7 @@ class Statistic(BaseModule):
             else:
                 delta = min(delta, timedelta(minutes=30))
 
-            ret['timing_statistic_delta'] = delta
+            ret["timing_statistic_delta"] = delta
 
         return ret
 
@@ -323,34 +333,34 @@ class Statistic(BaseModule):
         year = year if self.start_time.month >= 9 else year - 1
         ret = {}
 
-        if '/day/' not in self.url:
-            match = re.search(r'\bday\b\s+(?P<day>[0-9]+)', self.name, re.IGNORECASE)
-            contest_url = self.url.rstrip('/') + '/day/' + match['day']
+        if "/day/" not in self.url:
+            match = re.search(r"\bday\b\s+(?P<day>[0-9]+)", self.name, re.IGNORECASE)
+            contest_url = self.url.rstrip("/") + "/day/" + match["day"]
         else:
             contest_url = self.url
 
         page = REQ.get(contest_url)
-        match = re.search(r'<h2>[^<]*Day\s*(?P<day>[0-9]+):\s*(?P<problem_name>[^<]*)</h2>', page)
-        day = match.group('day')
-        problem_name = html.unescape(match.group('problem_name').strip('-').strip())
+        match = re.search(r"<h2>[^<]*Day\s*(?P<day>[0-9]+):\s*(?P<problem_name>[^<]*)</h2>", page)
+        day = match.group("day")
+        problem_name = html.unescape(match.group("problem_name").strip("-").strip())
 
-        if self.name.count('.') == 1 and problem_name:
-            ret['title'] = f'{self.name}. {problem_name}'
+        if self.name.count(".") == 1 and problem_name:
+            ret["title"] = f"{self.name}. {problem_name}"
 
-        standings_url = self.standings_url or contest_url.replace('/day/', '/leaderboard/day/')
+        standings_url = self.standings_url or contest_url.replace("/day/", "/leaderboard/day/")
         page = REQ.get(standings_url)
 
         matches = re.finditer(
-            r'''
+            r"""
             <div[^>]*class="leaderboard-entry"[^>]*data-user-id="(?P<user_id>[^"]*)"[^>]*>\s*
                 <span[^>]*class="leaderboard-position"[^>]*>\s*(?P<rank>[0-9]+)[^<]*</span>\s*
                 <span[^>]*class="leaderboard-time"[^>]*>(?P<time>[^<]*)</span>\s*
                 (?:<a[^>]*href="(?P<href>[^"]*)"[^>]*>\s*)?
                 <span[^>]*class="leaderboard-userphoto"[^>]*>(\s*<img[^>]*src="(?P<avatar>[^"]*)"[^>]*>)?[^<]*</span>\s*
                 (?:<span[^>]*class="leaderboard-anon"[^>]*>)?(?P<name>[^<]*)
-            ''',
+            """,
             page,
-            re.VERBOSE
+            re.VERBOSE,
         )
 
         problems_info = OrderedDict()
@@ -361,99 +371,101 @@ class Statistic(BaseModule):
         n_results = 0
         for match in matches:
             n_results += 1
-            name = html.unescape(match.group('name')).strip()
-            handle = match.group('user_id')
+            name = html.unescape(match.group("name")).strip()
+            handle = match.group("user_id")
 
-            rank = int(match.group('rank'))
+            rank = int(match.group("rank"))
             if last is None or last >= rank:
                 n_problems += 1
             last = rank
 
-            row = result.setdefault(handle, {'solving': 0, '_skip_for_problem_stat': True})
+            row = result.setdefault(handle, {"solving": 0, "_skip_for_problem_stat": True})
             score = 100 - rank + 1
-            row['solving'] += score
-            row['name'] = name
-            row['member'] = handle
+            row["solving"] += score
+            row["name"] = name
+            row["member"] = handle
 
-            avatar = match.group('avatar')
+            avatar = match.group("avatar")
             if avatar:
-                row['info'] = {'avatar': avatar}
+                row["info"] = {"avatar": avatar}
 
             k = str(n_problems)
             if k not in problems_info:
                 problems_info[k] = {
-                    'name': problem_name,
-                    'short': k,
-                    'code': f'Y{year}D{day}',
-                    'url': contest_url,
-                    'group': 0,
-                    '_info_prefix_fields': ['first_ac', 'last_ac'],
+                    "name": problem_name,
+                    "short": k,
+                    "code": f"Y{year}D{day}",
+                    "url": contest_url,
+                    "group": 0,
+                    "_info_prefix_fields": ["first_ac", "last_ac"],
                 }
 
-            problems = row.setdefault('problems', {})
+            problems = row.setdefault("problems", {})
             problem = problems.setdefault(k, {})
-            problem['result'] = score
-            time = f'''{self.start_time.year} {match.group('time')} -05:00'''
-            time = arrow.get(time, 'YYYY MMM D  HH:mm:ss ZZ') - self.start_time
-            problem['time'] = self.to_time(time)
-            problem['rank'] = rank
-            problem['time_in_seconds'] = (time + self.start_time - self.start_time.replace(day=1)).total_seconds()
-            problem['absolute_time'] = self.to_time(problem['time_in_seconds'])
-            problem['_solution_priority'] = 0
+            problem["result"] = score
+            time = f"""{self.start_time.year} {match.group("time")} -05:00"""
+            time = arrow.get(time, "YYYY MMM D  HH:mm:ss ZZ") - self.start_time
+            problem["time"] = self.to_time(time)
+            problem["rank"] = rank
+            problem["time_in_seconds"] = (time + self.start_time - self.start_time.replace(day=1)).total_seconds()
+            problem["absolute_time"] = self.to_time(problem["time_in_seconds"])
+            problem["_solution_priority"] = 0
 
             prev_k = str(n_problems - 1)
             if prev_k in problems:
                 prev_problem = problems[prev_k]
-                delta_time = prev_problem['time_in_seconds'] - problem['time_in_seconds']
-                prev_problem['delta_time'] = '+' + self.to_time(delta_time)
+                delta_time = prev_problem["time_in_seconds"] - problem["time_in_seconds"]
+                prev_problem["delta_time"] = "+" + self.to_time(delta_time)
 
         problems = list(reversed(problems_info.values()))
         if not problems:
-            problems = [{
-                'name': problem_name,
-                'code': f'Y{year}D{day}',
-                'url': contest_url,
-                'group': 0,
-                '_info_prefix_fields': ['first_ac', 'last_ac'],
-            }]
+            problems = [
+                {
+                    "name": problem_name,
+                    "code": f"Y{year}D{day}",
+                    "url": contest_url,
+                    "group": 0,
+                    "_info_prefix_fields": ["first_ac", "last_ac"],
+                }
+            ]
         if len(problems):
-            problems[0].update({'subname': '*', 'subname_class': 'first-star', '_info_prefix': 'first_star_'})
+            problems[0].update({"subname": "*", "subname_class": "first-star", "_info_prefix": "first_star_"})
         if len(problems) > 1:
-            problems[1].update({'subname': '*', 'subname_class': 'both-stars', '_info_prefix': 'both_stars_'})
-            first_ac = defaultdict(lambda: float('inf'))
-            last_ac = defaultdict(lambda: float('-inf'))
+            problems[1].update({"subname": "*", "subname_class": "both-stars", "_info_prefix": "both_stars_"})
+            first_ac = defaultdict(lambda: float("inf"))
+            last_ac = defaultdict(lambda: float("-inf"))
             for r in result.values():
-                for k, v in r['problems'].items():
-                    first_ac[k] = min(first_ac[k], v['time_in_seconds'])
-                    last_ac[k] = max(last_ac[k], v['time_in_seconds'])
+                for k, v in r["problems"].items():
+                    first_ac[k] = min(first_ac[k], v["time_in_seconds"])
+                    last_ac[k] = max(last_ac[k], v["time_in_seconds"])
             problems[1].update({
-                'diff_first_ac': self.to_time(first_ac['1'] - first_ac['2']),
-                'diff_last_ac': self.to_time(last_ac['1'] - last_ac['2']),
+                "diff_first_ac": self.to_time(first_ac["1"] - first_ac["2"]),
+                "diff_last_ac": self.to_time(last_ac["1"] - last_ac["2"]),
             })
         problem_stats = Statistic._get_problem_stats(year, day)
         if problem_stats and len(problems):
             problem_stat = problem_stats[day]
-            problems[0].update({'n_solved_firstonly': problem_stat['n_solved_firstonly']})
-            problems[0].update({'n_solved_both': problem_stat['n_solved_both']})
-            problems[-1].update({'n_solved_total': problem_stat['n_solved_total']})
+            problems[0].update({"n_solved_firstonly": problem_stat["n_solved_firstonly"]})
+            problems[0].update({"n_solved_both": problem_stat["n_solved_both"]})
+            problems[-1].update({"n_solved_total": problem_stat["n_solved_total"]})
 
         place = None
         last = None
-        for rank, row in enumerate(sorted(result.values(), key=lambda r: -r['solving']), start=1):
-            score = row['solving']
+        for rank, row in enumerate(sorted(result.values(), key=lambda r: -r["solving"]), start=1):
+            score = row["solving"]
             if last != score:
                 place = rank
                 last = score
-            row['place'] = place
+            row["place"] = place
 
         ret.update({
-            'contest_url': contest_url,
-            'result': result,
-            'url': standings_url,
-            'problems': problems,
+            "contest_url": contest_url,
+            "result": result,
+            "url": standings_url,
+            "problems": problems,
         })
         if n_results < 200 and django.utils.timezone.now() - self.start_time < timedelta(hours=1):
-            ret['timing_statistic_delta'] = timedelta(minutes=1)
+            ret["timing_statistic_delta"] = timedelta(minutes=1)
         return ret
 
     @staticmethod
@@ -465,8 +477,8 @@ class Statistic(BaseModule):
             problem_stats = Statistic._get_problem_stats(year)
             for day, info in problem_stats.items():
                 problem = {
-                    'key': f'Y{year}D{day}',
-                    'info': info,
+                    "key": f"Y{year}D{day}",
+                    "info": info,
                 }
                 ret.append(problem)
                 if len(ret) == limit:

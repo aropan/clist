@@ -60,21 +60,19 @@ class BaseModule(object, metaclass=ABCMeta):
     def __init__(self, **kwargs):
         contest = kwargs.pop("contest", None)
         if contest is not None:
-            kwargs.update(
-                {
-                    "contest": contest,
-                    "pk": contest.pk,
-                    "name": contest.title,
-                    "url": contest.url,
-                    "key": contest.key,
-                    "standings_url": contest.standings_url,
-                    "start_time": contest.start_time,
-                    "end_time": contest.end_time,
-                    "info": contest.info,
-                    "resource": contest.resource,
-                    "invisible": contest.invisible,
-                }
-            )
+            kwargs.update({
+                "contest": contest,
+                "pk": contest.pk,
+                "name": contest.title,
+                "url": contest.url,
+                "key": contest.key,
+                "standings_url": contest.standings_url,
+                "start_time": contest.start_time,
+                "end_time": contest.end_time,
+                "info": contest.info,
+                "resource": contest.resource,
+                "invisible": contest.invisible,
+            })
         for k, v in kwargs.items():
             setattr(self, k, v)
 

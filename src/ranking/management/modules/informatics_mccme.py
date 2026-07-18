@@ -7,7 +7,7 @@ from ranking.management.modules.excepts import ExceptionParseStandings, InitModu
 
 
 class Statistic(BaseModule):
-    STANDING_URL_FORMAT_ = 'http://informatics.mccme.ru/mod/monitor/view.php?id={0.key}'
+    STANDING_URL_FORMAT_ = "http://informatics.mccme.ru/mod/monitor/view.php?id={0.key}"
 
     def __init__(self, **kwargs):
         super(Statistic, self).__init__(**kwargs)
@@ -23,23 +23,23 @@ class Statistic(BaseModule):
         header = None
         prob_pos = None
 
-        for match in re.findall(r'<tr[^>]*>\n.*?<\/tr>', page, re.DOTALL):
-            match = match.replace('&nbsp;', ' ')
+        for match in re.findall(r"<tr[^>]*>\n.*?<\/tr>", page, re.DOTALL):
+            match = match.replace("&nbsp;", " ")
 
             member = None
             fields = []
 
-            tds = re.finditer(r'<td[^>]*>.*(?:<\/td>)?', match)
+            tds = re.finditer(r"<td[^>]*>.*(?:<\/td>)?", match)
             for i, td in enumerate(tds):
                 td = td.group()
-                value = re.sub('<[^>]*>', '', td).strip()
+                value = re.sub("<[^>]*>", "", td).strip()
 
-                attrs = dict(m.group('key', 'value') for m in re.finditer('(?P<key>[a-z]*)="?(?P<value>[^">]*)', td))
-                if 'href' in attrs:
-                    match = re.search('/user/.*id=(?P<id>[0-9]+)', attrs['href'])
+                attrs = dict(m.group("key", "value") for m in re.finditer('(?P<key>[a-z]*)="?(?P<value>[^">]*)', td))
+                if "href" in attrs:
+                    match = re.search("/user/.*id=(?P<id>[0-9]+)", attrs["href"])
                     if match:
-                        member = match.group('id')
-                if not header and prob_pos is None and attrs.get('rowspan', None) != '2':
+                        member = match.group("id")
+                if not header and prob_pos is None and attrs.get("rowspan", None) != "2":
                     prob_pos = i
                 # value = attrs.get('title', value)
                 # if 'href' in attrs:
@@ -54,29 +54,29 @@ class Statistic(BaseModule):
                 continue
 
             if prob_pos:
-                header = header[:prob_pos] + fields + header[prob_pos + 1:]
+                header = header[:prob_pos] + fields + header[prob_pos + 1 :]
                 prob_pos = 0
                 continue
 
             if not member:
-                raise ExceptionParseStandings('Not found member')
+                raise ExceptionParseStandings("Not found member")
 
             row = dict(list(zip(header, fields)))
 
             r = result.setdefault(member, {})
-            r['member'] = member
-            r['place'] = row['Место']
-            r['attempts'] = row['Попыток']
-            r['solving'] = row['Всего']
+            r["member"] = member
+            r["place"] = row["Место"]
+            r["attempts"] = row["Попыток"]
+            r["solving"] = row["Всего"]
 
-            problems = r.setdefault('problems', {})
+            problems = r.setdefault("problems", {})
             for k, v in row.items():
-                if v and re.match('^[A-Z]$', k):
-                    problems[k] = {'result': v}
+                if v and re.match("^[A-Z]$", k):
+                    problems[k] = {"result": v}
             if not problems:
-                r.pop('problems')
+                r.pop("problems")
         standings = {
-            'result': result,
-            'url': standings_url,
+            "result": result,
+            "url": standings_url,
         }
         return standings

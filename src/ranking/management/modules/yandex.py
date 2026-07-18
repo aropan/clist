@@ -110,7 +110,8 @@ class Statistic(BaseModule):
 
                     if max_run_id:
                         problem_submission_infos = [
-                            info for info in problem_submission_infos if info["run_id"] <= max_run_id]
+                            info for info in problem_submission_infos if info["run_id"] <= max_run_id
+                        ]
                     for submission_info in problem_submission_infos:
                         already_processed.add(submission_info["run_id"])
 
@@ -150,7 +151,7 @@ class Statistic(BaseModule):
                 return
             with rate_limiter:
                 offset = batch_size * page
-                run_ids_query = "&".join(f"runIds={run_id}" for run_id in run_ids[offset:offset + batch_size])
+                run_ids_query = "&".join(f"runIds={run_id}" for run_id in run_ids[offset : offset + batch_size])
                 url = f"{Statistic.YANDEX_API_URL}/contests/{self.key}/submissions/multiple?{run_ids_query}"
                 try:
                     submissions = REQ.get(url, headers=headers, return_json=True)
@@ -192,13 +193,15 @@ class Statistic(BaseModule):
                         or as_number(submission_score) == as_number(fields_data.get("result"))
                         and ("submission_id" not in fields_data or submission["runId"] < fields_data["submission_id"])
                     ):
-                        for (field, source) in Statistic.SUBMISSION_FIELDS_MAPPING.items():
+                        for field, source in Statistic.SUBMISSION_FIELDS_MAPPING.items():
                             value = source(submission) if callable(source) else submission[source]
                             fields_data[field] = value
 
-                    submission_info = {"ip": submission["ip"],
-                                       "run_id": submission["runId"],
-                                       "timestamp": submission_time.timestamp()}
+                    submission_info = {
+                        "ip": submission["ip"],
+                        "run_id": submission["runId"],
+                        "timestamp": submission_time.timestamp(),
+                    }
                     submission_problem.setdefault("_submission_infos", []).append(submission_info)
 
         submissions_percentage = 100 * n_processed / n_total if n_total else False
@@ -267,8 +270,10 @@ class Statistic(BaseModule):
                 if (
                     problem
                     and submission_result_value >= problem_result_value
-                    and ("submission_time" not in problem
-                         or submission_info["submission_time"] < problem["submission_time"])
+                    and (
+                        "submission_time" not in problem
+                        or submission_info["submission_time"] < problem["submission_time"]
+                    )
                 ):
                     counters["n_updated"] += 1
                     problem.update(submission_info)
@@ -279,13 +284,11 @@ class Statistic(BaseModule):
                 problem_info = deepcopy(problems_info[short])
                 if contest_url:
                     problem_info["url"] = urljoin(contest_url, f"problems/{short}")
-                row.setdefault("upsolving_submissions", []).append(
-                    {
-                        "contest": contest,
-                        "problem": problem_info,
-                        "info": submission_info,
-                    }
-                )
+                row.setdefault("upsolving_submissions", []).append({
+                    "contest": contest,
+                    "problem": problem_info,
+                    "info": submission_info,
+                })
                 row["_last_submission"] = max_with_none(row.get("_last_submission"), submission_time)
                 counters["n_upsolving"] += 1
         if max_submission_time:
@@ -531,7 +534,8 @@ class Statistic(BaseModule):
                         statistics_problem = statistics_problems[short]
                         for key, value in statistics_problem.items():
                             if (
-                                key in Statistic.SUBMISSION_FIELDS_MAPPING and key not in problem
+                                key in Statistic.SUBMISSION_FIELDS_MAPPING
+                                and key not in problem
                                 or key in {"_submission_infos", "upsolving"}
                             ):
                                 problem[key] = value

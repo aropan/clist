@@ -6,12 +6,11 @@ from utils.requester import FailOnGetResponse, ProxyLimitReached  # noqa
 
 
 class BaseException(Exception):
-
     def __init__(self, *args):
         super().__init__(*args)
 
     def __str__(self):
-        return f'{self.__class__.__name__}: {super().__str__()}'
+        return f"{self.__class__.__name__}: {super().__str__()}"
 
 
 class InitModuleException(BaseException):

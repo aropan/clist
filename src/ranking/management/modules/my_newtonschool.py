@@ -12,27 +12,26 @@ from ranking.management.modules.common import REQ, BaseModule
 from ranking.management.modules.excepts import FailOnGetResponse
 
 
-
 class Statistic(BaseModule):
-    API_STANDING_URL_FORMAT_ = '/api/v1/course/h/{}/assignment/h/{}/leader_board/competition/'
-    API_PROBLEMS_URL_FORMAT_ = '/api/v1/course/h/{}/assignment/h/{}/details/public/'
-    API_PROBLEM_URL_FORMAT_ = '/api/v1/course/h/{}/assignment/h/{}/question/h/{}/details/'
-    API_PROFILE_URL_FORMAT_ = '/api/v1/user/{}/'
+    API_STANDING_URL_FORMAT_ = "/api/v1/course/h/{}/assignment/h/{}/leader_board/competition/"
+    API_PROBLEMS_URL_FORMAT_ = "/api/v1/course/h/{}/assignment/h/{}/details/public/"
+    API_PROBLEM_URL_FORMAT_ = "/api/v1/course/h/{}/assignment/h/{}/question/h/{}/details/"
+    API_PROFILE_URL_FORMAT_ = "/api/v1/user/{}/"
 
     def get_standings(self, users=None, statistics=None, **kwargs):
-        standings_url = urljoin(self.url, '?tab=leaderboard')
+        standings_url = urljoin(self.url, "?tab=leaderboard")
 
-        hashes = self.key.split('/')
+        hashes = self.key.split("/")
         url = urljoin(self.url, self.API_PROBLEMS_URL_FORMAT_.format(*hashes))
         page = REQ.get(url)
         data = json.loads(page)
         problems_infos = collections.OrderedDict()
-        for idx, question in enumerate(data['assignment_questions'], start=1):
-            short = f'Q{idx}'
-            code = question['hash']
+        for idx, question in enumerate(data["assignment_questions"], start=1):
+            short = f"Q{idx}"
+            code = question["hash"]
             problems_infos[code] = dict(
                 code=code,
-                name=question['question_title'],
+                name=question["question_title"],
                 short=short,
             )
 
@@ -43,59 +42,59 @@ class Statistic(BaseModule):
 
         @RateLimiter(max_calls=4, period=1)
         def process_page(n_page):
-            page = REQ.get(f'{url}?limit={limit}&offset={n_page * limit}')
+            page = REQ.get(f"{url}?limit={limit}&offset={n_page * limit}")
             data = json.loads(page)
 
-            for r in data['results']:
+            for r in data["results"]:
                 row = collections.OrderedDict()
-                row['place'] = r.pop('actual_rank')
-                if 'user' in r:
-                    user = r.pop('user')
-                elif 'course_user_mapping' in r:
-                    user = r.pop('course_user_mapping').pop('user')
-                member = user.pop('username')
-                row['member'] = member
-                row['name'] = user.pop('first_name') + ' ' + user.pop('last_name')
-                row['penalty'] = r.pop('penalty')
-                row['solving'] = r.pop('all_test_cases_passed_question_count')
-                last_solved = r.pop('latest_solved_question_timestamp')
+                row["place"] = r.pop("actual_rank")
+                if "user" in r:
+                    user = r.pop("user")
+                elif "course_user_mapping" in r:
+                    user = r.pop("course_user_mapping").pop("user")
+                member = user.pop("username")
+                row["member"] = member
+                row["name"] = user.pop("first_name") + " " + user.pop("last_name")
+                row["penalty"] = r.pop("penalty")
+                row["solving"] = r.pop("all_test_cases_passed_question_count")
+                last_solved = r.pop("latest_solved_question_timestamp")
                 if last_solved is not None:
-                    row['last_solved'] = last_solved / 1000
-                country = r.pop('country', {}).get('code')
+                    row["last_solved"] = last_solved / 1000
+                country = r.pop("country", {}).get("code")
                 if country:
-                    row['country'] = country
-                college = r.pop('college', {}).get('name')
+                    row["country"] = country
+                college = r.pop("college", {}).get("name")
                 if college:
-                    row['college'] = college
+                    row["college"] = college
 
-                info = user.pop('profile', {})
-                rating = user.get('contest_rating')
+                info = user.pop("profile", {})
+                rating = user.get("contest_rating")
                 if rating is not None:
-                    info['rating'] = rating
+                    info["rating"] = rating
                 if info:
-                    row['info'] = info
+                    row["info"] = info
 
-                problems = row.setdefault('problems', {})
-                for p in r.pop('assignment_course_user_question_mappings'):
-                    attempt = p.pop('wrong_submissions')
-                    accepted = p.pop('all_test_case_passed')
+                problems = row.setdefault("problems", {})
+                for p in r.pop("assignment_course_user_question_mappings"):
+                    attempt = p.pop("wrong_submissions")
+                    accepted = p.pop("all_test_case_passed")
                     if not accepted and not attempt:
                         continue
-                    short = problems_infos[p.pop('assignment_question')['hash']]['short']
+                    short = problems_infos[p.pop("assignment_question")["hash"]]["short"]
                     problem = problems.setdefault(short, {})
                     if accepted:
-                        problem['result'] = '+' if attempt == 0 else f'+{attempt}'
+                        problem["result"] = "+" if attempt == 0 else f"+{attempt}"
                     elif attempt:
-                        problem['result'] = f'-{attempt}'
-                    time = p.pop('time_in_minutes')
+                        problem["result"] = f"-{attempt}"
+                    time = p.pop("time_in_minutes")
                     if time is not None:
-                        problem['time'] = self.to_time(time, 2)
+                        problem["time"] = self.to_time(time, 2)
                 if not problems:
                     continue
 
                 if statistics and member in statistics:
                     stat = statistics[member]
-                    for k in ('rating_change', 'new_rating', '_rank'):
+                    for k in ("rating_change", "new_rating", "_rank"):
                         if k in stat:
                             row[k] = stat[k]
 
@@ -105,15 +104,15 @@ class Statistic(BaseModule):
 
         with PoolExecutor(max_workers=4) as executor:
             data = process_page(0)
-            n_total_page = (data['count'] - 1) // limit + 1
+            n_total_page = (data["count"] - 1) // limit + 1
             executor.map(process_page, range(1, n_total_page))
 
         ret = {
-            'url': standings_url,
-            'fields_types': {'last_solved': ['time']},
-            'hidden_fields': ['last_solved', 'college'],
-            'problems': list(problems_infos.values()),
-            'result': results,
+            "url": standings_url,
+            "fields_types": {"last_solved": ["time"]},
+            "hidden_fields": ["last_solved", "college"],
+            "problems": list(problems_infos.values()),
+            "result": results,
         }
         return ret
 
@@ -131,23 +130,23 @@ class Statistic(BaseModule):
                 return user, False, {}
 
             data = json.loads(page)
-            contest_ratings = data.pop('contest_ratings', [])
-            data.update(data.pop('profile', {}))
+            contest_ratings = data.pop("contest_ratings", [])
+            data.update(data.pop("profile", {}))
 
             info = {}
-            avatar = data.pop('avatar', None)
+            avatar = data.pop("avatar", None)
             if avatar:
-                info['avatar'] = avatar
-            info['extra'] = data
+                info["avatar"] = avatar
+            info["extra"] = data
 
             ratings = {}
             for stat in contest_ratings:
-                course = stat['course']
-                key = f'{course["hash"]}/{course["assignment_hash"]}'
+                course = stat["course"]
+                key = f"{course['hash']}/{course['assignment_hash']}"
                 rating = ratings.setdefault(key, collections.OrderedDict())
-                rating['rating_change'] = stat['rating_delta']
-                rating['new_rating'] = stat['rating']
-                rating['_rank'] = stat['rank']
+                rating["rating_change"] = stat["rating_delta"]
+                rating["new_rating"] = stat["rating"]
+                rating["_rank"] = stat["rank"]
 
             return user, info, ratings
 
@@ -157,16 +156,16 @@ class Statistic(BaseModule):
                     pbar.update()
                 if not info:
                     if info is None:
-                        yield {'delete': True}
+                        yield {"delete": True}
                     else:
-                        yield {'skip': True}
+                        yield {"skip": True}
                     continue
                 info = {
-                    'info': info,
-                    'contest_addition_update_params': {
-                        'update': ratings,
-                        'by': 'key',
-                        'clear_rating_change': True,
+                    "info": info,
+                    "contest_addition_update_params": {
+                        "update": ratings,
+                        "by": "key",
+                        "clear_rating_change": True,
                     },
                 }
                 yield info

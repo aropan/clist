@@ -12,10 +12,10 @@ class Statistic(BaseModule):
         host = urlparse(self.standings_url).netloc
 
         year = self.start_time.year - (0 if self.start_time.month > 9 else 1)
-        season = f'{year}-{year + 1}'
-        kwargs.setdefault('season', season)
+        season = f"{year}-{year + 1}"
+        kwargs.setdefault("season", season)
 
-        if not host or 'yandex' in host:
+        if not host or "yandex" in host:
             self.module = yandex.Statistic(**kwargs)
         else:
             self.module = opencup.Statistic(**kwargs)
