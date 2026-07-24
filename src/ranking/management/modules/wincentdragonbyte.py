@@ -2,6 +2,7 @@
 
 import re
 from collections import OrderedDict
+from urllib.parse import urljoin
 
 from clist.templatetags.extras import as_number
 from ranking.management.modules.common import REQ, BaseModule, parsed_table
@@ -10,11 +11,8 @@ from ranking.management.modules.excepts import ExceptionParseStandings
 
 class Statistic(BaseModule):
     def get_standings(self, users=None, statistics=None, **kwargs):
-
-        if not self.standings_url:
-            raise ExceptionParseStandings("no standings url")
-
-        standings_page = REQ.get(self.standings_url)
+        standings_url = self.standings_url or urljoin(self.resource.href(), f"/scoreboard/{self.key}")
+        standings_page = REQ.get(standings_url)
 
         match = re.search(r'<table[^>]*id="scoreboard"[^>]*>.*?</table>', standings_page, re.DOTALL)
         if not match:
@@ -25,7 +23,11 @@ class Statistic(BaseModule):
         problems_infos = OrderedDict()
         for row in table:
             handle = row.pop("username").value
-            r = result.setdefault(handle, OrderedDict({"member": handle}))
+            r = OrderedDict()
+            if country := re.search(r"\s*\((?P<code>[A-Z]{2})\)$", handle):
+                handle = handle[: country.start()]
+                r["country"] = country.group("code")
+            r["member"] = handle
             r["place"] = as_number(row.pop("rank").value.rstrip("."))
             r["solving"] = as_number(row.pop("score").value)
             r["time"] = row.pop("time").value
@@ -43,10 +45,11 @@ class Statistic(BaseModule):
                     problem["result"] = as_number(value)
                     problem["attempts"] = as_number(attempts.rstrip(":"))
             if not problems:
-                result.pop(handle)
                 continue
+            result[handle] = r
 
         ret = {
+            "url": standings_url,
             "result": result,
             "problems": list(problems_infos.values()),
         }

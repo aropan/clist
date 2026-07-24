@@ -532,9 +532,13 @@ class Command(BaseCommand):
                         if clear_submissions_info:
                             contest.submissions_info = {}
                             contest.save(update_fields=["submissions_info"])
+                        standings_statistics = copy.deepcopy(statistics_by_key)
+                        for row in list(standings_statistics.values()):
+                            if old_key := row.get("_old_key"):
+                                standings_statistics[old_key] = row
                         standings = plugin.get_standings(
                             users=copy.deepcopy(specific_users),
-                            statistics=copy.deepcopy(statistics_by_key),
+                            statistics=standings_statistics,
                             more_statistics=copy.deepcopy(more_statistics_by_key),
                         )
                         has_standings_result = bool(standings.get("result"))

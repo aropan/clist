@@ -1,25 +1,51 @@
 # -*- coding: utf-8 -*-
 
+import hashlib
+import hmac
 import html
 import json
 import re
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 import yaml
 from ratelimiter import RateLimiter
 
 from clist.templatetags.extras import as_number, get_item
+from ranking.management.modules import conf
 from ranking.management.modules.common import LOG, REQ, BaseModule
 from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse
 from utils.strings import strip_tags
+
+
+def req_get(*args, **kwargs):
+    page, url = REQ.get(*args, **kwargs, return_url=True)
+    if urlparse(url).path == "/login":
+        variables = dict(re.findall(r'\s*([a-z_]+)\s*:\s*[^"\n]*"([^"\s]*)"', page))
+        password = hmac.new(
+            key=variables["password"].encode("utf-8"),
+            msg=conf.UOJ_PASSWORD.encode("utf-8"),
+            digestmod=hashlib.md5,
+        ).hexdigest()
+        REQ.submit_form(
+            data={
+                "_token": variables["_token"],
+                "login": "",
+                "username": conf.UOJ_USERNAME,
+                "password": password,
+            },
+        )
+        page, url = REQ.get(*args, **kwargs, return_url=True)
+        if urlparse(url).path == "/login":
+            raise ExceptionParseStandings("Failed to login to UOJ")
+    return page
 
 
 class Statistic(BaseModule):
     def get_standings(self, users=None, statistics=None, **kwargs):
         standings_url = self.standings_url or self.url.rstrip("/") + "/standings"
 
-        page = REQ.get(standings_url)
+        page = req_get(standings_url)
         entries = re.findall(r"^([a-z_]+)\s*=\s*(.*);\s*$", page, flags=re.MULTILINE)
         variables = {k: yaml.safe_load(v) for k, v in entries}
         variables.pop("myname", None)
@@ -126,7 +152,7 @@ class Statistic(BaseModule):
         @RateLimiter(max_calls=5, period=2)
         def fetch_profile(handle):
             profile_url = resource.profile_url.format(account=handle)
-            profile_page = REQ.get(profile_url, n_attempts=2)
+            profile_page = req_get(profile_url, n_attempts=2)
             data = {}
 
             matches = re.finditer(

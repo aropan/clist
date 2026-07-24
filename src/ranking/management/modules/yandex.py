@@ -351,6 +351,68 @@ class Statistic(BaseModule):
         LOG.info(f"Found {len(name2logins)} participant names and {len(login2name)} participant logins")
         return name2logins
 
+    def _get_api_standings(self, contest_id) -> tuple[dict, dict] | None:
+        headers = self._get_headers()
+        if not headers:
+            return None
+
+        page = 1
+        page_size = 1000
+        result = {}
+        problems_info = OrderedDict()
+        while True:
+            url = f"{Statistic.YANDEX_API_URL}/contests/{contest_id}/standings?page={page}&pageSize={page_size}"
+            standings_data = REQ.get(url, headers=headers, return_json=True)
+            if page == 1:
+                for problem in standings_data["titles"]:
+                    short = problem["title"]
+                    problems_info[short] = {"short": short, "name": problem["name"]}
+            for standings_row in standings_data["rows"]:
+                participant = standings_row["participantInfo"]
+                member = participant["login"]
+                row = {"member": member, "name": participant["name"]}
+
+                place_from = standings_row["placeFrom"][0]
+                place_to = standings_row["placeTo"][0]
+                if place_from == place_to:
+                    row["place"] = place_from
+                else:
+                    row["place"] = f"{place_from}-{place_to}"
+                row["solving"] = standings_row["score"]
+                result[member] = row
+
+                problems = row.setdefault("problems", {})
+                for problem_result, problem_info in zip(standings_row["problemResults"], standings_data["titles"]):
+                    status = problem_result["status"]
+                    if status == "NOT_SUBMITTED":
+                        continue
+                    short = problem_info["title"]
+                    problem = problems.setdefault(short, {})
+                    problem["result"] = problem_result["score"]
+                    problem["time"] = self.to_time(problem_result["submitDelay"] / 60, 2)
+                    problem["time_in_seconds"] = problem_result["submitDelay"]
+                    problem["verdict"] = status
+            if len(standings_data["rows"]) < page_size:
+                break
+            page += 1
+        return result, problems_info
+
+    def _transfer_submission_infos(self, row, statistics_problems):
+        problems = row["problems"]
+        for short in statistics_problems:
+            problems.setdefault(short, {})
+        for short, problem in problems.items():
+            if short not in statistics_problems:
+                continue
+            statistics_problem = statistics_problems[short]
+            for key, value in statistics_problem.items():
+                if (
+                    key in Statistic.SUBMISSION_FIELDS_MAPPING
+                    and key not in problem
+                    or key in {"_submission_infos", "upsolving"}
+                ):
+                    problem[key] = value
+
     def get_standings(self, users=None, statistics=None, **kwargs):
         if not hasattr(self, "season"):
             year = self.start_time.year - (0 if self.start_time.month > 8 else 1)
@@ -360,6 +422,7 @@ class Statistic(BaseModule):
 
         result = {}
         problems_info = OrderedDict()
+        standings_by_submissions = get_item(self.info, "standings.by_submissions")
 
         if not re.search("/[0-9]+/", self.standings_url):
             return {}
@@ -390,6 +453,9 @@ class Statistic(BaseModule):
                     re.MULTILINE | re.DOTALL,
                 )
                 if not match:
+                    if standings_by_submissions:
+                        LOG.warning(f"Not found table standings for {url}")
+                        break
                     raise ExceptionParseStandings("Not found table standings")
 
                 html_table = match.group(0)
@@ -526,19 +592,8 @@ class Statistic(BaseModule):
                                 upsolving.update(old_upsolving)
                         continue
 
-                    for short in statistics_problems:
-                        problems.setdefault(short, {})
-                    for short, problem in problems.items():
-                        if short not in statistics_problems:
-                            continue
-                        statistics_problem = statistics_problems[short]
-                        for key, value in statistics_problem.items():
-                            if (
-                                key in Statistic.SUBMISSION_FIELDS_MAPPING
-                                and key not in problem
-                                or key in {"_submission_infos", "upsolving"}
-                            ):
-                                problem[key] = value
+                    self._transfer_submission_infos(row, statistics_problems)
+
                     result[member] = row
                 if tqdm_pagination:
                     tqdm_pagination.update()
@@ -568,6 +623,16 @@ class Statistic(BaseModule):
                 if not location:
                     continue
                 row.update(location)
+
+        standings_by_submissions = standings_by_submissions and not result
+        if standings_by_submissions:
+            api_standings = self._get_api_standings(self.key)
+            if not api_standings:
+                raise ExceptionParseStandings("Fail to get standings by submissions")
+            result, problems_info = api_standings
+            for member, row in result.items():
+                statistics_problems = get_item(statistics, (member, "problems"), {})
+                self._transfer_submission_infos(row, statistics_problems)
 
         names_result = {row["name"]: row for row in result.values()}
         submission_infos, submissions_percentage = self._get_submission_infos(names_result)
@@ -615,6 +680,11 @@ class Statistic(BaseModule):
                         contest_whois[key].add(value)
 
         upsolving_counters = self._get_upsolving_submissions(self.contest, problems_info, names_result)
+
+        if standings_by_submissions:
+            removed_members = [member for member, row in result.items() if not row["problems"]]
+            for member in removed_members:
+                result.pop(member)
 
         standings = {
             "result": result,
