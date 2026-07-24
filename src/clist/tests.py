@@ -123,13 +123,14 @@ class CheckScheduleParsingTestCase(TestCase):
         with open(self.cache_file, "w", encoding="utf-8") as f:
             yaml.dump(state, f)
 
-    def _call_with_logs(self):
+    def _call_with_logs(self, **extra):
         with self.assertLogs("clist.check_schedule_parsing", level="WARNING") as logs:
             call_command(
                 "check_schedule_parsing",
                 stats_file=self.stats_file,
                 cache_file=self.cache_file,
                 dryrun=True,
+                **extra,
             )
         return logs.output
 
@@ -139,19 +140,29 @@ class CheckScheduleParsingTestCase(TestCase):
         output = self._call_with_logs()
         assert any("last schedule update finished" in line for line in output)
 
-    def test_alert_on_zero_parsed_recently_active(self):
+    def test_no_alert_on_recent_zero_parsed(self):
+        # Produced within the grace period, so a zero run must not alert yet
         self._seed_cache({"last_nonzero_at": int(self.now.timestamp())})
         self.stats_data["resources"][0]["n_contests_parsed"] = 0
         self._write_stats()
-        output = self._call_with_logs()
+        with pytest.raises(AssertionError):  # no warnings expected
+            self._call_with_logs(zero_grace="1 hour")
+
+    def test_alert_on_sustained_zero_parsed(self):
+        # Produced within the window but nothing for longer than the grace period -> alert
+        self._seed_cache({"last_nonzero_at": int(self.now.timestamp()) - 2 * 60 * 60})
+        self.stats_data["resources"][0]["n_contests_parsed"] = 0
+        self._write_stats()
+        output = self._call_with_logs(zero_grace="1 hour")
         assert any("enabled.example.com: no contests parsed" in line for line in output)
 
     def test_no_alert_on_zero_parsed_long_inactive(self):
+        # Last produced outside the window, so a zero run must not alert even past the grace period
         self._seed_cache({"last_nonzero_at": int(self.now.timestamp()) - 30 * 24 * 60 * 60})
         self.stats_data["resources"][0]["n_contests_parsed"] = 0
         self._write_stats()
         with pytest.raises(AssertionError):  # no warnings expected
-            self._call_with_logs()
+            self._call_with_logs(zero_grace="1 hour")
 
     def test_alert_on_parsed_but_not_upserted(self):
         self._seed_cache({"last_upserted_at": int(self.now.timestamp())})

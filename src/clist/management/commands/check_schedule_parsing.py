@@ -9,6 +9,7 @@ from logging import getLogger
 
 import yaml
 from django.core.management.base import BaseCommand, CommandError
+from django.db.models import Max
 from django.utils import timezone
 from django_print_sql import print_sql_decorator
 
@@ -18,6 +19,8 @@ from logify.models import EventLog, EventStatus
 from tg.bot import Bot
 from utils.attrdict import AttrDict
 from utils.timetools import datetime_from_timestamp, parse_duration
+
+DEFAULT_ZERO_GRACE = "1 hour"
 
 
 class Command(BaseCommand):
@@ -32,6 +35,11 @@ class Command(BaseCommand):
         parser.add_argument("--cache-file", default="logs/check_schedule_parsing.yaml", help="state cache yaml")
         parser.add_argument("--stale-threshold", default="2 hours", help="alert if the last run is older")
         parser.add_argument("--window", default="7 days", help="how recently a resource must have produced contests")
+        parser.add_argument(
+            "--zero-grace",
+            default=DEFAULT_ZERO_GRACE,
+            help="alert on zero parsed only after a resource has produced nothing for this long",
+        )
         parser.add_argument("-r", "--resources", metavar="HOST", nargs="*", help="resources hosts")
         parser.add_argument("--verbose", action="store_true", help="verbose output")
         parser.add_argument("--dryrun", action="store_true", help="do not alert, create event logs or write state")
@@ -47,6 +55,7 @@ class Command(BaseCommand):
         now = timezone.now()
         stale_threshold = parse_duration(args.stale_threshold)
         window = parse_duration(args.window)
+        zero_grace = parse_duration(args.zero_grace)
 
         state = {}
         if os.path.exists(args.cache_file):
@@ -114,13 +123,13 @@ class Command(BaseCommand):
                         rstate = {}
                     if "last_nonzero_at" not in rstate or "last_upserted_at" not in rstate:
                         rids_to_query.append(rid)
-            recent_resource_ids = set()
+            recent_produced_at = {}
             if rids_to_query:
-                recent_resource_ids = set(
+                recent_produced_at = dict(
                     Contest.objects
                     .filter(resource_id__in=rids_to_query, auto_updated__gte=now - window)
-                    .values_list("resource_id", flat=True)
-                    .distinct()
+                    .values_list("resource_id")
+                    .annotate(last=Max("auto_updated"))
                 )
 
             for entry in stats.get("resources", []):
@@ -147,10 +156,11 @@ class Command(BaseCommand):
                 problem = None
                 if n_parsed == 0:
                     if "last_nonzero_at" in resource_state:
-                        recently_produced = datetime_from_timestamp(resource_state["last_nonzero_at"]) >= now - window
+                        last_nonzero_at = datetime_from_timestamp(resource_state["last_nonzero_at"])
                     else:
-                        recently_produced = rid in recent_resource_ids
-                    if recently_produced:
+                        last_nonzero_at = recent_produced_at.get(rid)
+                    # Alert only if it produced within the window but nothing for at least the grace period
+                    if last_nonzero_at is not None and now - window <= last_nonzero_at <= now - zero_grace:
                         problem = f"{host}: no contests parsed"
                 else:
                     resource_state["last_nonzero_at"] = stats["finished_at"]
@@ -162,7 +172,7 @@ class Command(BaseCommand):
                                 datetime_from_timestamp(resource_state["last_upserted_at"]) >= now - window
                             )
                         else:
-                            recently_upserted = rid in recent_resource_ids
+                            recently_upserted = rid in recent_produced_at
 
                         if recently_upserted:
                             problem = f"{host}: {n_parsed} contests parsed but none upserted"
