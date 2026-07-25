@@ -5,12 +5,22 @@ from unittest import mock
 
 import pytest
 import yaml
+from django.contrib.auth.models import AnonymousUser
 from django.core.management import call_command
 from django.core.management.base import CommandError
-from django.test import TestCase
+from django.test import RequestFactory, TestCase
 from django.utils import timezone
 
 from clist.models import Resource
+from clist.views import get_view_contests
+
+
+class GetViewContestsTestCase(TestCase):
+    def test_invalid_past_days_uses_default(self):
+        request = RequestFactory().get("/", {"past_days": "not-an-integer"})
+        request.user = AnonymousUser()
+        request.get_resources = lambda: []
+        assert get_view_contests(request, coder=None) == []
 
 
 class CheckScheduleParsingTestCase(TestCase):

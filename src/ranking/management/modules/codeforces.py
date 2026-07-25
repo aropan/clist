@@ -934,9 +934,16 @@ class Statistic(BaseModule):
                 yield from Statistic.get_users_infos(users[i:], pbar=pbar)
                 return
 
-        removed = []
-        last_index = 0
         orig_users = list(users)
+
+        removed = []
+        for index, user in reversed(list(enumerate(users))):
+            if "=" in user:
+                removed.append((index, user))
+                users.pop(index)
+        removed.reverse()
+
+        last_index = 0
         for _ in range(len(users) * 2):
             handles = ";".join(users)
             data = api_query(method="user.info", params={"handles": handles})
@@ -948,6 +955,8 @@ class Statistic(BaseModule):
                 match := re.search("handles: User with handle (?P<handle>.*) not found", data["comment"])
             ):
                 handle = match.group("handle")
+                if handle not in users:
+                    raise ExceptionParseAccounts(f"Not found handle = {handle}")
                 location = REQ.geturl(f"https://{SUBDOMAIN}codeforces.com/profile/{handle}")
                 index = users.index(handle)
                 if urlparse(location).path.rstrip("/"):
@@ -961,13 +970,15 @@ class Statistic(BaseModule):
                     last_index = index
             else:
                 raise NameError(f"data = {data}")
+            infos = data["result"]
         else:
-            raise ValueError(f"Many failed query, data = {data}")
+            if users:
+                raise ValueError("Many failed query")
+            infos = []
 
         if pbar is not None:
             pbar.update(len(users) - last_index)
 
-        infos = data["result"]
         for index, user in removed:
             infos.insert(index, None)
             users.insert(index, user)

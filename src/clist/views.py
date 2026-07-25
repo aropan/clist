@@ -40,6 +40,7 @@ from clist.templatetags.extras import (
     media_size,
     rating_from_probability,
     redirect_login,
+    toint,
     win_probability,
 )
 from favorites.models import Activity
@@ -100,7 +101,7 @@ def get_view_contests(request, coder):
     now = timezone.now()
     result = []
     status = request.GET.get('status')
-    past_days = int(request.GET.get('past_days', 1))
+    past_days = max(toint(request.GET.get('past_days')) or 1, 1)
     for group, query, order in (
         ("past", Q(start_time__gt=now - timedelta(days=past_days), end_time__lte=now), "end_time"),
         ("running", Q(start_time__lte=now, end_time__gte=now), "end_time"),

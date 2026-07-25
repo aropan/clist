@@ -2180,7 +2180,9 @@ def versus(request, query):
         return allowed_redirect(f"{request.path}vs/{coder.username}")
 
     if request.GET.get("remove"):
-        idx = int(request.GET.get("remove"))
+        idx = toint(request.GET.get("remove"))
+        if idx is None:
+            return HttpResponseBadRequest("invalid remove index")
         parts = query.split("/vs/")
         if 0 <= idx < len(parts):
             parts = parts[:idx] + parts[idx + 1 :]

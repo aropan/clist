@@ -1088,8 +1088,13 @@ def change(request):
 
     coder = user.coder
 
-    if coder.id != int(request.POST.get("pk", -1)):
+    try:
+        coder_id = int(request.POST.get("pk", -1))
+    except (TypeError, ValueError):
         return HttpResponseBadRequest("invalid pk")
+    if coder.id != coder_id:
+        return HttpResponseBadRequest("invalid pk")
+
     if name == "theme":
         if value not in django_settings.THEMES_:
             return HttpResponseBadRequest("invalid theme name")
@@ -1612,10 +1617,21 @@ def change(request):
         coder.last_name_native = value
         coder.save(update_fields=["last_name_native"])
     elif name == "add-account":
+        resource_id = None
+        account_id = None
         try:
             if "resource" in request.POST:
                 resource_id = int(request.POST.get("resource"))
-                resource = Resource.objects.get(pk=resource_id)
+            else:
+                account_id = int(request.POST.get("id"))
+        except (TypeError, ValueError):
+            return HttpResponseBadRequest("invalid account or resource id")
+
+        try:
+            if resource_id is not None:
+                resource = Resource.objects.filter(pk=resource_id).first()
+                if resource is None:
+                    return HttpResponseBadRequest("Resource not found")
                 account = Account.objects.filter(resource=resource, key=value).first()
                 if account is None:
                     accounts = resource.account_set.filter(
@@ -1637,7 +1653,9 @@ def change(request):
                         }
                         return JsonResponse(response)
             else:
-                account = Account.objects.get(pk=request.POST.get("id"))
+                account = Account.objects.filter(pk=account_id).first()
+                if account is None:
+                    return HttpResponseBadRequest("Account not found")
                 resource = account.resource
 
             if account.coders.filter(pk=coder.id).first():
@@ -1938,9 +1956,15 @@ def search(request, **kwargs):
     if not query or not isinstance(query, str):
         return HttpResponseBadRequest("invalid query")
 
-    count = int(request.GET.get("count", django_settings.DEFAULT_COUNT_QUERY_))
+    try:
+        count = int(request.GET.get("count", django_settings.DEFAULT_COUNT_QUERY_))
+        page = int(request.GET.get("page", 1))
+    except (TypeError, ValueError):
+        return HttpResponseBadRequest("count and page must be positive integers")
+    if count < 1 or page < 1:
+        return HttpResponseBadRequest("count and page must be positive integers")
     count = min(count, django_settings.DEFAULT_COUNT_LIMIT_)
-    page = int(request.GET.get("page", 1))
+
     if query == "themes":
         ret = {}
         for t in django_settings.THEMES_:

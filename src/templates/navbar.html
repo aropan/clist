@@ -63,7 +63,10 @@
                 {% get_notification_messages_badges user request.path as notification_messages_badges %}
                 <li>
                     {% for navbar in request.as_coder_or_coder.settings.navbar %}
-                    <li><a href="{% url navbar.url %}">{% icon_to navbar.icon False %}</a></li>
+                    {% url navbar.url as navbar_url %}
+                    {% if navbar_url %}
+                    <li><a href="{{ navbar_url }}">{% icon_to navbar.icon False %}</a></li>
+                    {% endif %}
                     {% endfor %}
                     {% if user.is_superuser %}
                     <li>

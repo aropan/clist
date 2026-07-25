@@ -47,15 +47,14 @@ urlpatterns = [
     re_path(r'^favicon/$', RedirectView.as_view(url=static('img/favicon/favicon-32x32.png')), name='favicon'),
 
     path('django-rq/', include('django_rq.urls')),
-
-    path('silk/', include('silk.urls', namespace='silk')),
 ]
 
 
 if settings.DEBUG:
     import debug_toolbar
-    urlpatterns = (
-        [re_path(r'^__debug__/', include(debug_toolbar.urls))]
-        + url_static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
-        + urlpatterns
-    )
+    urlpatterns = [
+        re_path(r'^__debug__/', include(debug_toolbar.urls)),
+        path('silk/', include('silk.urls', namespace='silk')),
+        *url_static(settings.STATIC_URL, document_root=settings.STATIC_ROOT),
+        *urlpatterns,
+    ]
