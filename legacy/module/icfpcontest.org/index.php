@@ -1,10 +1,11 @@
 <?php
-require_once dirname(__FILE__) . "/../../config.php";
+
+require_once dirname(__FILE__) . '/../../config.php';
 
 $url = 'https://www.icfpconference.org/contest.html';
 $page = curlexec($url);
 
-$urls = array('http://icfpcontest.org/', 'http://icfpcontest.com/');
+$urls = ['http://icfpcontest.org/', 'http://icfpcontest.com/'];
 
 if (preg_match_all('#<a[^>]*href="(?P<url>[^"]*)"[^>]*>(?P<year>[0-9]{4})\b#', $page, $matches, PREG_SET_ORDER)) {
     foreach ($matches as $m) {
@@ -28,11 +29,11 @@ foreach ($urls as $url) {
     }
     $parsed_urls[] = $url;
 
-    $regexes = array(
+    $regexes = [
         '#<title[^>]*>(?P<title>[^<]*\b(?P<year>[0-9]{4})\b[-^<:|]*)#i',
         '#<h1[^>]*>\s*(?:<a[^>]*>)?(?P<title>[^<]*\b(?P<year>[0-9]{4})\b[-^<:|]*)<#i',
         '#<a[^>]*href="/"[^>]*>(?P<title>[^<]*\b(?P<year>[0-9]{4})\b[-^<:|]*)<#i',
-    );
+    ];
     $found = false;
     foreach ($regexes as $regex) {
         if (preg_match($regex, $page, $match)) {
@@ -81,14 +82,14 @@ foreach ($urls as $url) {
         $start_time .= " $year";
     }
     if (!preg_match('#[0-9]+:[0-9]+#', $start_time)) {
-        $start_time .= " 12:00 UTC";
+        $start_time .= ' 12:00 UTC';
     }
     if (!empty($end_time)) {
         if (!preg_match('#\b[0-9]{4}\b#', $end_time)) {
             $end_time .= " $year";
         }
         if (!preg_match('#[0-9]+:[0-9]+#', $end_time)) {
-            $end_time .= " 12:00 UTC";
+            $end_time .= ' 12:00 UTC';
         }
     }
     if (!strtotime($start_time)) {
@@ -98,7 +99,7 @@ foreach ($urls as $url) {
         $end_time = '';
     }
 
-    $c = array(
+    $c = [
         'start_time' => $start_time,
         'title' => $title,
         'url' => $url,
@@ -106,7 +107,7 @@ foreach ($urls as $url) {
         'rid' => $RID,
         'timezone' => $TIMEZONE,
         'key' => $year,
-    );
+    ];
     if (!empty($end_time)) {
         $c['end_time'] = $end_time;
     } else {

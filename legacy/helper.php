@@ -1,4 +1,5 @@
 <?php
+
 require_once __DIR__ . '/libs/SqlFormatter.php';
 
 if (!function_exists('http_parse_headers')) {
@@ -7,7 +8,7 @@ if (!function_exists('http_parse_headers')) {
         $headers = [];
 
         foreach (explode("\n", $raw_headers) as $i => $h) {
-            if (strpos($h, ": ") === false) {
+            if (strpos($h, ': ') === false) {
                 continue;
             }
             list($key, $value) = explode(': ', $h, 2);
@@ -15,7 +16,7 @@ if (!function_exists('http_parse_headers')) {
             $value = trim($value);
             if (isset($headers[$key])) {
                 if (!is_array($headers[$key])) {
-                    $headers[$key] = array($headers[$key]);
+                    $headers[$key] = [$headers[$key]];
                 }
                 array_push($headers[$key], $value);
             } else {
@@ -28,22 +29,23 @@ if (!function_exists('http_parse_headers')) {
 
 function microtime_float()
 {
-    list($usec, $sec) = explode(" ", microtime());
-    return ((float)$usec + (float)$sec);
+    list($usec, $sec) = explode(' ', microtime());
+    return ((float) $usec + (float) $sec);
 }
 
 function hex2str($hex)
 {
     $r = '';
-    for ($i = 0; $i < strlen($hex) - 1; $i += 2)
+    for ($i = 0; $i < strlen($hex) - 1; $i += 2) {
         $r .= chr(hexdec($hex[$i] . $hex[$i + 1]));
+    }
     echo $r . "<p>\n";
     return $r;
 }
 
 function unicode_decode($str)
 {
-    return preg_replace("#(?:\\%|\\\\)u([0-9A-Fa-f]{4})#ie", "iconv('utf-16', 'utf-8//TRANSLIT', hex2str('$1'))", $str);
+    return preg_replace('#(?:\\%|\\\\)u([0-9A-Fa-f]{4})#ie', "iconv('utf-16', 'utf-8//TRANSLIT', hex2str('$1'))", $str);
 }
 
 $PREV_TIME = microtime_float();
@@ -62,7 +64,7 @@ function logmsg($msg = '')
     global $NLOGMSG;
 
     $curr_time = microtime_float();
-    $msg = date('Y.m.d H:i:s ', intval($curr_time)) . sprintf("%6.2f - ", $curr_time - $PREV_TIME) . $msg . "\n";
+    $msg = date('Y.m.d H:i:s ', intval($curr_time)) . sprintf('%6.2f - ', $curr_time - $PREV_TIME) . $msg . "\n";
 
     $fp = fopen(LOGFILE, 'a');
     fwrite($fp, $msg);
@@ -70,7 +72,7 @@ function logmsg($msg = '')
 
     if ($NLOGMSG == 0) {
         register_shutdown_function('crop_logmsg');
-    } else if ($NLOGMSG >= COUNTLINEINLOGFILE) {
+    } elseif ($NLOGMSG >= COUNTLINEINLOGFILE) {
         crop_logmsg();
         $NLOGMSG = 0;
     }
@@ -78,7 +80,6 @@ function logmsg($msg = '')
     $PREV_TIME = $curr_time;
     $NLOGMSG += 1;
 }
-
 
 $cookiefile = dirname(__FILE__) . '/cookie.file';
 if (file_exists($cookiefile) && filesize($cookiefile) > 4 * 1024 * 1024) {
@@ -90,8 +91,8 @@ function filter_cookies($cookiefile)
     $cookies = file_get_contents($cookiefile);
     $cookies = explode("\n", $cookies);
     $cookies = array_reverse($cookies);
-    $filtered = array();
-    $counters = array();
+    $filtered = [];
+    $counters = [];
     foreach ($cookies as $cookie) {
         if (empty($cookie)) {
             continue;
@@ -118,7 +119,7 @@ if (ISCLI) {
 }
 
 $CID = curl_init();
-$USER_AGENT = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:43.0) Gecko/20100101 Firefox/43.0";
+$USER_AGENT = 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:43.0) Gecko/20100101 Firefox/43.0';
 curl_setopt($CID, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($CID, CURLOPT_FOLLOWLOCATION, true);
 curl_setopt($CID, CURLOPT_AUTOREFERER, true);
@@ -127,20 +128,19 @@ curl_setopt($CID, CURLOPT_USERAGENT, $USER_AGENT);
 curl_setopt($CID, CURLOPT_COOKIEJAR, $cookiefile);
 curl_setopt($CID, CURLOPT_COOKIEFILE, $cookiefile);
 curl_setopt($CID, CURLOPT_SSL_VERIFYPEER, false);
-curl_setopt($CID, CURLOPT_ENCODING, "gzip");
+curl_setopt($CID, CURLOPT_ENCODING, 'gzip');
 curl_setopt($CID, CURLINFO_HEADER_OUT, true);
 curl_setopt($CID, CURLOPT_VERBOSE, true);
 
-
-$COOKIE = array();
+$COOKIE = [];
 
 function redirect_url($url)
 {
-    stream_context_set_default(array(
-        'http' => array(
-            'method' => 'HEAD'
-        )
-    ));
+    stream_context_set_default([
+        'http' => [
+            'method' => 'HEAD',
+        ],
+    ]);
     $headers = get_headers($url, true);
     if ($headers !== false && isset($headers['Location'])) {
         if (is_array($headers['Location'])) {
@@ -151,7 +151,7 @@ function redirect_url($url)
     return $url;
 }
 
-function curlexec(&$url, $postfields = NULL, $params = array())
+function curlexec(&$url, $postfields = null, $params = [])
 {
     global $CID;
     global $COOKIE;
@@ -164,49 +164,49 @@ function curlexec(&$url, $postfields = NULL, $params = array())
     $curlexec_cache_file = false;
     if (CURLEXEC_CACHE_MODE) {
         $curlexec_requested_url = $url;
-        $curlexec_postfields = $postfields === NULL ? '' : (is_array($postfields) ? http_build_query($postfields) : $postfields);
-        $curlexec_cache_name = CURLEXEC_CACHE_DIR . "/" . parse_url($url, PHP_URL_HOST) . "-" . md5($url . "\n" . $curlexec_postfields);
-        $curlexec_cache_file = $curlexec_cache_name . ".html.gz";
-        $curlexec_meta_file = $curlexec_cache_name . ".meta.json";
+        $curlexec_postfields = $postfields === null ? '' : (is_array($postfields) ? http_build_query($postfields) : $postfields);
+        $curlexec_cache_name = CURLEXEC_CACHE_DIR . '/' . parse_url($url, PHP_URL_HOST) . '-' . md5($url . "\n" . $curlexec_postfields);
+        $curlexec_cache_file = $curlexec_cache_name . '.html.gz';
+        $curlexec_meta_file = $curlexec_cache_name . '.meta.json';
     }
 
     if (DEBUG) {
         echo "url = $url\n";
     }
 
-    empty($url) && die("Empty URL on " . __FILE__ . ":" . __LINE__);
+    empty($url) && die('Empty URL on ' . __FILE__ . ':' . __LINE__);
     curl_setopt($CID, CURLOPT_URL, $url);
 
-    $header = array();
+    $header = [];
     $header[] = 'Accept-Language: en;q=0.8, ru;q=0.2';
-    if (isset($params["http_header"])) {
-        $header = array_merge($header, $params["http_header"]);
+    if (isset($params['http_header'])) {
+        $header = array_merge($header, $params['http_header']);
     }
     curl_setopt($CID, CURLOPT_HTTPHEADER, $header);
 
-    if (isset($params["no_header"])) {
+    if (isset($params['no_header'])) {
         curl_setopt($CID, CURLOPT_HEADER, false);
     } else {
         curl_setopt($CID, CURLOPT_HEADER, true);
     }
 
-    if (isset($params["no_body"])) {
+    if (isset($params['no_body'])) {
         curl_setopt($CID, CURLOPT_NOBODY, true);
     } else {
         curl_setopt($CID, CURLOPT_NOBODY, false);
     }
 
-    $cachefile = CACHEDIR . "/" . parse_url($url, PHP_URL_HOST) . "-" . md5(preg_replace("#/?timeMin=[^&]*#", "", $url)) . ".html";
-    if ($postfields !== NULL) {
+    $cachefile = CACHEDIR . '/' . parse_url($url, PHP_URL_HOST) . '-' . md5(preg_replace('#/?timeMin=[^&]*#', '', $url)) . '.html';
+    if ($postfields !== null) {
         curl_setopt($CID, CURLOPT_POST, true);
         curl_setopt($CID, CURLOPT_POSTFIELDS, $postfields);
     } else {
         curl_setopt($CID, CURLOPT_POST, false);
     }
 
-    $with_curl = isset($params["with_curl"]) && $params["with_curl"];
+    $with_curl = isset($params['with_curl']) && $params['with_curl'];
 
-    if (CURLEXEC_CACHE_MODE === "replay") {
+    if (CURLEXEC_CACHE_MODE === 'replay') {
         if (!file_exists($curlexec_cache_file) || !file_exists($curlexec_meta_file)) {
             fwrite(STDERR, "curlexec replay miss: `$url` ($curlexec_cache_file)\n");
             exit(1);
@@ -218,23 +218,23 @@ function curlexec(&$url, $postfields = NULL, $params = array())
             exit(1);
         }
         $CURLEXEC_REPLAY_RESPONSE_CODE = $curlexec_meta['response_code'];
-    } else if (CACHE && $postfields === NULL && file_exists($cachefile)) {
+    } elseif (CACHE && $postfields === null && file_exists($cachefile)) {
         $page = file_get_contents($cachefile);
     } else {
         if ($with_curl) {
             $command = "curl -i {$url} -L --silent";
             foreach ($header as $h) {
-                $command .= " -H " . escapeshellarg($h);
+                $command .= ' -H ' . escapeshellarg($h);
             }
-            if ($postfields !== NULL) {
+            if ($postfields !== null) {
                 $postfields = http_build_query($postfields);
-                $command .= " --data " . escapeshellarg($postfields);
+                $command .= ' --data ' . escapeshellarg($postfields);
             }
-            if (isset($params["cookie_file"])) {
-                $command .= " -b " . escapeshellarg($params["cookie_file"]) . " -c " . escapeshellarg($params["cookie_file"]);
+            if (isset($params['cookie_file'])) {
+                $command .= ' -b ' . escapeshellarg($params['cookie_file']) . ' -c ' . escapeshellarg($params['cookie_file']);
             }
-            if (isset($params["curl_args_file"])) {
-                $command .= " " . file_get_contents($params["curl_args_file"]);
+            if (isset($params['curl_args_file'])) {
+                $command .= ' ' . file_get_contents($params['curl_args_file']);
             }
             $page = shell_exec($command);
         } else {
@@ -253,15 +253,15 @@ function curlexec(&$url, $postfields = NULL, $params = array())
         }
         if (CACHE) {
             file_put_contents($cachefile, $page);
-            if (substr(sprintf("%o", fileperms($cachefile)), -4) != "0766") {
+            if (substr(sprintf('%o', fileperms($cachefile)), -4) != '0766') {
                 chmod($cachefile, 0766);
             }
         }
     }
     $curlexec_raw_page = $page;
 
-    if (!isset($params["no_logmsg"])) {
-        logmsg("URL: " . (CURLEXEC_CACHE_MODE === "replay" ? "[replay] " : (CACHE ? "[cached] " : "")) . "`$url`");
+    if (!isset($params['no_logmsg'])) {
+        logmsg('URL: ' . (CURLEXEC_CACHE_MODE === 'replay' ? '[replay] ' : (CACHE ? '[cached] ' : '')) . "`$url`");
     }
     if (curl_errno($CID)) {
         logmsg('ERROR ' . curl_errno($CID) . ': ' . curl_error($CID));
@@ -271,13 +271,13 @@ function curlexec(&$url, $postfields = NULL, $params = array())
     $header = substr($page, 0, $sep);
     $header = http_parse_headers($header);
 
-    $header_ = array();
+    $header_ = [];
     foreach ($header as $k => $v) {
         $header_[strtolower($k)] = $v;
     }
     $header = $header_;
 
-    if (isset($params["json_output"])) {
+    if (isset($params['json_output'])) {
         $json_decode_page = json_decode(substr($page, $sep + 4), true);
         if ($json_decode_page !== null) {
             $page = $json_decode_page;
@@ -286,16 +286,16 @@ function curlexec(&$url, $postfields = NULL, $params = array())
 
     if (isset($header['set-cookie'])) {
         $a = $header['set-cookie'];
-        $a = is_array($a) ? $a : array($a);
+        $a = is_array($a) ? $a : [$a];
         foreach ($a as $c) {
-            $kv = explode(";", $c, 2)[0];
-            list($k, $v) = explode("=", $kv, 2);
+            $kv = explode(';', $c, 2)[0];
+            list($k, $v) = explode('=', $kv, 2);
             $COOKIE[$k] = $v;
         }
     }
-    if (CURLEXEC_CACHE_MODE === "replay") {
+    if (CURLEXEC_CACHE_MODE === 'replay') {
         $url = $curlexec_meta['effective_url'];
-    } else if ($with_curl) {
+    } elseif ($with_curl) {
         if (isset($header['location'])) {
             $url = $header['location'];
             if (is_array($url)) {
@@ -305,15 +305,15 @@ function curlexec(&$url, $postfields = NULL, $params = array())
     } else {
         $url = curl_getinfo($CID, CURLINFO_EFFECTIVE_URL);
     }
-    if (CURLEXEC_CACHE_MODE === "record") {
+    if (CURLEXEC_CACHE_MODE === 'record') {
         // never record server-issued cookies: fixtures are committed to the repo
         $curlexec_raw_page = preg_replace('/^set-cookie:[^\r\n]*\r?\n/mi', '', $curlexec_raw_page);
         file_put_contents($curlexec_cache_file, gzencode($curlexec_raw_page, 9));
-        file_put_contents($curlexec_meta_file, json_encode(array(
+        file_put_contents($curlexec_meta_file, json_encode([
             'url' => $curlexec_requested_url,
             'effective_url' => $url,
             'response_code' => response_code(),
-        ), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
     }
     return $page;
 }
@@ -322,7 +322,7 @@ function response_code()
 {
     global $CID;
     global $CURLEXEC_REPLAY_RESPONSE_CODE;
-    if (CURLEXEC_CACHE_MODE === "replay") {
+    if (CURLEXEC_CACHE_MODE === 'replay') {
         return $CURLEXEC_REPLAY_RESPONSE_CODE;
     }
     return curl_getinfo($CID, CURLINFO_RESPONSE_CODE);
@@ -343,134 +343,135 @@ function HSVtoRGB(array $hsv)
     //4
     switch ($I) {
         case 0:
-            list($R, $G, $B) = array($V, $K, $M);
+            list($R, $G, $B) = [$V, $K, $M];
             break;
         case 1:
-            list($R, $G, $B) = array($N, $V, $M);
+            list($R, $G, $B) = [$N, $V, $M];
             break;
         case 2:
-            list($R, $G, $B) = array($M, $V, $K);
+            list($R, $G, $B) = [$M, $V, $K];
             break;
         case 3:
-            list($R, $G, $B) = array($M, $N, $V);
+            list($R, $G, $B) = [$M, $N, $V];
             break;
         case 4:
-            list($R, $G, $B) = array($K, $M, $V);
+            list($R, $G, $B) = [$K, $M, $V];
             break;
         case 5:
         case 6: //for when $H=1 is given
-            list($R, $G, $B) = array($V, $M, $N);
+            list($R, $G, $B) = [$V, $M, $N];
             break;
     }
-    return array((int)($R * 255), (int)($G * 255), (int)($B * 255));
+    return [(int) ($R * 255), (int) ($G * 255), (int) ($B * 255)];
 }
 
-$atimezone = array(
-    "Pacific/Honolulu" => "Гавайи",
-    "America/Anchorage" => "Аляска",
-    "America/Los_Angeles" => "Североамериканское тихоокеанское время",
-    "America/Denver" => "Горное время, Мексика",
-    "America/Chicago" => "Центральное время, Центральноамериканское время, Мексика",
-    "America/New_York" => "Североамериканское восточное время, Южноамериканское тихоокеанское время",
-    "America/Caracas" => "Каракас",
-    "America/Halifax" => "Атлантическое время",
-    "America/St_Johns" => "Ньюфаундленд",
-    "America/Argentina/Buenos_Aires" => "Южноамериканское восточное время, Гренландия",
-    "America/Sao_Paulo" => "Среднеатлантическое время",
-    "Atlantic/Azores" => "Азорские острова, Кабо-Верде",
-    "Etc/GMT" => "Западноевропейское время",
-    "Europe/Belgrade" => "Центральноевропейское время  Западное центральноафриканское время",
-    "Africa/Cairo" => "Восточноевропейское время, Египет, Израиль, Ливан, Ливия, Турция, ЮАР",
-    "Europe/Kaliningrad" => "Калининградское время, Восточноафриканское время",
-    "Asia/Tehran" => "Тегеранское время",
-    "Europe/Moscow" => "Московское время",
-    "Asia/Kabul" => "Афганистан",
-    "Asia/Tashkent" => "Западный Казахстан, Пакистан, Таджикистан, Туркменистан, Узбекистан",
-    "Asia/Calcutta" => "Индия, Шри-Ланка",
-    "Asia/Katmandu" => "Непал",
-    "Asia/Yekaterinburg" => "Екатеринбургское время, центральная и восточная части Казахстана",
-    "Indian/Cocos" => "Мьянма",
-    "Asia/Omsk" => "Омское время, Новосибирск, Кемерово, Юго-Восточная Азия",
-    "Asia/Shanghai" => "Красноярское время, Западноавстралийское время",
-    "Asia/Irkutsk" => "Иркутское время, Корея, Япония",
-    "Australia/Darwin" => "Центральноавстралийское время",
-    "Asia/Yakutsk" => "Якутское время, Восточноавстралийское время, Западно-тихоокеанское время",
-    "Asia/Vladivostok" => "Владивостокское время, Центрально-тихоокеанское время",
-    "Asia/Magadan" => "Магаданское время, Маршалловы Острова, Фиджи, Новая Зеландия",
-    "Pacific/Tongatapu" => "Самоа, Тонга",
-    "Pacific/Kiritimati" => "Острова Лайн"
-);
+$atimezone = [
+    'Pacific/Honolulu' => 'Гавайи',
+    'America/Anchorage' => 'Аляска',
+    'America/Los_Angeles' => 'Североамериканское тихоокеанское время',
+    'America/Denver' => 'Горное время, Мексика',
+    'America/Chicago' => 'Центральное время, Центральноамериканское время, Мексика',
+    'America/New_York' => 'Североамериканское восточное время, Южноамериканское тихоокеанское время',
+    'America/Caracas' => 'Каракас',
+    'America/Halifax' => 'Атлантическое время',
+    'America/St_Johns' => 'Ньюфаундленд',
+    'America/Argentina/Buenos_Aires' => 'Южноамериканское восточное время, Гренландия',
+    'America/Sao_Paulo' => 'Среднеатлантическое время',
+    'Atlantic/Azores' => 'Азорские острова, Кабо-Верде',
+    'Etc/GMT' => 'Западноевропейское время',
+    'Europe/Belgrade' => 'Центральноевропейское время  Западное центральноафриканское время',
+    'Africa/Cairo' => 'Восточноевропейское время, Египет, Израиль, Ливан, Ливия, Турция, ЮАР',
+    'Europe/Kaliningrad' => 'Калининградское время, Восточноафриканское время',
+    'Asia/Tehran' => 'Тегеранское время',
+    'Europe/Moscow' => 'Московское время',
+    'Asia/Kabul' => 'Афганистан',
+    'Asia/Tashkent' => 'Западный Казахстан, Пакистан, Таджикистан, Туркменистан, Узбекистан',
+    'Asia/Calcutta' => 'Индия, Шри-Ланка',
+    'Asia/Katmandu' => 'Непал',
+    'Asia/Yekaterinburg' => 'Екатеринбургское время, центральная и восточная части Казахстана',
+    'Indian/Cocos' => 'Мьянма',
+    'Asia/Omsk' => 'Омское время, Новосибирск, Кемерово, Юго-Восточная Азия',
+    'Asia/Shanghai' => 'Красноярское время, Западноавстралийское время',
+    'Asia/Irkutsk' => 'Иркутское время, Корея, Япония',
+    'Australia/Darwin' => 'Центральноавстралийское время',
+    'Asia/Yakutsk' => 'Якутское время, Восточноавстралийское время, Западно-тихоокеанское время',
+    'Asia/Vladivostok' => 'Владивостокское время, Центрально-тихоокеанское время',
+    'Asia/Magadan' => 'Магаданское время, Маршалловы Острова, Фиджи, Новая Зеландия',
+    'Pacific/Tongatapu' => 'Самоа, Тонга',
+    'Pacific/Kiritimati' => 'Острова Лайн',
+];
 
 foreach ($atimezone as $timezone => $value) {
     $dtimezone =
         timezone_offset_get(
             new DateTimeZone($timezone),
-            new DateTime("now", new DateTimeZone("GMT"))
+            new DateTime('now', new DateTimeZone('GMT')),
         );
 
-    $dtime = ($dtimezone >= 0 ? '+' : '-') . sprintf("%02d:%02d", abs((int)$dtimezone) / 3600, abs((int)$dtimezone) % 3600 / 60);
-    $atimezone[$timezone] = array(
+    $dtime = ($dtimezone >= 0 ? '+' : '-') . sprintf('%02d:%02d', abs((int) $dtimezone) / 3600, abs((int) $dtimezone) % 3600 / 60);
+    $atimezone[$timezone] = [
         'text' => "($dtime) $value",
-        'value' => $dtimezone
-    );
+        'value' => $dtimezone,
+    ];
 }
 foreach (DateTimeZone::listIdentifiers() as $timezone) {
     $dtimezone =
         timezone_offset_get(
             new DateTimeZone($timezone),
-            new DateTime("now", new DateTimeZone("GMT"))
+            new DateTime('now', new DateTimeZone('GMT')),
         );
-    $dtime = ($dtimezone >= 0 ? '+' : '-') . sprintf("%02d:%02d", abs((int)$dtimezone) / 3600, abs((int)$dtimezone) % 3600 / 60);
-    $was = False;
+    $dtime = ($dtimezone >= 0 ? '+' : '-') . sprintf('%02d:%02d', abs((int) $dtimezone) / 3600, abs((int) $dtimezone) % 3600 / 60);
+    $was = false;
     foreach ($atimezone as $t) {
         if ($t['value'] == $dtimezone) {
-            $was = True;
+            $was = true;
             break;
         }
     }
     if (!$was) {
-        $atimezone[$timezone] = array(
+        $atimezone[$timezone] = [
             'text' => "($dtime) $timezone",
-            'value' => $dtimezone
-        );
+            'value' => $dtimezone,
+        ];
     }
 }
 
-$adurationlimit = array(
-    "3 hours" => 3 * 60 * 60,
-    "6 hours" => 6 * 60 * 60,
-    "12 hours" => 12 * 60 * 60,
-    "1 day" => 24 * 60 * 60,
-    "3 days" => 3 * 24 * 60 * 60,
-    "8 days" => 8 * 24 * 60 * 60,
-    "21 days" => 21 * 24 * 60 * 60,
-    "no limit" => 3000 * 365 * 24 * 60 * 60
-);
-
+$adurationlimit = [
+    '3 hours' => 3 * 60 * 60,
+    '6 hours' => 6 * 60 * 60,
+    '12 hours' => 12 * 60 * 60,
+    '1 day' => 24 * 60 * 60,
+    '3 days' => 3 * 24 * 60 * 60,
+    '8 days' => 8 * 24 * 60 * 60,
+    '21 days' => 21 * 24 * 60 * 60,
+    'no limit' => 3000 * 365 * 24 * 60 * 60,
+];
 
 function cmp_timezone($a, $b)
 {
-    if ($a['value'] == $b['value']) return 0;
-    return (int)$a['value'] < (int)$b['value'] ? -1 : 1;
+    if ($a['value'] == $b['value']) {
+        return 0;
+    }
+    return (int) $a['value'] < (int) $b['value'] ? -1 : 1;
 }
 uasort($atimezone, 'cmp_timezone');
 
 function replace_russian_moths_to_number($page)
 {
     $page = preg_replace(
-        array('#\sянваря\s#', '#\sфевраля\s#', '#\sмарта\s#', '#\sапреля\s#', '#\sмая\s#', '#\sиюня\s#', '#\sиюля\s#', '#\sавгуста\s#', '#\sсентября\s#', '#\sоктября\s#', '#\sноября\s#', '#\sдекабря\s#'),
-        array('.01.', '.02.', '.03.', '.04.', '.05.', '.06.', '.07.', '.08.', '.09.', '.10.', '.11.', '.12.'),
-        $page
+        ['#\sянваря\s#', '#\sфевраля\s#', '#\sмарта\s#', '#\sапреля\s#', '#\sмая\s#', '#\sиюня\s#', '#\sиюля\s#', '#\sавгуста\s#', '#\sсентября\s#', '#\sоктября\s#', '#\sноября\s#', '#\sдекабря\s#'],
+        ['.01.', '.02.', '.03.', '.04.', '.05.', '.06.', '.07.', '.08.', '.09.', '.10.', '.11.', '.12.'],
+        $page,
     );
     $page = preg_replace(
-        array('#\sянваря#', '#\sфевраля#', '#\sмарта#', '#\sапреля#', '#\sмая#', '#\sиюня#', '#\sиюля#', '#\sавгуста#', '#\sсентября#', '#\sоктября#', '#\sноября#', '#\sдекабря#'),
-        array('.01', '.02', '.03', '.04', '.05', '.06', '.07', '.08', '.09', '.10', '.11', '.12'),
-        $page
+        ['#\sянваря#', '#\sфевраля#', '#\sмарта#', '#\sапреля#', '#\sмая#', '#\sиюня#', '#\sиюля#', '#\sавгуста#', '#\sсентября#', '#\sоктября#', '#\sноября#', '#\sдекабря#'],
+        ['.01', '.02', '.03', '.04', '.05', '.06', '.07', '.08', '.09', '.10', '.11', '.12'],
+        $page,
     );
     $page = preg_replace(
-        array('#\sянв\b#', '#\sфев\b#', '#\sмар\b#', '#\sапр\b#', '#\sмай\b#', '#\sмая\b#', '#\sиюн\b#', '#\sиюл\b#', '#\sавг\b#', '#\sсен\b#', '#\sокт\b#', '#\sноя\b#', '#\sдек\b#'),
-        array('.01', '.02', '.03', '.04', '.05', '.05', '.06', '.07', '.08', '.09', '.10', '.11', '.12'),
-        $page
+        ['#\sянв\b#', '#\sфев\b#', '#\sмар\b#', '#\sапр\b#', '#\sмай\b#', '#\sмая\b#', '#\sиюн\b#', '#\sиюл\b#', '#\sавг\b#', '#\sсен\b#', '#\sокт\b#', '#\sноя\b#', '#\sдек\b#'],
+        ['.01', '.02', '.03', '.04', '.05', '.05', '.06', '.07', '.08', '.09', '.10', '.11', '.12'],
+        $page,
     );
     return $page;
 }
@@ -481,7 +482,7 @@ function get_calendar_authorization()
         return false;
     }
     $credentials = json_decode(file_get_contents(CALENDARCREDENTIALSFILE), true);
-    $token = $credentials["token_response"];
+    $token = $credentials['token_response'];
     return "{$token['token_type']} {$token['access_token']}";
 }
 
@@ -521,23 +522,22 @@ function normalize_url_path($path)
 
 function unparse_url($parsed_url)
 {
-    $scheme   = isset($parsed_url['scheme']) ? $parsed_url['scheme'] . '://' : '';
-    $host     = isset($parsed_url['host']) ? $parsed_url['host'] : '';
-    $port     = isset($parsed_url['port']) ? ':' . $parsed_url['port'] : '';
-    $user     = isset($parsed_url['user']) ? $parsed_url['user'] : '';
-    $pass     = isset($parsed_url['pass']) ? ':' . $parsed_url['pass']  : '';
-    $pass     = ($user || $pass) ? "$pass@" : '';
-    $path     = isset($parsed_url['path']) ? $parsed_url['path'] : '';
-    $path     = normalize_url_path($path);
-    $query    = isset($parsed_url['query']) ? '?' . $parsed_url['query'] : '';
+    $scheme = isset($parsed_url['scheme']) ? $parsed_url['scheme'] . '://' : '';
+    $host = isset($parsed_url['host']) ? $parsed_url['host'] : '';
+    $port = isset($parsed_url['port']) ? ':' . $parsed_url['port'] : '';
+    $user = isset($parsed_url['user']) ? $parsed_url['user'] : '';
+    $pass = isset($parsed_url['pass']) ? ':' . $parsed_url['pass'] : '';
+    $pass = ($user || $pass) ? "$pass@" : '';
+    $path = isset($parsed_url['path']) ? $parsed_url['path'] : '';
+    $path = normalize_url_path($path);
+    $query = isset($parsed_url['query']) ? '?' . $parsed_url['query'] : '';
     $fragment = isset($parsed_url['fragment']) ? '#' . $parsed_url['fragment'] : '';
     return "$scheme$user$pass$host$port$path$query$fragment";
 }
 
-
 function parse_schema_host($url)
 {
-    return parse_url($url, PHP_URL_SCHEME) . "://" . parse_url($url, PHP_URL_HOST);
+    return parse_url($url, PHP_URL_SCHEME) . '://' . parse_url($url, PHP_URL_HOST);
 }
 
 function url_merge($original, $new, $merge_query = false)
@@ -565,7 +565,7 @@ function url_merge($original, $new, $merge_query = false)
                 $qs = array_merge($original['query'], $new['query']);
             }
         }
-    } else if (isset($new['query'])) {
+    } elseif (isset($new['query'])) {
         $qs = $new['query'];
     }
     if (isset($original['path']) && isset($new['path']) && $new['path'][0] != '/') {
@@ -590,7 +590,7 @@ function url_merge($original, $new, $merge_query = false)
 
 function romanic_number($integer, $upcase = true)
 {
-    $table = array(
+    $table = [
         'M' => 1000,
         'CM' => 900,
         'D' => 500,
@@ -603,8 +603,8 @@ function romanic_number($integer, $upcase = true)
         'IX' => 9,
         'V' => 5,
         'IV' => 4,
-        'I' => 1
-    );
+        'I' => 1,
+    ];
     $return = '';
     while ($integer > 0) {
         foreach ($table as $rom => $arb) {
@@ -622,41 +622,40 @@ function ending_ordinal($integer)
 {
     switch ($integer % 10) {
         case 1:
-            return "st";
+            return 'st';
         case 2:
-            return "nd";
+            return 'nd';
         case 3:
-            return "rd";
+            return 'rd';
         default:
-            return "th";
+            return 'th';
     }
 }
 
 // https://gist.github.com/erickpatrick/3039081#file-seconds-human-redable-text-php-L9
 function human_readable_seconds($secs)
 {
-    $units = array(
-        "week"   => 7 * 24 * 3600,
-        "day"    =>     24 * 3600,
-        "hour"   =>          3600,
-        "minute" =>            60,
-        "second" =>             1,
-    );
+    $units = [
+        'week' => 7 * 24 * 3600,
+        'day' => 24 * 3600,
+        'hour' => 3600,
+        'minute' => 60,
+        'second' => 1,
+    ];
     // specifically handle zero
     if ($secs < 1) {
-        return number_format($secs, 3) . " seconds";
+        return number_format($secs, 3) . ' seconds';
     }
-    $s = "";
+    $s = '';
     foreach ($units as $name => $divisor) {
         if ($quot = intval($secs / $divisor)) {
             $s .= "$quot $name";
-            $s .= (abs($quot) > 1 ? "s" : "") . ", ";
+            $s .= (abs($quot) > 1 ? 's' : '') . ', ';
             $secs -= $quot * $divisor;
         }
     }
     return substr($s, 0, -2);
 }
-
 
 // https://stackoverflow.com/questions/2955251/php-function-to-make-slug-url-string/2955878#2955878
 function slugify($text)
@@ -698,11 +697,12 @@ function short_message($data)
 
 function ordinal($number)
 {
-    $ends = array('th', 'st', 'nd', 'rd', 'th', 'th', 'th', 'th', 'th', 'th');
-    if ((($number % 100) >= 11) && (($number % 100) <= 13))
+    $ends = ['th', 'st', 'nd', 'rd', 'th', 'th', 'th', 'th', 'th', 'th'];
+    if ((($number % 100) >= 11) && (($number % 100) <= 13)) {
         return $number . 'th';
-    else
+    } else {
         return $number . $ends[$number % 10];
+    }
 }
 
 function debug_content($content)
@@ -766,13 +766,13 @@ function parsed_table($table_html)
     $dom->loadHTML($table_html);
 
     $cols = $dom->getElementsByTagName('th');
-    $header = array();
+    $header = [];
     foreach ($cols as $col) {
         $header[] = slugify($col->nodeValue);
     }
 
     $rows = $dom->getElementsByTagName('tr');
-    $data = array();
+    $data = [];
     foreach ($rows as $row) {
         $cols = $row->getElementsByTagName('td');
         if ($cols->length == 0) {
@@ -786,7 +786,7 @@ function parsed_table($table_html)
         } else {
             $row = iterator_to_array($cols);
         }
-        $row_data = array();
+        $row_data = [];
         foreach ($row as $field => $col) {
             $row_data[$field] = trim($col->nodeValue);
             $a = $col->getElementsByTagName('a');
@@ -804,7 +804,7 @@ function pretty_print_sql($sql)
     return SqlFormatter::format($sql, false);
 }
 
-function season_year($timestamp = NULL)
+function season_year($timestamp = null)
 {
     $year = date('Y', $timestamp);
     $month = date('n', $timestamp);
@@ -833,10 +833,10 @@ function progress_bar($done, $total, $bar_length = 50)
     $estimated_total = $done > 0 ? ($elapsed / $done) * $total : 0;
     $remaining = max(0, $estimated_total - $elapsed);
 
-    $elapsed_minutes = (int)($elapsed / 60);
-    $elapsed_seconds = (int)$elapsed % 60;
-    $remaining_minutes = (int)($remaining / 60);
-    $remaining_seconds = (int)$remaining % 60;
+    $elapsed_minutes = (int) ($elapsed / 60);
+    $elapsed_seconds = (int) $elapsed % 60;
+    $remaining_minutes = (int) ($remaining / 60);
+    $remaining_seconds = (int) $remaining % 60;
 
     printf(
         "\r[%s] %3d%% (%d/%d) | Elapsed: %02d:%02d | Remaining: %02d:%02d",
@@ -847,7 +847,7 @@ function progress_bar($done, $total, $bar_length = 50)
         $elapsed_minutes,
         $elapsed_seconds,
         $remaining_minutes,
-        $remaining_seconds
+        $remaining_seconds,
     );
 
     if ($done >= $total) {
@@ -861,21 +861,23 @@ function parse_duration($duration)
         return $duration;
     }
     if (preg_match('#^(?:(?<d>\d+)d)?(?:\s*(?<hr>\d+(\.\d+)?)(?:hr|h|\s*hours?))?(?:\s*(?<min>\d+)(?:min|m))?#', $duration, $match) && $match[0]) {
-        foreach (array('d', 'hr', 'min') as $arg) {
-            if (!isset($match[$arg]) || empty($match[$arg])) $match[$arg] = 0;
+        foreach (['d', 'hr', 'min'] as $arg) {
+            if (!isset($match[$arg]) || empty($match[$arg])) {
+                $match[$arg] = 0;
+            }
         }
         $duration = (($match['d'] * 24 + $match['hr']) * 60 + $match['min']) * 60;
-    } else if (preg_match('#^(\d+)\.(\d+):(\d+):(\d+)$#', $duration, $match))
-        $duration = (((int)$match[1] * 24 + (int)$match[2]) * 60 + (int)$match[3]) * 60 + (int)$match[4];
-    else if (preg_match('#^(\d+):(\d+):(\d+)$#', $duration, $match))
-        $duration = ((int)$match[1] * 60 + (int)$match[2]) * 60 + (int)$match[3];
-    else if (preg_match('#^(\d+):(\d+)$#', $duration, $match))
-        $duration = ((int)$match[1] * 60 + (int)$match[2]) * 60;
-    else if (preg_match('#^(\d+)$#', $duration, $match))
-        $duration = (int)$match[1] * 60;
-    else {
+    } elseif (preg_match('#^(\d+)\.(\d+):(\d+):(\d+)$#', $duration, $match)) {
+        $duration = (((int) $match[1] * 24 + (int) $match[2]) * 60 + (int) $match[3]) * 60 + (int) $match[4];
+    } elseif (preg_match('#^(\d+):(\d+):(\d+)$#', $duration, $match)) {
+        $duration = ((int) $match[1] * 60 + (int) $match[2]) * 60 + (int) $match[3];
+    } elseif (preg_match('#^(\d+):(\d+)$#', $duration, $match)) {
+        $duration = ((int) $match[1] * 60 + (int) $match[2]) * 60;
+    } elseif (preg_match('#^(\d+)$#', $duration, $match)) {
+        $duration = (int) $match[1] * 60;
+    } else {
         $duration = preg_replace('/^([0-9]+)d /', '\1 days ', $duration);
-        $duration = strtotime("01.01.1970 " . $duration . " +0000");
+        $duration = strtotime('01.01.1970 ' . $duration . ' +0000');
     }
     return $duration;
 }
@@ -919,7 +921,7 @@ function hydrate_datetime($times, $alignment = 'right')
         $parts = explode(' ', $time);
         if ($alignment == 'left') {
             $parts = array_merge($parts, array_slice($base_parts, count($parts)));
-        } else if ($alignment == 'right') {
+        } elseif ($alignment == 'right') {
             $parts = array_merge(array_slice($base_parts, 0, count($base_parts) - count($parts)), $parts);
         }
         $time = implode(' ', $parts);

@@ -1,12 +1,13 @@
 <?php
+
 require_once dirname(__FILE__) . '/../../config.php';
 
 $url = 'http://jollybeeoj.com/tools/contest/data';
-$json = curlexec($url, "", array('json_output' => true));
+$json = curlexec($url, '', ['json_output' => true]);
 if (is_array($json)) {
     foreach ($json as $data) {
         $ok = true;
-        foreach (array('startTime', 'endTime', 'title', 'contestId') as $key) {
+        foreach (['startTime', 'endTime', 'title', 'contestId'] as $key) {
             if (!isset($data[$key]) || empty($data[$key])) {
                 $ok = false;
                 break;
@@ -15,7 +16,7 @@ if (is_array($json)) {
         if (!$ok) {
             continue;
         }
-        $contests[] = array(
+        $contests[] = [
             'title' => $data['title'],
             'start_time' => $data['startTime'] / 1000,
             'end_time' => $data['endTime'] / 1000,
@@ -23,8 +24,8 @@ if (is_array($json)) {
             'host' => $HOST,
             'rid' => $RID,
             'timezone' => $TIMEZONE,
-            'key' => $data['contestId']
-        );
+            'key' => $data['contestId'],
+        ];
     }
 } else {
     trigger_error("No get json data from $url", E_USER_WARNING);

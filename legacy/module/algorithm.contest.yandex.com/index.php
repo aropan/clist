@@ -1,5 +1,6 @@
 <?php
-require_once dirname(__FILE__) . "/../../config.php";
+
+require_once dirname(__FILE__) . '/../../config.php';
 
 $debug_ = $RID == -1 || DEBUG;
 
@@ -14,7 +15,7 @@ for (;; --$year) {
 
     $page = curlexec($url);
 
-    $urls = array();
+    $urls = [];
 
     preg_match_all('#<a[^>]*href="(?P<href>[^"]*/algorithm' . $year . '/[^>]+)">#', $page, $matches);
     foreach ($matches['href'] as $href) {
@@ -30,16 +31,16 @@ for (;; --$year) {
         }
     }
 
-    $contest_urls = array();
+    $contest_urls = [];
     foreach ($urls as $u) {
-        $u = preg_replace('#yandex.ru#', "yandex.com", $u);
+        $u = preg_replace('#yandex.ru#', 'yandex.com', $u);
         $u = preg_replace('#.com/contest#', ".com/algorithm{$year}/contest", $u);
         $u = preg_replace('#(/contest/[0-9]+).*$#', '\1/', $u);
         $contest_urls[] = $u;
     }
     $contest_urls = array_unique($contest_urls);
 
-    $ids = array();
+    $ids = [];
     foreach ($contest_urls as $url) {
         if (!preg_match('#/contest/(?P<key>[0-9]+)/#', $url, $match)) {
             continue;
@@ -53,7 +54,7 @@ for (;; --$year) {
 
         $page = curlexec($url);
         preg_match_all('#<div[^>]*class="status__prop"[^>]*>[^<]*<div[^>]*>(?P<name>[^<]+)</div>[^<]*<div[^>]*>(?<value>[^<]*)<(?:time[^>]*timestamp[^:]*:(?P<ts>[0-9]+))?#', $page, $ms, PREG_SET_ORDER);
-        $values = array();
+        $values = [];
         foreach ($ms as $m) {
             $values[$m['name']] = $m;
         }
@@ -63,28 +64,28 @@ for (;; --$year) {
         }
         $title = html_entity_decode($m['title']);
 
-        $contest = array(
+        $contest = [
             'title' => $title,
             'url' => $url,
             'host' => $HOST,
             'rid' => $RID,
             'timezone' => $TIMEZONE,
             'key' => $key,
-        );
+        ];
 
         foreach (
-            array(
+            [
                 'начало:' => 'start_time',
                 'start:' => 'start_time',
                 'конец:' => 'end_time',
                 'end:' => 'end_time',
                 'длительность:' => 'duration',
                 'duration:' => 'duration',
-            ) as $k => $v
+            ] as $k => $v
         ) {
             if (!empty($values[$k]['value'])) {
                 $contest[$v] = html_entity_decode($values[$k]['value']);
-            } else if (!empty($values[$k]['ts'])) {
+            } elseif (!empty($values[$k]['ts'])) {
                 $contest[$v] = $values[$k]['ts'] / 1000;
             }
         }

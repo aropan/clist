@@ -1,20 +1,21 @@
 <?php
-ini_set("display_errors", 1);
-ini_set("display_startup_errors", 1);
+
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
 ini_set('error_reporting', E_ALL);
 //    ini_set("max_execution_time", 0);
 
-define("ISCLI", isset($_SERVER['argv']));
-define("DEBUG", isset($_GET['debug']) && isset($_SERVER['argv']));
-define("CACHE", DEBUG);
-define("CACHEDIR", dirname(__FILE__) . "/cache");
-define("CURLEXEC_CACHE_MODE", getenv("CURLEXEC_CACHE_MODE") ?: "");  // "" | "record" | "replay"
-define("CURLEXEC_CACHE_DIR", getenv("CURLEXEC_CACHE_DIR") ?: "");
-define("IGNOREVALUE", "__IGNORE__");
+define('ISCLI', isset($_SERVER['argv']));
+define('DEBUG', isset($_GET['debug']) && isset($_SERVER['argv']));
+define('CACHE', DEBUG);
+define('CACHEDIR', dirname(__FILE__) . '/cache');
+define('CURLEXEC_CACHE_MODE', getenv('CURLEXEC_CACHE_MODE') ?: '');  // "" | "record" | "replay"
+define('CURLEXEC_CACHE_DIR', getenv('CURLEXEC_CACHE_DIR') ?: '');
+define('IGNOREVALUE', '__IGNORE__');
 
-require_once "db.class.php";
-require_once "libs/smarty/libs/Smarty.class.php";
-date_default_timezone_set("UTC");
+require_once 'db.class.php';
+require_once 'libs/smarty/libs/Smarty.class.php';
+date_default_timezone_set('UTC');
 
 $smarty = new Smarty();
 
@@ -23,7 +24,7 @@ $smarty->compile_dir = 'smarty/compile/';
 $smarty->cache_dir = 'smarty/cache/';
 $smarty->caching = 1500;
 
-$files = glob(CACHEDIR . "/*");
+$files = glob(CACHEDIR . '/*');
 $now = time();
 foreach ($files as $file) {
     if (is_file($file)) {
@@ -33,17 +34,17 @@ foreach ($files as $file) {
     }
 }
 
-define("LOGFILE", dirname(__FILE__) . "/logs/general.log");
-define("COUNTLINEINLOGFILE", 10000);
-define("LOGREMOVEDDIR", dirname(__FILE__) . '/logs/removed/');
+define('LOGFILE', dirname(__FILE__) . '/logs/general.log');
+define('COUNTLINEINLOGFILE', 10000);
+define('LOGREMOVEDDIR', dirname(__FILE__) . '/logs/removed/');
 
-foreach (array(CACHEDIR, dirname(LOGFILE), LOGREMOVEDDIR) as $dir) {
+foreach ([CACHEDIR, dirname(LOGFILE), LOGREMOVEDDIR] as $dir) {
     if (!file_exists($dir)) {
         mkdir($dir);
         chmod($dir, 0777);
     }
 }
 
-define("CALENDARCREDENTIALSFILE", dirname(__FILE__) . "/api/google_calendar/credentials");
+define('CALENDARCREDENTIALSFILE', dirname(__FILE__) . '/api/google_calendar/credentials');
 
-require_once "helper.php";
+require_once 'helper.php';

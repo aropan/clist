@@ -1,14 +1,15 @@
 <?php
+
 require_once dirname(__FILE__) . '/../../config.php';
 
 $_contests = $contests;
-$contests = array();
+$contests = [];
 
 $subdomains = $INFO['update']['subdomains'];
 foreach ($subdomains as $subdomain_format) {
     $n_skip = 0;
     for ($year = season_year() + 1, $iter = 0; $n_skip < 3; $year--, $iter++) {
-        $subdomain = strtr($subdomain_format, array('{YY}' => substr($year, 2, 2), '{YYYY}' => $year));
+        $subdomain = strtr($subdomain_format, ['{YY}' => substr($year, 2, 2), '{YYYY}' => $year]);
         $HOST = "$subdomain.kattis.com";
         $URL = "https://$HOST/contests/";
         $n_contests = -count($contests);

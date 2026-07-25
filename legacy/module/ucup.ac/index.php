@@ -1,6 +1,6 @@
 <?php
 
-require_once dirname(__FILE__) . "/../../config.php";
+require_once dirname(__FILE__) . '/../../config.php';
 
 function parse_season($base_url)
 {
@@ -16,14 +16,14 @@ function parse_season($base_url)
     );
     $standings = [];
     foreach ($matches as $stage => $th) {
-        $standings_url = url_merge($stage_standings_url, $th["href"]);
+        $standings_url = url_merge($stage_standings_url, $th['href']);
         $parsed_url = parse_url($standings_url);
-        $parsed_url["path"] = rtrim($parsed_url["path"], "/") . "/standings/";
+        $parsed_url['path'] = rtrim($parsed_url['path'], '/') . '/standings/';
         $standings_url = unparse_url($parsed_url);
-        $standings[$stage] = ["standings_url" => $standings_url, "title" => $th["title"], "stage" => $stage];
+        $standings[$stage] = ['standings_url' => $standings_url, 'title' => $th['title'], 'stage' => $stage];
     }
 
-    $contests_url = "https://contest.ucup.ac/contests";
+    $contests_url = 'https://contest.ucup.ac/contests';
     $contests_page = curlexec($contests_url);
     preg_match_all(
         '#<a[^>]*href="(?P<href>[^"]*/contest/(?P<cid>[0-9]+))"[^>]*>\s*(?P<title>The\b[^<]+:[^<]+)</a>#s',
@@ -34,14 +34,14 @@ function parse_season($base_url)
 
     $standings_canonized_titles = [];
     foreach ($matches as $match) {
-        $contest_url = url_merge($contests_url, $match["href"]);
-        $title = trim($match["title"]);
-        $standings_url = url_merge($contest_url . "/", "standings");
-        $canonized_title = slugify(trim(preg_replace("#:.*$#", "", $title)));
-        $name = preg_replace("#.*:\s*#", "", $title);
-        $name = preg_replace("#^grand prix of\s*#i", "", $name);
-        $name = preg_replace("#\s*grand prix$#i", "", $name);
-        $standings_canonized_titles[$canonized_title] = ["standings_url" => $standings_url, "name" => $name];
+        $contest_url = url_merge($contests_url, $match['href']);
+        $title = trim($match['title']);
+        $standings_url = url_merge($contest_url . '/', 'standings');
+        $canonized_title = slugify(trim(preg_replace('#:.*$#', '', $title)));
+        $name = preg_replace("#.*:\s*#", '', $title);
+        $name = preg_replace("#^grand prix of\s*#i", '', $name);
+        $name = preg_replace("#\s*grand prix$#i", '', $name);
+        $standings_canonized_titles[$canonized_title] = ['standings_url' => $standings_url, 'name' => $name];
     }
 
     $stage_url = $base_url;
@@ -50,94 +50,94 @@ function parse_season($base_url)
     if (!preg_match("#<h[12][^>]*>\s*season\s*(?P<season>[0-9]+)\b#i", $schedule_page, $match)) {
         return;
     }
-    $season = $match["season"];
+    $season = $match['season'];
 
     $stage_start_time = null;
     $stage_end_time = null;
 
-    preg_match_all("#<tr>.*?</tr>#s", $schedule_page, $rows, PREG_SET_ORDER);
+    preg_match_all('#<tr>.*?</tr>#s', $schedule_page, $rows, PREG_SET_ORDER);
     $headers = false;
     $seen = [];
     foreach ($rows as $row) {
-        preg_match_all("#<t[hd][^>]*>(?P<values>.*?)</(?P<tag>t[hd])>#s", $row[0], $cols);
-        if ($headers === false || $cols["tag"][0] == "th") {
-            $headers = array_map("strtolower", $cols["values"]);
+        preg_match_all('#<t[hd][^>]*>(?P<values>.*?)</(?P<tag>t[hd])>#s', $row[0], $cols);
+        if ($headers === false || $cols['tag'][0] == 'th') {
+            $headers = array_map('strtolower', $cols['values']);
             continue;
         }
 
-        $values = $cols["values"];
+        $values = $cols['values'];
         foreach ($values as &$value) {
             if (preg_match('#<a[^>]*href="(?P<href>[^"]*)"[^>]*>#', $value, $match)) {
-                $value = url_merge($stage_url, $match["href"]);
+                $value = url_merge($stage_url, $match['href']);
             }
-            $value = preg_replace('#<[^?]*>.*$#', "", $value);
+            $value = preg_replace('#<[^?]*>.*$#', '', $value);
             $value = trim($value);
         }
         $min_count = min(count($headers), count($values));
         $c = array_combine(array_slice($headers, 0, $min_count), array_slice($values, 0, $min_count));
 
-        if (!isset($c["stage"]) || !isset($c["contest"]) || !isset($c["date"]) || strpos($c["date"], "TBD") !== false) {
+        if (!isset($c['stage']) || !isset($c['contest']) || !isset($c['date']) || strpos($c['date'], 'TBD') !== false) {
             continue;
         }
 
-        $stage_parts = preg_split("#[^a-z0-9]+#i", strtolower($c["stage"]));
-        if (count($stage_parts) == 2 && $stage_parts[0] == "extra") {
-            $stage_desc = $stage_parts[0] . " stage " . $stage_parts[1];
+        $stage_parts = preg_split('#[^a-z0-9]+#i', strtolower($c['stage']));
+        if (count($stage_parts) == 2 && $stage_parts[0] == 'extra') {
+            $stage_desc = $stage_parts[0] . ' stage ' . $stage_parts[1];
         } elseif (count($stage_parts) == 1 && is_numeric($stage_parts[0])) {
-            $stage_desc = "stage " . $stage_parts[0];
+            $stage_desc = 'stage ' . $stage_parts[0];
         } else {
             continue;
         }
         $stage_title = ucwords($stage_desc);
 
-        $name = trim($c["contest"]);
-        $standings_url = isset($c["scoreboard"]) ? $c["scoreboard"] : null;
-        $date = $c["date"];
+        $name = trim($c['contest']);
+        $standings_url = isset($c['scoreboard']) ? $c['scoreboard'] : null;
+        $date = $c['date'];
 
-        $title = "The " . ordinal($season) . " Universal Cup. $stage_title";
+        $title = 'The ' . ordinal($season) . " Universal Cup. $stage_title";
         $canonized_title = slugify($title);
         if (isset($standings_canonized_titles[$canonized_title])) {
             $standings_info = $standings_canonized_titles[$canonized_title];
-            $standings_url = $standings_info["standings_url"];
-            if ($name == "TBD") {
-                $name = $standings_info["name"];
+            $standings_url = $standings_info['standings_url'];
+            if ($name == 'TBD') {
+                $name = $standings_info['name'];
             }
         }
-        $title .= ": " . $name;
+        $title .= ': ' . $name;
 
-        if (strpos($date, "to") !== false) {
-            $date = trim(explode("to", $date)[0]);
+        if (strpos($date, 'to') !== false) {
+            $date = trim(explode('to', $date)[0]);
         }
 
-        $parts = explode(".", $date);
+        $parts = explode('.', $date);
         if (strlen($parts[0]) == 4) {
             $parts = array_reverse($parts);
         }
-        $date = implode(".", $parts);
+        $date = implode('.', $parts);
 
         // $season = date('Y', strtotime($date)) - 2022 + (date('m', strtotime($date)) >= 9? 1 : 0);
-        $start_time = $date . " 05:00 UTC";
-        $end_time = $date . " 23:00 UTC";
-        $duration = "05:00";
-        $stage_key = str_replace(" ", "-", $stage_desc);
-        $key = "ucup-" . $season . "-" . $stage_key;
-        $info = ["parse" => ["season" => "$season", "stage" => $stage_key]];
+        $start_time = $date . ' 05:00 UTC';
+        $end_time = $date . ' 23:00 UTC';
+        $duration = '05:00';
+        $stage_key = str_replace(' ', '-', $stage_desc);
+        $key = 'ucup-' . $season . '-' . $stage_key;
+        $info = ['parse' => ['season' => "$season", 'stage' => $stage_key]];
 
         $standings_stage = null;
         foreach ($standings as $stage => $info) {
-            if (stripos($info["title"], $c["contest"]) === false) {
+            if (stripos($info['title'], $c['contest']) === false) {
                 continue;
             }
-            if ($standings_stage === null || strlen($info["title"]) < strlen($standings_stage["title"])) {
+            if ($standings_stage === null || strlen($info['title']) < strlen($standings_stage['title'])) {
                 $standings_stage = $info;
             }
         }
         if ($standings_stage) {
-            $standings_url = $standings_stage["standings_url"];
-            unset($standings[$standings_stage["stage"]]);
+            $standings_url = $standings_stage['standings_url'];
+            unset($standings[$standings_stage['stage']]);
         }
 
-        $start_and_title = $start_time . " " . $c["stage"] . " " . trim($c["contest"]);
+        $start_and_title = $start_time . ' ' . $c['stage'] . ' ' . trim($c['contest']);
         if (isset($seen[$start_and_title])) {
             continue;
         }
@@ -149,20 +149,20 @@ function parse_season($base_url)
         $stage_end_time = $end_time;
 
         $contest = [
-            "start_time" => $start_time,
-            "end_time" => $end_time,
-            "duration" => $duration,
-            "title" => trim($title),
-            "url" => isset($c["announcement"]) ? $c["announcement"] : $stage_url,
-            "key" => $key,
-            "info" => $info,
-            "host" => $HOST,
-            "timezone" => $TIMEZONE,
-            "rid" => $RID,
+            'start_time' => $start_time,
+            'end_time' => $end_time,
+            'duration' => $duration,
+            'title' => trim($title),
+            'url' => isset($c['announcement']) ? $c['announcement'] : $stage_url,
+            'key' => $key,
+            'info' => $info,
+            'host' => $HOST,
+            'timezone' => $TIMEZONE,
+            'rid' => $RID,
         ];
 
         if ($standings_url) {
-            $contest["standings_url"] = $standings_url;
+            $contest['standings_url'] = $standings_url;
         }
 
         $contests[] = $contest;
@@ -171,22 +171,22 @@ function parse_season($base_url)
     $two_weeks = 14 * 24 * 60 * 60;
     $stage_end_time = strtotime($stage_end_time) + $two_weeks;
     $contest = [
-        "start_time" => $stage_start_time,
-        "end_time" => $stage_end_time,
-        "title" => "The " . ordinal($season) . " Universal Cup. Rating",
-        "url" => $stage_url,
-        "standings_url" => $stage_standings_url,
-        "key" => "ucup-" . $season . "-rating",
-        "info" => ["_inherit_stage" => true],
-        "host" => $HOST,
-        "timezone" => $TIMEZONE,
-        "rid" => $RID,
+        'start_time' => $stage_start_time,
+        'end_time' => $stage_end_time,
+        'title' => 'The ' . ordinal($season) . ' Universal Cup. Rating',
+        'url' => $stage_url,
+        'standings_url' => $stage_standings_url,
+        'key' => 'ucup-' . $season . '-rating',
+        'info' => ['_inherit_stage' => true],
+        'host' => $HOST,
+        'timezone' => $TIMEZONE,
+        'rid' => $RID,
     ];
     $contests[] = $contest;
 
     return $season;
 }
 
-$season = parse_season("https://ucup.ac/");
+$season = parse_season('https://ucup.ac/');
 $prev_season = $season - 1;
 parse_season("https://ucup.ac/archive/season$prev_season/");

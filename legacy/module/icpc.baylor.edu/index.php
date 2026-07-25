@@ -1,5 +1,6 @@
 <?php
-require_once dirname(__FILE__) . "/../../config.php";
+
+require_once dirname(__FILE__) . '/../../config.php';
 
 $page = curlexec($URL);
 unset($xwiki);
@@ -15,7 +16,7 @@ if (preg_match('#src="(?P<js>/static/js/main.[^"]*.js)"#', $page, $match)) {
     $page = curlexec($url);
 }
 
-if (!preg_match("#>The (?P<year>[0-9]{4}) (?P<title>(?:ACM-)?ICPC World Finals)#i", $page, $match)) {
+if (!preg_match('#>The (?P<year>[0-9]{4}) (?P<title>(?:ACM-)?ICPC World Finals)#i', $page, $match)) {
     trigger_error('Not found year and title', E_USER_WARNING);
     return;
 }
@@ -34,7 +35,7 @@ $duration_in_secs = 5 * 60 * 60;
 if (preg_match('#.*(?P<day><th[^>]*colspan[^>]*>\s*[a-z]+\s*(?P<date>[^<]*)[^<]*' . $title . '[^<]*</th>.*?)<th[^>]*colspan[^>]*>#is', $page, $match)) {
     $start_date = trim(preg_replace('#[^a-z0-9]+#i', ' ', $match['date']));
     if (!str_ends_with($start_date, $year)) {
-        $start_date .=  " $year";
+        $start_date .= " $year";
     }
     preg_match_all('#(?P<times>(?:<td[^>]*>[^<]*</td>\s*)+)<td[^>]*required[^>]*>#s', $match['day'], $matches, PREG_SET_ORDER);
     $opt = 1e9;
@@ -42,8 +43,8 @@ if (preg_match('#.*(?P<day><th[^>]*colspan[^>]*>\s*[a-z]+\s*(?P<date>[^<]*)[^<]*
     foreach ($matches as $m) {
         $times = $m['times'];
         if (
-            (preg_match_all('#<td[^>]*>(?P<time>[^<]+)</td>#', $times, $matches) && count($matches['time']) == 2) ||
-            (preg_match_all('#(?P<time>[0-9]{2}:[0-9]{2})#', $times, $matches) && count($matches['time']) == 2)
+            (preg_match_all('#<td[^>]*>(?P<time>[^<]+)</td>#', $times, $matches) && count($matches['time']) == 2)
+            || (preg_match_all('#(?P<time>[0-9]{2}:[0-9]{2})#', $times, $matches) && count($matches['time']) == 2)
         ) {
             list($start_time, $end_time) = $matches['time'];
             $duration_time = strtotime($end_time) - strtotime($start_time);
@@ -58,7 +59,7 @@ if (preg_match('#.*(?P<day><th[^>]*colspan[^>]*>\s*[a-z]+\s*(?P<date>[^<]*)[^<]*
     if ($opt_start_time) {
         $start_date = $start_date . ' ' . $opt_start_time;
     }
-} else if (preg_match("#held on (?P<date>[^,\.<]*)#", $page, $match)) {
+} elseif (preg_match("#held on (?P<date>[^,\.<]*)#", $page, $match)) {
     $start_date = $match['date'] . ' ' . $year;
 } else {
     trigger_error('Not found date', E_USER_WARNING);
@@ -68,11 +69,11 @@ if (preg_match('#.*(?P<day><th[^>]*colspan[^>]*>\s*[a-z]+\s*(?P<date>[^<]*)[^<]*
 if ($where == 'ADA University') {
     $title .= '. Baku, Azerbaijan';
     $timezone = 'Asia/Baku';
-} else if ($where == 'AASTMT') {
+} elseif ($where == 'AASTMT') {
     $title .= ". $where, Egypt";
     $timezone = 'Africa/Cairo';
     $start_date = str_replace($year, $year + 1, $start_date);
-} else if (str_starts_with($where, 'Kazakhstan')) {
+} elseif (str_starts_with($where, 'Kazakhstan')) {
     $title .= ". $where";
     $timezone = 'Asia/Almaty';
 } else {
@@ -80,7 +81,7 @@ if ($where == 'ADA University') {
     $timezone = $TIMEZONE;
 }
 
-$contests[] = array(
+$contests[] = [
     'start_time' => $start_date,
     'duration' => $duration,
     'duration_in_secs' => $duration_in_secs,
@@ -89,8 +90,8 @@ $contests[] = array(
     'host' => $HOST,
     'key' => $year,
     'rid' => $RID,
-    'timezone' => $timezone
-);
+    'timezone' => $timezone,
+];
 
 $parse_full_list = isset($_GET['parse_full_list']);
 for (; $parse_full_list && isset($xwiki) && $year > 1970;) {
@@ -101,7 +102,7 @@ for (; $parse_full_list && isset($xwiki) && $year > 1970;) {
     $page = curlexec($url);
     $url = url_merge($URL, $path);
 
-    if (strpos($page, "page not found") !== false) {
+    if (strpos($page, 'page not found') !== false) {
         break;
     }
 
@@ -113,25 +114,25 @@ for (; $parse_full_list && isset($xwiki) && $year > 1970;) {
     }
 
     if (preg_match_all("#[Tt]he(?P<title>(?:\s+[A-Z0-9][A-Za-z0-9]*)+)#", $page, $matches)) {
-        $title = "";
+        $title = '';
         foreach ($matches['title'] as $t) {
             if (strlen($t) > strlen($title)) {
                 $title = $t;
             }
         }
-        if (strpos($title, "World Champions") !== false) {
-            $title = "The " . ($year - 1976) . "th Annual ACM ICPC World Finals";
+        if (strpos($title, 'World Champions') !== false) {
+            $title = 'The ' . ($year - 1976) . 'th Annual ACM ICPC World Finals';
         } else {
             $title = preg_replace('#International Collegiate Programming Contest#i', 'ICPC', $title);
         }
     } else {
-        $title = "World Finals";
+        $title = 'World Finals';
     }
     if (preg_match("# in\s*(?:<[^>]*>\s*)?(?P<name>[A-Z][A-Za-z.]+(?:,?\s*[A-Z][A-Za-z.]+)*)#", $page, $match)) {
-        $title .= ". " . trim($match['name'], '.');
+        $title .= '. ' . trim($match['name'], '.');
     }
 
-    $contests[] = array(
+    $contests[] = [
         'start_time' => $time,
         'duration' => '24 hours',
         'duration_in_secs' => 5 * 60 * 60,
@@ -140,8 +141,8 @@ for (; $parse_full_list && isset($xwiki) && $year > 1970;) {
         'host' => $HOST,
         'key' => $year,
         'rid' => $RID,
-        'timezone' => $TIMEZONE
-    );
+        'timezone' => $TIMEZONE,
+    ];
 }
 
 if ($RID == -1) {

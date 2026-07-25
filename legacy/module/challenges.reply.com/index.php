@@ -1,32 +1,33 @@
 <?php
-require_once dirname(__FILE__) . "/../../config.php";
-require_once dirname(__FILE__) . "/secret.php";
+
+require_once dirname(__FILE__) . '/../../config.php';
+require_once dirname(__FILE__) . '/secret.php';
 
 $url = 'https://challenges.reply.com/tamtamy/api/user-in-session.json';
-$session = curlexec($url, null, array("json_output" => true));
+$session = curlexec($url, null, ['json_output' => true]);
 if (is_string($session) && str_ends_with($session, 'null')) {
-    $url = "https://challenges.reply.com/tamtamy/user/signIn.action";
-    $data = array(
-        "username" => $CHALLENGE_REPLY_EMAIL,
-        "password" => $CHALLENGE_REPLY_PASSWORD,
-        "remember" => "on",
-        "pageSourceType" => "MODAL",
-    );
-    $data = curlexec($url, $data, array("json_output" => true));
-    if (!isset($data["message"])) {
+    $url = 'https://challenges.reply.com/tamtamy/user/signIn.action';
+    $data = [
+        'username' => $CHALLENGE_REPLY_EMAIL,
+        'password' => $CHALLENGE_REPLY_PASSWORD,
+        'remember' => 'on',
+        'pageSourceType' => 'MODAL',
+    ];
+    $data = curlexec($url, $data, ['json_output' => true]);
+    if (!isset($data['message'])) {
         trigger_error("Invalid singin: $data", E_USER_WARNING);
         return;
-    } else if (!isset($data["message"]) || strpos(strtolower($data["message"]), "success") === false) {
+    } elseif (!isset($data['message']) || strpos(strtolower($data['message']), 'success') === false) {
         trigger_error("Invalid singin: {$data['message']}", E_USER_WARNING);
         return;
     }
     $url = 'https://challenges.reply.com/tamtamy/api/user-in-session.json';
-    $session = curlexec($url, null, array("json_output" => true));
+    $session = curlexec($url, null, ['json_output' => true]);
 }
 unset($CHALLENGE_REPLY_EMAIL);
 unset($CHALLENGE_REPLY_PASSWORD);
 
-$keys = array();
+$keys = [];
 if (isset($session['roles'])) {
     foreach ($session['roles'] as $role) {
         $category = slugify($role['challengeCategory']);
@@ -67,8 +68,8 @@ foreach ($challenges_urls as $url) {
 
     $times = preg_split('#[^0-9]*[–-][^0-9]*#', $time);
     if (count($times) == 1) {
-        $start_time = $date . " " . $time;
-        $end_time = $date . " " . $time;
+        $start_time = $date . ' ' . $time;
+        $end_time = $date . ' ' . $time;
     } else {
         list($start_time, $end_time) = $times;
         $start_time = explode(' ', trim($start_time));
@@ -90,7 +91,7 @@ foreach ($challenges_urls as $url) {
         $key = $keys[$category];
     }
 
-    $contests[] = array(
+    $contests[] = [
         'start_time' => $start_time,
         'end_time' => $end_time,
         'title' => $title,
@@ -100,5 +101,5 @@ foreach ($challenges_urls as $url) {
         'host' => $HOST,
         'rid' => $RID,
         'timezone' => $TIMEZONE,
-    );
+    ];
 };

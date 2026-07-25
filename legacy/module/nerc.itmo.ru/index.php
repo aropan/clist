@@ -1,13 +1,13 @@
 <?php
 
-require_once dirname(__FILE__) . "/../../config.php";
+require_once dirname(__FILE__) . '/../../config.php';
 
 $main_page = curlexec($URL);
 if (empty($main_page)) {
-    trigger_error("Failed to fetch main page", E_USER_WARNING);
+    trigger_error('Failed to fetch main page', E_USER_WARNING);
     return;
 }
-$_contests = array();
+$_contests = [];
 
 function parse_contest_title($page)
 {
@@ -52,12 +52,12 @@ function parse_nef()
         preg_match_all("#<h3[^>]*\bid\b[^>]*>(?P<date>[^<]*)</h3>\s*<table[^>]*>.*?</table>#s", $page, $matches, PREG_SET_ORDER);
         foreach ($matches as $_ => $day) {
             if (preg_match('#<td[^>]*class="time"[^>]*>(?P<time>[^<]*)</td>\s*<td[^>]*class="name"[^>]*>[^a-zA-Z]*(?:Northern Eurasia Finals|Contest)[^a-zA-Z]*</td>#', $day[0], $match)) {
-                list($start_time, $end_time) = explode("-", $match['time']);
+                list($start_time, $end_time) = explode('-', $match['time']);
                 $start_time = $day['date'] . ' ' . $start_time . ' ' . $year;
                 $end_time = $day['date'] . ' ' . $end_time . ' ' . $year;
 
-                $title = "NERC, Northern Eurasia Finals";
-                $key = "icpc-" . $year . "-" . ($year + 1) . "-" . slugify($title);
+                $title = 'NERC, Northern Eurasia Finals';
+                $key = 'icpc-' . $year . '-' . ($year + 1) . '-' . slugify($title);
                 $old_key = IGNOREVALUE;
 
                 if ($standings_url) {
@@ -70,7 +70,7 @@ function parse_nef()
                     }
                 }
 
-                $_contests[] = array(
+                $_contests[] = [
                     'start_time' => $start_time,
                     'end_time' => $end_time,
                     'ignore_times_after_start' => true,
@@ -80,7 +80,7 @@ function parse_nef()
                     'key' => $key,
                     'old_key' => $old_key,
                     'info' => ['series' => 'nef'],
-                );
+                ];
                 break;
             }
         }
@@ -95,7 +95,7 @@ function parse_archive()
         return;
     }
 
-    $urls = array();
+    $urls = [];
     preg_match_all('#<a[^>]*href="(?P<url>[^"]*)"[^>]*>[0-9]+</a>#', $match[0], $matches, PREG_SET_ORDER);
     foreach ($matches as $match) {
         $urls[] = url_merge($URL, $match['url']);
@@ -104,7 +104,7 @@ function parse_archive()
         }
     }
 
-    $standings_url_keys = array();
+    $standings_url_keys = [];
     foreach ($_contests as $contest) {
         if ($contest['standings_url'] !== IGNOREVALUE) {
             $standings_url_keys[$contest['standings_url']] = $contest['key'];
@@ -131,7 +131,7 @@ function parse_archive()
 
             $start_time = "$year-09-02";
             $duration = '05:00';
-            $xml_url = url_merge($u, "standings.xml");
+            $xml_url = url_merge($u, 'standings.xml');
             $xml_page = curlexec($xml_url);
             if (preg_match('#<contest\s*(?P<attributes>[^>]*)>#s', $xml_page, $match)) {
                 preg_match_all('#(?P<name>[^=\s]*)="(?P<value>[^"]*)"#', $match['attributes'], $attributes, PREG_SET_ORDER);
@@ -148,7 +148,7 @@ function parse_archive()
                 }
             }
 
-            $_contests[] = array(
+            $_contests[] = [
                 'start_time' => $start_time,
                 'duration' => $duration,
                 'skip_check_time' => true,
@@ -158,7 +158,7 @@ function parse_archive()
                 'standings_url' => $u,
                 'key' => $key,
                 'old_key' => $old_key,
-            );
+            ];
         }
     }
 }

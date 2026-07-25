@@ -1,35 +1,35 @@
 <?php
-    require_once dirname(__FILE__) . '/../../config.php';
 
-    $data = curlexec($URL, null, array("json_output" => 1));
-    if (!$data || !is_array($data)) {
-        trigger_error("Fetch data = '{$data}'", E_USER_WARNING);
-        return;
-    }
-    if ($data['result'] !== 'OK') {
-        trigger_error("Fetch result = '{$data['result']}', error = '{$data['error']}'", E_USER_WARNING);
-        return;
-    }
+require_once dirname(__FILE__) . '/../../config.php';
 
-    foreach ($data['data'] as $_ => $contest) {
-        $rounds = pop_item($contest, 'rounds');
-        foreach ($rounds as $_ => $round) {
-            $contests[] = array(
-                'start_time' => pop_item($round, 'round_from'),
-                'end_time' => pop_item($round, 'round_to'),
-                'title' => $contest['caption'] . '. ' . $round['caption'],
-                'url' => url_merge($HOST_URL, "/timed_competitions/{$contest['id']}"),
-                'standings_url' => url_merge($HOST_URL, "/timed_competitions/{$contest['id']}/leaderboard/{$round['id']}/"),
-                'host' => $HOST,
-                'rid' => $RID,
-                'timezone' => $TIMEZONE,
-                'info' => ['parse' => ['round' => $round, 'contest' => $contest]],
-                'key' => $contest['id'] . '/' . $round['id'],
-            );
-        }
-    }
+$data = curlexec($URL, null, ['json_output' => 1]);
+if (!$data || !is_array($data)) {
+    trigger_error("Fetch data = '{$data}'", E_USER_WARNING);
+    return;
+}
+if ($data['result'] !== 'OK') {
+    trigger_error("Fetch result = '{$data['result']}', error = '{$data['error']}'", E_USER_WARNING);
+    return;
+}
 
-    if ($RID === -1) {
-        print_r($contests);
+foreach ($data['data'] as $_ => $contest) {
+    $rounds = pop_item($contest, 'rounds');
+    foreach ($rounds as $_ => $round) {
+        $contests[] = [
+            'start_time' => pop_item($round, 'round_from'),
+            'end_time' => pop_item($round, 'round_to'),
+            'title' => $contest['caption'] . '. ' . $round['caption'],
+            'url' => url_merge($HOST_URL, "/timed_competitions/{$contest['id']}"),
+            'standings_url' => url_merge($HOST_URL, "/timed_competitions/{$contest['id']}/leaderboard/{$round['id']}/"),
+            'host' => $HOST,
+            'rid' => $RID,
+            'timezone' => $TIMEZONE,
+            'info' => ['parse' => ['round' => $round, 'contest' => $contest]],
+            'key' => $contest['id'] . '/' . $round['id'],
+        ];
     }
-?>
+}
+
+if ($RID === -1) {
+    print_r($contests);
+}

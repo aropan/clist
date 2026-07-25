@@ -1,7 +1,8 @@
 <?php
+
 require_once dirname(__FILE__) . '/../../config.php';
 
-$preparers = array();
+$preparers = [];
 foreach (['', 'order=UPDATE_TIME_DESC'] as $params) {
     $url = $URL;
     if ($params) {
@@ -25,7 +26,7 @@ if (!count($preparers)) {
 $url = 'https://codeforces.com/api/contest.list?gym=true&lang=en';
 
 curl_setopt($CID, CURLOPT_TIMEOUT, 45);
-$json = curlexec($url, NULL, array('json_output' => true));
+$json = curlexec($url, null, ['json_output' => true]);
 curl_setopt($CID, CURLOPT_TIMEOUT, 15);
 if (!is_array($json)) {
     return;
@@ -41,7 +42,7 @@ if ($json['status'] != 'OK') {
 }
 
 if (isset($_GET['parse_full_list'])) {
-    $contest_ids = array();
+    $contest_ids = [];
     foreach ($json['result'] as $c) {
         $contest_ids[] = $c['id'];
     }
@@ -49,7 +50,7 @@ if (isset($_GET['parse_full_list'])) {
     $contest_ids = array_keys($preparers);
 }
 
-$authors = array();
+$authors = [];
 $chunks = array_chunk($contest_ids, 3);
 foreach ($chunks as $index => $chunk) {
     $url = 'https://codeforces.com/contests/' . implode(',', $chunk) . '?locale=en';
@@ -66,7 +67,7 @@ foreach ($chunks as $index => $chunk) {
         if (preg_match_all('#<a[^>]*href="/profile/(?<handle>[^"/]+)/?"[^>]*>(?P<name>.*?)</a>#', $match['authors'], $m)) {
             $authors[$k] = $m['handle'];
         } else {
-            $authors[$k] = array();
+            $authors[$k] = [];
         }
     }
 
@@ -85,19 +86,19 @@ foreach ($chunks as $index => $chunk) {
 }
 
 if (count($authors) != count($preparers)) {
-    trigger_error("Number of authors " . count($authors) . " is equal to number of preparers " . count($preparers), E_USER_WARNING);
+    trigger_error('Number of authors ' . count($authors) . ' is equal to number of preparers ' . count($preparers), E_USER_WARNING);
 }
 
 $n_skipped = 0;
 foreach ($json['result'] as $c) {
-    $unchanged = array();
+    $unchanged = [];
     if (isset($c['startTimeSeconds'])) {
         $start_time = $c['startTimeSeconds'];
     } else {
         if (!empty($c['season'])) {
             list($year, $_) = explode('-', $c['season']);
             $start_time = strtotime("$year-09-03");
-        } else if (preg_match('#(?P<year>^[0-9]{4}\b|\b[0-9]{4}$)#', $c['name'], $match)) {
+        } elseif (preg_match('#(?P<year>^[0-9]{4}\b|\b[0-9]{4}$)#', $c['name'], $match)) {
             $year = $match['year'];
             $start_time = strtotime("$year-09-03");
         } else {
@@ -118,7 +119,7 @@ foreach ($json['result'] as $c) {
         continue;
     }
 
-    $contest = array(
+    $contest = [
         'start_time' => $start_time,
         'duration' => $c['durationSeconds'] / 60,
         'title' => $title,
@@ -129,10 +130,10 @@ foreach ($json['result'] as $c) {
         'timezone' => $TIMEZONE,
         'unchanged' => $unchanged,
         'skip_check_time' => true,
-    );
+    ];
 
     if (isset($authors[$c['id']])) {
-        $contest['info'] = array('writers' => $authors[$c['id']]);
+        $contest['info'] = ['writers' => $authors[$c['id']]];
     }
 
     $contests[] = $contest;

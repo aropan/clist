@@ -1,47 +1,47 @@
 <?php
-    require_once dirname(__FILE__) . '/../../config.php';
 
-    $page = curlexec($URL);
-    $page = replace_russian_moths_to_number($page);
+require_once dirname(__FILE__) . '/../../config.php';
 
-    if (!preg_match('#<title>[^<]*(?P<year>[0-9]{4})[^<]*</title>#', $page, $match)) {
-        return;
-    }
-    $year = $match['year'];
+$page = curlexec($URL);
+$page = replace_russian_moths_to_number($page);
 
-    if (!preg_match('/(?:Конкурс начинается|Отборочный тур)[^<0-9]*[0-9.]+[^<]* до [^<0-9]*[0-9.]+[^<]*</', $page, $match)) {
-        return;
-    }
+if (!preg_match('#<title>[^<]*(?P<year>[0-9]{4})[^<]*</title>#', $page, $match)) {
+    return;
+}
+$year = $match['year'];
 
-    preg_match_all('/[0-9]+[.:]+[0-9.:]*[0-9]/', $match[0], $matches);
-    $times = $matches[0];
-    if (count($times) != 4) {
-        return;
-    }
+if (!preg_match('/(?:Конкурс начинается|Отборочный тур)[^<0-9]*[0-9.]+[^<]* до [^<0-9]*[0-9.]+[^<]*</', $page, $match)) {
+    return;
+}
 
-    $start_time = $times[0] . ' ' . $times[1];
-    $end_time = $times[2] . ' ' . $times[3];
-    if (strpos($start_time, $year) === false) {
-        $start_time .= " $year";
-    }
-    if (strpos($end_time, $year) === false) {
-        $end_time .= " $year";
-    }
+preg_match_all('/[0-9]+[.:]+[0-9.:]*[0-9]/', $match[0], $matches);
+$times = $matches[0];
+if (count($times) != 4) {
+    return;
+}
 
-    $title = 'Отборочный тур';
+$start_time = $times[0] . ' ' . $times[1];
+$end_time = $times[2] . ' ' . $times[3];
+if (strpos($start_time, $year) === false) {
+    $start_time .= " $year";
+}
+if (strpos($end_time, $year) === false) {
+    $end_time .= " $year";
+}
 
-    $contests[] = array(
-        'start_time' => $start_time,
-        'end_time' => $end_time,
-        'title' => $title,
-        'url' => $URL,
-        'host' => $HOST,
-        'rid' => $RID,
-        'timezone' => $TIMEZONE,
-        'key' => $title . ' ' . $year
-    );
+$title = 'Отборочный тур';
 
-    if ($RID === -1) {
-        print_r($contests);
-    }
-?>
+$contests[] = [
+    'start_time' => $start_time,
+    'end_time' => $end_time,
+    'title' => $title,
+    'url' => $URL,
+    'host' => $HOST,
+    'rid' => $RID,
+    'timezone' => $TIMEZONE,
+    'key' => $title . ' ' . $year,
+];
+
+if ($RID === -1) {
+    print_r($contests);
+}

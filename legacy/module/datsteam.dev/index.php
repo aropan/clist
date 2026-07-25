@@ -1,5 +1,6 @@
 <?php
-require_once dirname(__FILE__) . "/../../config.php";
+
+require_once dirname(__FILE__) . '/../../config.php';
 
 $events_url = $URL;
 $page = curlexec($events_url);
@@ -32,11 +33,11 @@ foreach ($matches as $contest) {
     $headers = get_headers($event_url);
     if (strpos($headers[0], '200') !== false) {
         $url = $event_url;
-    } else if (isset($info['website'])) {
+    } elseif (isset($info['website'])) {
         $url = $info['website'];
     }
 
-    $contests[] = array(
+    $contests[] = [
         'start_time' => $info['event-start'],
         'end_time' => $info['event-end'],
         'title' => $title,
@@ -46,7 +47,7 @@ foreach ($matches as $contest) {
         'host' => $HOST,
         'rid' => $RID,
         'timezone' => $TIMEZONE,
-    );
+    ];
 
     $end_time = strtotime($info['event-start']);
     if ($end_time && $end_time < $current_time && !$parse_full_list) {

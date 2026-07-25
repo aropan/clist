@@ -1,5 +1,6 @@
 <?php
-require_once dirname(__FILE__) . "/../../config.php";
+
+require_once dirname(__FILE__) . '/../../config.php';
 
 function choose_unique($parts, &$title)
 {
@@ -8,11 +9,11 @@ function choose_unique($parts, &$title)
     }
     list($fs, $sc) = $parts;
 
-    $fs = explode(" ", $fs);
-    $sc = explode(" ", $sc);
+    $fs = explode(' ', $fs);
+    $sc = explode(' ', $sc);
 
     if (count($fs) < count($sc)) {
-        list($fs, $sc) = array($sc, $fs);
+        list($fs, $sc) = [$sc, $fs];
         $result = $parts[1];
     } else {
         $result = $parts[0];
@@ -64,10 +65,10 @@ function normalize_title($title, $date)
     return $ret;
 }
 
-$proxy_file = dirname(__FILE__) . "/../../logs/topcoder.proxy";
+$proxy_file = dirname(__FILE__) . '/../../logs/topcoder.proxy';
 $proxy = file_exists($proxy_file) ? json_decode(file_get_contents($proxy_file)) : false;
 if ($proxy) {
-    echo " (proxy)";
+    echo ' (proxy)';
     curl_setopt($CID, CURLOPT_PROXY, $proxy->addr . ':' . $proxy->port);
 }
 
@@ -75,9 +76,9 @@ $debug_ = $RID == -1 || DEBUG;
 
 $_DATE_FORMAT = 'm.d.Y';
 
-$url_scheme_host = parse_url($URL, PHP_URL_SCHEME) . "://" . parse_url($URL, PHP_URL_HOST);
+$url_scheme_host = parse_url($URL, PHP_URL_SCHEME) . '://' . parse_url($URL, PHP_URL_HOST);
 
-$_contests = array();
+$_contests = [];
 $external_parsed = false;
 
 $parse_full_list = false;  // isset($_GET['parse_full_list']);
@@ -90,7 +91,7 @@ for ($shift = 0; $shift < 2; ++$shift) {
     $day = false;
     foreach ($rows[0] as $row) {
         preg_match_all('#<td[^>]*>.*?</td>#ms', $row, $columns);
-        $texts = array();
+        $texts = [];
         foreach ($columns[0] as $column) {
             $text = strip_tags($column);
             $texts[] = $text;
@@ -139,15 +140,15 @@ for ($shift = 0; $shift < 2; ++$shift) {
             continue;
         }
 
-        $contest = array(
-            "start_time" => $start_time,
-            "end_time" => $end_time,
-            "title" => $title,
-            "url" => $url,
-            "key" => $key,
-            "timezone" => $TIMEZONE,
-            "_external" => true,
-        );
+        $contest = [
+            'start_time' => $start_time,
+            'end_time' => $end_time,
+            'title' => $title,
+            'url' => $url,
+            'key' => $key,
+            'timezone' => $TIMEZONE,
+            '_external' => true,
+        ];
         $_contests[] = $contest;
         $external_parsed = true;
     }
@@ -179,38 +180,38 @@ foreach ($matches as $match) {
     }
     list($start_time, $end_time) = explode('/', ($m['date']));
 
-    $_contests[] = array(
-        "start_time" => $start_time,
-        "end_time" => $end_time,
-        "title" => $title,
-        "url" => $url,
-        "key" => $key,
-        "_external" => true,
-    );
+    $_contests[] = [
+        'start_time' => $start_time,
+        'end_time' => $end_time,
+        'title' => $title,
+        'url' => $url,
+        'key' => $key,
+        '_external' => true,
+    ];
     $external_parsed = true;
 }
 
 $limit = 100;
-$ids = array();
+$ids = [];
 foreach (
-    array(
-        array("status" => "Active", "sortBy" => "startDate", "sortOrder" => "desc"),
-        array("status" => "Completed", "sortBy" => "startDate", "sortOrder" => "desc"),
-    ) as $params
+    [
+        ['status' => 'Active', 'sortBy' => 'startDate', 'sortOrder' => 'desc'],
+        ['status' => 'Completed', 'sortBy' => 'startDate', 'sortOrder' => 'desc'],
+    ] as $params
 ) {
     for ($page = 1; $page < 10; $page += 1) {
-        $params["page"] = $page;
-        $params["perPage"] = $limit;
+        $params['page'] = $page;
+        $params['perPage'] = $limit;
         $query = http_build_query($params);
-        $url = "https://api.topcoder.com/v5/challenges/?" . $query;
-        $data = curlexec($url, null, array("json_output" => 1));
+        $url = 'https://api.topcoder.com/v5/challenges/?' . $query;
+        $data = curlexec($url, null, ['json_output' => 1]);
         if (!is_array($data) || empty($data) || !count($data)) {
             break;
         }
         $stop = false;
         foreach ($data as $c) {
             $ok = true;
-            foreach (array("name", "id", "registrationStartDate", "submissionEndDate") as $f) {
+            foreach (['name', 'id', 'registrationStartDate', 'submissionEndDate'] as $f) {
                 if (!isset($c[$f])) {
                     $ok = false;
                     break;
@@ -225,8 +226,8 @@ foreach (
             }
             $ids[$c['id']] = true;
 
-            $title = $c["name"];
-            if (!isset($c['tags']) || !array_intersect($c['tags'], array("Algorithm", "Marathon Match", "Puzzle"))) {
+            $title = $c['name'];
+            if (!isset($c['tags']) || !array_intersect($c['tags'], ['Algorithm', 'Marathon Match', 'Puzzle'])) {
                 continue;
             }
 
@@ -245,19 +246,18 @@ foreach (
                 continue;
             }
 
-
             $key = get_algorithm_key($title);
             if (!$key || strpos($key, 'SRM') !== false) {
-                $key = "challenge=" . $c['id'];
+                $key = 'challenge=' . $c['id'];
             }
-            $_contests[] = array(
-                "start_time" => $c["registrationStartDate"],
-                "end_time" => $c["submissionEndDate"],
-                "standings_url" => "https://www.topcoder.com/challenges/" . $c['id'] . "?tab=submissions",
-                "title" => $title,
-                "url" => $url_scheme_host . "/challenges/" . $c['id'],
-                "key" => $key,
-            );
+            $_contests[] = [
+                'start_time' => $c['registrationStartDate'],
+                'end_time' => $c['submissionEndDate'],
+                'standings_url' => 'https://www.topcoder.com/challenges/' . $c['id'] . '?tab=submissions',
+                'title' => $title,
+                'url' => $url_scheme_host . '/challenges/' . $c['id'],
+                'key' => $key,
+            ];
         }
         if ($stop || (!$parse_full_list && $params['status'] == 'Completed')) {
             break;
@@ -265,7 +265,7 @@ foreach (
     }
 }
 
-$_ = array();
+$_ = [];
 foreach ($_contests as $v) {
     $v['title'] = trim($v['title']);
     $v['title'] = preg_replace('/ {2,}/', ' ', $v['title']);
@@ -290,8 +290,8 @@ if ($external_parsed) {
     $add_from_stats = $parse_full_list;
     $iou_treshhold = 0.61803398875;
 
-    $round_overview = array();
-    foreach (array('https://www.topcoder.com/tc?module=MatchList') as $base_url) {
+    $round_overview = [];
+    foreach (['https://www.topcoder.com/tc?module=MatchList'] as $base_url) {
         $nr = 200;
         $sr = 1;
         for (;;) {
@@ -305,12 +305,12 @@ if ($external_parsed) {
             }
             foreach ($matches as $match) {
                 $key = get_algorithm_key($match['title']);
-                $ro = array(
+                $ro = [
                     'url' => url_merge($base_url, htmlspecialchars_decode($match['url'])),
                     'title' => $match['title'],
                     'date' => $match['date'],
                     'key' => $key ? $key : $match['title'],
-                );
+                ];
                 $round_overview[$match['rd']] = $ro;
             }
             if (!$add_from_stats) {
@@ -340,12 +340,12 @@ if ($external_parsed) {
                 }
                 $opt = 0;
                 $t = null;
-                foreach (array(0, -1, 1) as $shift_day) {
+                foreach ([0, -1, 1] as $shift_day) {
                     $date = date('m.d.Y', strtotime($c['start_time']) + $shift_day * 24 * 60 * 60);
                     foreach ($round_overview as $k => $ro) {
                         if ($ro['date'] == $date) {
-                            $a1 = explode(" ", normalize_title($c["title"], $date));
-                            $a2 = explode(" ", normalize_title($ro["title"], $date));
+                            $a1 = explode(' ', normalize_title($c['title'], $date));
+                            $a2 = explode(' ', normalize_title($ro['title'], $date));
                             $intersection = 0;
                             foreach ($a1 as $w1) {
                                 foreach ($a2 as $w2) {
@@ -354,7 +354,7 @@ if ($external_parsed) {
                                             $intersection += 1;
                                             break;
                                         }
-                                    } else if (substr($w1, 0, strlen($w2)) == $w2 || substr($w2, 0, strlen($w1)) == $w1) {
+                                    } elseif (substr($w1, 0, strlen($w2)) == $w2 || substr($w2, 0, strlen($w1)) == $w1) {
                                         $intersection += 1;
                                         break;
                                     }
@@ -373,7 +373,7 @@ if ($external_parsed) {
                     continue;
                 }
                 if ($debug_) {
-                    echo $c['title'] . " <-> " . $round_overview[$t]['title'] . "\n";
+                    echo $c['title'] . ' <-> ' . $round_overview[$t]['title'] . "\n";
                 }
                 $rd = $t;
             }
@@ -388,7 +388,7 @@ if ($external_parsed) {
 
     foreach ($round_overview as $ro) {
         $ds = explode('.', $ro['date']);
-        list($ds[0], $ds[1]) = array($ds[1], $ds[0]);
+        list($ds[0], $ds[1]) = [$ds[1], $ds[0]];
         $date_str = implode('.', $ds);
         if (!$add_from_stats) {
             $now = time();
@@ -409,29 +409,29 @@ if ($external_parsed) {
             $key = $title;
         }
 
-        $_contests[] = array(
-            "start_time" => $date_str,
-            "end_time" => $date_str,
-            "title" => $title,
-            "url" => $ro['url'],
-            "key" => $key,
-            "standings_url" => $ro['url'],
-        );
+        $_contests[] = [
+            'start_time' => $date_str,
+            'end_time' => $date_str,
+            'title' => $title,
+            'url' => $ro['url'],
+            'key' => $key,
+            'standings_url' => $ro['url'],
+        ];
     }
 }
 
 foreach ($_contests as $c) {
     unset($c['_external']);
-    $c["host"] = $HOST;
-    $c["rid"] = $RID;
-    if (!isset($c["timezone"])) {
-        $c["timezone"] = "UTC";
+    $c['host'] = $HOST;
+    $c['rid'] = $RID;
+    if (!isset($c['timezone'])) {
+        $c['timezone'] = 'UTC';
     }
     $contests[] = $c;
 }
 
 if ($RID === -1) {
-    echo "Total contests: " . count($_contests) . "\n";
+    echo 'Total contests: ' . count($_contests) . "\n";
 }
 
 if ($proxy) {

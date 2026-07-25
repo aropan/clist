@@ -2,7 +2,7 @@
 
 global $contests, $HOST, $TIMEZONE, $RID;
 
-require_once dirname(__FILE__) . "/../../config.php";
+require_once dirname(__FILE__) . '/../../config.php';
 
 $page = curlexec($URL);
 
@@ -23,13 +23,13 @@ preg_match_all(
 
 foreach ($matches as &$match) {
     $contests[] = [
-        "start_time" => $match["start_time"],
-        "end_time" => $match["end_time"],
-        "title" => $match["title"],
-        "url" => $URL,
-        "key" => $match["key"],
-        "host" => $HOST,
-        "timezone" => $TIMEZONE,
-        "rid" => $RID,
+        'start_time' => $match['start_time'],
+        'end_time' => $match['end_time'],
+        'title' => $match['title'],
+        'url' => $URL,
+        'key' => $match['key'],
+        'host' => $HOST,
+        'timezone' => $TIMEZONE,
+        'rid' => $RID,
     ];
 }

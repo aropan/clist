@@ -1,84 +1,85 @@
 <?php
-    require_once dirname(__FILE__) . "/../../config.php";
 
-    $seen = array();
+require_once dirname(__FILE__) . '/../../config.php';
 
-    function process_url($url) {
-        global $contests, $RID, $HOST, $TIMEZONE;
-        global $seen;
+$seen = [];
 
-        $page = curlexec($url);
-        preg_match_all('#<div[^>]*data-id="(?P<id>[^"]*)"[^<]*data-json="(?P<data>[^"]*)"[^>]*>#', $page, $matches, PREG_SET_ORDER);
-        $n_parsed = 0;
+function process_url($url)
+{
+    global $contests, $RID, $HOST, $TIMEZONE;
+    global $seen;
 
-        foreach ($matches as $_ => $match) {
-            $data = html_entity_decode($match['data']);
-            $data = html_entity_decode($data);
-            $data = json_decode($data, true);
+    $page = curlexec($url);
+    preg_match_all('#<div[^>]*data-id="(?P<id>[^"]*)"[^<]*data-json="(?P<data>[^"]*)"[^>]*>#', $page, $matches, PREG_SET_ORDER);
+    $n_parsed = 0;
 
-            $type = get_item($data, 'type');
-            if ($type == 0) {
-                $kind = 'ACM';
-                $standings_kind = 'icpc';
-            } elseif ($type == 2) {
-                $kind = 'OI';
-                $standings_kind = 'scoring';
-            } elseif ($type == 3) {
-                $kind = 'IOI';
-                $standings_kind = 'scoring';
-            } elseif ($type == 4) {
-                $kind = 'IOI';
-                $standings_kind = 'scoring';
-            } else {
-                $kind = null;
-                $standings_kind = null;
-            }
+    foreach ($matches as $_ => $match) {
+        $data = html_entity_decode($match['data']);
+        $data = html_entity_decode($data);
+        $data = json_decode($data, true);
 
-            $title = html_entity_decode(pop_item($data, 'contestName'));
-            if ($kind) {
-                $title .= " [$kind]";
-            }
-
-            $key = pop_item($data, 'contestId');
-
-            $contest = [
-                'title' => $title,
-                'start_time' => pop_item($data, 'contestStartTime') / 1000,
-                'end_time' => pop_item($data, 'contestEndTime') / 1000,
-                'duration' => pop_item($data, 'contestDuration') / 1000 / 60,
-                'url' => "https://ac.nowcoder.com/acm/contest/{$key}",
-                'key' => $key,
-                'rid' => $RID,
-                'host' => $HOST,
-                'timezone' => $TIMEZONE,
-                'info' => ['parse' => $data],
-            ];
-
-            if ($standings_kind) {
-                $contest['standings_kind'] = $standings_kind;
-            }
-
-            $contests[] = $contest;
-
-            if (!isset($seen[$key])) {
-                $seen[$key] = true;
-                $n_parsed += 1;
-            }
+        $type = get_item($data, 'type');
+        if ($type == 0) {
+            $kind = 'ACM';
+            $standings_kind = 'icpc';
+        } elseif ($type == 2) {
+            $kind = 'OI';
+            $standings_kind = 'scoring';
+        } elseif ($type == 3) {
+            $kind = 'IOI';
+            $standings_kind = 'scoring';
+        } elseif ($type == 4) {
+            $kind = 'IOI';
+            $standings_kind = 'scoring';
+        } else {
+            $kind = null;
+            $standings_kind = null;
         }
-        return $n_parsed;
-    }
 
-    process_url($URL);
+        $title = html_entity_decode(pop_item($data, 'contestName'));
+        if ($kind) {
+            $title .= " [$kind]";
+        }
 
-    $page = 1;
-    $base_url = parse_schema_host($URL) .  '/acm/contest/vip-end-index?orderType=DESC';
+        $key = pop_item($data, 'contestId');
 
-    for ($page = 1; ; $page++) {
-        $url = $base_url . "&page=$page";
-        $ok = process_url($url);
+        $contest = [
+            'title' => $title,
+            'start_time' => pop_item($data, 'contestStartTime') / 1000,
+            'end_time' => pop_item($data, 'contestEndTime') / 1000,
+            'duration' => pop_item($data, 'contestDuration') / 1000 / 60,
+            'url' => "https://ac.nowcoder.com/acm/contest/{$key}",
+            'key' => $key,
+            'rid' => $RID,
+            'host' => $HOST,
+            'timezone' => $TIMEZONE,
+            'info' => ['parse' => $data],
+        ];
 
-        if (!$ok || !isset($_GET['parse_full_list'])) {
-            break;
+        if ($standings_kind) {
+            $contest['standings_kind'] = $standings_kind;
+        }
+
+        $contests[] = $contest;
+
+        if (!isset($seen[$key])) {
+            $seen[$key] = true;
+            $n_parsed += 1;
         }
     }
-?>
+    return $n_parsed;
+}
+
+process_url($URL);
+
+$page = 1;
+$base_url = parse_schema_host($URL) . '/acm/contest/vip-end-index?orderType=DESC';
+
+for ($page = 1; ; $page++) {
+    $url = $base_url . "&page=$page";
+    $ok = process_url($url);
+
+    if (!$ok || !isset($_GET['parse_full_list'])) {
+        break;
+    }
+}
