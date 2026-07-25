@@ -25,9 +25,9 @@ def get_update_statistics_permission(user, contest):
 
 class ContestConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
-        params = parse_qs(self.scope['query_string'].decode())
-        self.contest = await get_contest(pk=params['pk'][0])
-        self.user = self.scope['user']
+        params = parse_qs(self.scope["query_string"].decode())
+        self.contest = await get_contest(pk=params["pk"][0])
+        self.user = self.scope["user"]
 
         await self.channel_layer.group_add(self.group_name, self.channel_name)
 

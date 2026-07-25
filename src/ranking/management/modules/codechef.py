@@ -352,7 +352,6 @@ class Statistic(BaseModule):
 
     @staticmethod
     def get_users_infos(users, resource=None, accounts=None, pbar=None):
-
         with REQ.with_proxy(
             n_limit=50,
             time_limit=10,

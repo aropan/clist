@@ -119,7 +119,6 @@ class Statistic(BaseModule):
 
     @staticmethod
     def get_users_infos(users, resource, accounts, pbar=None):
-
         def fetch_profile(user, account):
             if account.info.get("is_team") or account.info.get("_no_profile_url"):
                 return False

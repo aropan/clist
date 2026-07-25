@@ -140,7 +140,6 @@ class Statistic(BaseModule):
 
     @staticmethod
     def get_users_infos(users, resource, accounts, pbar=None):
-
         def fetch_profile(user):
             url = Statistic.PROFILE_URL_FORMAT_.format(account=user)
 

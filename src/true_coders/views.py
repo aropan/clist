@@ -102,8 +102,7 @@ logger = logging.getLogger(__name__)
 
 def get_medals_for_profile_context(statistics):
     qs = (
-        statistics
-        .select_related("contest")
+        statistics.select_related("contest")
         .filter(addition__medal__isnull=False)
         .order_by("-contest__end_time", "-contest_id")
     )
@@ -199,8 +198,7 @@ def get_profile_context(request, statistics, writers, resources):
     context_params["upsolving"] = upsolving_filter
 
     rated_stats = (
-        statistics
-        .filter(
+        statistics.filter(
             Q(addition__new_rating__isnull=False)
             | Q(addition__rating_change__isnull=False)
             | Q(addition___rating_data__isnull=False)
@@ -210,8 +208,7 @@ def get_profile_context(request, statistics, writers, resources):
     )
 
     external_ratings = (
-        statistics
-        .filter(
+        statistics.filter(
             contest__resource__has_rating_history=True,
             contest__resource__info__ratings__external=True,
             account__info___rating_data__isnull=False,
@@ -687,8 +684,7 @@ def _get_data_mixed_profile(request, query, is_team=False):
             accounts = accounts.annotate(verified=Exists("verified_accounts", filter=Q(coder__in=coders)))
 
         resources = (
-            Resource.objects
-            .prefetch_related(
+            Resource.objects.prefetch_related(
                 Prefetch(
                     "account_set",
                     queryset=accounts,
@@ -754,8 +750,7 @@ def get_ratings_data(
     resources = {r.pk: r for r in Resource.objects.filter(has_rating_history=True)}
 
     base_qs = (
-        statistics
-        .annotate(date=F("contest__end_time"))
+        statistics.annotate(date=F("contest__end_time"))
         .annotate(name=F("contest__title"))
         .annotate(key=F("contest__key"))
         .annotate(kind=F("contest__kind"))
@@ -771,8 +766,7 @@ def get_ratings_data(
     )
 
     qs = (
-        base_qs
-        .annotate(rating_change=Cast(KeyTextTransform("rating_change", "addition"), IntegerField()))
+        base_qs.annotate(rating_change=Cast(KeyTextTransform("rating_change", "addition"), IntegerField()))
         .annotate(new_rating=Cast(KeyTextTransform("new_rating", "addition"), IntegerField()))
         .annotate(old_rating=Cast(KeyTextTransform("old_rating", "addition"), IntegerField()))
         .annotate(is_unrated=Cast(KeyTextTransform("is_unrated", "contest__info"), IntegerField()))
@@ -843,8 +837,7 @@ def get_ratings_data(
 
     if with_global:
         global_qs = (
-            base_qs
-            .annotate(rating_change=F("global_rating_change"))
+            base_qs.annotate(rating_change=F("global_rating_change"))
             .annotate(new_rating=F("new_global_rating"))
             .annotate(old_rating=Value(None, IntegerField(null=True)))
             .annotate(resource=Value(0, IntegerField()))
@@ -2072,8 +2065,7 @@ def search(request, **kwargs):
         coder_accounts = coder.account_set.filter(resource=OuterRef("pk"))
 
         qs = (
-            Resource.objects
-            .annotate(has_coder_account=Exists(coder_accounts))
+            Resource.objects.annotate(has_coder_account=Exists(coder_accounts))
             .annotate(has_multi=F("has_multi_account"))
             .annotate(
                 disabled=Case(
@@ -2373,16 +2365,14 @@ def party(request, slug, tab="ranking"):
     party = get_object_or_404(Party.objects.for_user(request.user), slug=slug)
 
     party_contests = (
-        Contest.objects
-        .filter(ratings__party=party)
+        Contest.objects.filter(ratings__party=party)
         .annotate(has_statistics=Exists("statistics"))
         .order_by("-end_time", "-id")
     )
 
     filt = Q(ratings__party=party, statistics__account__coders=OuterRef("pk"))
     coders = (
-        party.coders
-        .annotate(n_participations=SubqueryCount("account__resource__contest", filter=filt))
+        party.coders.annotate(n_participations=SubqueryCount("account__resource__contest", filter=filt))
         .order_by("-n_participations")
         .select_related("user")
     )
@@ -2402,8 +2392,7 @@ def party(request, slug, tab="ranking"):
     future = contests.filter(end_time__gt=timezone.now()).order_by("start_time")
 
     statistics = (
-        Statistics.objects
-        .filter(
+        Statistics.objects.filter(
             account__coders__in=party.coders.all(),
             contest__in=party_contests.filter(start_time__lt=timezone.now()),
             contest__end_time__lt=timezone.now(),
@@ -2874,8 +2863,7 @@ def accounts(request, template="accounts.html"):
 
         statistics_filter = filtered_stats["contest_filter"] & filtered_stats["adv_filter"]
         accounts = (
-            accounts
-            .prefetch_related(Prefetch("statistics_set", prefetch_stats, to_attr="selected_stats"))
+            accounts.prefetch_related(Prefetch("statistics_set", prefetch_stats, to_attr="selected_stats"))
             .annotate(has_statistic=Exists("statistics", filter=statistics_filter))
             .filter(has_statistic=True)
         )

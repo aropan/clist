@@ -118,7 +118,6 @@ class Statistic(BaseModule):
 
     @staticmethod
     def get_users_infos(users, resource, accounts, pbar=None):
-
         def fetch_profile(req, handle, raise_on_error=False):
             try:
                 xsrf_token = req.get_cookie("XSRF-TOKEN", domain_regex="kaggle.com")

@@ -174,13 +174,11 @@ row(False, changed, "retention", detail)
 
 # 2) Telegram alert channel (created only if a bot token is configured)
 if settings.TELEGRAM_TOKEN:
-    value = json.dumps(
-        {
-            "id": TELEGRAM_CHAT_ID,
-            "type": TELEGRAM_CHAT_TYPE,
-            "name": settings.TELEGRAM_BOT_NAME,
-        }
-    )
+    value = json.dumps({
+        "id": TELEGRAM_CHAT_ID,
+        "type": TELEGRAM_CHAT_TYPE,
+        "name": settings.TELEGRAM_BOT_NAME,
+    })
     channel, created = Channel.objects.get_or_create(
         project=project,
         kind="telegram",

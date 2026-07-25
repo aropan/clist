@@ -21,7 +21,7 @@ from clist.templatetags.extras import canonize, get_problem_key, get_problem_nam
 
 def update_accounts_by_coders(accounts, progress_bar=None) -> int:
     ret = 0
-    accounts = accounts.prefetch_related('coders').select_related('resource')
+    accounts = accounts.prefetch_related("coders").select_related("resource")
     for account in accounts:
         ret += update_account_by_coders(account)
         if progress_bar is not None:
@@ -36,16 +36,13 @@ def update_account_by_coders(account) -> bool:
         if url:
             url = True
         else:
-            url = reverse('coder:profile', args=[coder.username]) + f'?resource={account.resource_id}'
+            url = reverse("coder:profile", args=[coder.username]) + f"?resource={account.resource_id}"
 
-        coder_custom_countries = coder.settings.get('custom_countries', {})
+        coder_custom_countries = coder.settings.get("custom_countries", {})
         if custom_countries is None:
             custom_countries = coder_custom_countries
         else:
-            custom_countries = dict(
-                set(custom_countries.items()) &
-                set(coder_custom_countries.items())
-            )
+            custom_countries = dict(set(custom_countries.items()) & set(coder_custom_countries.items()))
             if not custom_countries:
                 break
 
@@ -56,12 +53,12 @@ def update_account_by_coders(account) -> bool:
 
     if url != account.url:
         account.url = url
-        update_fields.append('url')
+        update_fields.append("url")
 
     custom_countries = custom_countries or {}
-    if custom_countries != account.info.get('custom_countries_', {}):
-        account.info['custom_countries_'] = custom_countries
-        update_fields.append('info')
+    if custom_countries != account.info.get("custom_countries_", {}):
+        account.info["custom_countries_"] = custom_countries
+        update_fields.append("info")
 
     if update_fields:
         account.save(update_fields=update_fields)
@@ -71,33 +68,33 @@ def update_account_by_coders(account) -> bool:
 @cache
 def get_similar_contests_patterns():
     return {
-        'number_with_ending': r'\b[0-9]+(?:th|st|nd|rd)\b',
-        'number': r'\b[0-9]+\b',
-        'roman_number': r'\b[IVXLCDM]+\b',
-        'final': r'\.\s+[^.]*(?<=\s)\b[Ff]inals?\b[^.]*$',
-        'subtitle': r'\.\s+[^.]*$',
+        "number_with_ending": r"\b[0-9]+(?:th|st|nd|rd)\b",
+        "number": r"\b[0-9]+\b",
+        "roman_number": r"\b[IVXLCDM]+\b",
+        "final": r"\.\s+[^.]*(?<=\s)\b[Ff]inals?\b[^.]*$",
+        "subtitle": r"\.\s+[^.]*$",
     }
 
 
 @cache
 def get_similar_contests_regex():
     patterns = get_similar_contests_patterns()
-    return '|'.join(rf'(?P<{group}>{regex})' for group, regex in patterns.items())
+    return "|".join(rf"(?P<{group}>{regex})" for group, regex in patterns.items())
 
 
 def similar_contests_replacing(match):
     patterns = get_similar_contests_patterns()
     for group, regex in patterns.items():
         if match.group(group):
-            return regex.replace(r'\b', r'\y')
+            return regex.replace(r"\b", r"\y")
 
 
 def similar_contests_queryset(contest):
     regex = get_similar_contests_regex()
-    title_regex = re.sub(regex, similar_contests_replacing, f'^{contest.title}$')
+    title_regex = re.sub(regex, similar_contests_replacing, f"^{contest.title}$")
     contests_filter = Q(title__iregex=title_regex)
-    if not re.match('^[^a-zA-Z]*$', contest.key):
-        key_regex = re.sub(regex, similar_contests_replacing, f'^{contest.key}$')
+    if not re.match("^[^a-zA-Z]*$", contest.key):
+        key_regex = re.sub(regex, similar_contests_replacing, f"^{contest.key}$")
         contests_filter |= Q(key__iregex=key_regex)
     contests_filter &= Q(resource_id=contest.resource_id, stage__isnull=True)
     return contest._meta.model.objects.filter(contests_filter)
@@ -113,14 +110,14 @@ def create_contest_problem_discussions(contest):
 
 
 def create_contest_problem_discussion(contest, problem):
-    Discussion = apps.get_model('clist.Discussion')
+    Discussion = apps.get_model("clist.Discussion")
     contest_discussions = Discussion.objects.filter(
         contest=contest,
         what_contest=contest,
         with_problem_discussions=True,
         where_telegram_chat__isnull=False,
     )
-    TelegramBot = import_module('tg.bot').Bot()
+    TelegramBot = import_module("tg.bot").Bot()
     for discussion in contest_discussions:
         telegram_chat = discussion.where
         if Discussion.objects.filter(what_problem=problem, where_telegram_chat=telegram_chat).exists():
@@ -134,7 +131,7 @@ def create_contest_problem_discussion(contest, problem):
                 discussion.save()
                 topic = TelegramBot.create_topic(telegram_chat.chat_id, problem.full_name)
                 discussion.url = urljoin(discussion.url, str(topic.message_thread_id))
-                discussion.info = {'topic': topic.to_dict()}
+                discussion.info = {"topic": topic.to_dict()}
                 discussion.save()
             except Exception as e:
                 if topic is not None:
@@ -145,25 +142,25 @@ def create_contest_problem_discussion(contest, problem):
 @transaction.atomic
 def update_problems(contest, problems=None, force=False):
     if problems is not None and not force:
-        if canonize(problems) == canonize(contest.info.get('problems')):
+        if canonize(problems) == canonize(contest.info.get("problems")):
             return
 
-    contest.info['problems'] = problems
-    contest.save(update_fields=['info'])
+    contest.info["problems"] = problems
+    contest.save(update_fields=["info"])
 
-    if hasattr(contest, 'stage'):
+    if hasattr(contest, "stage"):
         return
 
     contest.n_problems = len(list(contest.problems_list))
-    contest.save(update_fields=['n_problems'])
+    contest.save(update_fields=["n_problems"])
 
     contests_set = {contest.pk}
     contests_queue = SimpleQueue()
     contests_queue.put(contest)
 
     new_problem_ids = set()
-    old_problem_ids = set(contest.problem_set.values_list('id', flat=True))
-    old_problem_ids |= set(contest.individual_problem_set.values_list('id', flat=True))
+    old_problem_ids = set(contest.problem_set.values_list("id", flat=True))
+    old_problem_ids |= set(contest.individual_problem_set.values_list("id", flat=True))
     added_problems = dict()
 
     def link_problem_to_contest(problem, contest):
@@ -176,7 +173,7 @@ def update_problems(contest, problems=None, force=False):
         new_problem_ids.add(problem.id)
         return ret
 
-    Problem = apps.get_model('clist.Problem')
+    Problem = apps.get_model("clist.Problem")
     while not contests_queue.empty():
         current_contest = contests_queue.get()
         problem_sets = current_contest.division_problems
@@ -187,23 +184,23 @@ def update_problems(contest, problems=None, force=False):
                 short = get_problem_short(problem_info)
                 name = get_problem_name(problem_info)
 
-                if problem_info.get('ignore'):
+                if problem_info.get("ignore"):
                     continue
-                if prev and not problem_info.get('_info_prefix'):
-                    if prev.get('group') and prev.get('group') == problem_info.get('group'):
+                if prev and not problem_info.get("_info_prefix"):
+                    if prev.get("group") and prev.get("group") == problem_info.get("group"):
                         continue
-                    if prev.get('subname') and prev.get('name') == name:
+                    if prev.get("subname") and prev.get("name") == name:
                         continue
                 prev = deepcopy(problem_info)
                 info = deepcopy(problem_info)
 
-                problem_contest = contest if 'code' not in problem_info else None
+                problem_contest = contest if "code" not in problem_info else None
 
                 added_problem = added_problems.get(key)
                 if current_contest != contest and not added_problem:
                     continue
 
-                if problem_info.get('skip_in_stats'):
+                if problem_info.get("skip_in_stats"):
                     problem = Problem.objects.filter(
                         contest=problem_contest,
                         resource=contest.resource,
@@ -213,96 +210,97 @@ def update_problems(contest, problems=None, force=False):
                         link_problem_to_contest(problem, contest)
                     continue
 
-                url = info.pop('url', None)
-                if info.pop('_no_problem_url', False):
-                    url = getattr(added_problem, 'url', None) or url
+                url = info.pop("url", None)
+                if info.pop("_no_problem_url", False):
+                    url = getattr(added_problem, "url", None) or url
                 else:
-                    url = url or getattr(added_problem, 'url', None)
+                    url = url or getattr(added_problem, "url", None)
 
-                skip_rating = bool(contest.info.get('skip_problem_rating'))
+                skip_rating = bool(contest.info.get("skip_problem_rating"))
 
-                kinds = getattr(added_problem, 'kinds', [])
+                kinds = getattr(added_problem, "kinds", [])
                 if contest.kind and contest.kind not in settings.PROBLEM_IGNORE_KINDS and contest.kind not in kinds:
                     kinds.append(contest.kind)
 
-                divisions = getattr(added_problem, 'divisions', [])
+                divisions = getattr(added_problem, "divisions", [])
                 if division and division not in divisions:
                     divisions.append(division)
 
                 defaults = {
-                    'index': index if getattr(added_problem, 'index', index) == index else None,
-                    'short': short if getattr(added_problem, 'short', short) == short else None,
-                    'name': name,
-                    'slug': info.pop('slug', getattr(added_problem, 'slug', None)),
-                    'divisions': divisions,
-                    'kinds': kinds,
-                    'url': url,
-                    'n_attempts': info.pop('n_teams', 0) + getattr(added_problem, 'n_attempts', 0),
-                    'n_accepted': info.pop('n_accepted', 0) + getattr(added_problem, 'n_accepted', 0),
-                    'n_partial': info.pop('n_partial', 0) + getattr(added_problem, 'n_partial', 0),
-                    'n_hidden': info.pop('n_hidden', 0) + getattr(added_problem, 'n_hidden', 0),
-                    'n_failed': info.pop('n_failed', 0) + getattr(added_problem, 'n_failed', 0),
-                    'n_total': info.pop('n_total', 0) + getattr(added_problem, 'n_total', 0),
-                    'n_submissions': info.pop('n_submissions', 0) + getattr(added_problem, 'n_submissions', 0),
-                    'time': max(contest.start_time, getattr(added_problem, 'time', contest.start_time)),
-                    'start_time': min(contest.start_time, getattr(added_problem, 'start_time', contest.start_time)),
-                    'end_time': max(contest.end_time, getattr(added_problem, 'end_time', contest.end_time)),
-                    'skip_rating': skip_rating and getattr(added_problem, 'skip_rating', skip_rating),
+                    "index": index if getattr(added_problem, "index", index) == index else None,
+                    "short": short if getattr(added_problem, "short", short) == short else None,
+                    "name": name,
+                    "slug": info.pop("slug", getattr(added_problem, "slug", None)),
+                    "divisions": divisions,
+                    "kinds": kinds,
+                    "url": url,
+                    "n_attempts": info.pop("n_teams", 0) + getattr(added_problem, "n_attempts", 0),
+                    "n_accepted": info.pop("n_accepted", 0) + getattr(added_problem, "n_accepted", 0),
+                    "n_partial": info.pop("n_partial", 0) + getattr(added_problem, "n_partial", 0),
+                    "n_hidden": info.pop("n_hidden", 0) + getattr(added_problem, "n_hidden", 0),
+                    "n_failed": info.pop("n_failed", 0) + getattr(added_problem, "n_failed", 0),
+                    "n_total": info.pop("n_total", 0) + getattr(added_problem, "n_total", 0),
+                    "n_submissions": info.pop("n_submissions", 0) + getattr(added_problem, "n_submissions", 0),
+                    "time": max(contest.start_time, getattr(added_problem, "time", contest.start_time)),
+                    "start_time": min(contest.start_time, getattr(added_problem, "start_time", contest.start_time)),
+                    "end_time": max(contest.end_time, getattr(added_problem, "end_time", contest.end_time)),
+                    "skip_rating": skip_rating and getattr(added_problem, "skip_rating", skip_rating),
                 }
                 for rate_field, value_field in (
-                    ('attempt_rate', 'n_attempts'),
-                    ('acceptance_rate', 'n_accepted'),
-                    ('partial_rate', 'n_partial'),
-                    ('hidden_rate', 'n_hidden'),
-                    ('failed_rate', 'n_failed'),
-                    ('submissions_rate', 'n_submissions'),
+                    ("attempt_rate", "n_attempts"),
+                    ("acceptance_rate", "n_accepted"),
+                    ("partial_rate", "n_partial"),
+                    ("hidden_rate", "n_hidden"),
+                    ("failed_rate", "n_failed"),
+                    ("submissions_rate", "n_submissions"),
                 ):
-                    defaults[rate_field] = defaults[value_field] / defaults['n_total'] if defaults['n_total'] else None
+                    defaults[rate_field] = defaults[value_field] / defaults["n_total"] if defaults["n_total"] else None
 
-                if translation := info.pop('translation', None):
+                if translation := info.pop("translation", None):
                     translation = {
-                        f'{field}_{language}': value
-                        for language, data in translation.items() for field, value in data.items()
+                        f"{field}_{language}": value
+                        for language, data in translation.items()
+                        for field, value in data.items()
                     }
                     defaults.update(translation)
 
-                for optional_field in 'n_accepted_submissions', 'n_total_submissions':
+                for optional_field in "n_accepted_submissions", "n_total_submissions":
                     if optional_field not in info:
                         continue
                     added_value = getattr(added_problem, optional_field, 0) or 0
                     defaults[optional_field] = info.pop(optional_field) + added_value
-                if getattr(added_problem, 'rating', None) is not None:
-                    problem_info['rating'] = added_problem.rating
-                    info.pop('rating', None)
-                elif 'rating' in info:
-                    defaults['rating'] = info.pop('rating')
-                if 'visible' in info:
-                    defaults['visible'] = info.pop('visible')
+                if getattr(added_problem, "rating", None) is not None:
+                    problem_info["rating"] = added_problem.rating
+                    info.pop("rating", None)
+                elif "rating" in info:
+                    defaults["rating"] = info.pop("rating")
+                if "visible" in info:
+                    defaults["visible"] = info.pop("visible")
 
-                if 'archive_url' in info:
-                    archive_url = info.pop('archive_url')
+                if "archive_url" in info:
+                    archive_url = info.pop("archive_url")
                 elif contest.resource.problem_url and problem_contest is None:
                     archive_url = contest.resource.problem_url.format(key=key, **defaults)
                 else:
-                    archive_url = getattr(added_problem, 'archive_url', None)
-                defaults['archive_url'] = archive_url
+                    archive_url = getattr(added_problem, "archive_url", None)
+                defaults["archive_url"] = archive_url
 
-                if '_more_fields' in info:
-                    info.update(info.pop('_more_fields'))
-                info_prefix = info.pop('_info_prefix', None)
-                info_prefix_fields = info.pop('_info_prefix_fields', None)
+                if "_more_fields" in info:
+                    info.update(info.pop("_more_fields"))
+                info_prefix = info.pop("_info_prefix", None)
+                info_prefix_fields = info.pop("_info_prefix_fields", None)
                 if info_prefix:
                     for field in info_prefix_fields:
                         if field in info:
-                            info[f'{info_prefix}{field}'] = info.pop(field)
+                            info[f"{info_prefix}{field}"] = info.pop(field)
 
-                for field in 'short', 'code', 'name', 'tags', 'subname', 'subname_class':
+                for field in "short", "code", "name", "tags", "subname", "subname_class":
                     info.pop(field, None)
                 if added_problem:
                     added_info = deepcopy(added_problem.info or {})
                     added_info.update(info)
                     info = added_info
-                defaults['info'] = info
+                defaults["info"] = info
 
                 problem, created = Problem.objects.update_or_create(
                     contest=problem_contest,
@@ -313,7 +311,7 @@ def update_problems(contest, problems=None, force=False):
 
                 link_problem_to_contest(problem, contest)
 
-                problem.update_tags(problem_info.get('tags'), replace=not added_problem)
+                problem.update_tags(problem_info.get("tags"), replace=not added_problem)
 
                 added_problems[key] = problem
 
@@ -322,7 +320,7 @@ def update_problems(contest, problems=None, force=False):
                         continue
                     contests_set.add(c.pk)
                     contests_queue.put(c)
-        current_contest.save(update_fields=['info'])
+        current_contest.save(update_fields=["info"])
 
     while old_problem_ids:
         new_problems = Problem.objects.filter(id__in=new_problem_ids)
@@ -333,12 +331,12 @@ def update_problems(contest, problems=None, force=False):
             for new_problem in new_problems:
                 similarity_score = 0
                 for weight, field in (
-                    (1, 'index'),
-                    (2, 'short'),
-                    (3, 'slug'),
-                    (5, 'name'),
-                    (10, 'url'),
-                    (15, 'archive_url'),
+                    (1, "index"),
+                    (2, "short"),
+                    (3, "slug"),
+                    (5, "name"),
+                    (10, "url"),
+                    (15, "archive_url"),
                 ):
                     similarity_score += weight * (getattr(old_problem, field) == getattr(new_problem, field))
                 if similarity_score > max_similarity_score:
@@ -356,7 +354,7 @@ def update_problems(contest, problems=None, force=False):
                 activity.object_id = opt_new_problem.id
                 activity.validate_unique()
             except ValidationError as e:
-                logging.warning(f'ValidationError: {e}')
+                logging.warning(f"ValidationError: {e}")
                 activity.delete()
 
         MergedModelInstance.create(opt_new_problem, [opt_old_problem])
@@ -373,25 +371,25 @@ def update_problems(contest, problems=None, force=False):
 
 def update_writers(contest, writers=None, force=False) -> bool | None:
     if writers is not None and not force:
-        if canonize(writers) == canonize(contest.info.get('writers')):
+        if canonize(writers) == canonize(contest.info.get("writers")):
             return
-        contest.info['writers'] = writers
+        contest.info["writers"] = writers
         contest.save()
 
-    writers = contest.info.get('writers', [])
+    writers = contest.info.get("writers", [])
     if not writers:
         contest.writers.clear()
         return
 
     resource = contest.resource
-    contest_writers = set(contest.writers.values_list('key', flat=True))
+    contest_writers = set(contest.writers.values_list("key", flat=True))
     already_writers = set(writers) & contest_writers
 
     def get_account(writer):
         account = resource.account_set.filter(key=writer).first()
         if account:
             return account
-        return resource.account_set.filter(key__iexact=writer).order_by('-n_contests').first()
+        return resource.account_set.filter(key__iexact=writer).order_by("-n_contests").first()
 
     modified_writers = []
     for writer in writers:
@@ -414,6 +412,6 @@ def update_writers(contest, writers=None, force=False) -> bool | None:
 
     if modified_writers == writers:
         return False
-    contest.info['writers'] = modified_writers
-    contest.save(update_fields=['info'])
+    contest.info["writers"] = modified_writers
+    contest.save(update_fields=["info"])
     return True

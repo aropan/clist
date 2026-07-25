@@ -5,4 +5,4 @@ from clist.models import Problem
 
 @register(Problem)
 class ProblemTranslationOptions(TranslationOptions):
-    fields = ('name', )
+    fields = ("name",)

@@ -126,8 +126,7 @@ class Command(BaseCommand):
             recent_produced_at = {}
             if rids_to_query:
                 recent_produced_at = dict(
-                    Contest.objects
-                    .filter(resource_id__in=rids_to_query, auto_updated__gte=now - window)
+                    Contest.objects.filter(resource_id__in=rids_to_query, auto_updated__gte=now - window)
                     .values_list("resource_id")
                     .annotate(last=Max("auto_updated"))
                 )

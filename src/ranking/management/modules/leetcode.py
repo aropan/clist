@@ -428,7 +428,6 @@ class Statistic(BaseModule):
 
     @staticmethod
     def get_users_infos(users, resource, accounts, pbar=None):
-
         rate_limiter = RateLimiter(max_calls=1, period=2)
 
         @lru_cache()
@@ -914,7 +913,6 @@ class Statistic(BaseModule):
         handle = profile_url["_handle"]
 
         def recent_accepted_submissions(req=REQ):
-
             if Statistic.is_china(account):
                 post = (
                     '''

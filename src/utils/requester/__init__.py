@@ -477,14 +477,12 @@ def encode_multipart(fields=None, files=None, boundary=None):
 
     fields = fields or {}
     for name, value in fields.items():
-        lines.extend(
-            (
-                "--{0}".format(boundary),
-                'Content-Disposition: form-data; name="{0}"'.format(escape_quote(name)),
-                "",
-                str(value),
-            )
-        )
+        lines.extend((
+            "--{0}".format(boundary),
+            'Content-Disposition: form-data; name="{0}"'.format(escape_quote(name)),
+            "",
+            str(value),
+        ))
 
     files = files or {}
     for name, value in files.items():
@@ -493,17 +491,15 @@ def encode_multipart(fields=None, files=None, boundary=None):
             mimetype = value["mimetype"]
         else:
             mimetype = mimetypes.guess_type(filename)[0] or "application/octet-stream"
-        lines.extend(
-            (
-                "--{0}".format(boundary),
-                'Content-Disposition: form-data; name="{0}"; filename="{1}"'.format(
-                    escape_quote(name), escape_quote(filename)
-                ),
-                "Content-Type: {0}".format(mimetype),
-                "",
-                value["content"],
-            )
-        )
+        lines.extend((
+            "--{0}".format(boundary),
+            'Content-Disposition: form-data; name="{0}"; filename="{1}"'.format(
+                escape_quote(name), escape_quote(filename)
+            ),
+            "Content-Type: {0}".format(mimetype),
+            "",
+            value["content"],
+        ))
 
     lines.extend(("--{0}--".format(boundary), ""))
     body = "\r\n".join(lines)
@@ -733,14 +729,12 @@ class requester:
             url = f"{url}?{urllib.parse.urlencode(params)}"
 
         try:
-            file_cache = "".join(
-                (
-                    self.dir_cache,
-                    md5((md5_file_cache or url + (post_urlencoded or "")).encode()).hexdigest(),
-                    ("/" + url[url.find("//") + 2 :].split("?", 2)[0]).replace("/", "_"),
-                    ".html",
-                )
-            )
+            file_cache = "".join((
+                self.dir_cache,
+                md5((md5_file_cache or url + (post_urlencoded or "")).encode()).hexdigest(),
+                ("/" + url[url.find("//") + 2 :].split("?", 2)[0]).replace("/", "_"),
+                ".html",
+            ))
         except Exception:
             file_cache = None
         file_cache_metadata = f"{file_cache}.meta.json" if file_cache else None

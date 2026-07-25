@@ -281,7 +281,6 @@ class Statistic(BaseModule):
 
     @staticmethod
     def get_users_infos(users, resource, accounts, pbar=None):
-
         def normalize(val):
             val = val.strip()
             val = val.lower()

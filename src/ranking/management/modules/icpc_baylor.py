@@ -72,7 +72,6 @@ class Statistic(BaseModule):
 
     @staticmethod
     def _get_medals(year):
-
         def get_from_icpc(year):
             medal_result_url = f"https://icpc.global/api/help/cms/virtpublic/community/results-{year}"
             page = REQ.get(medal_result_url)

@@ -168,7 +168,6 @@ class Statistic(BaseModule):
 
     @staticmethod
     def get_users_infos(users, resource, accounts, pbar=None):
-
         api_user_url = urljoin(resource.url, Statistic.API_USER_URL_FORMAT_)
 
         @RateLimiter(max_calls=2, period=1)

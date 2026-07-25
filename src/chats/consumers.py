@@ -14,7 +14,7 @@ def get_coder(user):
 
 
 def get_chat(name):
-    chat_type, chat_slug = name.split('__')
+    chat_type, chat_slug = name.split("__")
     ret = get_object_or_404(Chat, chat_type=chat_type.upper(), slug=chat_slug)
     return ret
 
@@ -33,61 +33,57 @@ def get_logs(chat, from_id):
     ret = ChatLog.objects.filter(chat=chat)
     if from_id:
         ret = ret.filter(pk__lt=int(from_id))
-    ret = ret.order_by('-created')[:20]
+    ret = ret.order_by("-created")[:20]
     return list(ret)
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        self.room_group_name = 'room__general'
-        self.user = self.scope['user']
+        self.room_group_name = "room__general"
+        self.user = self.scope["user"]
         if self.user.is_authenticated:
             self.coder = await get_coder(self.user)
 
         # Join room group
-        await self.channel_layer.group_add(
-            self.room_group_name,
-            self.channel_name
-        )
+        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
 
         await self.accept()
 
     async def disconnect(self, close_code):
         # Leave room group
-        await self.channel_layer.group_discard(
-            self.room_group_name,
-            self.channel_name
-        )
+        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
     # Receive message from WebSocket
     async def receive(self, text_data):
         data = json.loads(text_data)
-        action = data.pop('action')
+        action = data.pop("action")
         context = {
-            'type': action,
-            'chat': data['chat'],
-            'when': str(now()),
+            "type": action,
+            "chat": data["chat"],
+            "when": str(now()),
         }
 
         if self.user.is_authenticated:
-            context['from'] = {'coder': self.coder.username}
-        elif action not in ['get_logs']:
+            context["from"] = {"coder": self.coder.username}
+        elif action not in ["get_logs"]:
             return
 
-        if action == 'new_message':
-            context['message'] = data['message']
+        if action == "new_message":
+            context["message"] = data["message"]
             await self.channel_layer.group_send(self.room_group_name, context)
-        elif action == 'get_logs':
-            logs = await get_logs(data['chat'], data['id'])
-            context = [{'data': d.context, 'id': d.pk} for d in logs]
-            await self.send(text_data=json.dumps({
-                'type': 'history',
-                'history': context,
-            }))
+        elif action == "get_logs":
+            logs = await get_logs(data["chat"], data["id"])
+            context = [{"data": d.context, "id": d.pk} for d in logs]
+            await self.send(
+                text_data=json.dumps({
+                    "type": "history",
+                    "history": context,
+                })
+            )
             return
         else:
             return
-        await add_chat_log(data['chat'], self.coder, action, context)
+        await add_chat_log(data["chat"], self.coder, action, context)
 
     # Receive message from room group
     async def new_message(self, event):

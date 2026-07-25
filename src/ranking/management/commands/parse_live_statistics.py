@@ -11,11 +11,11 @@ from utils.attrdict import AttrDict
 
 
 class Command(BaseCommand):
-    help = 'Parse live statistics'
+    help = "Parse live statistics"
 
     def add_arguments(self, parser):
-        parser.add_argument('--dryrun', action='store_true', default=False)
-        self.logger = logging.getLogger('ranking.parse.live_statistics')
+        parser.add_argument("--dryrun", action="store_true", default=False)
+        self.logger = logging.getLogger("ranking.parse.live_statistics")
 
     def handle(self, *args, **options):
         self.stdout.write(str(options))
@@ -28,20 +28,20 @@ class Command(BaseCommand):
                 contest__start_time__lte=now,
                 contest__end_time__gte=now,
             )
-            parse_statistics = parse_statistics.select_related('contest')
+            parse_statistics = parse_statistics.select_related("contest")
 
             for parse_stat in parse_statistics:
                 now = timezone.now()
                 if parse_stat.parse_time and parse_stat.parse_time > now:
-                    self.logger.info(f'Skip {parse_stat.contest}, delay = {parse_stat.parse_time - now}')
+                    self.logger.info(f"Skip {parse_stat.contest}, delay = {parse_stat.parse_time - now}")
                     continue
-                self.logger.info(f'Parse statistic for {parse_stat.contest}')
+                self.logger.info(f"Parse statistic for {parse_stat.contest}")
                 parse_stat.parse_time = now + parse_stat.delay
-                parse_stat.save(update_fields=['parse_time'])
+                parse_stat.save(update_fields=["parse_time"])
                 if args.dryrun:
                     continue
                 call_command(
-                    'parse_statistic',
+                    "parse_statistic",
                     contest_id=parse_stat.contest.pk,
                     without_set_coder_problems=parse_stat.without_set_coder_problems,
                     without_stage=parse_stat.without_stage,
@@ -54,5 +54,5 @@ class Command(BaseCommand):
 
             parse_time = min(parse_times)
             delay = (parse_time - now).total_seconds()
-            self.logger.info(f'Delay = {humanize.naturaldelta(delay)}, next parse time = {parse_time}')
+            self.logger.info(f"Delay = {humanize.naturaldelta(delay)}, next parse time = {parse_time}")
             time.sleep(delay)

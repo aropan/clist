@@ -121,7 +121,7 @@ def process_access_token(request, service, access_token):
         url = data_uri % access_token
         if match := re.search("\[([^\]]+?)\]$", url):
             data_field = match.group(1)
-            url = url[:match.start()]
+            url = url[: match.start()]
         response = requests.get(url, headers=headers)
 
         if response.status_code != requests.codes.ok:
@@ -345,11 +345,11 @@ def form(request, uuid):
             with transaction.atomic():
                 credential = Credential.objects.filter(form=form, token=token).first()
                 if not credential:
-                    credential = Credential.objects.filter(form=form, token__isnull=True).order_by('?').first()
+                    credential = Credential.objects.filter(form=form, token__isnull=True).order_by("?").first()
                     credential.token = token
                     credential.state = Credential.State.ASSIGNED
                     credential.save(update_fields=["token", "state"])
-            data['credential_login'] = credential.login
+            data["credential_login"] = credential.login
         code = form.code.format(**data)
     else:
         code = None
@@ -411,7 +411,7 @@ def form(request, uuid):
 
 
 @login_required
-@permission_required_or_403("my_oauth.view_form_stats", (Form, 'pk', 'uuid'))
+@permission_required_or_403("my_oauth.view_form_stats", (Form, "pk", "uuid"))
 def form_stats(request, uuid):
     form = get_object_or_404(Form.objects, pk=uuid)
     credentials = Credential.objects.filter(form=form)
@@ -436,5 +436,5 @@ def form_stats(request, uuid):
             "credentials_chart": credentials_chart,
             "nofavicon": True,
             "nocounter": True,
-        }
+        },
     )

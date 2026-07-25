@@ -22,5 +22,5 @@ def FloatJSONF(field_name):
 
 def CharJSONF(field_name):
     if isinstance(field_name, str):
-        field_name = field_name.split('__', 1)[::-1]
+        field_name = field_name.split("__", 1)[::-1]
     return KeyTextTransform(*field_name)

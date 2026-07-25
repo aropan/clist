@@ -47,7 +47,6 @@ req = LazyObject(create_req)
 
 
 def post_save_req(func):
-
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         try:
@@ -634,7 +633,6 @@ class Statistic(BaseModule):
     @staticmethod
     @post_save_req
     def get_users_infos(users, resource, accounts, pbar=None):
-
         key_value_re = re.compile(
             r"""
             <tr>[^<]*<th[^>]*class="no-break"[^>]*>(?P<key>[^<]*)</th>[^<]*

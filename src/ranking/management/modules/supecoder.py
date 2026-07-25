@@ -73,7 +73,6 @@ class Statistic(BaseModule):
 
     @staticmethod
     def get_users_infos(users, resource, accounts, pbar=None):
-
         @RateLimiter(max_calls=10, period=1)
         def fetch_profile(user):
             url = urljoin(resource.parse_url, f"/api/users/{user}")

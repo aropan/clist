@@ -11,14 +11,13 @@ from notification.models import Calendar
 
 
 class EventFeed(ICalFeed):
-
-    product_id = 'CLIST'
-    timezone = 'UTC'
+    product_id = "CLIST"
+    timezone = "UTC"
 
     def __call__(self, request, uuid, *args, **kwargs):
         self.request = request
         self.uuid = uuid
-        self.calendar = get_object_or_404(Calendar.objects.select_related('coder'), uuid=self.uuid)
+        self.calendar = get_object_or_404(Calendar.objects.select_related("coder"), uuid=self.uuid)
         self.title = self.calendar.name
 
         contests = Contest.visible.filter(end_time__gt=now() - timedelta(days=31))
@@ -41,7 +40,7 @@ class EventFeed(ICalFeed):
 
     def item_description(self, item):
         ret = [Calendar.EventDescription.extract(item, desc) for desc in self.calendar.descriptions]
-        return '\n'.join(ret)
+        return "\n".join(ret)
 
     def item_link(self, item):
         if Calendar.EventDescription.URL not in self.calendar.descriptions:
@@ -66,11 +65,11 @@ def messages(request):
     coder = request.as_coder or request.user.coder
     update = not bool(request.as_coder)
 
-    messages = coder.messages_set.order_by('-created')
+    messages = coder.messages_set.order_by("-created")
     context = {
-        'notification_messages': messages,
+        "notification_messages": messages,
     }
-    response = render(request, 'notification_messages.html', context)
+    response = render(request, "notification_messages.html", context)
 
     if update:
         messages.filter(is_read=False).update(is_read=True, read_at=now())

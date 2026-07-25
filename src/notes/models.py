@@ -12,11 +12,11 @@ class Note(BaseModel):
 
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
-    content_object = GenericForeignKey('content_type', 'object_id')
+    content_object = GenericForeignKey("content_type", "object_id")
 
     class Meta:
         indexes = [
-            models.Index(fields=['coder', 'content_type', 'object_id']),
-            models.Index(fields=['content_type', 'object_id']),
+            models.Index(fields=["coder", "content_type", "object_id"]),
+            models.Index(fields=["content_type", "object_id"]),
         ]
-        unique_together = ('coder', 'content_type', 'object_id')
+        unique_together = ("coder", "content_type", "object_id")

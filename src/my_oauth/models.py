@@ -68,7 +68,6 @@ class Token(BaseModel):
         return f"{self.user_id} on {self.service} Token#{self.id}"
 
     def email_hint(self):
-
         def hint(s):
             regex = "(?<!^)."
             if len(s) > 3:

@@ -117,7 +117,6 @@ class Statistic(BaseModule):
 
     @staticmethod
     def get_users_infos(users, resource, accounts, pbar=None):
-
         @RateLimiter(max_calls=100, period=30)
         def fetch_profile(user):
             nonlocal stop

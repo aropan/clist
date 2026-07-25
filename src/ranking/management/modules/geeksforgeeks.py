@@ -34,7 +34,6 @@ class Statistic(BaseModule):
             )
 
     def get_standings(self, users=None, statistics=None, **kwargs):
-
         result = {}
 
         @RateLimiter(max_calls=10, period=2)
@@ -85,7 +84,6 @@ class Statistic(BaseModule):
         return ret
 
     def get_users_infos(users, resource, accounts, pbar=None):
-
         @RateLimiter(max_calls=6, period=1)
         def fetch_profile(account):
             url = account.profile_url(resource)

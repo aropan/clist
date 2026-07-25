@@ -9,13 +9,12 @@ from true_coders.models import Coder
 
 
 class CustomCacheThrottle(CacheThrottle):
-
     def convert_identifier_to_key(self, identifier):
         return str(identifier)
 
     def should_be_throttled(self, identifier, **kwargs):
         key = self.convert_identifier_to_key(identifier)
-        limit_key = key + '[limit]'
+        limit_key = key + "[limit]"
 
         now = int(time.time())
         timeframe = int(self.timeframe)
@@ -29,9 +28,9 @@ class CustomCacheThrottle(CacheThrottle):
             return timeframe - (now - times_accessed[-throttle_at])
 
         if limit_key not in cache:
-            settings = Coder.objects.filter(username=identifier).values_list('settings', flat=True)
+            settings = Coder.objects.filter(username=identifier).values_list("settings", flat=True)
             settings = settings[0] if settings else {}
-            throttle_at = settings.get('api_throttle_at', self.throttle_at)
+            throttle_at = settings.get("api_throttle_at", self.throttle_at)
             cache.set(limit_key, throttle_at, 3600)
 
         return False

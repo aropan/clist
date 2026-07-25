@@ -15,8 +15,8 @@ from stringcolor import cs
 def trim_on_newline(text, max_length):
     if len(text) <= max_length:
         return text
-    pos = text.find('\n', -max_length)
-    return text[-max_length:] if pos == -1 else text[pos + 1:]
+    pos = text.find("\n", -max_length)
+    return text[-max_length:] if pos == -1 else text[pos + 1 :]
 
 
 def string_iou(a, b):
@@ -42,11 +42,11 @@ def word_string_iou(a, b, sep: str | None = None):
 
 
 def slug_string_iou(a, b):
-    return list_string_iou(slugify(a).split('-'), slugify(b).split('-'))
+    return list_string_iou(slugify(a).split("-"), slugify(b).split("-"))
 
 
 def random_string(length=40):
-    return ''.join(random.choices(list(string.ascii_letters + string.digits), k=length))
+    return "".join(random.choices(list(string.ascii_letters + string.digits), k=length))
 
 
 def generate_secret(length=16):
@@ -59,7 +59,7 @@ def generate_secret_64():
 
 
 def markdown_to_text(markdown_text):
-    return BeautifulSoup(markdown(markdown_text), 'html.parser').get_text()
+    return BeautifulSoup(markdown(markdown_text), "html.parser").get_text()
 
 
 def markdown_to_html(markdown_text):
@@ -68,7 +68,7 @@ def markdown_to_html(markdown_text):
 
 def cut_prefix(text, prefix, strip=True):
     if text.startswith(prefix):
-        text = text[len(prefix):]
+        text = text[len(prefix) :]
         if strip:
             text = text.strip()
     return text
@@ -76,16 +76,16 @@ def cut_prefix(text, prefix, strip=True):
 
 def split_team_name_and_members(value):
     value = value.rstrip()
-    if not value.endswith(')'):
+    if not value.endswith(")"):
         return None
 
     depth = 0
     opening_index = None
     for index in range(len(value) - 1, -1, -1):
         char = value[index]
-        if char == ')':
+        if char == ")":
             depth += 1
-        elif char == '(':
+        elif char == "(":
             depth -= 1
             if depth == 0:
                 opening_index = index
@@ -96,20 +96,20 @@ def split_team_name_and_members(value):
     if opening_index is None:
         return None
 
-    members_value = value[opening_index + 1:-1]
+    members_value = value[opening_index + 1 : -1]
     members = []
     member_start = 0
     depth = 0
     for index, char in enumerate(members_value):
-        if char == '(':
+        if char == "(":
             if depth:
                 return None
             depth = 1
-        elif char == ')':
+        elif char == ")":
             if not depth:
                 return None
             depth = 0
-        elif char == ',' and depth == 0:
+        elif char == "," and depth == 0:
             member = members_value[member_start:index].strip()
             if member:
                 members.append(member)
@@ -133,10 +133,10 @@ def print_diff(p, q):
         p = yaml.dump(p, indent=2).splitlines()
         q = yaml.dump(q, indent=2).splitlines()
     for diff in list(unified_diff(p, q)):
-        if diff.startswith('+ '):
-            print(cs(diff, 'green'))
-        elif diff.startswith('- '):
-            print(cs(diff, 'red'))
+        if diff.startswith("+ "):
+            print(cs(diff, "green"))
+        elif diff.startswith("- "):
+            print(cs(diff, "red"))
         else:
             print(diff)
 
@@ -154,13 +154,13 @@ def remove_unpaired_surrogates(text):
         else:
             result.append(text[i])
             i += 1
-    return ''.join(result)
+    return "".join(result)
 
 
 def sanitize_text(text):
     if not text:
         return text
-    text = re.sub(r'[\x00-\x1F\x7F]', '', text)
+    text = re.sub(r"[\x00-\x1F\x7F]", "", text)
     text = remove_unpaired_surrogates(text)
     return text
 
@@ -179,4 +179,4 @@ def sanitize_data(data):
 
 
 def strip_tags(html):
-    return BeautifulSoup(html, 'html.parser').get_text()
+    return BeautifulSoup(html, "html.parser").get_text()

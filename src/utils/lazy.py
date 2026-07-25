@@ -17,7 +17,7 @@ class LazyObject:
         return getattr(self._object, name)
 
     def __setattr__(self, name, value):
-        if name in ('_initialized', '_object', '_factory'):
+        if name in ("_initialized", "_object", "_factory"):
             return super().__setattr__(name, value)
         self._initialize()
         return setattr(self._object, name, value)

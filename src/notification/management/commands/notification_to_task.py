@@ -21,13 +21,13 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-    help = 'Add notice tasks'
+    help = "Add notice tasks"
 
-    def process(self, notify, contests, prefix=''):
+    def process(self, notify, contests, prefix=""):
         if contests.exists():
             addition = {}
-            addition['context'] = {'prefix': prefix}
-            addition['contests'] = [contest.pk for contest in contests]
+            addition["context"] = {"prefix": prefix}
+            addition["contests"] = [contest.pk for contest in contests]
 
             Task.objects.create(
                 notification=notify,
@@ -35,46 +35,47 @@ class Command(BaseCommand):
             )
 
     def add_arguments(self, parser):
-        parser.add_argument('--coders', nargs='+')
-        parser.add_argument('--dryrun', action='store_true', default=False)
-        parser.add_argument('--methods', nargs='+')
-        parser.add_argument('--reset', action='store_true', default=False)
+        parser.add_argument("--coders", nargs="+")
+        parser.add_argument("--dryrun", action="store_true", default=False)
+        parser.add_argument("--methods", nargs="+")
+        parser.add_argument("--reset", action="store_true", default=False)
 
     @print_sql_decorator()
     def handle(self, *args, **options):
-        coders = options.get('coders')
-        dryrun = options.get('dryrun')
-        methods = options.get('methods')
+        coders = options.get("coders")
+        dryrun = options.get("dryrun")
+        methods = options.get("methods")
 
-        updates = Contest.visible\
-            .filter(start_time__gte=timezone.now()) \
-            .filter(Q(notification_timing=None) | Q(modified__gt=F('notification_timing'))) \
-            .order_by('start_time')
+        updates = (
+            Contest.visible.filter(start_time__gte=timezone.now())
+            .filter(Q(notification_timing=None) | Q(modified__gt=F("notification_timing")))
+            .order_by("start_time")
+        )
 
         now = timezone.now()
         if dryrun:
-            logger.info(f'now = {now}')
+            logger.info(f"now = {now}")
 
         notifies = Notification.objects.all()
         if coders is not None:
             notifies = notifies.filter(coder__user__username__in=coders)
         if methods:
             notifies = notifies.filter(method__in=methods)
-        if dryrun and options.get('reset'):
+        if dryrun and options.get("reset"):
             notifies.update(last_time=now)
         if not updates:
             notifies = notifies.filter(last_time__isnull=False, last_time__lte=now)
         elif dryrun:
-            logger.info(f'updates = {updates}')
+            logger.info(f"updates = {updates}")
 
-        notifies = notifies.select_related('coder')
+        notifies = notifies.select_related("coder")
 
-        contests = Contest.visible.annotate(duration_time=Epoch(F('end_time') - F('start_time')))
+        contests = Contest.visible.annotate(duration_time=Epoch(F("end_time") - F("start_time")))
 
         for notify in tqdm(notifies.iterator()):
             try:
-                if ':' in notify.method:
-                    category = notify.method.split(':', 1)[-1]
+                if ":" in notify.method:
+                    category = notify.method.split(":", 1)[-1]
                 else:
                     category = notify.method
                 filt = notify.coder.get_contest_filter(category)
@@ -85,26 +86,27 @@ class Command(BaseCommand):
 
                 if updates and notify.last_time and notify.with_updates:
                     qs_updates = updates.filter(filt, start_time__lt=min(now, notify.last_time) + before)
-                    self.process(notify, qs_updates, 'UPD')
+                    self.process(notify, qs_updates, "UPD")
                     qs = qs.filter(~Q(pk__in=[c.pk for c in qs_updates]))
 
                 qs = qs.filter(filt)
 
                 if notify.with_virtual:
                     one_day = timedelta(days=1)
-                    if_virtual = (~Q(duration_time=F('duration_in_secs'))
-                                  & Q(duration_time__gt=one_day.total_seconds(), start_time__lt=now))
+                    if_virtual = ~Q(duration_time=F("duration_in_secs")) & Q(
+                        duration_time__gt=one_day.total_seconds(), start_time__lt=now
+                    )
                     qs = qs.annotate(
                         time=Case(
-                            When(start_time__gte=now, then=F('start_time')),
-                            When(if_virtual, then=Cast(F('end_time') - one_day + before, output_field=DateTimeField())),
+                            When(start_time__gte=now, then=F("start_time")),
+                            When(if_virtual, then=Cast(F("end_time") - one_day + before, output_field=DateTimeField())),
                             default=None,
                         )
                     )
                 else:
-                    qs = qs.filter(start_time__gte=now).annotate(time=F('start_time'))
+                    qs = qs.filter(start_time__gte=now).annotate(time=F("start_time"))
 
-                qs = qs.filter(time__isnull=False).order_by('time')
+                qs = qs.filter(time__isnull=False).order_by("time")
 
                 if notify.last_time:
                     qs = qs.filter(time__gte=notify.last_time + before)
@@ -114,7 +116,7 @@ class Command(BaseCommand):
                 first = qs.first()
                 if not first:
                     if dryrun:
-                        logger.info(f'last_time = {notify.last_time} to none')
+                        logger.info(f"last_time = {notify.last_time} to none")
                     else:
                         notify.last_time = now + timedelta(hours=1)
                         notify.save()
@@ -124,7 +126,7 @@ class Command(BaseCommand):
                 if delta > timedelta(minutes=3):
                     new_time = first.time - before - timedelta(minutes=1)
                     if dryrun:
-                        logger.info(f'last_time = {notify.last_time} to {new_time}')
+                        logger.info(f"last_time = {notify.last_time} to {new_time}")
                     else:
                         notify.last_time = new_time
                         notify.save()
@@ -138,16 +140,16 @@ class Command(BaseCommand):
 
                 new_time = now + last - before
                 if dryrun:
-                    logger.info(f'qs = {qs}')
-                    logger.info(f'last_time = {notify.last_time} to {new_time}')
+                    logger.info(f"qs = {qs}")
+                    logger.info(f"last_time = {notify.last_time} to {new_time}")
                 else:
                     self.process(notify, qs)
                     notify.last_time = new_time
                     notify.save()
             except Exception as e:
                 logger.debug(colored_format_exc())
-                logger.warning(f'notification = {notify}')
-                logger.error(f'Exception send notice: {e}')
+                logger.warning(f"notification = {notify}")
+                logger.error(f"Exception send notice: {e}")
 
         if not dryrun:
             with transaction.atomic():

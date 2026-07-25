@@ -40,7 +40,6 @@ class CustomRequester:
         self._kwargs = kwargs
 
     def __call__(self, func):
-
         def wrapper(*args, **kwargs):
             with self._base_req(*self._args, **self._kwargs) as req:
                 return func(*args, req=req, **kwargs)

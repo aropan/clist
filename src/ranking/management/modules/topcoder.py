@@ -605,7 +605,6 @@ class Statistic(BaseModule):
 
     @staticmethod
     def get_users_infos(users, resource=None, accounts=None, pbar=None):
-
         # active_algorithm_list_url = 'https://www.topcoder.com/tc?module=BasicData&c=dd_active_algorithm_list'
         members_api_url = "https://api.topcoder.com/v5/members/"
         with REQ.with_proxy(

@@ -1,5 +1,4 @@
 class ListAsQueryset(list):
-
     def exists(self):
         return len(self) > 0
 
@@ -7,7 +6,7 @@ class ListAsQueryset(list):
         return len(self)
 
     def order_by(self, field):
-        reverse = field.startswith('-')
-        field = field.strip('-')
+        reverse = field.startswith("-")
+        field = field.strip("-")
         self.sort(key=lambda el: (el.get(field) is not None, el.get(field)), reverse=reverse)
         return self

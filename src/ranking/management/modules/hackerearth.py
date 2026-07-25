@@ -227,7 +227,6 @@ class Statistic(BaseModule):
 
     @staticmethod
     def get_users_infos(users, resource, accounts, pbar=None):
-
         def fetch_account(account):
             ret = {}
             info = ret.setdefault("info", {})

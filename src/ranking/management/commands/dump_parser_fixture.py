@@ -736,12 +736,10 @@ class Command(BaseCommand):
                 covered_combination_count += 1
             if force_update or not covered:
                 reason_type = "force-update-combination" if covered else "combination"
-                suggestions.setdefault(contest.pk, {"contest": contest, "reasons": []})["reasons"].append(
-                    (
-                        reason_type,
-                        self.describe_coverage(contest),
-                    )
-                )
+                suggestions.setdefault(contest.pk, {"contest": contest, "reasons": []})["reasons"].append((
+                    reason_type,
+                    self.describe_coverage(contest),
+                ))
 
         covered_annual_count = 0
         for contest in annual_candidates:
@@ -750,12 +748,10 @@ class Command(BaseCommand):
                 covered_annual_count += 1
             if force_update or not covered:
                 reason_type = "force-update-annual" if covered else "annual"
-                suggestions.setdefault(contest.pk, {"contest": contest, "reasons": []})["reasons"].append(
-                    (
-                        reason_type,
-                        contest.series.slug,
-                    )
-                )
+                suggestions.setdefault(contest.pk, {"contest": contest, "reasons": []})["reasons"].append((
+                    reason_type,
+                    contest.series.slug,
+                ))
 
         suggestions = list(suggestions.values())
         self.write_suggestions_summary(

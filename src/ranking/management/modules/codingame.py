@@ -443,7 +443,6 @@ class Statistic(BaseModule):
         return standings
 
     def get_users_infos(users, resource=None, accounts=None, pbar=None):
-
         def fetch_ratings(user, account):
             handle = account.info.get("profile_url", {}).get("public_handle")
             if not handle:
@@ -629,7 +628,6 @@ class Statistic(BaseModule):
 
 
 def run(*args):
-
     from clist.models import Contest
     from ranking.models import Statistics
 

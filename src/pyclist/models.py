@@ -16,13 +16,12 @@ from utils.timetools import parse_duration
 
 
 class DateDuringLookup(LessThan):
-
     def __init__(self, lhs, rhs):
         rhs = now() + parse_duration(rhs)
         super().__init__(lhs, rhs)
 
 
-Field.register_lookup(DateDuringLookup, lookup_name='during')
+Field.register_lookup(DateDuringLookup, lookup_name="during")
 
 
 class BaseModel(models.Model):
@@ -38,14 +37,14 @@ class BaseModel(models.Model):
         elif isinstance(update_fields, set):
             update_fields.update(fields)
         elif isinstance(update_fields, tuple):
-            raise ValueError('update_fields cannot be a tuple')
+            raise ValueError("update_fields cannot be a tuple")
 
     def save(self, *args, **kwargs):
-        self.add_to_update_fields(['modified'], kwargs.get('update_fields'))
+        self.add_to_update_fields(["modified"], kwargs.get("update_fields"))
         return super().save(*args, **kwargs)
 
     def fetched_field(self, field) -> Optional[Any]:
-        fields = field.split('__')
+        fields = field.split("__")
         obj = self
         for field in fields:
             if field not in obj._state.fields_cache:
@@ -54,7 +53,7 @@ class BaseModel(models.Model):
         return obj
 
     def has_field(self, field) -> bool:
-        *fields, key = field.split('__')
+        *fields, key = field.split("__")
         obj = self
         for field in fields:
             if field not in obj._state.fields_cache:
@@ -67,22 +66,21 @@ class BaseModel(models.Model):
 
     @property
     def channel_group_name(self):
-        return f'{self.__class__.__name__.upper()}__{self.pk}'
+        return f"{self.__class__.__name__.upper()}__{self.pk}"
 
     @classmethod
     def admin_changelist_viewname(cls):
-        return f'{cls._meta.app_label}_{cls._meta.model_name}_changelist'
+        return f"{cls._meta.app_label}_{cls._meta.model_name}_changelist"
 
     def admin_change_url(self):
-        return reverse(f'admin:{self._meta.app_label}_{self._meta.model_name}_change', args=[self.pk])
+        return reverse(f"admin:{self._meta.app_label}_{self._meta.model_name}_change", args=[self.pk])
 
     def touch(self):
         self.modified = now()
-        self.save(update_fields=['modified'])
+        self.save(update_fields=["modified"])
 
 
 class BaseQuerySet(models.QuerySet):
-
     def annotate_favorite(self, instance):
         if isinstance(instance, (User, AnonymousUser)):
             coder = instance.coder if instance.is_authenticated else None
@@ -92,13 +90,13 @@ class BaseQuerySet(models.QuerySet):
         if not coder:
             return self.annotate(is_favorite=Value(False, output_field=models.BooleanField()))
 
-        Activity = apps.get_model('favorites.Activity')
+        Activity = apps.get_model("favorites.Activity")
         content_type = ContentType.objects.get_for_model(self.model)
         qs = Activity.objects.filter(
             coder=coder,
             activity_type=Activity.Type.FAVORITE,
             content_type=content_type,
-            object_id=OuterRef('pk'),
+            object_id=OuterRef("pk"),
         )
         return self.annotate(is_favorite=Exists(qs))
 
@@ -111,33 +109,33 @@ class BaseQuerySet(models.QuerySet):
         if not coder:
             return self.annotate(is_note=Value(False, output_field=models.BooleanField()))
 
-        Note = apps.get_model('notes.Note')
+        Note = apps.get_model("notes.Note")
         content_type = ContentType.objects.get_for_model(self.model)
-        qs = Note.objects.filter(coder=coder, content_type=content_type, object_id=OuterRef('pk'))
+        qs = Note.objects.filter(coder=coder, content_type=content_type, object_id=OuterRef("pk"))
         ret = self.annotate(is_note=Exists(qs))
-        ret = ret.annotate(note_text=Subquery(qs.values('text')[:1]))
+        ret = ret.annotate(note_text=Subquery(qs.values("text")[:1]))
         return ret
 
     def annotate_active_executions(self):
-        EventLog = apps.get_model('logify.EventLog')
+        EventLog = apps.get_model("logify.EventLog")
         content_type = ContentType.objects.get_for_model(self.model)
         qs = EventLog.env_objects.filter(
             content_type=content_type,
-            object_id=OuterRef('pk'),
+            object_id=OuterRef("pk"),
             status=EventStatus.IN_PROGRESS,
         )
         return self.annotate(has_active_executions=Exists(qs))
 
     def annotate_choices(self, field, choices, annotation_field=None):
         if annotation_field is None:
-            annotation_field = f'{field}_name'
+            annotation_field = f"{field}_name"
 
-        if hasattr(choices, 'choices'):
+        if hasattr(choices, "choices"):
             choices = choices.choices
 
         return self.annotate(**{
             annotation_field: Case(
-                *[When(**{field: k, 'then': Value(v)}) for k, v in choices],
+                *[When(**{field: k, "then": Value(v)}) for k, v in choices],
                 output_field=CharField(),
             )
         })
@@ -147,7 +145,6 @@ class BaseQuerySet(models.QuerySet):
 
 
 class _BaseManager(models.Manager):
-
     class Meta:
         abstract = True
 

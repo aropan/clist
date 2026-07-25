@@ -8,12 +8,12 @@ from clist.models import Resource
 
 
 def run(host=None):
-    resources = Resource.objects.order_by('n_accounts')
+    resources = Resource.objects.order_by("n_accounts")
     if host:
         resources = resources.filter(host__regex=host)
     total = resources.count()
 
-    with tqdm(total=total, desc='resources') as pbar_resource:
+    with tqdm(total=total, desc="resources") as pbar_resource:
         for resource in resources.iterator():
             start_time = timezone.now()
             accounts = resource.account_set.all()

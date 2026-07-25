@@ -22,7 +22,6 @@ class Statistic(BaseModule):
     USER_RATING_API_URL_ = "/api/api.php?type=user-rating&user={0}"
 
     def get_standings(self, users=None, statistics=None, **kwargs):
-
         page = REQ.get(self.url)
         if "login.php" in REQ.last_url:
             raise ExceptionParseStandings("private contest")
@@ -122,7 +121,6 @@ class Statistic(BaseModule):
 
     @staticmethod
     def get_users_infos(users, resource, accounts, pbar=None):
-
         page = REQ.get(urljoin(resource.profile_url, Statistic.SETTINGS_URL_))
         form = REQ.form(action=r"login.php\?action=login")
         if form:

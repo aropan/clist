@@ -7,11 +7,11 @@ from skimage import color
 
 
 def color_to_rgb(color, normalization=1):
-    return [int(color[i:i + 2], 16) * normalization / 255 for i in range(1, 6, 2)]
+    return [int(color[i : i + 2], 16) * normalization / 255 for i in range(1, 6, 2)]
 
 
 def rgb_to_color(*args):
-    return '#' + ''.join(f'{int(c * 255):02x}' for c in args).upper()
+    return "#" + "".join(f"{int(c * 255):02x}" for c in args).upper()
 
 
 def rgb_to_hls(*args):
@@ -73,6 +73,6 @@ def get_n_colors(n, ignore_colors=[]):
         # print(lab, np.linalg.norm(ignore_colors - lab, axis=1).min())
         rgb = color.lab2rgb(lab)
         r, g, b = [int(round(x * 255)) for x in rgb]
-        ret.append(f'#{r:02x}{g:02x}{b:02x}')
+        ret.append(f"#{r:02x}{g:02x}{b:02x}")
 
     return ret

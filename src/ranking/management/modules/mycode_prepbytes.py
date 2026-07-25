@@ -112,7 +112,6 @@ class Statistic(BaseModule):
 
     @staticmethod
     def get_users_infos(users, resource, accounts, pbar=None):
-
         @RateLimiter(max_calls=8, period=2)
         def fetch_user_info(user):
             page = REQ.get(

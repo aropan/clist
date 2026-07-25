@@ -13,20 +13,20 @@ import tqdm
 
 
 class Command(BaseCommand):
-    help = 'Event mailing'
+    help = "Event mailing"
 
     def add_arguments(self, parser):
-        parser.add_argument('--event', type=str, required=True)
-        parser.add_argument('--status', type=str, required=True)
-        parser.add_argument('--each', action='store_true', default=False)
-        parser.add_argument('--dryrun', action='store_true', default=False)
-        parser.add_argument('--template', type=str, required=True)
+        parser.add_argument("--event", type=str, required=True)
+        parser.add_argument("--status", type=str, required=True)
+        parser.add_argument("--each", action="store_true", default=False)
+        parser.add_argument("--dryrun", action="store_true", default=False)
+        parser.add_argument("--template", type=str, required=True)
 
     def handle(self, *args, **options):
-        event = Event.objects.filter(name__iregex=options['event']).order_by('-created').first()
-        self.stdout.write(f'event = {event}')
-        template = get_template(options['template'])
-        status = getattr(TeamStatus, options['status'].upper())
+        event = Event.objects.filter(name__iregex=options["event"]).order_by("-created").first()
+        self.stdout.write(f"event = {event}")
+        template = get_template(options["template"])
+        status = getattr(TeamStatus, options["status"].upper())
 
         teams = Team.objects.filter(
             modified__lt=now() - timedelta(minutes=2),
@@ -44,29 +44,29 @@ class Command(BaseCommand):
             logins = [team.login_set.get(stage=status) for team in teams]
             with tqdm.tqdm(zip(teams, logins), total=len(logins)) as pbar:
                 for team, login in pbar:
-                    context = {'team': team, 'login': login}
+                    context = {"team": team, "login": login}
                     jobs = []
-                    if options['dryrun']:
+                    if options["dryrun"]:
                         email = settings.ADMINS[0][1]
-                        jobs = [{'email': [email], 'coder': Coder.objects.get(username='aropan')}]
+                        jobs = [{"email": [email], "coder": Coder.objects.get(username="aropan")}]
                     else:
-                        if options['each']:
-                            jobs = [{'email': [p.email], 'coder': p.coder} for p in team.ordered_participants]
+                        if options["each"]:
+                            jobs = [{"email": [p.email], "coder": p.coder} for p in team.ordered_participants]
                         else:
-                            jobs = [{'email': [p.email for p in team.ordered_participants]}]
+                            jobs = [{"email": [p.email for p in team.ordered_participants]}]
 
                     for job in jobs:
                         context.update(job)
                         message = template.render(context)
-                        subject, message = message.split('\n\n', 1)
-                        message = message.replace('\n', '<br>\n')
+                        subject, message = message.split("\n\n", 1)
+                        message = message.replace("\n", "<br>\n")
                         msg = EmailMultiAlternatives(
                             subject,
                             message,
-                            to=job['email'],
+                            to=job["email"],
                             connection=connection,
                         )
-                        msg.attach_alternative(message, 'text/html')
+                        msg.attach_alternative(message, "text/html")
 
                         for i in range(n_attempet):
                             try:
@@ -81,7 +81,7 @@ class Command(BaseCommand):
                         else:
                             failed += 1
                         pbar.set_postfix(done=done, failed=failed)
-                        if options['dryrun']:
+                        if options["dryrun"]:
                             return
 
-        self.stdout.write(f'Successfully mailing: {done} of {teams.count()} ({failed} fails)')
+        self.stdout.write(f"Successfully mailing: {done} of {teams.count()} ({failed} fails)")

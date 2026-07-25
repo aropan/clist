@@ -310,7 +310,6 @@ class Statistic(BaseModule):
 
     @staticmethod
     def get_users_infos(users, resource, accounts, pbar=None):
-
         # Set the english locale on the session: fetch_profile below raises instead of setting it.
         get_page(resource.href())
 

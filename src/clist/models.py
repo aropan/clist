@@ -371,7 +371,6 @@ class Resource(BaseModel):
         return urls
 
     def update_icon(self):
-
         urls = self.get_icon_urls()
 
         for url, ext in urls:

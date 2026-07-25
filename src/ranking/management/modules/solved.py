@@ -19,7 +19,6 @@ class Statistic(BaseModule):
     )
 
     def get_standings(self, users=None, statistics=None, **kwargs):
-
         cid = self.info.get("parse", {}).get("arenaBojContestId")
         if cid is None:
             return ExceptionParseStandings
@@ -99,7 +98,6 @@ class Statistic(BaseModule):
 
     @staticmethod
     def get_users_infos(users, resource, accounts, pbar=None):
-
         @RateLimiter(max_calls=5, period=2)
         def fetch_profile(handle):
             profile_url = resource.profile_url.format(account=handle)

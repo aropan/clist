@@ -7,7 +7,7 @@ from pytz import utc
 
 
 def get_n_contests_weight(n_contests):
-    return 1 - 0.9 ** n_contests
+    return 1 - 0.9**n_contests
 
 
 def get_last_activity_weight(last_activity, base=None):
@@ -34,7 +34,7 @@ def get_weighted_rating(wratings, target, threshold=0.95, cache=None) -> float:
             negative_prob = 1
             for weight, rating in wratings:
                 exp = (middle - rating) / 400
-                e = 1 / (1 + 10 ** exp)
+                e = 1 / (1 + 10**exp)
                 weight_sum += weight
                 e_total += weight * e
                 positive_prob *= e

@@ -5,36 +5,51 @@ from django.urls import re_path
 from tastypie import fields
 from tastypie.utils import trailing_slash
 
-from clist.api.v2 import (AccountResource, BaseModelResource, ContestResource, ResourceResource,  # noqa: F401
-                          StatisticsResource, use_in_detail_only, use_in_me_only)
+from clist.api.v2 import (
+    AccountResource,
+    BaseModelResource,
+    ContestResource,
+    ResourceResource,  # noqa: F401
+    StatisticsResource,
+    use_in_detail_only,
+    use_in_me_only,
+)
 from true_coders.models import Coder
 
 
 def use_for_is_real(bundle, *args, **kwargs):
-    return not bundle.data['is_virtual']
+    return not bundle.data["is_virtual"]
 
 
 def use_for_is_virtual(bundle, *args, **kwargs):
-    return bundle.data['is_virtual']
+    return bundle.data["is_virtual"]
 
 
 class CoderResource(BaseModelResource):
-    handle = fields.CharField('username')
-    is_virtual = fields.BooleanField('is_virtual')
-    first_name = fields.CharField('user__first_name', null=True, use_in=use_for_is_real,
-                                  help_text='Unicode string data. Ex: "Hello World". '
-                                  'Field is available only if coder is real')
-    last_name = fields.CharField('user__last_name', null=True, use_in=use_for_is_real,
-                                 help_text='Unicode string data. Ex: "Hello World". '
-                                 'Field is available only if coder is real')
-    country = fields.CharField('country')
-    timezone = fields.CharField('timezone', use_in=use_in_me_only)
-    email = fields.CharField('user__email', use_in=use_in_me_only, null=True)
-    n_accounts = fields.IntegerField('n_accounts', use_in='list')
-    display_name = fields.CharField('display_name', use_in=use_for_is_virtual,
-                                    help_text='Unicode string data. Ex: "Hello World". '
-                                    'Field is available only if coder is virtual')
-    accounts = fields.ManyToManyField(AccountResource, 'account_set', use_in=use_in_detail_only, full=True)
+    handle = fields.CharField("username")
+    is_virtual = fields.BooleanField("is_virtual")
+    first_name = fields.CharField(
+        "user__first_name",
+        null=True,
+        use_in=use_for_is_real,
+        help_text='Unicode string data. Ex: "Hello World". Field is available only if coder is real',
+    )
+    last_name = fields.CharField(
+        "user__last_name",
+        null=True,
+        use_in=use_for_is_real,
+        help_text='Unicode string data. Ex: "Hello World". Field is available only if coder is real',
+    )
+    country = fields.CharField("country")
+    timezone = fields.CharField("timezone", use_in=use_in_me_only)
+    email = fields.CharField("user__email", use_in=use_in_me_only, null=True)
+    n_accounts = fields.IntegerField("n_accounts", use_in="list")
+    display_name = fields.CharField(
+        "display_name",
+        use_in=use_for_is_virtual,
+        help_text='Unicode string data. Ex: "Hello World". Field is available only if coder is virtual',
+    )
+    accounts = fields.ManyToManyField(AccountResource, "account_set", use_in=use_in_detail_only, full=True)
     with_accounts = fields.BooleanField()
     total_count = fields.BooleanField()
 
@@ -42,36 +57,36 @@ class CoderResource(BaseModelResource):
         abstract = False
         object_class = Coder
         queryset = Coder.objects.all()
-        resource_name = 'coder'
-        excludes = ('total_count', 'with_accounts')
+        resource_name = "coder"
+        excludes = ("total_count", "with_accounts")
         filtering = {
-            'total_count': ['exact'],
-            'with_accounts': ['exact'],
-            'country': ['exact'],
-            'id': ['exact', 'in'],
-            'handle': ['exact', 'in'],
-            'is_virtual': ['exact'],
+            "total_count": ["exact"],
+            "with_accounts": ["exact"],
+            "country": ["exact"],
+            "id": ["exact", "in"],
+            "handle": ["exact", "in"],
+            "is_virtual": ["exact"],
         }
         extra_actions = [
             {
-                'name': 'me',
-                'summary': 'Retrieve your coder',
-                'resource_type': 'list',
-                'responseClass': 'coder',
+                "name": "me",
+                "summary": "Retrieve your coder",
+                "resource_type": "list",
+                "responseClass": "coder",
             }
         ]
-        ordering = ['id', 'n_accounts']
+        ordering = ["id", "n_accounts"]
 
     def me(self, request, *args, **kwargs):
-        kwargs['me'] = True
-        return self.dispatch('detail', request, **kwargs)
+        kwargs["me"] = True
+        return self.dispatch("detail", request, **kwargs)
 
     def prepend_urls(self):
         return [
             re_path(
-                r'^(?P<resource_name>%s)/me%s$' % (self._meta.resource_name, trailing_slash),
-                self.wrap_view('me'),
-                name='api_dispatch_me'
+                r"^(?P<resource_name>%s)/me%s$" % (self._meta.resource_name, trailing_slash),
+                self.wrap_view("me"),
+                name="api_dispatch_me",
             )
         ]
 
@@ -80,25 +95,25 @@ class CoderResource(BaseModelResource):
         for k in self.fields.keys():
             if k in bundle.data and not bundle.data[k] and isinstance(bundle.data[k], str):
                 bundle.data[k] = None
-        bundle.data.pop('with_accounts', None)
+        bundle.data.pop("with_accounts", None)
         return bundle
 
     def build_filters(self, filters=None, *args, **kwargs):
         filters = filters or {}
-        me = filters.pop('me', None)
-        filters.pop('with_accounts', None)
+        me = filters.pop("me", None)
+        filters.pop("with_accounts", None)
         filters = super().build_filters(filters, *args, **kwargs)
-        filters['me'] = me
+        filters["me"] = me
         return filters
 
     def apply_filters(self, request, applicable_filters):
-        me = applicable_filters.pop('me', None)
+        me = applicable_filters.pop("me", None)
         qs = super().apply_filters(request, applicable_filters)
         if me:
             qs = qs.filter(pk=request.user.coder.pk)
-        qs = qs.select_related('user')
+        qs = qs.select_related("user")
 
-        fake_bundle = type('obj', (object,), {'request': request})
+        fake_bundle = type("obj", (object,), {"request": request})
         if use_in_detail_only(fake_bundle):
-            qs = qs.prefetch_related('account_set__resource')
+            qs = qs.prefetch_related("account_set__resource")
         return qs

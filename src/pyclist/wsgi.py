@@ -19,7 +19,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pyclist.settings")
 if not settings.DEBUG:
     setup()
 
-    call_command('collectstatic', verbosity=1, interactive=False)
+    call_command("collectstatic", verbosity=1, interactive=False)
 
     from django.conf import settings
 

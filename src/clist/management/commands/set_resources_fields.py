@@ -20,18 +20,18 @@ from utils.attrdict import AttrDict
 
 def set_accounts_fields(resources, logger):
     total = Account.objects.filter(resource__in=resources).count()
-    with tqdm(total=total, desc='accounts') as pbar:
+    with tqdm(total=total, desc="accounts") as pbar:
         for resource in resources.iterator():
             fields_types = defaultdict(set)
             pbar.set_postfix(resource=resource)
 
-            for info in resource.account_set.values('info', 'rating_prediction').iterator():
-                rating_prediction = info.pop('rating_prediction')
-                info = info['info']
-                info = flatten(info, reducer=make_reducer(delimiter='__'))
+            for info in resource.account_set.values("info", "rating_prediction").iterator():
+                rating_prediction = info.pop("rating_prediction")
+                info = info["info"]
+                info = flatten(info, reducer=make_reducer(delimiter="__"))
                 if rating_prediction:
-                    rating_prediction = flatten(rating_prediction, reducer=make_reducer(delimiter='__'))
-                    raring_prediction = {f'rating_prediction__{k}': v for k, v in rating_prediction.items()}
+                    rating_prediction = flatten(rating_prediction, reducer=make_reducer(delimiter="__"))
+                    raring_prediction = {f"rating_prediction__{k}": v for k, v in rating_prediction.items()}
                     info.update(raring_prediction)
                 for k, v in info.items():
                     if Account.is_special_info_field(k):
@@ -49,34 +49,34 @@ def set_accounts_fields(resources, logger):
                 if new_types == orig_types:
                     continue
                 if (orig_types or new_types) and first_log:
-                    logger.info(f'{resource} accounts fields:')
+                    logger.info(f"{resource} accounts fields:")
                     first_log = False
                 if orig_types:
-                    logger.info(cs(f'- {field}: {orig_types}', 'red'))
+                    logger.info(cs(f"- {field}: {orig_types}", "red"))
                 if new_types:
-                    logger.info(cs(f'+ {field}: {new_types}', 'green'))
+                    logger.info(cs(f"+ {field}: {new_types}", "green"))
 
-            resource.accounts_fields['types'] = fields_types
-            resource.save(update_fields=['accounts_fields'])
+            resource.accounts_fields["types"] = fields_types
+            resource.save(update_fields=["accounts_fields"])
 
 
 def set_problems_fields(resources, logger):
     total = Problem.objects.filter(resource__in=resources).count()
-    with tqdm(total=total, desc='problems') as pbar:
+    with tqdm(total=total, desc="problems") as pbar:
         for resource in resources.iterator():
             fields_types = defaultdict(set)
             pbar.set_postfix(resource=resource)
 
-            for info in resource.problem_set.values('info').iterator():
-                info = info['info']
-                info = flatten(info, reducer=make_reducer(delimiter='__'))
+            for info in resource.problem_set.values("info").iterator():
+                info = info["info"]
+                info = flatten(info, reducer=make_reducer(delimiter="__"))
                 for k, v in info.items():
                     if Problem.is_special_info_field(k):
                         continue
                     fields_types[k].add(type(v).__name__)
                 pbar.update()
             fields_types = {k: list(v) for k, v in fields_types.items()}
-            resource_problems_fields_types = resource.problems_fields.get('types', {})
+            resource_problems_fields_types = resource.problems_fields.get("types", {})
 
             fields = list(sorted(set(resource_problems_fields_types.keys()) | set(fields_types.keys())))
             first_log = True
@@ -86,42 +86,42 @@ def set_problems_fields(resources, logger):
                 if new_types == orig_types:
                     continue
                 if (orig_types or new_types) and first_log:
-                    logger.info(f'{resource} problems fields:')
+                    logger.info(f"{resource} problems fields:")
                     first_log = False
                 if orig_types:
-                    logger.info(cs(f'- {field}: {orig_types}', 'red'))
+                    logger.info(cs(f"- {field}: {orig_types}", "red"))
                 if new_types:
-                    logger.info(cs(f'+ {field}: {new_types}', 'green'))
+                    logger.info(cs(f"+ {field}: {new_types}", "green"))
 
-            resource.problems_fields['types'] = fields_types
-            resource.save(update_fields=['problems_fields'])
+            resource.problems_fields["types"] = fields_types
+            resource.save(update_fields=["problems_fields"])
 
 
 def set_statistics_fields(resources, logger):
     qs = Contest.objects
     total = qs.filter(resource__in=resources).count()
-    with tqdm(total=total, desc='contests') as pbar:
+    with tqdm(total=total, desc="contests") as pbar:
         for resource in resources.iterator():
             fields_types = defaultdict(set)
             pbar.set_postfix(resource=resource)
 
-            resource_qs = qs.filter(resource=resource).values('info__fields_types', 'rating_prediction_fields__types')
+            resource_qs = qs.filter(resource=resource).values("info__fields_types", "rating_prediction_fields__types")
             for info in resource_qs.iterator():
                 for prefix, fields_key in (
-                    ('', 'info__fields_types'),
-                    ('rating_prediction_', 'rating_prediction_fields__types'),
+                    ("", "info__fields_types"),
+                    ("rating_prediction_", "rating_prediction_fields__types"),
                 ):
                     fields = info[fields_key] or {}
                     for k, v in fields.items():
                         if prefix:
-                            k = f'{prefix}{k}'
+                            k = f"{prefix}{k}"
                         if Statistics.is_special_addition_field(k):
                             continue
                         fields_types[k] |= set(v)
                 pbar.update()
 
             fields_types = {k: list(v) for k, v in fields_types.items()}
-            resource_statistics_fields_types = resource.statistics_fields.get('types', {})
+            resource_statistics_fields_types = resource.statistics_fields.get("types", {})
 
             fields = list(sorted(set(resource_statistics_fields_types.keys()) | set(fields_types.keys())))
             first_log = True
@@ -131,23 +131,23 @@ def set_statistics_fields(resources, logger):
                 if new_types == orig_types:
                     continue
                 if (orig_types or new_types) and first_log:
-                    logger.info(f'{resource} statistics fields:')
+                    logger.info(f"{resource} statistics fields:")
                     first_log = False
                 if orig_types:
-                    logger.info(cs(f'- {field}: {orig_types}', 'red'))
+                    logger.info(cs(f"- {field}: {orig_types}", "red"))
                 if new_types:
-                    logger.info(cs(f'+ {field}: {new_types}', 'green'))
+                    logger.info(cs(f"+ {field}: {new_types}", "green"))
 
             if resource.has_submissions_statistics_log:
                 statistic_log = resource.statisticslog_set
                 statistic_log = statistic_log.filter(log_type=StatisticsLog.LogType.SUBMISSION)
-                statistic_log = statistic_log.order_by('-time')
+                statistic_log = statistic_log.order_by("-time")
                 statistic_log = statistic_log.first()
                 types = {k: [type(v).__name__] for k, v in statistic_log.data.items()}
-                resource.statistics_fields['submissions_statistics_types'] = types
+                resource.statistics_fields["submissions_statistics_types"] = types
 
-            resource.statistics_fields['types'] = fields_types
-            resource.save(update_fields=['statistics_fields'])
+            resource.statistics_fields["types"] = fields_types
+            resource.save(update_fields=["statistics_fields"])
 
 
 def set_n_fields(resources, logger):
@@ -156,14 +156,14 @@ def set_n_fields(resources, logger):
         n_contests = resource.contest_set.count()
         update_fields = []
         for field, new_value in (
-            ('n_accounts', n_accounts),
-            ('n_contests', n_contests),
-            ('n_university_accounts', resource.account_set.filter(account_type=AccountType.UNIVERSITY).count()),
-            ('n_team_accounts', resource.account_set.filter(account_type=AccountType.TEAM).count()),
+            ("n_accounts", n_accounts),
+            ("n_contests", n_contests),
+            ("n_university_accounts", resource.account_set.filter(account_type=AccountType.UNIVERSITY).count()),
+            ("n_team_accounts", resource.account_set.filter(account_type=AccountType.TEAM).count()),
         ):
             value = getattr(resource, field)
             if value != new_value:
-                logger.info(f'{resource} {field}: {value} -> {new_value}')
+                logger.info(f"{resource} {field}: {value} -> {new_value}")
                 setattr(resource, field, new_value)
                 update_fields.append(field)
         if update_fields:
@@ -180,35 +180,35 @@ def set_avg_rating(resources, logger, default_min_n_participations=3):
     for resource in tqdm(resources.iterator(), total=resources.count()):
         ratings = []
         qs = resource.account_set.filter(rating__isnull=False)
-        min_n_participations = resource.info.get('default_variables', {}).get('min_n_participations')
+        min_n_participations = resource.info.get("default_variables", {}).get("min_n_participations")
         min_n_participations = min_n_participations or default_min_n_participations
         qs = qs.filter(n_contests__gte=min_n_participations)
-        qs = qs.values('rating')
+        qs = qs.values("rating")
         for rating in tqdm(qs.iterator(), total=qs.count()):
-            ratings.append(rating['rating'])
+            ratings.append(rating["rating"])
         if ratings:
             avg_rating = sum(ratings) / len(ratings)
-            logger.info(f'{resource} avg_rating by {len(ratings)} accounts: {avg_rating:.3f} <- {resource.avg_rating}')
+            logger.info(f"{resource} avg_rating by {len(ratings)} accounts: {avg_rating:.3f} <- {resource.avg_rating}")
             if resource.avg_rating and not isclose(resource.avg_rating, avg_rating):
-                logger.info(f'{resource} avg_rating_diff: {resource.avg_rating - avg_rating}')
+                logger.info(f"{resource} avg_rating_diff: {resource.avg_rating - avg_rating}")
             resource.avg_rating = avg_rating
-            resource.save(update_fields=['avg_rating'])
+            resource.save(update_fields=["avg_rating"])
 
 
 class Command(BaseCommand):
-    help = 'Set resources fields'
+    help = "Set resources fields"
 
     def __init__(self, *args, **kw):
         super(Command, self).__init__(*args, **kw)
-        self.logger = getLogger('clist.set_resources_fields')
+        self.logger = getLogger("clist.set_resources_fields")
 
     def add_arguments(self, parser):
-        parser.add_argument('-r', '--resources', metavar='HOST', nargs='*', help='host name for update')
-        parser.add_argument('--full', action='store_true', help='full update')
-        parser.add_argument('--avg-rating', action='store_true', help='update average rating')
-        parser.add_argument('--problems-only', action='store_true', help='update problems only')
-        parser.add_argument('--remove-empty-accounts', action='store_true', help='remove empty accounts')
-        parser.add_argument('--with-priority', action='store_true', help='update resources by priority')
+        parser.add_argument("-r", "--resources", metavar="HOST", nargs="*", help="host name for update")
+        parser.add_argument("--full", action="store_true", help="full update")
+        parser.add_argument("--avg-rating", action="store_true", help="update average rating")
+        parser.add_argument("--problems-only", action="store_true", help="update problems only")
+        parser.add_argument("--remove-empty-accounts", action="store_true", help="remove empty accounts")
+        parser.add_argument("--with-priority", action="store_true", help="update resources by priority")
 
     def handle(self, *args, **options):
         self.stdout.write(str(options))
@@ -220,7 +220,7 @@ class Command(BaseCommand):
             resources = Resource.priority_objects.all()
         else:
             resources = Resource.available_for_update_objects.all()
-        self.logger.info(f'resources [{len(resources)}] = {[r.host for r in resources]}')
+        self.logger.info(f"resources [{len(resources)}] = {[r.host for r in resources]}")
 
         if args.avg_rating:
             set_avg_rating(resources, logger=self.logger)
@@ -233,6 +233,6 @@ class Command(BaseCommand):
             set_n_fields(resources, logger=self.logger)
             set_icon(resources, logger=self.logger)
         if args.full and args.resources:
-            call_command('set_country_fields', resources=args.resources)
-            call_command('set_account_rank', resources=args.resources)
-            call_command('set_resources_accounts', resources=args.resources, remove_empty=args.remove_empty_accounts)
+            call_command("set_country_fields", resources=args.resources)
+            call_command("set_account_rank", resources=args.resources)
+            call_command("set_resources_accounts", resources=args.resources, remove_empty=args.remove_empty_accounts)

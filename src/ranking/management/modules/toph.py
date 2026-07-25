@@ -315,7 +315,6 @@ class Statistic(BaseModule):
 
     @staticmethod
     def get_users_infos(users, resource, accounts, pbar=None):
-
         def fetch_ratings(user, account):
             if account.info.get("is_virtual"):
                 return user, False, None

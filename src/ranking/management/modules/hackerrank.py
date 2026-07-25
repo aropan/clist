@@ -40,7 +40,6 @@ class Statistic(BaseModule):
         return page
 
     def get_standings(self, users=None, statistics=None, **kwargs):
-
         standings_url = self.url.rstrip("/") + "/leaderboard"
 
         per_page = 100
@@ -323,7 +322,6 @@ class Statistic(BaseModule):
 
     @staticmethod
     def get_users_infos(users, resource, accounts, pbar=None):
-
         @RateLimiter(max_calls=Statistic.MAX_WORKERS, period=1)
         def fetch_profile(user):
             url = urljoin(resource.url, f"/rest/contests/master/hackers/{user}/profile")

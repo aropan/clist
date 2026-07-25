@@ -21,17 +21,17 @@ coloredlogs.install(logger=logger)
 
 
 class Command(BaseCommand):
-    help = 'Inherit stage'
+    help = "Inherit stage"
 
     def add_arguments(self, parser):
-        parser.add_argument('--contest-id', '-cid', type=int, help='Contest id')
-        parser.add_argument('--regex', type=str, help='Original stage title regex')
-        parser.add_argument('--title', type=str, help='Title of new stage')
-        parser.add_argument('--url', type=str, help='Url of new stage')
-        parser.add_argument('--start-time', type=str, help='Start time of new stage')
-        parser.add_argument('--end-time', type=str, help='End time of new stage')
-        parser.add_argument('--delta-time', type=str, help='Delta time of new stage')
-        parser.add_argument('--time-regex', type=str, help='Regex contest title to find range time')
+        parser.add_argument("--contest-id", "-cid", type=int, help="Contest id")
+        parser.add_argument("--regex", type=str, help="Original stage title regex")
+        parser.add_argument("--title", type=str, help="Title of new stage")
+        parser.add_argument("--url", type=str, help="Url of new stage")
+        parser.add_argument("--start-time", type=str, help="Start time of new stage")
+        parser.add_argument("--end-time", type=str, help="End time of new stage")
+        parser.add_argument("--delta-time", type=str, help="Delta time of new stage")
+        parser.add_argument("--time-regex", type=str, help="Regex contest title to find range time")
 
     def handle(self, *args, **options):
         self.stdout.write(str(options))
@@ -47,7 +47,7 @@ class Command(BaseCommand):
                     stage_contests = filtered_contests.filter(stage__isnull=False, start_time__lt=contest.start_time)
                 max_iou = 0
                 original_contest = None
-                for stage_contest in stage_contests.order_by('-end_time'):
+                for stage_contest in stage_contests.order_by("-end_time"):
                     iou = word_string_iou(stage_contest.title, contest.title)
                     if iou > max_iou:
                         max_iou = iou
@@ -55,7 +55,7 @@ class Command(BaseCommand):
                 created = False
             else:
                 original_contest = Contest.objects.get(stage__isnull=False, title__iregex=args.regex)
-                logger.info(f'original contest = {original_contest}')
+                logger.info(f"original contest = {original_contest}")
 
                 time_qs = original_contest.resource.contest_set.filter(title__regex=args.time_regex or args.title)
                 time_qs = time_qs.filter(stage__isnull=True)
@@ -67,7 +67,7 @@ class Command(BaseCommand):
                     delta_time = dateutil.relativedelta.relativedelta(**delta_time)
                     start_time = original_contest.start_time + delta_time
                 else:
-                    start_time = time_qs.aggregate(Min('start_time'))['start_time__min'] - timedelta(days=1)
+                    start_time = time_qs.aggregate(Min("start_time"))["start_time__min"] - timedelta(days=1)
 
                 if args.end_time:
                     end_time = dateutil.parser.parse(args.end_time)
@@ -76,7 +76,7 @@ class Command(BaseCommand):
                     delta_time = dateutil.relativedelta.relativedelta(**delta_time)
                     end_time = original_contest.end_time + delta_time
                 else:
-                    end_time = time_qs.aggregate(Max('end_time'))['end_time__max'] + timedelta(days=1)
+                    end_time = time_qs.aggregate(Max("end_time"))["end_time__max"] + timedelta(days=1)
 
                 contest, created = Contest.objects.update_or_create(
                     title=args.title,
@@ -91,9 +91,9 @@ class Command(BaseCommand):
                 )
 
             if created:
-                logger.info(f'new contest = {contest}, start_time = {start_time}, end_time = {end_time}')
+                logger.info(f"new contest = {contest}, start_time = {start_time}, end_time = {end_time}")
 
-            if getattr(contest, 'stage', None):
+            if getattr(contest, "stage", None):
                 stage = contest.stage
                 stage.filter_params = original_contest.stage.filter_params
                 stage.score_params = original_contest.stage.score_params
@@ -103,19 +103,19 @@ class Command(BaseCommand):
                 stage.pk = None
                 stage.contest = contest
                 stage.save()
-                logger.info(f'new stage = {stage}')
+                logger.info(f"new stage = {stage}")
 
-            exclude_stages = stage.score_params.get('advances', {}).get('exclude_stages')
+            exclude_stages = stage.score_params.get("advances", {}).get("exclude_stages")
             if exclude_stages is not None:
                 exclude_stages.clear()
 
-                new_title = re.sub(r'(.*\s*)([0-9]+)', lambda m: f'{m.group(1)}{int(m.group(2)) - 1}', args.title)
+                new_title = re.sub(r"(.*\s*)([0-9]+)", lambda m: f"{m.group(1)}{int(m.group(2)) - 1}", args.title)
                 if new_title != args.title:
                     exclude_contest = Contest.objects.filter(stage__isnull=False, title=new_title).first()
                     if exclude_contest:
                         exclude_stage = exclude_contest.stage
-                        exclude_stages.extend(exclude_stage.score_params.get('advances', {}).get('exclude_stages', []))
+                        exclude_stages.extend(exclude_stage.score_params.get("advances", {}).get("exclude_stages", []))
                         exclude_stages.append(exclude_stage.pk)
 
-                logger.info(f'exclude stages = {exclude_stages}')
+                logger.info(f"exclude stages = {exclude_stages}")
                 stage.save()

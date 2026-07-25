@@ -16,7 +16,6 @@ from utils.timetools import parse_datetime
 
 class Statistic(BaseModule):
     def get_standings(self, users=None, statistics=None, **kwargs):
-
         slug = self.url.rstrip("/").rsplit("/", 1)[-1]
         api_standings_url = urljoin(self.url, f"/api/v1/contest/{slug}/public-ranking")
         try:
@@ -112,7 +111,6 @@ class Statistic(BaseModule):
 
     @staticmethod
     def get_users_infos(users, resource, accounts, pbar=None):
-
         def fetch_profile_data(account):
             url = resource.profile_url.format(**account.dict_with_info())
             try:

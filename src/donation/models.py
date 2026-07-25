@@ -11,11 +11,11 @@ class EnabledDonationSource(BaseManager):
 class DonationSource(BaseModel):
     name = models.CharField(max_length=100, unique=True)
     url = models.URLField()
-    icon = models.ImageField(upload_to='donation_sources', null=True, blank=True)
+    icon = models.ImageField(upload_to="donation_sources", null=True, blank=True)
     enable = models.BooleanField(default=True)
 
     objects = BaseManager()
     enabled = EnabledDonationSource()
 
     def __str__(self):
-        return f'{self.name} DonationSource#{self.id}'
+        return f"{self.name} DonationSource#{self.id}"

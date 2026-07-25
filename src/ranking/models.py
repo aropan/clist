@@ -32,12 +32,12 @@ from true_coders.models import Coder, Party
 from utils.mathutils import sum_with_none
 from utils.signals import update_n_field_on_change
 
-AVATAR_RELPATH_FIELD = 'avatar_relpath_'
+AVATAR_RELPATH_FIELD = "avatar_relpath_"
 
 
 class PriorityAccountManager(BaseManager):
     def get_queryset(self):
-        return super().get_queryset().order_by('deleted', '-n_contests')
+        return super().get_queryset().order_by("deleted", "-n_contests")
 
 
 class Account(BaseModel):
@@ -61,9 +61,10 @@ class Account(BaseModel):
     info = models.JSONField(default=dict, blank=True)
     submissions_info = models.JSONField(default=dict, blank=True)
     updated = models.DateTimeField(auto_now_add=True)
-    duplicate = models.ForeignKey('Account', null=True, blank=True, on_delete=models.CASCADE)
-    related = models.ForeignKey('Account', null=True, blank=True, on_delete=models.CASCADE,
-                                related_name='related_accounts')
+    duplicate = models.ForeignKey("Account", null=True, blank=True, on_delete=models.CASCADE)
+    related = models.ForeignKey(
+        "Account", null=True, blank=True, on_delete=models.CASCADE, related_name="related_accounts"
+    )
     global_rating = models.IntegerField(null=True, blank=True, default=None, db_index=True)
     need_verification = models.BooleanField(default=False)
     deleted = models.BooleanField(null=True, blank=True, default=None, db_index=True)
@@ -94,18 +95,18 @@ class Account(BaseModel):
     priority_objects = PriorityAccountManager()
 
     def __str__(self):
-        return 'Account#%d %s on %s' % (self.pk, str(self.key), str(self.resource_id))
+        return "Account#%d %s on %s" % (self.pk, str(self.key), str(self.resource_id))
 
     def dict(self):
         return {
-            'pk': self.pk,
-            'account': self.key,
-            'name': self.name,
+            "pk": self.pk,
+            "account": self.key,
+            "name": self.name,
         }
 
     def dict_with_info(self):
         ret = self.dict()
-        ret.update(self.info.get('profile_url', {}))
+        ret.update(self.info.get("profile_url", {}))
         for k, v in ret.items():
             if isinstance(v, str):
                 ret[k] = quote(v)
@@ -115,13 +116,13 @@ class Account(BaseModel):
         resource = resource or self.resource
         if resource.avatar_url:
             try:
-                avatar_url_info = resource.info.get('avatar_url', {})
-                fields = avatar_url_info.get('fields')
+                avatar_url_info = resource.info.get("avatar_url", {})
+                fields = avatar_url_info.get("fields")
                 if fields and any(not self.info.get(f) for f in fields):
                     return
                 url = resource.avatar_url.format(key=self.key, info=self.info)
-                if avatar_url_info.get('urljoin'):
-                    url = urljoin(avatar_url_info.get('urljoin'), url)
+                if avatar_url_info.get("urljoin"):
+                    url = urljoin(avatar_url_info.get("urljoin"), url)
                 return url
             except KeyError:
                 pass
@@ -135,13 +136,21 @@ class Account(BaseModel):
     def is_special_info_field(field):
         if not field:
             return False
-        if field[0] == '_' or field[-1] == '_' or '___' in field:
+        if field[0] == "_" or field[-1] == "_" or "___" in field:
             return True
-        if field in {'profile_url', 'rating', 'raw_rating', 'is_virtual', 'is_team', 'name', 'country',
-                     'rank_percentile'}:
+        if field in {
+            "profile_url",
+            "rating",
+            "raw_rating",
+            "is_virtual",
+            "is_team",
+            "name",
+            "country",
+            "rank_percentile",
+        }:
             return True
         field = field.lower()
-        for word in ('email', 'password', 'phone', 'birth', 'telegram'):
+        for word in ("email", "password", "phone", "birth", "telegram"):
             if word in field:
                 return True
 
@@ -150,27 +159,25 @@ class Account(BaseModel):
             return
         date = self.last_activity
         year = date.year - (0 if date.month > 8 else 1)
-        season = f'{year}-{year + 1}'
+        season = f"{year}-{year + 1}"
         return season
 
     def update_last_activity(self, statistic):
-        if (
-            statistic.last_activity and
-            (not self.last_activity or self.last_activity < statistic.last_activity)
-        ):
+        if statistic.last_activity and (not self.last_activity or self.last_activity < statistic.last_activity):
             self.last_activity = statistic.last_activity
-            self.save(update_fields=['last_activity'])
+            self.save(update_fields=["last_activity"])
 
     def update_last_rating_activity(self, statistic, contest=None, resource=None):
         contest = contest or statistic.contest
-        resource = resource or statistic.fetched_field('resource') or contest.resource
+        resource = resource or statistic.fetched_field("resource") or contest.resource
         if (
-            statistic.is_rated and statistic.last_activity and
-            (not self.last_rating_activity or self.last_rating_activity < statistic.last_activity) and
-            resource.is_major_kind(contest)
+            statistic.is_rated
+            and statistic.last_activity
+            and (not self.last_rating_activity or self.last_rating_activity < statistic.last_activity)
+            and resource.is_major_kind(contest)
         ):
             self.last_rating_activity = statistic.last_activity
-            self.save(update_fields=['last_rating_activity'])
+            self.save(update_fields=["last_rating_activity"])
 
     def display(self, with_resource=None):
         if not with_resource and self.name and has_season(self.key, self.name):
@@ -178,80 +185,77 @@ class Account(BaseModel):
         elif not self.name or self.name == self.key:
             ret = self.key
         else:
-            ret = f'{self.key}, {self.name}'
+            ret = f"{self.key}, {self.name}"
         if with_resource:
-            ret += f', {self.resource.host}'
+            ret += f", {self.resource.host}"
         return ret
 
     def short_display(self, resource=None, name=None):
         name = name or self.name
         resource = resource or self.resource
-        name_instead_key = get_item(resource, 'info.standings.name_instead_key')
-        name_instead_key = get_item(self, 'info._name_instead_key', default=name_instead_key)
+        name_instead_key = get_item(resource, "info.standings.name_instead_key")
+        name_instead_key = get_item(self, "info._name_instead_key", default=name_instead_key)
         name_instead_key = name and (name_instead_key or has_season(self.key, name))
         return name if name_instead_key else self.key
 
     def account_default_url(self):
-        return reverse('coder:account', args=[self.key, self.resource.host])
+        return reverse("coder:account", args=[self.key, self.resource.host])
 
     @staticmethod
     def apply_coder_kind(queryset, coder_kind, logger=None):
-        if not coder_kind or coder_kind == 'all':
+        if not coder_kind or coder_kind == "all":
             return queryset
-        if coder_kind == 'real':
-            coders = Coder.objects.filter(is_virtual=False, account=OuterRef('pk'))
-        elif coder_kind == 'ghost' or coder_kind == 'virtual':
-            coders = Coder.objects.filter(is_virtual=True, account=OuterRef('pk'))
-        elif coder_kind == 'none':
+        if coder_kind == "real":
+            coders = Coder.objects.filter(is_virtual=False, account=OuterRef("pk"))
+        elif coder_kind == "ghost" or coder_kind == "virtual":
+            coders = Coder.objects.filter(is_virtual=True, account=OuterRef("pk"))
+        elif coder_kind == "none":
             return queryset.filter(coders=None)
         else:
             if logger:
-                logger.warning(f'Unknown coder kind: {coder_kind}')
+                logger.warning(f"Unknown coder kind: {coder_kind}")
             return queryset
         queryset = queryset.annotate(coder_kinds=Exists(coders)).filter(coder_kinds=True)
         return queryset
 
     def save(self, *args, **kwargs):
         update_fields = []
-        if self.has_field('rating'):
+        if self.has_field("rating"):
             prev_rating = self.rating
             if self.deleted:
                 self.rating = None
-            elif 'rating' in self.info:
-                if self.rating != self.info['rating']:
+            elif "rating" in self.info:
+                if self.rating != self.info["rating"]:
                     self.resource.rating_update_time = timezone.now()
-                    self.resource.save(update_fields=['rating_update_time'])
-                self.rating = self.info['rating']
+                    self.resource.save(update_fields=["rating_update_time"])
+                self.rating = self.info["rating"]
                 self.rating50 = self.rating / 50 if self.rating is not None else None
             if self.rating is None:
                 self.rating50 = None
                 self.resource_rank = None
             if self.rating != prev_rating:
-                update_fields.extend(['rating', 'rating50', 'resource_rank'])
-        if self.has_field('info'):
+                update_fields.extend(["rating", "rating50", "resource_rank"])
+        if self.has_field("info"):
             download_avatar_url(self)
 
         account_type = None
-        if self.info.get('is_university'):
+        if self.info.get("is_university"):
             account_type = AccountType.UNIVERSITY
-        elif self.info.get('is_team'):
+        elif self.info.get("is_team"):
             account_type = AccountType.TEAM
         if account_type and self.account_type != account_type:
             self.account_type = account_type
-            update_fields.append('account_type')
+            update_fields.append("account_type")
 
         if update_fields:
-            self.add_to_update_fields(update_fields, kwargs.get('update_fields'))
+            self.add_to_update_fields(update_fields, kwargs.get("update_fields"))
 
         super().save(*args, **kwargs)
 
     @staticmethod
-    def get(resource, key) -> Optional['Account']:
+    def get(resource, key) -> Optional["Account"]:
         account = resource.account_set.filter(key=key).first()
-        if (
-            account is None and
-            (renaming := resource.accountrenaming_set.filter(old_key=key).first())
-        ):
+        if account is None and (renaming := resource.accountrenaming_set.filter(old_key=key).first()):
             account = resource.account_set.get(key=renaming.new_key)
         return account
 
@@ -279,87 +283,90 @@ class Account(BaseModel):
 
     class Meta:
         indexes = [
-            models.Index(fields=['resource']),
-            models.Index(fields=['resource', 'name']),
-            models.Index(fields=['resource', 'country']),
-            models.Index(fields=['resource', 'updated'], condition=Q(updated__isnull=False), name="account_updated"),
-
-            GistIndexTrgrmOps(fields=['key']),
-            GistIndexTrgrmOps(fields=['name']),
-            ExpressionIndex(expressions=[Upper('key')]),
-            ExpressionIndex(expressions=[F('resource'), Upper('key')]),
-
-            DescNullsLastIndex(fields=['resource', 'rating']),
-            DescNullsLastIndex(fields=['resource', '-rating']),
-            DescNullsLastIndex(fields=['resource', 'rating50']),
-            DescNullsLastIndex(fields=['resource', '-rating50']),
-            DescNullsLastIndex(fields=['resource', 'last_activity']),
-            DescNullsLastIndex(fields=['resource', '-last_activity']),
-            DescNullsLastIndex(fields=['resource', 'last_rating_activity']),
-            DescNullsLastIndex(fields=['resource', '-last_rating_activity']),
-            DescNullsLastIndex(fields=['resource', 'last_submission']),
-            DescNullsLastIndex(fields=['resource', '-last_submission']),
-            DescNullsLastIndex(fields=['resource', 'n_contests']),
-            DescNullsLastIndex(fields=['resource', '-n_contests']),
-            DescNullsLastIndex(fields=['resource', 'n_writers']),
-            DescNullsLastIndex(fields=['resource', '-n_writers']),
-            DescNullsLastIndex(fields=['resource', 'updated']),
-            DescNullsLastIndex(fields=['resource', '-updated']),
-            DescNullsLastIndex(fields=['resource', 'resource_rank']),
-            DescNullsLastIndex(fields=['resource', '-resource_rank']),
-            DescNullsLastIndex(fields=['resource', 'total_solving']),
-            DescNullsLastIndex(fields=['resource', '-total_solving']),
-            DescNullsLastIndex(fields=['resource', 'n_total_solved']),
-            DescNullsLastIndex(fields=['resource', '-n_total_solved']),
-            DescNullsLastIndex(fields=['resource', 'n_first_ac']),
-            DescNullsLastIndex(fields=['resource', '-n_first_ac']),
-
-            DescNullsLastIndex(fields=['resource', 'country', '-rating']),
-            DescNullsLastIndex(fields=['resource', 'country', '-rating50']),
-            DescNullsLastIndex(fields=['resource', 'country', '-last_activity']),
-            DescNullsLastIndex(fields=['resource', 'country', '-last_rating_activity']),
-            DescNullsLastIndex(fields=['resource', 'country', '-last_submission']),
-            DescNullsLastIndex(fields=['resource', 'country', '-n_contests']),
-            DescNullsLastIndex(fields=['resource', 'country', '-n_writers']),
-            DescNullsLastIndex(fields=['resource', 'country', '-updated']),
-            DescNullsLastIndex(fields=['resource', 'country', 'resource_rank']),
-            DescNullsLastIndex(fields=['resource', 'country', '-resource_rank']),
-            DescNullsLastIndex(fields=['resource', 'country', '-total_solving']),
-            DescNullsLastIndex(fields=['resource', 'country', '-n_total_solved']),
-            DescNullsLastIndex(fields=['resource', 'country', '-n_first_ac']),
-
-            DescNullsLastIndex(fields=['country', '-rating']),
-            DescNullsLastIndex(fields=['country', '-rating50']),
-            DescNullsLastIndex(fields=['country', '-last_activity']),
-            DescNullsLastIndex(fields=['country', '-last_rating_activity']),
-            DescNullsLastIndex(fields=['country', '-last_submission']),
-            DescNullsLastIndex(fields=['country', '-n_contests']),
-            DescNullsLastIndex(fields=['country', '-n_writers']),
-            DescNullsLastIndex(fields=['country', '-updated']),
-            DescNullsLastIndex(fields=['country', 'resource_rank']),
-            DescNullsLastIndex(fields=['country', '-resource_rank']),
-            DescNullsLastIndex(fields=['country', '-total_solving']),
-            DescNullsLastIndex(fields=['country', '-n_total_solved']),
-            DescNullsLastIndex(fields=['country', '-n_first_ac']),
-
-            DescNullsLastIndex(fields=['resource',
-                                       '-n_win', '-n_gold', '-n_silver', '-n_bronze', '-n_other_medals']),
-            DescNullsLastIndex(fields=['resource',
-                                       '-n_first_places', '-n_second_places', '-n_third_places', '-n_top_ten_places']),
-
-            DescNullsLastIndex(fields=['resource', 'account_type']),
-            DescNullsLastIndex(fields=['resource', 'country', 'account_type']),
-            DescNullsLastIndex(fields=['resource', 'account_type', 'n_contests']),
-            DescNullsLastIndex(fields=['resource', 'account_type', '-n_contests']),
-            DescNullsLastIndex(fields=['resource', 'account_type', 'last_activity']),
-            DescNullsLastIndex(fields=['resource', 'account_type', '-last_activity']),
-            DescNullsLastIndex(fields=['resource', 'account_type',
-                                       '-n_win', '-n_gold', '-n_silver', '-n_bronze', '-n_other_medals']),
-            DescNullsLastIndex(fields=['resource', 'account_type',
-                                       '-n_first_places', '-n_second_places', '-n_third_places', '-n_top_ten_places']),
+            models.Index(fields=["resource"]),
+            models.Index(fields=["resource", "name"]),
+            models.Index(fields=["resource", "country"]),
+            models.Index(fields=["resource", "updated"], condition=Q(updated__isnull=False), name="account_updated"),
+            GistIndexTrgrmOps(fields=["key"]),
+            GistIndexTrgrmOps(fields=["name"]),
+            ExpressionIndex(expressions=[Upper("key")]),
+            ExpressionIndex(expressions=[F("resource"), Upper("key")]),
+            DescNullsLastIndex(fields=["resource", "rating"]),
+            DescNullsLastIndex(fields=["resource", "-rating"]),
+            DescNullsLastIndex(fields=["resource", "rating50"]),
+            DescNullsLastIndex(fields=["resource", "-rating50"]),
+            DescNullsLastIndex(fields=["resource", "last_activity"]),
+            DescNullsLastIndex(fields=["resource", "-last_activity"]),
+            DescNullsLastIndex(fields=["resource", "last_rating_activity"]),
+            DescNullsLastIndex(fields=["resource", "-last_rating_activity"]),
+            DescNullsLastIndex(fields=["resource", "last_submission"]),
+            DescNullsLastIndex(fields=["resource", "-last_submission"]),
+            DescNullsLastIndex(fields=["resource", "n_contests"]),
+            DescNullsLastIndex(fields=["resource", "-n_contests"]),
+            DescNullsLastIndex(fields=["resource", "n_writers"]),
+            DescNullsLastIndex(fields=["resource", "-n_writers"]),
+            DescNullsLastIndex(fields=["resource", "updated"]),
+            DescNullsLastIndex(fields=["resource", "-updated"]),
+            DescNullsLastIndex(fields=["resource", "resource_rank"]),
+            DescNullsLastIndex(fields=["resource", "-resource_rank"]),
+            DescNullsLastIndex(fields=["resource", "total_solving"]),
+            DescNullsLastIndex(fields=["resource", "-total_solving"]),
+            DescNullsLastIndex(fields=["resource", "n_total_solved"]),
+            DescNullsLastIndex(fields=["resource", "-n_total_solved"]),
+            DescNullsLastIndex(fields=["resource", "n_first_ac"]),
+            DescNullsLastIndex(fields=["resource", "-n_first_ac"]),
+            DescNullsLastIndex(fields=["resource", "country", "-rating"]),
+            DescNullsLastIndex(fields=["resource", "country", "-rating50"]),
+            DescNullsLastIndex(fields=["resource", "country", "-last_activity"]),
+            DescNullsLastIndex(fields=["resource", "country", "-last_rating_activity"]),
+            DescNullsLastIndex(fields=["resource", "country", "-last_submission"]),
+            DescNullsLastIndex(fields=["resource", "country", "-n_contests"]),
+            DescNullsLastIndex(fields=["resource", "country", "-n_writers"]),
+            DescNullsLastIndex(fields=["resource", "country", "-updated"]),
+            DescNullsLastIndex(fields=["resource", "country", "resource_rank"]),
+            DescNullsLastIndex(fields=["resource", "country", "-resource_rank"]),
+            DescNullsLastIndex(fields=["resource", "country", "-total_solving"]),
+            DescNullsLastIndex(fields=["resource", "country", "-n_total_solved"]),
+            DescNullsLastIndex(fields=["resource", "country", "-n_first_ac"]),
+            DescNullsLastIndex(fields=["country", "-rating"]),
+            DescNullsLastIndex(fields=["country", "-rating50"]),
+            DescNullsLastIndex(fields=["country", "-last_activity"]),
+            DescNullsLastIndex(fields=["country", "-last_rating_activity"]),
+            DescNullsLastIndex(fields=["country", "-last_submission"]),
+            DescNullsLastIndex(fields=["country", "-n_contests"]),
+            DescNullsLastIndex(fields=["country", "-n_writers"]),
+            DescNullsLastIndex(fields=["country", "-updated"]),
+            DescNullsLastIndex(fields=["country", "resource_rank"]),
+            DescNullsLastIndex(fields=["country", "-resource_rank"]),
+            DescNullsLastIndex(fields=["country", "-total_solving"]),
+            DescNullsLastIndex(fields=["country", "-n_total_solved"]),
+            DescNullsLastIndex(fields=["country", "-n_first_ac"]),
+            DescNullsLastIndex(fields=["resource", "-n_win", "-n_gold", "-n_silver", "-n_bronze", "-n_other_medals"]),
+            DescNullsLastIndex(
+                fields=["resource", "-n_first_places", "-n_second_places", "-n_third_places", "-n_top_ten_places"]
+            ),
+            DescNullsLastIndex(fields=["resource", "account_type"]),
+            DescNullsLastIndex(fields=["resource", "country", "account_type"]),
+            DescNullsLastIndex(fields=["resource", "account_type", "n_contests"]),
+            DescNullsLastIndex(fields=["resource", "account_type", "-n_contests"]),
+            DescNullsLastIndex(fields=["resource", "account_type", "last_activity"]),
+            DescNullsLastIndex(fields=["resource", "account_type", "-last_activity"]),
+            DescNullsLastIndex(
+                fields=["resource", "account_type", "-n_win", "-n_gold", "-n_silver", "-n_bronze", "-n_other_medals"]
+            ),
+            DescNullsLastIndex(
+                fields=[
+                    "resource",
+                    "account_type",
+                    "-n_first_places",
+                    "-n_second_places",
+                    "-n_third_places",
+                    "-n_top_ten_places",
+                ]
+            ),
         ]
 
-        unique_together = ('resource', 'key')
+        unique_together = ("resource", "key")
 
 
 class CountryAccount(BaseModel):
@@ -383,20 +390,29 @@ class CountryAccount(BaseModel):
 
     class Meta:
         indexes = [
-            DescNullsLastIndex(fields=['resource', 'country']),
-            DescNullsLastIndex(fields=['resource', 'rating', 'country']),
-            DescNullsLastIndex(fields=['resource', '-rating', 'country']),
-            DescNullsLastIndex(fields=['resource', 'resource_rank', 'country']),
-            DescNullsLastIndex(fields=['resource', '-resource_rank', 'country']),
-            DescNullsLastIndex(fields=['resource', 'n_accounts', 'country']),
-            DescNullsLastIndex(fields=['resource', '-n_accounts', 'country']),
-            DescNullsLastIndex(fields=['resource', '-n_win', '-n_gold', '-n_silver', '-n_bronze',
-                                       '-n_other_medals', 'country']),
-            DescNullsLastIndex(fields=['resource', '-n_first_places', '-n_second_places', '-n_third_places',
-                                       '-n_top_ten_places', 'country'])
+            DescNullsLastIndex(fields=["resource", "country"]),
+            DescNullsLastIndex(fields=["resource", "rating", "country"]),
+            DescNullsLastIndex(fields=["resource", "-rating", "country"]),
+            DescNullsLastIndex(fields=["resource", "resource_rank", "country"]),
+            DescNullsLastIndex(fields=["resource", "-resource_rank", "country"]),
+            DescNullsLastIndex(fields=["resource", "n_accounts", "country"]),
+            DescNullsLastIndex(fields=["resource", "-n_accounts", "country"]),
+            DescNullsLastIndex(
+                fields=["resource", "-n_win", "-n_gold", "-n_silver", "-n_bronze", "-n_other_medals", "country"]
+            ),
+            DescNullsLastIndex(
+                fields=[
+                    "resource",
+                    "-n_first_places",
+                    "-n_second_places",
+                    "-n_third_places",
+                    "-n_top_ten_places",
+                    "country",
+                ]
+            ),
         ]
 
-        unique_together = ('resource', 'country')
+        unique_together = ("resource", "country")
 
 
 class AccountRenaming(BaseModel):
@@ -405,29 +421,29 @@ class AccountRenaming(BaseModel):
     new_key = models.CharField(max_length=1024, null=True, blank=True)
 
     def __str__(self):
-        return f'{self.old_key} -> {self.new_key}'
+        return f"{self.old_key} -> {self.new_key}"
 
     class Meta:
         indexes = [
-            GistIndexTrgrmOps(fields=['old_key']),
-            GistIndexTrgrmOps(fields=['new_key']),
-            models.Index(fields=['resource', 'old_key']),
-            models.Index(fields=['resource', 'new_key']),
+            GistIndexTrgrmOps(fields=["old_key"]),
+            GistIndexTrgrmOps(fields=["new_key"]),
+            models.Index(fields=["resource", "old_key"]),
+            models.Index(fields=["resource", "new_key"]),
         ]
 
-        unique_together = ('resource', 'old_key')
+        unique_together = ("resource", "old_key")
 
 
 def download_avatar_url(account):
-    download_avatar_url = account.info.pop('download_avatar_url_', None)
+    download_avatar_url = account.info.pop("download_avatar_url_", None)
     if not download_avatar_url:
         return
 
-    checksum_field = account.resource.info.get('standings', {}).get('download_avatar_checksum_field')
+    checksum_field = account.resource.info.get("standings", {}).get("download_avatar_checksum_field")
     if checksum_field:
         headers = requests.head(download_avatar_url).headers
         checksum_value = headers[checksum_field]
-        checksum_field += '_'
+        checksum_field += "_"
         if checksum_value == account.info.get(checksum_field):
             return
 
@@ -435,19 +451,19 @@ def download_avatar_url(account):
     if response.status_code != 200:
         return
 
-    content_type = response.headers.get('Content-Type')
+    content_type = response.headers.get("Content-Type")
     if not content_type:
         content_type = magic.from_buffer(response.content, mime=True)
-    ext = content_type.split('/')[-1]
-    ext = ext.split('+')[0]
-    folder = re.sub('[./]', '_', account.resource.host)
+    ext = content_type.split("/")[-1]
+    ext = ext.split("+")[0]
+    folder = re.sub("[./]", "_", account.resource.host)
     hashname = hashlib.md5(download_avatar_url.encode()).hexdigest()
-    hashname = hashname[:2] + '/' + hashname[2:4] + '/' + hashname[4:]
-    relpath = os.path.join('avatars', folder, f'{hashname}.{ext}')
+    hashname = hashname[:2] + "/" + hashname[2:4] + "/" + hashname[4:]
+    relpath = os.path.join("avatars", folder, f"{hashname}.{ext}")
     filepath = os.path.join(settings.MEDIA_ROOT, relpath)
 
     os.makedirs(os.path.dirname(filepath), exist_ok=True)
-    with open(filepath, 'wb') as fo:
+    with open(filepath, "wb") as fo:
         fo.write(response.content)
 
     account.info[AVATAR_RELPATH_FIELD] = relpath
@@ -460,69 +476,68 @@ def download_avatar_url(account):
 def count_resource_accounts(signal, instance, **kwargs):
     if signal is post_delete:
         delta = -1
-    elif signal is post_save and kwargs['created']:
+    elif signal is post_save and kwargs["created"]:
         delta = +1
     else:
         return
-    update_fields = ['n_accounts']
+    update_fields = ["n_accounts"]
     instance.resource.n_accounts += delta
     if instance.account_type == AccountType.UNIVERSITY:
         instance.resource.n_university_accounts += delta
-        update_fields.append('n_university_accounts')
+        update_fields.append("n_university_accounts")
     elif instance.account_type == AccountType.TEAM:
         instance.resource.n_team_accounts += delta
-        update_fields.append('n_team_accounts')
+        update_fields.append("n_team_accounts")
     instance.resource.save(update_fields=update_fields)
 
 
 @receiver(pre_save, sender=Account)
 @receiver(m2m_changed, sender=Account.coders.through)
 def update_account_url(signal, instance, **kwargs):
-    if kwargs.get('reverse'):
+    if kwargs.get("reverse"):
         return
     account = instance
 
     if signal is pre_save:
-        if not account.has_field('url') or account.url:
+        if not account.has_field("url") or account.url:
             return
         account.url = account.account_default_url()
     elif signal is m2m_changed:
-        action = kwargs.get('action')
-        if not action or not action.startswith('post_'):
+        action = kwargs.get("action")
+        if not action or not action.startswith("post_"):
             return
         update_account_by_coders(account)
 
 
 @receiver(m2m_changed, sender=Account.writer_set.through)
 def update_account_writer(**kwargs):
-    update_n_field_on_change(**kwargs, field='n_writers')
+    update_n_field_on_change(**kwargs, field="n_writers")
 
 
 @receiver(m2m_changed, sender=Account.coders.through)
 def update_coder_n_accounts_and_n_contests(signal, instance, action, reverse, pk_set, **kwargs):
-    if action not in ['post_add', 'post_remove']:
+    if action not in ["post_add", "post_remove"]:
         return
 
     if reverse:
         instance.n_accounts = instance.account_set.count()
-        instance.n_contests = instance.account_set.aggregate(total=Sum('n_contests'))['total'] or 0
-        instance.save(update_fields=['n_accounts', 'n_contests'])
+        instance.n_contests = instance.account_set.aggregate(total=Sum("n_contests"))["total"] or 0
+        instance.save(update_fields=["n_accounts", "n_contests"])
 
-        resources = Resource.objects.annotate(has_account=Exists('account', filter=Q(pk__in=pk_set)))
+        resources = Resource.objects.annotate(has_account=Exists("account", filter=Q(pk__in=pk_set)))
         resources = resources.filter(has_account=True)
-        resources = list(resources.values_list('host', flat=True))
+        resources = list(resources.values_list("host", flat=True))
         coders = [instance.username]
     else:
-        Coder.objects.filter(pk__in=pk_set) \
-            .annotate(n_a=SubqueryCount('account')) \
-            .annotate(n_c=SubquerySum('account__n_contests')) \
-            .update(n_accounts=F('n_a'), n_contests=Coalesce('n_c', 0))
+        Coder.objects.filter(pk__in=pk_set).annotate(n_a=SubqueryCount("account")).annotate(
+            n_c=SubquerySum("account__n_contests")
+        ).update(n_accounts=F("n_a"), n_contests=Coalesce("n_c", 0))
 
-        coders = list(Coder.objects.filter(pk__in=pk_set).values_list('username', flat=True))
+        coders = list(Coder.objects.filter(pk__in=pk_set).values_list("username", flat=True))
         resources = [instance.resource.host]
 
     if coders and resources:
-        call_command('set_coder_problems', coders=coders, resources=resources)
+        call_command("set_coder_problems", coders=coders, resources=resources)
 
 
 class AccountVerification(BaseModel):
@@ -531,18 +546,18 @@ class AccountVerification(BaseModel):
     code = models.CharField(max_length=10)
 
     class Meta:
-        unique_together = ('coder', 'account')
+        unique_together = ("coder", "account")
 
     def text(self):
-        return f'ClistCheckCode{self.code}'
+        return f"ClistCheckCode{self.code}"
 
 
 class VerifiedAccount(BaseModel):
-    coder = models.ForeignKey(Coder, on_delete=models.CASCADE, related_name='verified_accounts')
-    account = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='verified_accounts')
+    coder = models.ForeignKey(Coder, on_delete=models.CASCADE, related_name="verified_accounts")
+    account = models.ForeignKey(Account, on_delete=models.CASCADE, related_name="verified_accounts")
 
     class Meta:
-        unique_together = ('coder', 'account')
+        unique_together = ("coder", "account")
 
 
 @receiver(pre_save, sender=AccountVerification)
@@ -552,14 +567,14 @@ def account_verification_pre_save(sender, instance, *args, **kwargs):
 
 
 class Rating(BaseModel):
-    contest = models.ForeignKey(Contest, on_delete=models.CASCADE, related_name='ratings')
+    contest = models.ForeignKey(Contest, on_delete=models.CASCADE, related_name="ratings")
     party = models.ForeignKey(Party, on_delete=models.CASCADE)
 
     def __str__(self):
-        return 'rating %s by %s' % (str(self.party.name), str(self.contest.title))
+        return "rating %s by %s" % (str(self.party.name), str(self.contest.title))
 
     class Meta:
-        unique_together = ('contest', 'party')
+        unique_together = ("contest", "party")
 
 
 class AutoRating(BaseModel):
@@ -568,7 +583,7 @@ class AutoRating(BaseModel):
     deadline = models.DateTimeField()
 
     def __str__(self):
-        return 'auto rating [%d] with party [%d]' % (self.pk, self.party_id)
+        return "auto rating [%d] with party [%d]" % (self.pk, self.party_id)
 
 
 class Statistics(BaseModel):
@@ -594,46 +609,54 @@ class Statistics(BaseModel):
     n_total_solved = models.IntegerField(default=0, blank=True)
     n_first_ac = models.IntegerField(default=0, blank=True)
     medal = models.CharField(max_length=20, null=True, blank=True)
-    related = models.ForeignKey('Statistics', null=True, blank=True, on_delete=models.CASCADE,
-                                related_name='related_statistics')
+    related = models.ForeignKey(
+        "Statistics", null=True, blank=True, on_delete=models.CASCADE, related_name="related_statistics"
+    )
 
     class StatisticsManager(BaseManager):
         def get_queryset(self):
             queryset = super().get_queryset()
             statistics_fields = [field.name for field in Statistics._meta.get_fields() if field.concrete]
-            accounts_fields = [f'account__{field.name}' for field in Account._meta.get_fields() if field.concrete]
-            return queryset.select_related('account', 'contest', 'resource').only(
+            accounts_fields = [f"account__{field.name}" for field in Account._meta.get_fields() if field.concrete]
+            return queryset.select_related("account", "contest", "resource").only(
                 *statistics_fields,
                 *accounts_fields,
-                'contest__kind', 'contest__resource_id', 'contest__is_rated',
-                'contest__title', 'contest__url', 'contest__standings_url',
-                'contest__n_statistics', 'contest__start_time', 'contest__end_time',
-                'resource__host', 'resource__info',
+                "contest__kind",
+                "contest__resource_id",
+                "contest__is_rated",
+                "contest__title",
+                "contest__url",
+                "contest__standings_url",
+                "contest__n_statistics",
+                "contest__start_time",
+                "contest__end_time",
+                "resource__host",
+                "resource__info",
             )
 
     objects = BaseManager()
     saved_objects = StatisticsManager()
 
     class Meta:
-        verbose_name_plural = 'Statistics'
-        unique_together = ('account', 'contest')
+        verbose_name_plural = "Statistics"
+        unique_together = ("account", "contest")
 
         indexes = [
-            models.Index(fields=['contest', 'place_as_int', '-solving', 'id']),
-            models.Index(fields=['account', 'skip_in_stats']),
-            models.Index(fields=['-created'], condition=Q(place_as_int__lte=3), name='statistics_created_top3'),
+            models.Index(fields=["contest", "place_as_int", "-solving", "id"]),
+            models.Index(fields=["account", "skip_in_stats"]),
+            models.Index(fields=["-created"], condition=Q(place_as_int__lte=3), name="statistics_created_top3"),
         ]
 
     @staticmethod
     def is_special_addition_field(field):
         if not field:
             return False
-        if field[0] == '_' or field[-1] == '_':
+        if field[0] == "_" or field[-1] == "_":
             return True
         return field in settings.ADDITION_HIDE_FIELDS_
 
     def __str__(self):
-        return f'Statistics#{self.id} Account#{self.account_id} on Contest#{self.contest_id}'
+        return f"Statistics#{self.id} Account#{self.account_id} on Contest#{self.contest_id}"
 
     def get_old_rating(self, use_rating_prediction=True):
         rating_datas = [self.addition]
@@ -642,28 +665,26 @@ class Statistics(BaseModel):
         for rating_data in rating_datas:
             if not rating_data:
                 continue
-            if 'old_rating' in rating_data:
-                return rating_data['old_rating']
-            if 'new_rating' in rating_data and 'rating_change' in rating_data:
-                return rating_data['new_rating'] - rating_data['rating_change']
+            if "old_rating" in rating_data:
+                return rating_data["old_rating"]
+            if "new_rating" in rating_data and "rating_change" in rating_data:
+                return rating_data["new_rating"] - rating_data["rating_change"]
 
     def get_medal(self) -> str | None:
-        return get_item(self, 'addition.medal')
+        return get_item(self, "addition.medal")
 
     @property
     def is_rated(self):
         if self.skip_in_stats:
             return False
-        return 'new_rating' in self.addition or 'rating_change' in self.addition
+        return "new_rating" in self.addition or "rating_change" in self.addition
 
     @property
     def account_name(self):
         resource = (
-            self.fetched_field('contest__resource') or
-            self.fetched_field('account__resource') or
-            self.contest.resource
+            self.fetched_field("contest__resource") or self.fetched_field("account__resource") or self.contest.resource
         )
-        return self.account.short_display(resource=resource, name=self.addition.get('name'))
+        return self.account.short_display(resource=resource, name=self.addition.get("name"))
 
     @classmethod
     def top_n_filter(cls, n):
@@ -682,14 +703,15 @@ class Statistics(BaseModel):
                 update_fields.append(k)
         if (medal := self.get_medal()) != self.medal:
             self.medal = medal
-            update_fields.append('medal')
+            update_fields.append("medal")
         self.save(update_fields=update_fields)
         return update_fields
 
 
 def _get_statistic_stats(instance):
-    return get_statistic_stats(instance.addition, solving=instance.solving,
-                               with_n_medal_field=True, with_n_place_field=instance.place_as_int)
+    return get_statistic_stats(
+        instance.addition, solving=instance.solving, with_n_medal_field=True, with_n_place_field=instance.place_as_int
+    )
 
 
 @receiver(post_init, sender=Statistics)
@@ -705,7 +727,7 @@ def update_account_from_statistic(signal, instance, **kwargs):
             diff = {field: -value for field, value in instance._stats.items() if value}
         elif signal is post_save:
             diff = _get_statistic_stats(instance)
-            if not kwargs['created']:
+            if not kwargs["created"]:
                 for field, value in instance._stats.items():
                     diff[field] = (diff.get(field) or 0) - (value or 0)
         else:
@@ -720,26 +742,25 @@ def update_account_from_statistic(signal, instance, **kwargs):
         if updated_fields:
             instance.account.save(update_fields=updated_fields)
 
-    if instance.skip_in_stats or kwargs.get('update_fields'):
+    if instance.skip_in_stats or kwargs.get("update_fields"):
         return
 
     if signal is post_delete:
         instance.account.n_contests -= 1
-        instance.account.save(update_fields=['n_contests'])
+        instance.account.save(update_fields=["n_contests"])
     elif signal is post_save:
-        if kwargs['created']:
+        if kwargs["created"]:
             instance.account.n_contests += 1
-            instance.account.save(update_fields=['n_contests'])
+            instance.account.save(update_fields=["n_contests"])
 
         instance.account.update_last_activity(statistic=instance)
         instance.account.update_last_rating_activity(statistic=instance)
 
 
 class StatisticsLog(BaseModel):
-
     class LogType(models.TextChoices):
-        SUBMISSION = 'SUBMISSION'
-        GAME = 'GAME'
+        SUBMISSION = "SUBMISSION"
+        GAME = "GAME"
 
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE, null=True, blank=True, default=None)
     contest = models.ForeignKey(Contest, on_delete=models.CASCADE, null=True, blank=True, default=None)
@@ -761,12 +782,12 @@ class StatisticsLog(BaseModel):
         ]
 
         indexes = [
-            models.Index(fields=['-time', 'resource', 'log_type', 'id']),
-            models.Index(fields=['-time', 'resource', 'log_type', 'account', 'id']),
-            models.Index(fields=['-time', 'resource', 'log_type', 'contest', 'id']),
-            models.Index(fields=['-updated', '-time', 'resource', 'log_type', 'id']),
-            models.Index(fields=['-updated', '-time', 'resource', 'log_type', 'account', 'id']),
-            models.Index(fields=['-updated', '-time', 'resource', 'log_type', 'contest', 'id']),
+            models.Index(fields=["-time", "resource", "log_type", "id"]),
+            models.Index(fields=["-time", "resource", "log_type", "account", "id"]),
+            models.Index(fields=["-time", "resource", "log_type", "contest", "id"]),
+            models.Index(fields=["-updated", "-time", "resource", "log_type", "id"]),
+            models.Index(fields=["-updated", "-time", "resource", "log_type", "account", "id"]),
+            models.Index(fields=["-updated", "-time", "resource", "log_type", "contest", "id"]),
         ]
 
 
@@ -778,42 +799,42 @@ class Module(BaseModel):
     max_delay_after_end = models.DurationField()
     delay_on_error = models.DurationField()
     delay_on_success = models.DurationField(null=True, blank=True)
-    long_contest_idle = models.DurationField(default='06:00:00', blank=True)
+    long_contest_idle = models.DurationField(default="06:00:00", blank=True)
     long_contest_divider = models.IntegerField(default=15)
-    shortly_after = models.DurationField(default='00:30:00', blank=True)
-    delay_shortly_after = models.DurationField(default='00:05:00', blank=True)
+    shortly_after = models.DurationField(default="00:30:00", blank=True)
+    delay_shortly_after = models.DurationField(default="00:05:00", blank=True)
 
     class BaseModuleManager(BaseManager):
         def get_queryset(self):
-            return super().get_queryset().select_related('resource')
+            return super().get_queryset().select_related("resource")
 
     objects = BaseModuleManager()
 
     def __str__(self):
-        return f'{self.resource.host} Module#{self.id}'
+        return f"{self.resource.host} Module#{self.id}"
 
 
 class StageContest(BaseModel):
-    stage = models.ForeignKey('ranking.Stage', on_delete=models.CASCADE)
-    contest = models.ForeignKey('clist.Contest', on_delete=models.CASCADE)
+    stage = models.ForeignKey("ranking.Stage", on_delete=models.CASCADE)
+    contest = models.ForeignKey("clist.Contest", on_delete=models.CASCADE)
 
 
 class Stage(BaseModel):
     contest = models.OneToOneField(Contest, on_delete=models.CASCADE)
     filter_params = models.JSONField(default=dict, blank=True)
     score_params = models.JSONField(default=dict, blank=True)
-    contests = models.ManyToManyField(Contest, related_name='stages', through='StageContest', blank=True)
+    contests = models.ManyToManyField(Contest, related_name="stages", through="StageContest", blank=True)
 
     def __str__(self):
-        return 'Stage#%d %s' % (self.pk, self.contest)
+        return "Stage#%d %s" % (self.pk, self.contest)
 
 
 class VirtualStart(BaseModel):
-    coder = models.ForeignKey(Coder, on_delete=models.CASCADE, related_name='virtual_starts')
+    coder = models.ForeignKey(Coder, on_delete=models.CASCADE, related_name="virtual_starts")
 
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
-    entity = GenericForeignKey('content_type', 'object_id')
+    entity = GenericForeignKey("content_type", "object_id")
 
     start_time = models.DateTimeField()
     finish_time = models.DateTimeField(default=None, null=True, blank=True)
@@ -821,15 +842,15 @@ class VirtualStart(BaseModel):
     addition = models.JSONField(default=dict, blank=True)
 
     class Meta:
-        unique_together = ('coder', 'content_type', 'object_id')
-        indexes = [models.Index(fields=['coder', 'content_type', 'object_id'])]
+        unique_together = ("coder", "content_type", "object_id")
+        indexes = [models.Index(fields=["coder", "content_type", "object_id"])]
 
     class VirtualStartStatistic:
         def __init__(self, virtual_start):
-            self.id = f'virtualstart{virtual_start.pk}'
-            self.contest_id = virtual_start.object_id if virtual_start.content_type.model == 'contest' else None
-            self.place = virtual_start.addition.get('place')
-            self.solving = virtual_start.addition.get('solving')
+            self.id = f"virtualstart{virtual_start.pk}"
+            self.contest_id = virtual_start.object_id if virtual_start.content_type.model == "contest" else None
+            self.place = virtual_start.addition.get("place")
+            self.solving = virtual_start.addition.get("solving")
             self.addition = virtual_start.addition
             self.virtual_start = True
             self.virtual_start_pk = virtual_start.pk
@@ -839,13 +860,13 @@ class VirtualStart(BaseModel):
         content_type = ContentType.objects.get_for_model(model_class)
         qs = cls.objects.filter(content_type=content_type)
         if prefetch:
-            qs = qs.prefetch_related(Prefetch('entity', queryset=model_class.objects.all()))
+            qs = qs.prefetch_related(Prefetch("entity", queryset=model_class.objects.all()))
         return qs
 
     @staticmethod
     def contests_filter(coder):
-        has_virtual_start = VirtualStart.filter_by_content_type(Contest).filter(coder=coder, object_id=OuterRef('id'))
-        has_verdict = coder.verdicts.filter(problem__contests=OuterRef('pk'))
+        has_virtual_start = VirtualStart.filter_by_content_type(Contest).filter(coder=coder, object_id=OuterRef("id"))
+        has_verdict = coder.verdicts.filter(problem__contests=OuterRef("pk"))
         return Exists(has_virtual_start) | Exists(has_verdict)
 
     def is_active(self):
@@ -856,19 +877,19 @@ class VirtualStart(BaseModel):
 
 
 class MatchingStatus(models.TextChoices):
-    NEW = 'new', 'New'
-    PENDING = 'pending', 'Pending'
-    SKIP = 'skip', 'Skip'
-    ALREADY = 'already', 'Already'
-    DONE = 'done', 'Done'
-    ERROR = 'error', 'Error'
+    NEW = "new", "New"
+    PENDING = "pending", "Pending"
+    SKIP = "skip", "Skip"
+    ALREADY = "already", "Already"
+    DONE = "done", "Done"
+    ERROR = "error", "Error"
 
 
 class AccountMatching(BaseModel):
     name = models.CharField(max_length=400)
     account = models.ForeignKey(Account, on_delete=models.CASCADE)
     statistic = models.ForeignKey(Statistics, on_delete=models.CASCADE)
-    contest = models.ForeignKey(Contest, on_delete=models.CASCADE, related_name='account_matchings')
+    contest = models.ForeignKey(Contest, on_delete=models.CASCADE, related_name="account_matchings")
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
     n_found_accounts = models.IntegerField(default=None, null=True, blank=True)
     n_found_coders = models.IntegerField(default=None, null=True, blank=True)
@@ -877,14 +898,14 @@ class AccountMatching(BaseModel):
     status = models.CharField(max_length=10, choices=MatchingStatus.choices, default=MatchingStatus.NEW)
 
     class Meta:
-        unique_together = ('name', 'statistic')
+        unique_together = ("name", "statistic")
 
     def __str__(self):
-        return f'AccountMatching#{self.pk} {self.name} statistic#{self.statistic_id}'
+        return f"AccountMatching#{self.pk} {self.name} statistic#{self.statistic_id}"
 
 
 class ParseStatistics(BaseModel):
-    contest = models.OneToOneField(Contest, on_delete=models.CASCADE, related_name='live_statistics')
+    contest = models.OneToOneField(Contest, on_delete=models.CASCADE, related_name="live_statistics")
     delay = models.DurationField(null=True, blank=True)
     parse_time = models.DateTimeField(null=True, blank=True)
     enable = models.BooleanField(default=True, blank=True)
@@ -893,12 +914,12 @@ class ParseStatistics(BaseModel):
     without_subscriptions = models.BooleanField(default=False, blank=True)
 
     class Meta:
-        verbose_name_plural = 'ParseStatistics'
+        verbose_name_plural = "ParseStatistics"
 
     @staticmethod
     def relevant_contest():
         contests = Contest.objects.filter(live_statistics__isnull=False, end_time__gt=timezone.now())
-        return contests.order_by('end_time').first()
+        return contests.order_by("end_time").first()
 
     def create_for_contest(self, contest):
         self.pk = None
@@ -906,12 +927,12 @@ class ParseStatistics(BaseModel):
         self.save()
 
     def __str__(self):
-        return f'ParseStatistics#{self.pk} contest#{self.contest_id}'
+        return f"ParseStatistics#{self.pk} contest#{self.contest_id}"
 
 
 class FinalistManager(BaseManager):
     def get_queryset(self):
-        return super().get_queryset().select_related('contest').prefetch_related('accounts__resource')
+        return super().get_queryset().select_related("contest").prefetch_related("accounts__resource")
 
 
 class Finalist(BaseModel):
@@ -928,14 +949,14 @@ class Finalist(BaseModel):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=['contest', 'name'],
-                name='unique_finalist_name',
+                fields=["contest", "name"],
+                name="unique_finalist_name",
                 condition=Q(name__isnull=False),
             ),
         ]
 
     def __str__(self):
-        return f'Finalist#{self.pk} contest#{self.contest_id}'
+        return f"Finalist#{self.pk} contest#{self.contest_id}"
 
 
 class FinalistResourceInfo(BaseModel):
@@ -946,4 +967,4 @@ class FinalistResourceInfo(BaseModel):
     updated = models.DateTimeField(default=None, null=True, blank=True)
 
     class Meta:
-        unique_together = ('finalist', 'resource')
+        unique_together = ("finalist", "resource")

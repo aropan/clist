@@ -185,7 +185,6 @@ class Statistic(BaseModule):
 
     @staticmethod
     def get_users_infos(users, resource, accounts, pbar=None):
-
         host = "{uri.scheme}://{uri.netloc}".format(uri=urlparse(resource.url))
 
         @RateLimiter(max_calls=1, period=2)

@@ -12,44 +12,34 @@ def is_true_value(value):
     return value and value.lower() in settings.YES_
 
 
-def build_content_type(format, encoding='utf-8'):
-    '''
+def build_content_type(format, encoding="utf-8"):
+    """
     Appends character encoding to the provided format if not already present.
-    '''
-    if 'charset' in format:
+    """
+    if "charset" in format:
         return format
-    return '%s; charset=%s' % (format, encoding)
+    return "%s; charset=%s" % (format, encoding)
 
 
 class BaseModelResource(ModelResource):
-    id = fields.IntegerField('id')
+    id = fields.IntegerField("id")
 
-    def create_response(
-        self,
-        request,
-        data,
-        response_class=HttpResponse,
-        **response_kwargs
-    ):
-        '''
+    def create_response(self, request, data, response_class=HttpResponse, **response_kwargs):
+        """
         Extracts the common 'which-format/serialize/return-response' cycle.
         Mostly a useful shortcut/hook.
-        '''
+        """
         desired_format = self.determine_format(request)
         serialized = self.serialize(request, data, desired_format)
-        return response_class(
-            content=serialized,
-            content_type=build_content_type(desired_format),
-            **response_kwargs
-        )
+        return response_class(content=serialized, content_type=build_content_type(desired_format), **response_kwargs)
 
     class Meta:
         abstract = True
         limit = 100
         include_resource_uri = False
         include_absolute_url = False
-        allowed_methods = ['get']
-        fields = ['id']
+        allowed_methods = ["get"]
+        fields = ["id"]
 
         throttle = CustomCacheThrottle(throttle_at=settings.DEFAULT_API_THROTTLE_AT_, timeframe=60)
 
@@ -57,12 +47,12 @@ class BaseModelResource(ModelResource):
             ApiKeyAuthentication(),
             SessionAuthentication(),
             OAuth2ScopedAuthentication(
-                post=('read write', ),
-                get=('read', ),
-                put=('read', 'write'),
+                post=("read write",),
+                get=("read",),
+                put=("read", "write"),
             ),
         )
 
     def _handle_500(self, request, exception):
-        data = {'error_message': str(exception)}
+        data = {"error_message": str(exception)}
         return self.error_response(request, data, response_class=http.HttpApplicationError)

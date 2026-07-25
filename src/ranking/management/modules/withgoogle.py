@@ -33,7 +33,6 @@ class Statistic(BaseModule):
         super(Statistic, self).__init__(**kwargs)
 
     def _api_get_standings(self, users=None, statistics=None):
-
         match = re.search("/([0-9a-f]{16})$", self.url)
         if not match:
             raise ExceptionParseStandings(f"Not found id in url = {self.url}")

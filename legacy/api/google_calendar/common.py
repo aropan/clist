@@ -13,4 +13,4 @@ if credentials and credentials.access_token_expired:
 
 assert credentials
 http = credentials.authorize(httplib2.Http())
-service = build('calendar', 'v3', http=http, cache_discovery=False)
+service = build("calendar", "v3", http=http, cache_discovery=False)

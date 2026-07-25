@@ -32,7 +32,7 @@ class Event(BaseModel):
     team_size = models.IntegerField(default=3)
 
     def email_backend(self):
-        return EmailBackend(**self.email_conf['connection'])
+        return EmailBackend(**self.email_conf["connection"])
 
     def __str__(self):
         return "%s" % (self.name)
@@ -50,12 +50,12 @@ class TshirtSize(enum.Enum):
     XXXL = 6
 
     __labels__ = {
-        S: 'S',
-        M: 'M',
-        L: 'L',
-        XL: 'XL',
-        XXL: 'XXL',
-        XXXL: 'XXXL',
+        S: "S",
+        M: "M",
+        L: "L",
+        XL: "XL",
+        XXL: "XXL",
+        XXXL: "XXXL",
     }
 
     @classproperty
@@ -65,14 +65,13 @@ class TshirtSize(enum.Enum):
 
 class ParticipantManager(models.Manager):
     def get_queryset(self):
-        return super().get_queryset() \
-            .select_related('coder', 'event', 'team', 'organization')
+        return super().get_queryset().select_related("coder", "event", "team", "organization")
 
 
 class Participant(BaseModel):
     coder = models.ForeignKey(Coder, null=True, blank=True, on_delete=models.CASCADE)
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
-    team = models.ForeignKey('Team', related_name='participants', null=True, blank=True, on_delete=models.CASCADE)
+    team = models.ForeignKey("Team", related_name="participants", null=True, blank=True, on_delete=models.CASCADE)
     first_name = models.CharField(max_length=255, blank=True)
     last_name = models.CharField(max_length=255, blank=True)
     first_name_native = models.CharField(max_length=255, blank=True)
@@ -115,20 +114,20 @@ class TeamStatus(enum.Enum):
     SCHOOL_SEMIFINAL = 15
 
     __labels__ = {
-        PENDING: 'pending',
-        EDITING: 'editing',
-        CANCELLED: 'cancelled',
-        QUALIFICATION: 'qualification',
-        QUARTERFINAL: 'quarterfinal',
-        SEMIFINAL: 'semifinal',
-        SCHOOL_SEMIFINAL: 'junior semifinal',
-        FINAL: 'final',
-        SCHOOL_FINAL: 'junior final',
-        DISQUALIFIED: 'disqualified',
-        NEW: 'new',
-        ADD_COACH: 'coaching',
-        BSU_SEMIFINAL: 'bsu',
-        INVITED: 'invited',
+        PENDING: "pending",
+        EDITING: "editing",
+        CANCELLED: "cancelled",
+        QUALIFICATION: "qualification",
+        QUARTERFINAL: "quarterfinal",
+        SEMIFINAL: "semifinal",
+        SCHOOL_SEMIFINAL: "junior semifinal",
+        FINAL: "final",
+        SCHOOL_FINAL: "junior final",
+        DISQUALIFIED: "disqualified",
+        NEW: "new",
+        ADD_COACH: "coaching",
+        BSU_SEMIFINAL: "bsu",
+        INVITED: "invited",
     }
 
     @classproperty
@@ -138,84 +137,83 @@ class TeamStatus(enum.Enum):
     @classproperty
     def frame_labels(cls):
         return {
-            cls.PENDING: 'pending',
-            cls.EDITING: 'editing',
-            cls.CANCELLED: 'cancelled',
-            cls.QUALIFICATION: 'qualification',
-            cls.QUARTERFINAL: 'quarterfinal',
-            cls.SEMIFINAL: 'semifinal',
-            cls.FINAL: 'final',
-            cls.DISQUALIFIED: 'disqualified',
-            cls.NEW: 'new',
-            cls.ADD_COACH: 'coaching',
-            cls.BSU_SEMIFINAL: 'semifinal',
-            cls.INVITED: 'invited',
-            cls.SCHOOL_FINAL: 'junior final',
-            cls.SCHOOL_SEMIFINAL: 'junior semifinal',
+            cls.PENDING: "pending",
+            cls.EDITING: "editing",
+            cls.CANCELLED: "cancelled",
+            cls.QUALIFICATION: "qualification",
+            cls.QUARTERFINAL: "quarterfinal",
+            cls.SEMIFINAL: "semifinal",
+            cls.FINAL: "final",
+            cls.DISQUALIFIED: "disqualified",
+            cls.NEW: "new",
+            cls.ADD_COACH: "coaching",
+            cls.BSU_SEMIFINAL: "semifinal",
+            cls.INVITED: "invited",
+            cls.SCHOOL_FINAL: "junior final",
+            cls.SCHOOL_SEMIFINAL: "junior semifinal",
         }
 
     @classproperty
     def descriptions(cls):
         return {
-            cls.PENDING: 'pending',
-            cls.EDITING: 'pending',
-            cls.CANCELLED: 'canceled',
-            cls.QUALIFICATION: 'approved',
-            cls.QUARTERFINAL: 'approved',
-            cls.SEMIFINAL: 'approved',
-            cls.FINAL: 'approved',
-            cls.DISQUALIFIED: 'disqualified',
-            cls.NEW: 'new',
-            cls.ADD_COACH: 'new',
-            cls.BSU_SEMIFINAL: 'approved',
-            cls.INVITED: 'invited',
-            cls.SCHOOL_FINAL: 'approved',
-            cls.SCHOOL_SEMIFINAL: 'approved',
+            cls.PENDING: "pending",
+            cls.EDITING: "pending",
+            cls.CANCELLED: "canceled",
+            cls.QUALIFICATION: "approved",
+            cls.QUARTERFINAL: "approved",
+            cls.SEMIFINAL: "approved",
+            cls.FINAL: "approved",
+            cls.DISQUALIFIED: "disqualified",
+            cls.NEW: "new",
+            cls.ADD_COACH: "new",
+            cls.BSU_SEMIFINAL: "approved",
+            cls.INVITED: "invited",
+            cls.SCHOOL_FINAL: "approved",
+            cls.SCHOOL_SEMIFINAL: "approved",
         }
 
     @classproperty
     def classes(cls):
         return {
-            cls.PENDING: 'warning',
-            cls.EDITING: 'warning',
-            cls.CANCELLED: 'danger',
-            cls.QUALIFICATION: 'success',
-            cls.QUARTERFINAL: 'success',
-            cls.SEMIFINAL: 'success',
-            cls.FINAL: 'success',
-            cls.DISQUALIFIED: 'danger',
-            cls.NEW: 'default',
-            cls.ADD_COACH: 'default',
-            cls.BSU_SEMIFINAL: 'success',
-            cls.INVITED: 'default',
-            cls.SCHOOL_FINAL: 'success',
-            cls.SCHOOL_SEMIFINAL: 'success',
+            cls.PENDING: "warning",
+            cls.EDITING: "warning",
+            cls.CANCELLED: "danger",
+            cls.QUALIFICATION: "success",
+            cls.QUARTERFINAL: "success",
+            cls.SEMIFINAL: "success",
+            cls.FINAL: "success",
+            cls.DISQUALIFIED: "danger",
+            cls.NEW: "default",
+            cls.ADD_COACH: "default",
+            cls.BSU_SEMIFINAL: "success",
+            cls.INVITED: "default",
+            cls.SCHOOL_FINAL: "success",
+            cls.SCHOOL_SEMIFINAL: "success",
         }
 
 
 class TeamManager(models.Manager):
     def get_queryset(self):
-        return super().get_queryset() \
+        return (
+            super()
+            .get_queryset()
             .select_related(
-                'coach__organization',
-                'author__organization',
-                'event',
-            ) \
-            .prefetch_related('participants') \
-            .annotate(participants_count=models.Count('participants'))
+                "coach__organization",
+                "author__organization",
+                "event",
+            )
+            .prefetch_related("participants")
+            .annotate(participants_count=models.Count("participants"))
+        )
 
 
 class Team(BaseModel):
     name = models.CharField(max_length=255)
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
-    author = models.ForeignKey(Participant,
-                               related_name='team_author_set',
-                               on_delete=models.CASCADE)
-    coach = models.ForeignKey(Participant,
-                              related_name='team_coach_set',
-                              null=True,
-                              blank=True,
-                              on_delete=models.CASCADE)
+    author = models.ForeignKey(Participant, related_name="team_author_set", on_delete=models.CASCADE)
+    coach = models.ForeignKey(
+        Participant, related_name="team_coach_set", null=True, blank=True, on_delete=models.CASCADE
+    )
     status = enum.EnumField(TeamStatus, default=TeamStatus.NEW)
 
     objects = TeamManager()
@@ -235,15 +233,13 @@ class Team(BaseModel):
 
     @property
     def title(self):
-        organizations = '+'.join(sorted(set(
-            p.organization.abbreviation or 'none'
-            for p in self.participants.all()
-            if p.organization
-        )))
-        names = ', '.join(p.last_name for p in self.ordered_participants)
-        ret = f'{self.name}: {names}'
+        organizations = "+".join(
+            sorted(set(p.organization.abbreviation or "none" for p in self.participants.all() if p.organization))
+        )
+        names = ", ".join(p.last_name for p in self.ordered_participants)
+        ret = f"{self.name}: {names}"
         if organizations:
-            ret = f'[{organizations}] {ret}'
+            ret = f"[{organizations}] {ret}"
         return ret
 
     @property
@@ -274,7 +270,7 @@ class Team(BaseModel):
         filename = event.logins_paths[self.status_label]
         if cache is None or filename not in cache:
             passwords = {}
-            with open(filename, 'r') as fo:
+            with open(filename, "r") as fo:
                 reader = csv.reader(fo)
                 for username, password in reader:
                     login = Login.objects.filter(username=username).first()
@@ -297,7 +293,10 @@ class Team(BaseModel):
         return True, login
 
     class Meta:
-        unique_together = ('name', 'event', )
+        unique_together = (
+            "name",
+            "event",
+        )
 
 
 class JoinRequestManager(models.Manager):
@@ -322,7 +321,10 @@ class JoinRequest(BaseModel):
     objects = JoinRequestManager()
 
     class Meta:
-        unique_together = ('team', 'participant', )
+        unique_together = (
+            "team",
+            "participant",
+        )
 
 
 class Login(BaseModel):
@@ -336,21 +338,16 @@ class Login(BaseModel):
         if self.is_sent:
             return
         event = self.team.event
-        filepath = event.email_conf['logins-templates'][TeamStatus.labels[self.stage]]
+        filepath = event.email_conf["logins-templates"][TeamStatus.labels[self.stage]]
         template = get_template(filepath)
-        message = template.render({'login': self, 'team': self.team})
-        subject, message = message.split('\n\n', 1)
-        message = message.replace('\n', '<br>\n')
+        message = template.render({"login": self, "team": self.team})
+        subject, message = message.split("\n\n", 1)
+        message = message.replace("\n", "<br>\n")
         to = []
         for m in self.team.ordered_participants:
             to.append(m.email)
-        msg = EmailMultiAlternatives(
-            subject,
-            message,
-            to=to,
-            **kwargs
-        )
-        msg.attach_alternative(message, 'text/html')
+        msg = EmailMultiAlternatives(subject, message, to=to, **kwargs)
+        msg.attach_alternative(message, "text/html")
         result = msg.send()
         if result:
             self.is_sent = True
@@ -358,7 +355,7 @@ class Login(BaseModel):
         return result
 
     def __str__(self):
-        return '%s in %s' % (self.username, TeamStatus.labels[self.stage])
+        return "%s in %s" % (self.username, TeamStatus.labels[self.stage])
 
     class Meta:
-        unique_together = (('team', 'stage'), ('stage', 'username'))
+        unique_together = (("team", "stage"), ("stage", "username"))

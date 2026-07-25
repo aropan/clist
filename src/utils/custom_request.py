@@ -10,7 +10,6 @@ from clist.models import Contest, Resource
 
 
 class RequestLogger:
-
     def __init__(self, request):
         self.request_ = request
 
@@ -21,50 +20,51 @@ class RequestLogger:
         return ret
 
 
-def get_sort_field(self, options, orders=('asc', 'desc'), field='sort', order_field=None, method='GET'):
-    order_field = order_field or f'{field}_order'
-    if method in ['GET', 'POST']:
+def get_sort_field(self, options, orders=("asc", "desc"), field="sort", order_field=None, method="GET"):
+    order_field = order_field or f"{field}_order"
+    if method in ["GET", "POST"]:
         data = getattr(self, method)
         if not data.get(field) or not data.get(order_field):
-            method = 'EMPTY'
+            method = "EMPTY"
     value = self.get_filtered_value(field, options=options, default_first=True, method=method)
     order = self.get_filtered_value(order_field, options=orders, default_first=True, method=method)
     return getattr(F(value), order)(nulls_last=True)
 
 
-def get_resource(self, field='resource', method='GET') -> Optional[Resource]:
-    if method not in ['GET', 'POST']:
-        raise ValueError(f'Invalid method: {method}')
+def get_resource(self, field="resource", method="GET") -> Optional[Resource]:
+    if method not in ["GET", "POST"]:
+        raise ValueError(f"Invalid method: {method}")
     resource = getattr(self, method).get(field)
     return Resource.get(resource)
 
 
-def get_resources(self, field='resource', method='GET', default=None) -> Optional[Resource]:
-    if method not in ['GET', 'POST']:
-        raise ValueError(f'Invalid method: {method}')
+def get_resources(self, field="resource", method="GET", default=None) -> Optional[Resource]:
+    if method not in ["GET", "POST"]:
+        raise ValueError(f"Invalid method: {method}")
     resources = self.get_filtered_list(field, method=method)
     if not resources and default is not None:
         return default
     return Resource.get(resources)
 
 
-def get_contests(self, field='contest', method='GET', default=None) -> Optional[Contest]:
-    if method not in ['GET', 'POST']:
-        raise ValueError(f'Invalid method: {method}')
+def get_contests(self, field="contest", method="GET", default=None) -> Optional[Contest]:
+    if method not in ["GET", "POST"]:
+        raise ValueError(f"Invalid method: {method}")
     contests = self.get_filtered_list(field, method=method)
     if not contests and default is not None:
         return default
     return Contest.objects.filter(pk__in=contests) if contests else Contest.objects.none()
 
 
-def get_filtered_list(self, field, options: Optional[list[str]] = None, method: str = 'GET',
-                      separator: Optional[str] = None):
-    if method not in ['GET', 'POST', 'EMPTY']:
-        raise ValueError(f'Invalid method: {method}')
+def get_filtered_list(
+    self, field, options: Optional[list[str]] = None, method: str = "GET", separator: Optional[str] = None
+):
+    if method not in ["GET", "POST", "EMPTY"]:
+        raise ValueError(f"Invalid method: {method}")
 
     values = []
     values_set = set()
-    field_values = [] if method == 'EMPTY' else getattr(self, method).getlist(field)
+    field_values = [] if method == "EMPTY" else getattr(self, method).getlist(field)
     for value in field_values:
         value_key = value
         if separator is not None and separator in value:
@@ -83,9 +83,9 @@ def get_filtered_list(self, field, options: Optional[list[str]] = None, method: 
     return values
 
 
-def get_filtered_value(self, field, options=None, default_first=None, allow_empty=False, method='GET'):
-    if allow_empty and '' not in options:
-        options = options + ['']
+def get_filtered_value(self, field, options=None, default_first=None, allow_empty=False, method="GET"):
+    if allow_empty and "" not in options:
+        options = options + [""]
     ret = self.get_filtered_list(field, options, method=method)
     if ret:
         return ret[-1]
@@ -109,9 +109,9 @@ def has_contest_perm(self, perm, contest):
 
 
 def set_security_cookie(request, response, *args, **kwargs):
-    kwargs.setdefault('secure', True)
-    kwargs.setdefault('httponly', True)
-    kwargs.setdefault('samesite', 'Strict')
+    kwargs.setdefault("secure", True)
+    kwargs.setdefault("httponly", True)
+    kwargs.setdefault("samesite", "Strict")
     response.set_cookie(*args, **kwargs)
 
 
@@ -124,16 +124,16 @@ def as_coder_or_coder(self):
 
 
 def CustomRequest(request):
-    setattr(request, 'logger', RequestLogger(request))
-    setattr(request, 'get_resource', partial(get_resource, request))
-    setattr(request, 'get_resources', partial(get_resources, request))
-    setattr(request, 'get_contests', partial(get_contests, request))
-    setattr(request, 'get_filtered_list', partial(get_filtered_list, request))
-    setattr(request, 'get_filtered_value', partial(get_filtered_value, request))
-    setattr(request, 'canonical_url', None)
-    setattr(request, 'set_canonical', partial(set_canonical, request))
-    setattr(request, 'has_contest_perm', partial(has_contest_perm, request))
-    setattr(request, 'set_security_cookie', partial(set_security_cookie, request))
-    setattr(request, 'get_sort_field', partial(get_sort_field, request))
-    setattr(request, 'as_coder_or_coder', partial(as_coder_or_coder, request))
+    setattr(request, "logger", RequestLogger(request))
+    setattr(request, "get_resource", partial(get_resource, request))
+    setattr(request, "get_resources", partial(get_resources, request))
+    setattr(request, "get_contests", partial(get_contests, request))
+    setattr(request, "get_filtered_list", partial(get_filtered_list, request))
+    setattr(request, "get_filtered_value", partial(get_filtered_value, request))
+    setattr(request, "canonical_url", None)
+    setattr(request, "set_canonical", partial(set_canonical, request))
+    setattr(request, "has_contest_perm", partial(has_contest_perm, request))
+    setattr(request, "set_security_cookie", partial(set_security_cookie, request))
+    setattr(request, "get_sort_field", partial(get_sort_field, request))
+    setattr(request, "as_coder_or_coder", partial(as_coder_or_coder, request))
     return request

@@ -200,6 +200,7 @@ def superuser_required(view_func):
         if not request.user.is_superuser:
             return redirect_login(request)
         return view_func(request, *args, **kwargs)
+
     return wrapper
 
 
@@ -211,4 +212,5 @@ def bookmarked(view_func):
             if bookmark:
                 return redirect(request.path + "?" + bookmark)
         return view_func(request, *args, **kwargs)
+
     return wrapper

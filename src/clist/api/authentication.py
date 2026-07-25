@@ -15,12 +15,13 @@ Dependencies (one of these):
 - django-oauth2-provider: https://github.com/caffeinehit/django-oauth2-provider
 """
 
-log = logging.getLogger('tastypie_oauth')
+log = logging.getLogger("tastypie_oauth")
 
 
 class OAuthError(RuntimeError):
     """Generic exception class."""
-    def __init__(self, message='OAuth error occured.'):
+
+    def __init__(self, message="OAuth error occured."):
         self.message = message
 
 
@@ -31,7 +32,8 @@ class OAuth20Authentication(Authentication):
     This Authentication method checks for a provided HTTP_AUTHORIZATION
     and looks up to see if this is a valid OAuth Access Token
     """
-    def __init__(self, realm='API'):
+
+    def __init__(self, realm="API"):
         self.realm = realm
 
     def is_authenticated(self, request, **kwargs):
@@ -42,22 +44,22 @@ class OAuth20Authentication(Authentication):
         """
         log.info("OAuth20Authentication")
         try:
-            key = request.GET.get('oauth_consumer_key')
+            key = request.GET.get("oauth_consumer_key")
             if not key:
-                for header in ['Authorization', 'HTTP_AUTHORIZATION']:
+                for header in ["Authorization", "HTTP_AUTHORIZATION"]:
                     auth_header_value = request.META.get(header)
-                    if auth_header_value and ' ' in auth_header_value:
-                        key = auth_header_value.split(' ', 1)[1]
+                    if auth_header_value and " " in auth_header_value:
+                        key = auth_header_value.split(" ", 1)[1]
                         break
-            if not key and request.method == 'POST':
-                if request.META.get('CONTENT_TYPE') == 'application/json':
-                    decoded_body = request.body.decode('utf8')
+            if not key and request.method == "POST":
+                if request.META.get("CONTENT_TYPE") == "application/json":
+                    decoded_body = request.body.decode("utf8")
                     try:
-                        key = json.loads(decoded_body)['oauth_consumer_key']
+                        key = json.loads(decoded_body)["oauth_consumer_key"]
                     except (ValueError, KeyError):
                         pass
             if not key:
-                log.info('OAuth20Authentication. No consumer_key found.')
+                log.info("OAuth20Authentication. No consumer_key found.")
                 return None
             """
             If verify_access_token() does not pass, it will raise an error
@@ -70,7 +72,7 @@ class OAuth20Authentication(Authentication):
 
             # If OAuth authentication is successful, set oauth_consumer_key on
             # request in case we need it later
-            request.META['oauth_consumer_key'] = key
+            request.META["oauth_consumer_key"] = key
             return True
         except KeyError:
             log.exception("Error in OAuth20Authentication.")
@@ -89,34 +91,34 @@ class OAuth20Authentication(Authentication):
 
             # Check if token has expired
             if token.expires < timezone.now():
-                raise OAuthError('AccessToken has expired.')
+                raise OAuthError("AccessToken has expired.")
         except AccessToken.DoesNotExist:
             raise OAuthError("AccessToken not found at all.")
 
-        log.info('Valid access')
+        log.info("Valid access")
         return token
 
 
 class OAuth2ScopedAuthentication(OAuth20Authentication):
     def __init__(self, realm="API", post=None, get=None, patch=None, put=None, delete=None, use_default=True, **kwargs):
         """
-            https://tools.ietf.org/html/rfc6749
-            get, post, patch and put is desired to be a scope or a list of scopes or None
-            if get is None, it will default to post
-            if delete is None, it will default to post
-            if both patch and put are None, they are all default to post
-            if one of patch or put is None, the two will default to the one that is not None
+        https://tools.ietf.org/html/rfc6749
+        get, post, patch and put is desired to be a scope or a list of scopes or None
+        if get is None, it will default to post
+        if delete is None, it will default to post
+        if both patch and put are None, they are all default to post
+        if one of patch or put is None, the two will default to the one that is not None
 
-            You can turn this overriding behavior off entirely by specifying use_default=False, but then remember
-            that None means no scope requirement is specified for that http method
+        You can turn this overriding behavior off entirely by specifying use_default=False, but then remember
+        that None means no scope requirement is specified for that http method
 
-            the list of scopes should have a logic "or" between them
-            e.g. get=("a b","c") for oauth2-toolkit means "GET method requires scope 'a b'('a' and 'b') or scope 'c' "
-                 get=(a|b,c) is the corresponding form for oauth2-provider, where a,b,c should be some constants you
-                     defined in your settings
-                 Note: for oauth2-toolkit, you have to provide a space seperated string of combination of scopes
-            you can also specify only one scope(instead of a list), and that scope will the only scope that has
-            permission to the according method
+        the list of scopes should have a logic "or" between them
+        e.g. get=("a b","c") for oauth2-toolkit means "GET method requires scope 'a b'('a' and 'b') or scope 'c' "
+             get=(a|b,c) is the corresponding form for oauth2-provider, where a,b,c should be some constants you
+                 defined in your settings
+             Note: for oauth2-toolkit, you have to provide a space seperated string of combination of scopes
+        you can also specify only one scope(instead of a list), and that scope will the only scope that has
+        permission to the according method
         """
         super(OAuth2ScopedAuthentication, self).__init__(realm)
         self.POST = post
@@ -126,7 +128,7 @@ class OAuth2ScopedAuthentication(OAuth20Authentication):
             if not patch and not put:
                 self.PATCH = self.PUT = post
             elif not patch or not put:
-                self.PATCH = self.PUT = (put or patch)
+                self.PATCH = self.PUT = put or patch
             else:
                 self.PATCH = patch
                 self.PUT = put
@@ -167,6 +169,6 @@ class OAuth2ScopedAuthentication(OAuth20Authentication):
                 if token.allow_scopes(scope.split()):
                     allowed_scopes.append(scope)
         except Exception:
-            raise Exception('Invalid required scope values')
+            raise Exception("Invalid required scope values")
         else:
             return allowed_scopes

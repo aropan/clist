@@ -12,13 +12,13 @@ def get_m2m_field_for_through(instance, sender):
         elif field.is_relation and field.many_to_many:
             if field.remote_field.through == sender:
                 return field
-    raise ValueError('No ManyToManyField for through model')
+    raise ValueError("No ManyToManyField for through model")
 
 
 def update_n_field_on_change(sender, instance, action, reverse, pk_set, model, field, **kwargs):
-    ADD_ACTION = 'post_add'
-    REMOVE_ACTION = 'pre_remove'
-    CLEAR_ACTION = 'pre_clear'
+    ADD_ACTION = "post_add"
+    REMOVE_ACTION = "pre_remove"
+    CLEAR_ACTION = "pre_clear"
     if action == ADD_ACTION or action == REMOVE_ACTION:
         delta = len(pk_set) if reverse else 1
         delta = -delta if action == REMOVE_ACTION else delta
@@ -27,7 +27,7 @@ def update_n_field_on_change(sender, instance, action, reverse, pk_set, model, f
             delta = -getattr(instance, field)
         else:
             m2m_field = get_m2m_field_for_through(instance, sender)
-            pk_set = getattr(instance, m2m_field.name).values_list('pk', flat=True)
+            pk_set = getattr(instance, m2m_field.name).values_list("pk", flat=True)
             delta = -1
     else:
         return
@@ -48,13 +48,13 @@ def update_n_field_on_delete(objects, field):
 
 
 def update_foreign_key_n_field_on_change(instance, signal, attr, field, **kwargs):
-    attr_id = f'{attr}_id'
+    attr_id = f"{attr}_id"
     model = instance._meta.get_field(attr).related_model
     if signal == post_init:
-        setattr(instance, f'_{attr_id}', getattr(instance, attr_id))
+        setattr(instance, f"_{attr_id}", getattr(instance, attr_id))
     elif signal == post_save:
-        _value, value = getattr(instance, f'_{attr_id}', None), getattr(instance, attr_id)
-        if kwargs.get('created'):
+        _value, value = getattr(instance, f"_{attr_id}", None), getattr(instance, attr_id)
+        if kwargs.get("created"):
             _value = None
         if _value == value:
             return
@@ -64,6 +64,6 @@ def update_foreign_key_n_field_on_change(instance, signal, attr, field, **kwargs
             if value:
                 model.objects.filter(pk=value).update(**{field: models.F(field) + 1})
     elif signal == post_delete:
-        value = getattr(instance, f'_{attr_id}', None) or getattr(instance, attr_id)
+        value = getattr(instance, f"_{attr_id}", None) or getattr(instance, attr_id)
         if value:
             model.objects.filter(pk=value).update(**{field: models.F(field) - 1})

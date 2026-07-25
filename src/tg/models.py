@@ -17,16 +17,16 @@ class Chat(BaseModel):
     secret_key = models.CharField(max_length=20, blank=True, null=True)
     last_command = models.JSONField(default=dict, blank=True)
     is_group = models.BooleanField(default=False)
-    coders = models.ManyToManyField(Coder, blank=True, related_name='chats')
-    accounts = models.ManyToManyField(Account, blank=True, related_name='chats')
+    coders = models.ManyToManyField(Coder, blank=True, related_name="chats")
+    accounts = models.ManyToManyField(Account, blank=True, related_name="chats")
     settings = models.JSONField(default=dict, blank=True)
     replying_rules = models.JSONField(default=dict, blank=True)
 
     discussions = GenericRelation(
-        'clist.Discussion',
-        content_type_field='where_type',
-        object_id_field='where_id',
-        related_query_name='where_telegram_chat',
+        "clist.Discussion",
+        content_type_field="where_type",
+        object_id_field="where_id",
+        related_query_name="where_telegram_chat",
     )
 
     def __str__(self):
@@ -41,13 +41,13 @@ class Chat(BaseModel):
         return "%s@%s" % (self.chat_id, self.title)
 
     def get_notification_method(self):
-        ret = f'telegram:{self.chat_id}'
+        ret = f"telegram:{self.chat_id}"
         if self.thread_id:
-            ret += f':{self.thread_id}'
+            ret += f":{self.thread_id}"
         return ret
 
     class Meta:
-        unique_together = ['chat_id', 'thread_id']
+        unique_together = ["chat_id", "thread_id"]
 
     def update_coders_or_accounts(self):
         coders, accounts = list(self.coders.all()), list(self.accounts.all())
@@ -59,7 +59,7 @@ class Chat(BaseModel):
 @receiver(m2m_changed, sender=Chat.coders.through)
 @receiver(m2m_changed, sender=Chat.accounts.through)
 def update_coders_or_accounts(sender, instance, reverse, pk_set, action, **kwargs):
-    if not action.startswith('post_'):
+    if not action.startswith("post_"):
         return
     if reverse:
         for chat in Chat.objects.filter(pk__in=pk_set):
@@ -77,13 +77,13 @@ class History(BaseModel):
         return "Histroy %s" % (self.chat)
 
     def save(self, *args, **kwargs):
-        q = History.objects.filter(chat=self.chat).order_by('created')
+        q = History.objects.filter(chat=self.chat).order_by("created")
         count = q.count()
         if count > self.LIMIT_BY_CHAT:
-            for o in q[0:count - self.LIMIT_BY_CHAT]:
+            for o in q[0 : count - self.LIMIT_BY_CHAT]:
                 o.delete()
         super(History, self).save(*args, **kwargs)
 
     class Meta:
-        verbose_name_plural = 'History'
-        ordering = ['-created']
+        verbose_name_plural = "History"
+        ordering = ["-created"]

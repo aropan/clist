@@ -7,45 +7,44 @@ from notification.models import Notification
 
 
 class NotificationForm(ModelForm):
-
     class Meta:
         model = Notification
-        exclude = ['coder', 'last_time', 'secret']
+        exclude = ["coder", "last_time", "secret"]
         help_texts = {
-            'method': ('You can <a href="/settings#filtres-tab">configure filters</a> for each method'),
-            'before': ('How much before event to send notifications'),
-            'period': ('Frequency of notifications'),
-            'with_updates': ('Notify about updates'),
-            'with_results': ('Notify about results'),
-            'with_virtual': ('Notify about end of the virtual a day before'),
-            'clear_on_delete':  ('Delete message in a day (only for telegram, need delete message permission)'),
+            "method": ('You can <a href="/settings#filtres-tab">configure filters</a> for each method'),
+            "before": ("How much before event to send notifications"),
+            "period": ("Frequency of notifications"),
+            "with_updates": ("Notify about updates"),
+            "with_results": ("Notify about results"),
+            "with_virtual": ("Notify about end of the virtual a day before"),
+            "clear_on_delete": ("Delete message in a day (only for telegram, need delete message permission)"),
         }
         labels = {
-            'with_updates': 'Updates',
-            'with_results': 'Results',
-            'with_virtual': 'Virtual',
-            'clear_on_delete': 'Clear'
+            "with_updates": "Updates",
+            "with_results": "Results",
+            "with_virtual": "Virtual",
+            "clear_on_delete": "Clear",
         }
 
     def __init__(self, coder, *args, **kwargs):
         super(NotificationForm, self).__init__(*args, **kwargs)
         methods = coder.get_notifications()
-        self.fields['method'] = ChoiceField(choices=methods)
+        self.fields["method"] = ChoiceField(choices=methods)
 
     helper = FormHelper()
-    helper.form_method = 'POST'
-    helper.form_class = 'form-horizontal'
-    helper.label_class = 'col-sm-1'
-    helper.field_class = 'col-sm-4'
+    helper.form_method = "POST"
+    helper.form_class = "form-horizontal"
+    helper.label_class = "col-sm-1"
+    helper.field_class = "col-sm-4"
     helper.layout = Layout(
-        Field('method', css_class='input-sm'),
-        AppendedText('before', 'minute(s)', css_class='input-sm'),
-        Field('period', css_class='input-sm'),
-        Field('with_updates', template='crispy_forms/boolean_field.html'),
-        Field('with_results', template='crispy_forms/boolean_field.html'),
-        Field('with_virtual', template='crispy_forms/boolean_field.html'),
-        Field('clear_on_delete', template='crispy_forms/boolean_field.html'),
-        Hidden('action', 'notification'),
-        Hidden('pk', ''),
-        FormActions(Submit('add', 'Add', css_class='btn-primary'))
+        Field("method", css_class="input-sm"),
+        AppendedText("before", "minute(s)", css_class="input-sm"),
+        Field("period", css_class="input-sm"),
+        Field("with_updates", template="crispy_forms/boolean_field.html"),
+        Field("with_results", template="crispy_forms/boolean_field.html"),
+        Field("with_virtual", template="crispy_forms/boolean_field.html"),
+        Field("clear_on_delete", template="crispy_forms/boolean_field.html"),
+        Hidden("action", "notification"),
+        Hidden("pk", ""),
+        FormActions(Submit("add", "Add", css_class="btn-primary")),
     )

@@ -8,10 +8,9 @@ from django_countries import countries
 
 
 class Countrier:
-
     def __init__(self):
         self.countries_name = {name.lower(): code for code, name in countries}
-        with override('ru'):
+        with override("ru"):
             self.countries_name.update({name.lower(): code for code, name in countries})
         self.countries_name.update({code.lower(): code for code, name in countries})
         self.countries_name.update({countries.alpha3(code).lower(): code for code, name in countries})
@@ -27,7 +26,7 @@ class Countrier:
                 self.countries_name[k] = v[0]
 
         self.missed_countries = defaultdict(int)
-        self.logger = getLogger('ranking.parse.countrier')
+        self.logger = getLogger("ranking.parse.countrier")
 
     def get(self, name):
         ret = self.countries_name.get(name.lower())
@@ -37,4 +36,4 @@ class Countrier:
 
     def __del__(self):
         if self.missed_countries:
-            self.logger.warning(f'Missed countries = {self.missed_countries}')
+            self.logger.warning(f"Missed countries = {self.missed_countries}")

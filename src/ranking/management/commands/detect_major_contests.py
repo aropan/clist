@@ -12,15 +12,15 @@ from utils.attrdict import AttrDict
 
 
 class Command(BaseCommand):
-    help = 'Detect major contests'
+    help = "Detect major contests"
 
     def __init__(self, *args, **kwargs):
         super(Command, self).__init__(*args, **kwargs)
-        self.logger = logging.getLogger('ranking.detect.major_contests')
+        self.logger = logging.getLogger("ranking.detect.major_contests")
 
     def add_arguments(self, parser):
-        parser.add_argument('-n', '--dryrun', action='store_true', default=False)
-        parser.add_argument('-r', '--resources', nargs='*', default=[])
+        parser.add_argument("-n", "--dryrun", action="store_true", default=False)
+        parser.add_argument("-r", "--resources", nargs="*", default=[])
 
     @transaction.atomic()
     def handle(self, *args, **options):
@@ -35,7 +35,7 @@ class Command(BaseCommand):
             base_contests = base_contests.filter(resource__in=resources)
         base_contests = base_contests.filter(end_time__lt=timezone.now())
 
-        contests = base_contests.filter(live_statistics__isnull=False).order_by('-end_time')
+        contests = base_contests.filter(live_statistics__isnull=False).order_by("-end_time")
         for contest in contests:
             major_contests = contest.similar_contests()
             major_contests = major_contests.filter(start_time__gt=now, start_time__lt=now + timezone.timedelta(days=7))
@@ -44,7 +44,7 @@ class Command(BaseCommand):
                 contest.live_statistics.create_for_contest(major_contest)
                 self.logger.info(f"Created live statistics for major contest {major_contest} from {contest}")
 
-        contests = base_contests.filter(promotion__isnull=False).order_by('-end_time')
+        contests = base_contests.filter(promotion__isnull=False).order_by("-end_time")
         for contest in contests:
             major_contests = contest.similar_contests()
             major_contests = major_contests.filter(start_time__gt=now, start_time__lt=now + timezone.timedelta(days=7))

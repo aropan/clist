@@ -10,11 +10,11 @@ from pyclist.models import BaseManager, BaseModel
 
 class EventLogManager(BaseManager):
     def create(self, *args, **kwargs):
-        kwargs.setdefault('environment', settings.ENVIRONMENT)
+        kwargs.setdefault("environment", settings.ENVIRONMENT)
         return super().create(*args, **kwargs)
 
     def get_queryset(self):
-        return super().get_queryset().select_related('content_type').prefetch_related('related')
+        return super().get_queryset().select_related("content_type").prefetch_related("related")
 
 
 class EnvironmentEventLogManager(EventLogManager):
@@ -25,7 +25,7 @@ class EnvironmentEventLogManager(EventLogManager):
 class EventLog(BaseModel):
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
-    related = GenericForeignKey('content_type', 'object_id')
+    related = GenericForeignKey("content_type", "object_id")
     name = models.CharField(max_length=50, db_index=True)
     status = models.CharField(max_length=20, choices=EventStatus.choices, default=EventStatus.NONE, db_index=True)
     message = models.TextField(blank=True, null=True, default=None)
@@ -37,19 +37,19 @@ class EventLog(BaseModel):
     env_objects = EnvironmentEventLogManager()
 
     def __str__(self):
-        return f'{self.related} EventLog#{self.id}'
+        return f"{self.related} EventLog#{self.id}"
 
     def update(self, status=None, message=None, error=None):
-        update_fields = ['elapsed']
+        update_fields = ["elapsed"]
         if status is not None:
             self.status = status
-            update_fields.append('status')
+            update_fields.append("status")
         if message is not None:
             self.message = message
-            update_fields.append('message')
+            update_fields.append("message")
         if error is not None:
             self.error = error
-            update_fields.append('error')
+            update_fields.append("error")
         self.elapsed = timezone.now() - self.created
         self.save(update_fields=update_fields)
 
@@ -88,4 +88,4 @@ class PgStat(BaseModel):
     pretty_diff_size = models.CharField(max_length=20, blank=True, null=True)
 
     def __str__(self):
-        return f'{self.table_name} PgStat#{self.id}'
+        return f"{self.table_name} PgStat#{self.id}"

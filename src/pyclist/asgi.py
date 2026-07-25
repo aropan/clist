@@ -11,12 +11,9 @@ def get_application():
     import ranking.routing
 
     application = ProtocolTypeRouter({
-        'http': django_asgi_app,
-        'websocket': AuthMiddlewareStack(
-            URLRouter(
-                chats.routing.websocket_urlpatterns +
-                ranking.routing.websocket_urlpatterns
-            ),
+        "http": django_asgi_app,
+        "websocket": AuthMiddlewareStack(
+            URLRouter(chats.routing.websocket_urlpatterns + ranking.routing.websocket_urlpatterns),
         ),
     })
 

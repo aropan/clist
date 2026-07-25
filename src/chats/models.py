@@ -8,10 +8,9 @@ from true_coders.models import Coder
 
 
 class Chat(BaseModel):
-
     class ChatType(models.TextChoices):
-        ROOM = 'ROOM', 'Room'
-        PRIVATE = 'PRIV', 'Private'
+        ROOM = "ROOM", "Room"
+        PRIVATE = "PRIV", "Private"
 
     chat_type = models.CharField(
         max_length=4,
@@ -27,13 +26,13 @@ class Chat(BaseModel):
         return super().save(*args, **kwargs)
 
     def __str__(self):
-        return f'{self.chat_type}__{self.name}'
+        return f"{self.chat_type}__{self.name}"
 
     class Meta:
         indexes = [
-            models.Index(fields=['chat_type']),
-            models.Index(fields=['slug']),
-            models.Index(fields=['chat_type', 'slug']),
+            models.Index(fields=["chat_type"]),
+            models.Index(fields=["slug"]),
+            models.Index(fields=["chat_type", "slug"]),
         ]
 
 
@@ -45,15 +44,14 @@ class ChatLog(BaseModel):
 
 
 class ExternalChat(BaseModel):
-
     class ExternalChatType(models.TextChoices):
-        BLANK = 'BLANK', 'Blank'
-        DISCORD = 'DSCRD', 'Discord'
-        TELEGRAM = 'TLGRM', 'Telegram'
+        BLANK = "BLANK", "Blank"
+        DISCORD = "DSCRD", "Discord"
+        TELEGRAM = "TLGRM", "Telegram"
 
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
-    related = GenericForeignKey('content_type', 'object_id')
+    related = GenericForeignKey("content_type", "object_id")
 
     chat_type = models.CharField(
         max_length=5,

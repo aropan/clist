@@ -360,7 +360,6 @@ class Statistic(BaseModule):
 
     @staticmethod
     def get_users_infos(users, resource, accounts, pbar=None):
-
         def set_rename(user, account, ret):
             if re.match("^team-[0-9]+$", user):
                 return

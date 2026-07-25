@@ -284,7 +284,6 @@ class Statistic(BaseModule):
 
     @staticmethod
     def get_users_infos(users, resource=None, accounts=None, pbar=None):
-
         if not users:
             yield from Statistic.get_all_users_infos()
 

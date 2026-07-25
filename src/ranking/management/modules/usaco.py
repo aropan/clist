@@ -64,7 +64,6 @@ class Statistic(BaseModule):
                     )
 
     def get_standings(self, users=None, statistics=None, **kwargs):
-
         def parse_problems(page, full=False):
             matches = re.finditer(
                 r"""

@@ -1,1 +1,1 @@
-default_app_config = 'tg.apps.Telegram'
+default_app_config = "tg.apps.Telegram"

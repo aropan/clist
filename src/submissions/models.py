@@ -15,19 +15,19 @@ class Language(BaseModel):
     extensions = models.JSONField(default=list, blank=True)
 
     @staticmethod
-    def get(language) -> Optional['Language']:
+    def get(language) -> Optional["Language"]:
         try:
             return Language.objects.get(Q(id__iexact=language) | Q(name__iexact=language))
         except Language.DoesNotExist:
             return None
 
     @staticmethod
-    @timed_cache('15m')
-    def cached_get(language) -> Optional['Language']:
+    @timed_cache("15m")
+    def cached_get(language) -> Optional["Language"]:
         return Language.get(language)
 
     def __str__(self):
-        return f'Language#{self.id}'
+        return f"Language#{self.id}"
 
 
 class Verdict(BaseModel):
@@ -37,27 +37,28 @@ class Verdict(BaseModel):
     solved = models.BooleanField(default=False)
 
     @staticmethod
-    def get(verdict) -> Optional['Verdict']:
+    def get(verdict) -> Optional["Verdict"]:
         try:
             return Verdict.objects.get(Q(id__iexact=verdict) | Q(name__iexact=verdict))
         except Verdict.DoesNotExist:
             return None
 
     @staticmethod
-    @timed_cache('15m')
-    def cached_get(verdict) -> Optional['Verdict']:
+    @timed_cache("15m")
+    def cached_get(verdict) -> Optional["Verdict"]:
         return Verdict.get(verdict)
 
     def __str__(self):
-        return f'Verdict#{self.id}'
+        return f"Verdict#{self.id}"
 
 
 class Submission(BaseModel):
-    account = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='submissions')
-    contest = models.ForeignKey(Contest, on_delete=models.CASCADE, related_name='submissions')
-    problem = models.ForeignKey(Problem, on_delete=models.SET_NULL, related_name='submissions',
-                                default=None, null=True, blank=True)
-    statistic = models.ForeignKey(Statistics, on_delete=models.CASCADE, related_name='submissions')
+    account = models.ForeignKey(Account, on_delete=models.CASCADE, related_name="submissions")
+    contest = models.ForeignKey(Contest, on_delete=models.CASCADE, related_name="submissions")
+    problem = models.ForeignKey(
+        Problem, on_delete=models.SET_NULL, related_name="submissions", default=None, null=True, blank=True
+    )
+    statistic = models.ForeignKey(Statistics, on_delete=models.CASCADE, related_name="submissions")
     secondary_key = models.CharField(max_length=50)
     problem_short = models.CharField(max_length=50, db_index=True)
     problem_key = models.CharField(max_length=50, db_index=True)
@@ -71,17 +72,17 @@ class Submission(BaseModel):
     time = models.DateTimeField(default=None, null=True, blank=True)
 
     class Meta:
-        unique_together = ('statistic', 'secondary_key', 'problem_short')
+        unique_together = ("statistic", "secondary_key", "problem_short")
 
         indexes = [
-            models.Index(fields=['contest', 'contest_time']),
-            models.Index(fields=['contest', '-contest_time']),
-            models.Index(fields=['contest', 'account', 'contest_time']),
-            models.Index(fields=['contest', 'account', '-contest_time']),
-            models.Index(fields=['contest', 'problem_short', 'contest_time']),
-            models.Index(fields=['contest', 'problem_short', '-contest_time']),
-            models.Index(fields=['contest', 'account', 'problem_short', 'contest_time']),
-            models.Index(fields=['contest', 'account', 'problem_short', '-contest_time']),
+            models.Index(fields=["contest", "contest_time"]),
+            models.Index(fields=["contest", "-contest_time"]),
+            models.Index(fields=["contest", "account", "contest_time"]),
+            models.Index(fields=["contest", "account", "-contest_time"]),
+            models.Index(fields=["contest", "problem_short", "contest_time"]),
+            models.Index(fields=["contest", "problem_short", "-contest_time"]),
+            models.Index(fields=["contest", "account", "problem_short", "contest_time"]),
+            models.Index(fields=["contest", "account", "problem_short", "-contest_time"]),
         ]
 
     @property
@@ -89,11 +90,11 @@ class Submission(BaseModel):
         return self.problem_key or self.problem_short
 
     def __str__(self):
-        return f'Submission#{self.id}'
+        return f"Submission#{self.id}"
 
 
 class Testing(BaseModel):
-    submission = models.ForeignKey(Submission, on_delete=models.CASCADE, related_name='tests')
+    submission = models.ForeignKey(Submission, on_delete=models.CASCADE, related_name="tests")
     verdict = models.ForeignKey(Verdict, on_delete=models.PROTECT)
     secondary_key = models.CharField(max_length=50)
     test_number = models.IntegerField(default=None, null=True, blank=True, db_index=True)
@@ -102,7 +103,7 @@ class Testing(BaseModel):
     time = models.DateTimeField(default=None, null=True, blank=True)
 
     class Meta:
-        unique_together = ('submission', 'secondary_key')
+        unique_together = ("submission", "secondary_key")
 
     def __str__(self):
-        return f'Testing#{self.id}'
+        return f"Testing#{self.id}"
