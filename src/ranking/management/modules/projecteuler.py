@@ -19,6 +19,9 @@ from ranking.management.modules.excepts import ExceptionParseStandings
 
 class Statistic(BaseModule):
     def get_standings(self, **kwargs):
+        if re.match(r"^[0-9]+$", self.key) and int(self.key) > 1000:
+            return {}
+
         if not self.standings_url:
             self.standings_url = f"https://projecteuler.net/fastest={self.key}"
 
