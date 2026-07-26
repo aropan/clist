@@ -5,6 +5,9 @@
 # Set the maximum line length to 120 characters
 line-length = 120
 
+# Keep CLI, editor, and CI formatting results identical
+required-version = "==0.12.7"
+
 # Assume Python 3.10+ (change this to match your actual dev environment)
 target-version = "py310"
 

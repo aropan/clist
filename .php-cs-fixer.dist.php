@@ -9,6 +9,19 @@ $finder = PhpCsFixer\Finder::create()
     ->in(__DIR__ . '/legacy')
     ->exclude('libs');
 
+$cacheRoot = getenv('XDG_CACHE_HOME');
+if (!$cacheRoot) {
+    $homeDirectory = getenv('HOME');
+    $cacheRoot = $homeDirectory ? $homeDirectory . '/.cache' : sys_get_temp_dir();
+}
+
+$cacheDirectory = rtrim($cacheRoot, '/\\') . '/clist/php-cs-fixer';
+if (!is_dir($cacheDirectory)) {
+    mkdir($cacheDirectory, 0755, true);
+}
+
+$cacheFile = $cacheDirectory . '/' . hash('sha256', __DIR__) . '.cache';
+
 return (new PhpCsFixer\Config())
     ->setParallelConfig(ParallelConfigFactory::sequential())
     ->setRiskyAllowed(false)
@@ -38,6 +51,6 @@ return (new PhpCsFixer\Config())
         'trim_array_spaces' => true,
         'whitespace_after_comma_in_array' => ['ensure_single_space' => true],
     ])
-    ->setCacheFile(__DIR__ . '/.php-cs-fixer.cache')
+    ->setCacheFile($cacheFile)
     ->setUsingCache(true)
     ->setFinder($finder);

@@ -3,5 +3,4 @@
 logs/
 volumes/
 .envrc
-/.php-cs-fixer.cache
-/vendor/
+/mise.local.toml

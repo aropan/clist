@@ -1,0 +1,19 @@
+min_version = "2026.7.13"
+
+[settings]
+lockfile = true
+
+[tools]
+"aqua:astral-sh/ruff" = "0.12.7"
+
+[tools."github:PHP-CS-Fixer/PHP-CS-Fixer"]
+version = "3.95.15"
+asset_pattern = "php-cs-fixer.phar"
+bin = "php-cs-fixer"
+
+[tasks]
+format-python = "ruff format ."
+check-python = "ruff format --check ."
+lint-python = "ruff check ."
+format-php = "php-cs-fixer fix --config=.php-cs-fixer.dist.php"
+check-php = "php-cs-fixer check --config=.php-cs-fixer.dist.php"
