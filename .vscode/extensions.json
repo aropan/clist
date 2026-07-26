@@ -1,0 +1,7 @@
+{
+    "recommendations": [
+        "biomejs.biome",
+        "charliermarsh.ruff",
+        "junstyle.php-cs-fixer"
+    ]
+}

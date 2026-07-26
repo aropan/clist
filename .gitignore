@@ -2,5 +2,10 @@
 !.env.*.template
 logs/
 volumes/
-.envrc
 /mise.local.toml
+
+# Shared VS Code workspace configuration
+!/.vscode/
+/.vscode/*
+!/.vscode/extensions.json
+!/.vscode/settings.json

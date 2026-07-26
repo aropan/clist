@@ -1,0 +1,48 @@
+{
+    "search.exclude": {
+        "legacy/libs/smarty/**": true
+    },
+    "files.watcherExclude": {
+        "**/.ruff_cache/**": true,
+        "**/.uv_python/**": true,
+        "**/.venv/**": true,
+        "**/__pycache__/**": true,
+        "**/legacy/cache/**": true,
+        "**/legacy/libs/**": true,
+        "**/legacy/smarty/cache/**": true,
+        "**/legacy/smarty/compile/**": true,
+        "**/logs/**": true,
+        "**/volumes/**": true
+    },
+    "python.terminal.activateEnvironment": false,
+    "[python]": {
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.formatOnSave": true
+    },
+    "[php]": {
+        "editor.defaultFormatter": "junstyle.php-cs-fixer",
+        "editor.formatOnSave": true
+    },
+    "intelephense.format.enable": false,
+    "php-cs-fixer.config": ".php-cs-fixer.dist.php",
+    "php-cs-fixer.allowRisky": false,
+    "php-cs-fixer.onsave": false,
+    "php-cs-fixer.exclude": [
+        "**/legacy/libs/**"
+    ],
+    "biome.enabled": true,
+    "biome.requireConfiguration": true,
+    "biome.suggestInstallingGlobally": false,
+    "[javascript]": {
+        "editor.defaultFormatter": "biomejs.biome",
+        "editor.formatOnSave": true
+    },
+    "[css]": {
+        "editor.defaultFormatter": "biomejs.biome",
+        "editor.formatOnSave": true
+    },
+    "[json]": {
+        "editor.defaultFormatter": "biomejs.biome",
+        "editor.formatOnSave": true
+    }
+}

@@ -62,22 +62,32 @@ a checkout-specific cache under `$XDG_CACHE_HOME/clist/php-cs-fixer/`
 (`~/.cache/clist/php-cs-fixer/` by default); editor formatting still processes
 only the current file.
 
-For VS Code, point both extensions at the mise shims in user settings:
+Shared VS Code formatter selection and format-on-save settings live in
+[`.vscode/settings.json`](../.vscode/settings.json). The extension recommendations
+are optional and do not affect other editors.
+
+Mise activates the existing `.venv/clist` virtualenv when entering the project.
+The shared workspace settings disable legacy Python extension activation. Keep
+executable paths and the current Python Environments activation setting in VS
+Code user settings because they are machine-specific:
 
 ```json
-"ruff.path": ["${env:HOME}/.local/share/mise/shims/ruff"],
-"php-cs-fixer.executablePath": "~/.local/share/mise/shims/php-cs-fixer"
+{
+  "python-envs.terminal.autoActivationType": "off",
+  "ruff.path": ["${env:HOME}/.local/share/mise/shims/ruff"],
+  "php-cs-fixer.executablePath": "~/.local/share/mise/shims/php-cs-fixer",
+  "biome.lsp.bin": "/home/your-user/.local/share/mise/shims/biome"
+}
 ```
 
+`python-envs.terminal.autoActivationType` has machine scope, so VS Code ignores
+it in workspace settings. The Biome extension requires an absolute binary path
+and does not expand `~` or `${env:HOME}`.
+
 Use only `editor.formatOnSave`; do not also enable `php-cs-fixer.onsave`.
-
-## Type checking — off
-
-Type checking is intentionally **off** ([`pyrightconfig.json`](../pyrightconfig.json)).
-Don't add type errors, but don't expect a type gate either.
 
 ## Where to run
 
 Run formatter tasks from the host through `mise run`. Application and test
-commands can continue using the activated venv (`.envrc` activates the `clist`
-virtualenv) or the container.
+commands can continue using the `clist` virtualenv activated by mise or the
+container.

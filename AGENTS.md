@@ -46,7 +46,7 @@ Gemini, Copilot, Cursor, Codex, and any other agent read the same rules.
 | [docs/repository-map.md](docs/repository-map.md) | Where things live in `src/`, `legacy/`, `config/`; risk per area |
 | [docs/development-environment.md](docs/development-environment.md) | Docker Compose, the long-running `dev` service, `manage.py` commands |
 | [docs/testing.md](docs/testing.md) | Django test runner; narrow → broad policy |
-| [docs/linting-formatting.md](docs/linting-formatting.md) | Ruff, Biome, type-checking (off) |
+| [docs/linting-formatting.md](docs/linting-formatting.md) | Ruff, Biome, PHP-CS-Fixer, editor integration |
 | [docs/git-and-safety.md](docs/git-and-safety.md) | Git policy, off-limits files, destructive-command ban |
 | [docs/infrastructure.md](docs/infrastructure.md) | Docker services, supervisord, RQ queues, `config/` tree, monitoring |
 | [docs/parsers.md](docs/parsers.md) | 1-paragraph overview + pointer to the `add-parser` skill |

@@ -30,11 +30,10 @@ docker compose exec dev ./manage.py test                                # full s
 
 **Lint / format** (Ruff, config in `.ruff.toml`, line length 120, double quotes):
 ```bash
-ruff check src/path/you/changed.py
-ruff format src/path/you/changed.py
+mise exec -- ruff check src/path/you/changed.py
+mise exec -- ruff format src/path/you/changed.py
 ```
-Run Ruff from the host (the `.envrc` venv has it) or inside the container — both
-work. JS/CSS/JSON use Biome (`biome.json`).
+Run Ruff from the host through mise. JS/CSS/JSON use Biome (`biome.json`).
 
 **Run a management command** (e.g. to exercise a parser or check a job):
 ```bash
@@ -52,8 +51,6 @@ docker compose exec dev ./manage.py shell      # quick interactive check
    make checks pass.
 
 If a check can't run, say exactly why and give the human the command to run.
-Note: type checking is intentionally off (`pyrightconfig.json`) — don't rely on
-a type gate.
 
 ## When done, report
 
