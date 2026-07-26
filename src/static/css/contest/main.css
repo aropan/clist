@@ -1,27 +1,27 @@
 #contests .badge {
-    font-size: 75%;
+  font-size: 75%;
 }
 
 .start-time {
-    font-family: monospace;
+  font-family: monospace;
 }
 
-#contests>tbody>tr>td {
-    vertical-align: middle;
+#contests > tbody > tr > td {
+  vertical-align: middle;
 }
 
 #contests th,
 #contests .start-time,
 #contests .duration,
 #contests .timeleft {
-    white-space: nowrap;
+  white-space: nowrap;
 }
 
 #contests th,
 #contests td {
-    border-width: 1px 0px;
-    border-style: solid #ddd;
-    padding: 5px 15px;
+  border-width: 1px 0px;
+  border-style: solid #ddd;
+  padding: 5px 15px;
 }
 
 .header-start-time,
@@ -30,88 +30,82 @@
 #contests .start-time,
 #contests .duration,
 #contests .timeleft {
-    text-align: center;
+  text-align: center;
 }
-
 
 .header-resource,
 #contests .resource {
-    text-align: right;
+  text-align: right;
 }
 
 #contests a {
-    outline: none;
+  outline: none;
 }
-
 
 /*
  * action contest
  */
 
 .hide-contest.fa-eye,
-.fc-event .data-ace
-{
-    visibility: hidden;
-    margin-right: 2px;
+.fc-event .data-ace {
+  visibility: hidden;
+  margin-right: 2px;
 }
 
 :hover > .hide-contest,
-:hover > .data-ace
-{
-    visibility: visible;
+:hover > .data-ace {
+  visibility: visible;
 }
 
 .event i.hide-contest:hover,
 .event .data-ace:hover i,
-.event i.share-to-category:hover
-{
-    color: #23527c;
+.event i.share-to-category:hover {
+  color: #23527c;
 }
 
 .event .hide-contest,
 .event .data-ace,
-.event .share-to-category
-{
-    color: #8be;
-    cursor: pointer;
+.event .share-to-category {
+  color: #8be;
+  cursor: pointer;
 }
 
 .party-check.has-permission-toggle-party-contest:hover {
-    cursor: pointer;
+  cursor: pointer;
 }
 
 .contest.contest-muted * {
-    color: #ccc;
+  color: #ccc;
 }
 
 .contest.contest-muted img {
-    opacity: 50%;
-    filter: grayscale(50%);
+  opacity: 50%;
+  filter: grayscale(50%);
 }
 
 .contest.nofilter,
 .contest.subcontest {
-    display: none;
+  display: none;
 }
 
 .contest.onfilter {
-    display: table-row;
+  display: table-row;
 }
 
-@media(max-width:767px) {
-    #contests td {
-        border: none;
-        display: block;
-        padding: 2px;
-        text-align: center;
-    }
-    #contests td:first-child {
-        padding-top: 5px;
-    }
-    #contests td:last-child {
-        padding-bottom: 5px;
-    }
-    #contests tr {
-        border: 1px solid #ddd;
-    }
+@media (max-width: 767px) {
+  #contests td {
+    border: none;
+    display: block;
+    padding: 2px;
+    text-align: center;
+  }
+  #contests td:first-child {
+    padding-top: 5px;
+  }
+  #contests td:last-child {
+    padding-bottom: 5px;
+  }
+  #contests tr {
+    border: 1px solid #ddd;
+  }
 }

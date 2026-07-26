@@ -3,14 +3,12 @@
 }
 
 #submissions th,
-#submissions td
-{
+#submissions td {
   text-align: center;
 }
 
 #submissions th.account-column,
-#submissions td.account-column
-{
+#submissions td.account-column {
   text-align: left;
 }
 

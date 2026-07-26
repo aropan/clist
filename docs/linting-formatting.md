@@ -35,6 +35,16 @@ mise run format-python
 
 Config lives in [`biome.json`](../biome.json): 2-space indent, width 120.
 
+```bash
+mise run check-frontend
+mise run format-frontend
+```
+
+Biome formats project-owned JavaScript and CSS under `src/static/` plus root
+JSON configuration files. Vendored libraries, generated localization files,
+and minified assets are excluded. Linting remains disabled until the legacy
+frontend rules and globals are migrated separately.
+
 ## PHP — PHP-CS-Fixer
 
 Config lives in [`.php-cs-fixer.dist.php`](../.php-cs-fixer.dist.php) and applies

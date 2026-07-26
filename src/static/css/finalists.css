@@ -27,9 +27,13 @@ table.finalists .participant-column {
   cursor: pointer;
   /* Light ring separates overlapping coins; the semi-transparent shadow accumulates where
      dots pile up, so a bigger cluster reads as a heavier, denser blob. */
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.85), 0 0 3px rgba(0, 0, 0, 0.35);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.85),
+    0 0 3px rgba(0, 0, 0, 0.35);
   transform: translate(0, -50%);
-  transition: transform 0.25s ease, box-shadow 0.15s ease;
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.15s ease;
 }
 
 .timeline-container:hover .timeline-dot {
@@ -38,7 +42,9 @@ table.finalists .participant-column {
 
 .timeline-dot:hover {
   z-index: 50;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9), 0 1px 3px rgba(0, 0, 0, 0.4);
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.9),
+    0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
 .timeline-axis {

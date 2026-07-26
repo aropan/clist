@@ -4,12 +4,14 @@ table.standings th {
   vertical-align: middle !important;
 }
 
-.acc, .upsolved {
+.acc,
+.upsolved {
   color: #090;
   font-weight: bold;
 }
 
-.rej, .upsolving {
+.rej,
+.upsolving {
   color: #d22;
   font-weight: bold;
 }
@@ -24,12 +26,14 @@ table.standings th {
   font-weight: bold;
 }
 
-.swi, .vir {
+.swi,
+.vir {
   color: #f0f;
   font-weight: bold;
 }
 
-tr:hover .edit-active-switcher, .edit-active-switcher:hover {
+tr:hover .edit-active-switcher,
+.edit-active-switcher:hover {
   display: inline-block;
 }
 
@@ -46,8 +50,7 @@ tr:hover .edit-active-switcher, .edit-active-switcher:hover {
 }
 
 .standings tr.parity-border td,
-.standings tr.parity-border th
-{
+.standings tr.parity-border th {
   border-top: 1px solid #444;
 }
 
@@ -144,10 +147,13 @@ table.standings .first-u-cell {
 }
 
 .standings tr.header-problems th.subheader-score {
-  box-shadow: inset 1px 0 #d0d0d0, inset 0 -1px #d0d0d0;
+  box-shadow:
+    inset 1px 0 #d0d0d0,
+    inset 0 -1px #d0d0d0;
 }
 
-a.coder, .standings td a {
+a.coder,
+.standings td a {
   color: inherit !important;
 }
 
@@ -386,15 +392,15 @@ a.versus-games:hover {
   background-color: #fff;
 }
 
-table.standings.table-condensed-detail tr>td {
+table.standings.table-condensed-detail tr > td {
   height: 40px;
 }
 
-table.standings.table-condensed-detail tr>* {
+table.standings.table-condensed-detail tr > * {
   padding: 1px 5px;
 }
 
-table.standings.table-condensed-non-detail tr>* {
+table.standings.table-condensed-non-detail tr > * {
   padding: 5px;
 }
 
@@ -410,9 +416,7 @@ table.standings.table-merge-problems th {
 
 .edit-active-switcher-bootbox input:not(:first-child) {
   margin-top: 5px;
-
 }
-
 
 .progress-circle {
   width: 20px;
@@ -426,7 +430,7 @@ table.standings.table-merge-problems th {
 }
 
 .progress-circle::before {
-  content: '';
+  content: "";
   width: 10px;
   height: 10px;
   border-radius: 50%;
@@ -434,18 +438,16 @@ table.standings.table-merge-problems th {
   box-shadow: inset 0 0 1px rgba(0, 0, 0, 0.5);
 }
 
-
 /*
  * upload solution
  */
-
 
 .drop-zone {
   position: relative;
 }
 
 .drop-zone::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -465,10 +467,14 @@ table.standings.table-merge-problems th {
 }
 
 @keyframes dash_compress {
-  0%, 100% { border-width: 2px; }
-  50% { border-width: 8px; }
+  0%,
+  100% {
+    border-width: 2px;
+  }
+  50% {
+    border-width: 8px;
+  }
 }
-
 
 /*
  * first_u_cell
@@ -481,7 +487,6 @@ table.standings.table-merge-problems th {
 .standings.intermediate .first-u-cell .small {
   display: none;
 }
-
 
 /*
  * Single elimination tournament
@@ -510,7 +515,6 @@ table.standings.table-merge-problems th {
 .elimination-tournament-table td {
   padding: 0 1em;
 }
-
 
 .match-header {
   font-weight: bold;

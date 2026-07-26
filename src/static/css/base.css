@@ -57,7 +57,7 @@ table.center {
  * Row flex
  */
 
-.row-flex>div {
+.row-flex > div {
   padding-right: 0px;
 }
 
@@ -225,12 +225,12 @@ html {
 }
 
 .coder-legendary {
-  color: #FF0000 !important;
+  color: #ff0000 !important;
   display: inline-block;
 }
 
 .coder-tourist:first-letter {
-  color: #FF0000 !important;
+  color: #ff0000 !important;
 }
 
 .coder-tourist {
@@ -244,35 +244,35 @@ html {
   background: linear-gradient(0deg, #b00, #b00 50%, #000 51%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  color: #FF0000 !important;
+  color: #ff0000 !important;
 }
 
 .coder-red {
-  color: #FF0000 !important;
+  color: #ff0000 !important;
 }
 
 .coder-yellow {
-  color: #BBBB00 !important;
+  color: #bbbb00 !important;
 }
 
 .coder-violet {
-  color: #AA00AA !important;
+  color: #aa00aa !important;
 }
 
 .coder-orange {
-  color: #FF8C00 !important;
+  color: #ff8c00 !important;
 }
 
 .coder-blue {
-  color: #0000FF !important;
+  color: #0000ff !important;
 }
 
 .coder-sky-blue {
-  color: #30A1E5 !important;
+  color: #30a1e5 !important;
 }
 
 .coder-cyan {
-  color: #03A89E !important;
+  color: #03a89e !important;
 }
 
 .coder-green {
@@ -280,11 +280,11 @@ html {
 }
 
 .coder-lime {
-  color: #74C229 !important;
+  color: #74c229 !important;
 }
 
 .coder-brown {
-  color: #A52A2A !important;
+  color: #a52a2a !important;
 }
 
 .coder-gray {
@@ -292,7 +292,7 @@ html {
 }
 
 .coder-white {
-  color: #FFFFFF !important;
+  color: #ffffff !important;
 }
 
 .coder-black {
@@ -304,19 +304,19 @@ html {
 }
 
 .coder-tc-red {
-  color: #EE0000 !important
+  color: #ee0000 !important;
 }
 
 .coder-tc-yellow {
-  color: #DDCC00 !important;
+  color: #ddcc00 !important;
 }
 
 .coder-tc-blue {
-  color: #6666FF !important;
+  color: #6666ff !important;
 }
 
 .coder-tc-green {
-  color: #00A900 !important;
+  color: #00a900 !important;
 }
 
 .coder-tc-gray {
@@ -367,7 +367,7 @@ html {
   margin-left: 5px;
 }
 
-:hover>.hover-visible {
+:hover > .hover-visible {
   visibility: visible;
 }
 
@@ -409,7 +409,7 @@ html {
   visibility: hidden;
 }
 
-*:hover>.sortable-column a {
+*:hover > .sortable-column a {
   visibility: visible;
 }
 
@@ -429,7 +429,7 @@ html {
   visibility: hidden;
 }
 
-*:hover>.chart-column {
+*:hover > .chart-column {
   visibility: visible;
 }
 
@@ -451,7 +451,7 @@ html {
  * contest button
  */
 
-:hover>.inline-button,
+:hover > .inline-button,
 .inline-button:hover {
   visibility: visible;
 }
@@ -468,7 +468,6 @@ html {
   margin-left: 5px;
   z-index: 40;
 }
-
 
 /*
  * rating history canvas
@@ -489,11 +488,11 @@ canvas.rating_history {
   white-space: nowrap;
   opacity: 1;
   position: absolute;
-  background: rgba(0, 0, 0, .7);
+  background: rgba(0, 0, 0, 0.7);
   color: white;
   border-radius: 3px;
-  -webkit-transition: all .1s ease;
-  transition: all .1s ease;
+  -webkit-transition: all 0.1s ease;
+  transition: all 0.1s ease;
   pointer-events: none;
 }
 
@@ -530,7 +529,7 @@ canvas.rating_history {
   z-index: 0;
 }
 
-.resource_fields>div,
+.resource_fields > div,
 .resource_fields .select2-container,
 .resource_fields .select2-selection,
 .resource_fields .select2-selection span {
@@ -609,7 +608,6 @@ canvas.rating_history {
 .progress-bar.progress-bar-default-lighter {
   background-color: #e6e6e6;
 }
-
 
 /*
  * range slider
@@ -695,19 +693,18 @@ canvas.rating_history {
  */
 
 .ko-fi::after {
-  content: '\f004';
+  content: "\f004";
   font-size: 6px;
   color: #fff;
   position: absolute;
   margin: 6px -12px;
 }
 
-
 /*
  * Buttons for login and donate pages
  */
 
-.custom-btn-group-justified.btn-group>.btn {
+.custom-btn-group-justified.btn-group > .btn {
   display: table-cell;
   float: none;
 }
@@ -719,7 +716,6 @@ canvas.rating_history {
   table-layout: fixed;
   border-collapse: separate;
 }
-
 
 /*
  * Favorites
@@ -870,7 +866,6 @@ a[disabled] {
   color: #aaa;
 }
 
-
 /*
  * filter collapse
  */
@@ -897,19 +892,18 @@ a[disabled] {
   position: relative;
   margin-bottom: 5px;
   font-size: 10px;
-  line-height: 1.0;
+  line-height: 1;
 }
 
 @media (min-width: 768px) {
   #filter-toggle {
-    display: none
+    display: none;
   }
 }
 
 tr:has(+ tr[data-delete-on-duplicate]:not(tr[data-delete-on-duplicate-stop])) {
   display: none;
 }
-
 
 /*
  * Table
@@ -921,8 +915,7 @@ tr:has(+ tr[data-delete-on-duplicate]:not(tr[data-delete-on-duplicate-stop])) {
   max-width: none;
 }
 
-
-@media(max-width:767px) {
+@media (max-width: 767px) {
   table.table.table-stacked thead {
     display: none;
   }
@@ -947,9 +940,6 @@ tr:has(+ tr[data-delete-on-duplicate]:not(tr[data-delete-on-duplicate-stop])) {
   }
 }
 
-
-
-
 /*
  * copy-url-help
  */
@@ -966,11 +956,9 @@ a[data-toggle="tooltip"][disabled],
   pointer-events: auto;
 }
 
-
 /*
  * Advent of Code stars
  */
-
 
 .first-star {
   color: #9999cc;
@@ -991,20 +979,19 @@ a[data-toggle="tooltip"][disabled],
   padding: 0px;
 }
 
-
 /*
  * Bootstrap themes
  */
 
 .input-group-addon {
-  line-height: 1.0 !important;
+  line-height: 1 !important;
 }
 
 /*
  * Promotoin
  */
 
-#promotion.dark-background>* {
+#promotion.dark-background > * {
   color: #eee;
   text-shadow: 0 0 5px #000;
 }
@@ -1026,7 +1013,6 @@ a[data-toggle="tooltip"][disabled],
   cursor: pointer;
 }
 
-
 /*
  * select2
  */
@@ -1035,7 +1021,7 @@ a[data-toggle="tooltip"][disabled],
   width: 100% !important;
 }
 
-.form-inline .input-group>.select2-container--bootstrap {
+.form-inline .input-group > .select2-container--bootstrap {
   display: inline-block;
 }
 
@@ -1051,8 +1037,7 @@ a[data-toggle="tooltip"][disabled],
 #table-inner-scroll:not(.firefox) table tr.starred,
 #table-inner-scroll.firefox table tr.starred td
 
-/* https://bugzilla.mozilla.org/show_bug.cgi?id=1745323 */
-  {
+/* https://bugzilla.mozilla.org/show_bug.cgi?id=1745323 */ {
   position: sticky;
   position: -webkit-sticky;
   top: 0;
@@ -1123,7 +1108,6 @@ tr:not(.info) .sticky-right-column {
   max-width: 100px;
 }
 
-
 /*
  * Countdown
  */
@@ -1131,7 +1115,6 @@ tr:not(.info) .sticky-right-column {
 .countdown {
   white-space: nowrap !important;
 }
-
 
 /*
  * toastify notifications
@@ -1156,11 +1139,11 @@ tr:not(.info) .sticky-right-column {
 
 @keyframes progress-animation {
   from {
-    width: 100%
+    width: 100%;
   }
 
   to {
-    width: 0%
+    width: 0%;
   }
 }
 
@@ -1172,7 +1155,6 @@ tr:not(.info) .sticky-right-column {
   border-right: 0px;
 }
 
-
 /*
  * virtual start
  */
@@ -1181,7 +1163,6 @@ tr:not(.info) .sticky-right-column {
   position: absolute;
   margin: 2px;
 }
-
 
 /*
  * trimmed text
@@ -1194,7 +1175,6 @@ tr:not(.info) .sticky-right-column {
 .expandable-click {
   cursor: pointer;
 }
-
 
 /*
  * Table scroll appearance

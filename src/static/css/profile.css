@@ -45,7 +45,7 @@
   margin-left: -15px;
 }
 
-.contest>div {
+.contest > div {
   padding: 3px;
 }
 
@@ -125,7 +125,6 @@ table tr.contest.honorable-medal {
   pointer-events: none;
 }
 
-
 #account-verification {
   margin-top: 10px;
 }
@@ -138,7 +137,6 @@ table tr.contest.honorable-medal {
   list-style: decimal inside;
   display: list-item;
 }
-
 
 .loading-rating {
   position: absolute;

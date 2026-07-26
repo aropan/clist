@@ -19,8 +19,8 @@
   padding: 4px;
 }
 
-#standings-filters .input-group-addon:has(>.series-checkbox) {
-  line-height: 1.0;
+#standings-filters .input-group-addon:has(> .series-checkbox) {
+  line-height: 1;
 }
 
 #standings-filters .series-checkbox {

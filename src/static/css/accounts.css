@@ -1,6 +1,5 @@
 #accounts table.table th,
-#accounts table.table td
-{
+#accounts table.table td {
   text-align: center;
   vertical-align: middle;
 }

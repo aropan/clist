@@ -5,6 +5,7 @@ lockfile = true
 
 [tools]
 "aqua:astral-sh/ruff" = "0.12.7"
+"aqua:biomejs/biome" = "2.5.5"
 
 [tools."github:PHP-CS-Fixer/PHP-CS-Fixer"]
 version = "3.95.15"
@@ -12,6 +13,8 @@ asset_pattern = "php-cs-fixer.phar"
 bin = "php-cs-fixer"
 
 [tasks]
+format-frontend = "biome format --write ."
+check-frontend = "biome format ."
 format-python = "ruff format ."
 check-python = "ruff format --check ."
 lint-python = "ruff check ."

@@ -1,1 +1,1 @@
-$(toggle_tooltip)
+$(toggle_tooltip);

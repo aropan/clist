@@ -1,1 +1,1 @@
-$(inline_button)
+$(inline_button);

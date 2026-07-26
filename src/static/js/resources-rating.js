@@ -1,39 +1,45 @@
 function resources_account_rating_setup_hover() {
   $(".to-hover[data-coder]").hover(
-    function() {
-      var coder = $(this).attr('data-coder')
-      $("[data-coder='" + coder + "']").addClass('hover')
+    function () {
+      var coder = $(this).attr("data-coder");
+      $("[data-coder='" + coder + "']").addClass("hover");
     },
-    function() {
-      var coder = $(this).attr('data-coder')
-      $("[data-coder='" + coder + "']").removeClass('hover')
+    function () {
+      var coder = $(this).attr("data-coder");
+      $("[data-coder='" + coder + "']").removeClass("hover");
     },
-  )
-  $(".to-hover").click(
-    function() {
-      var coder = $(this).attr('data-coder')
-      if (coder) {
-        var elements = $("[data-coder='" + coder + "']")
-        if ($(this).hasClass('fixed')) {
-          elements.removeClass('fixed')
-        } else {
-          elements.addClass('fixed')
-        }
+  );
+  $(".to-hover").click(function () {
+    var coder = $(this).attr("data-coder");
+    if (coder) {
+      var elements = $("[data-coder='" + coder + "']");
+      if ($(this).hasClass("fixed")) {
+        elements.removeClass("fixed");
       } else {
-        $(this).toggleClass('fixed')
+        elements.addClass("fixed");
       }
-
-      var coders = $('.fixed[data-coder]').map((_, el) => { pk = $(el).attr('data-coder'); return "coder_" + pk + "=" + pk })
-      coders = [...new Set(coders)]
-      var accounts = $('.fixed[data-account]').map((_, el) => { pk = $(el).attr('data-account'); return "account_" + pk + "=" + pk })
-      accounts = [...new Set(accounts)]
-
-      query = coders.concat(accounts)
-      url = versus_url + '?redirect=&' + query.join('&')
-      $('#versus-fixed').attr('disabled', query.length < 2).attr('href', url)
+    } else {
+      $(this).toggleClass("fixed");
     }
-  )
-  $(".to-hover").removeClass('to-hover')
+
+    var coders = $(".fixed[data-coder]").map((_, el) => {
+      pk = $(el).attr("data-coder");
+      return "coder_" + pk + "=" + pk;
+    });
+    coders = [...new Set(coders)];
+    var accounts = $(".fixed[data-account]").map((_, el) => {
+      pk = $(el).attr("data-account");
+      return "account_" + pk + "=" + pk;
+    });
+    accounts = [...new Set(accounts)];
+
+    query = coders.concat(accounts);
+    url = versus_url + "?redirect=&" + query.join("&");
+    $("#versus-fixed")
+      .attr("disabled", query.length < 2)
+      .attr("href", url);
+  });
+  $(".to-hover").removeClass("to-hover");
 }
 
-$(resources_account_rating_setup_hover)
+$(resources_account_rating_setup_hover);

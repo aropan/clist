@@ -1,31 +1,33 @@
 .standings {
-    text-align: center;
+  text-align: center;
 }
 
 table.standings td,
 table.standings th {
-    text-align: center;
-    vertical-align: middle !important;
+  text-align: center;
+  vertical-align: middle !important;
 }
 
-.coders, .contests, .participates {
-    line-height: 1.6180339887;
+.coders,
+.contests,
+.participates {
+  line-height: 1.6180339887;
 }
 
 .larger {
-    font-size: 130%;
+  font-size: 130%;
 }
 
 .tabbable .nav-tabs {
-    height: 80%;
-    position: fixed;
-    overflow-x: hidden;
+  height: 80%;
+  position: fixed;
+  overflow-x: hidden;
 }
 
-.container>.nav {
-    margin-bottom: 10px;
+.container > .nav {
+  margin-bottom: 10px;
 }
 
 .tabbable .tab-content {
-    margin-left: 300px;
+  margin-left: 300px;
 }

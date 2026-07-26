@@ -1,51 +1,50 @@
 .fc-event .activity.fav:not(.selected-activity) {
-    color: #fff;
+  color: #fff;
 }
 
 #calendar .fc-day a {
-    font-size: 12px;
-    color: #555;
+  font-size: 12px;
+  color: #555;
 }
 
 .fc-event {
-    font-size: 12px;
+  font-size: 12px;
 }
 
 .dropdown-menu .ignore-filter {
-    border: 0;
-    width: 100%;
-    text-align: left;
-    border-radius: 0px;
-    margin-left: 0 !important;
+  border: 0;
+  width: 100%;
+  text-align: left;
+  border-radius: 0px;
+  margin-left: 0 !important;
 }
 
 #calendar .fc-event-time {
-    overflow: visible;
+  overflow: visible;
 }
 
 #calendar i {
-    line-height: inherit;
+  line-height: inherit;
 }
 
 #calendar .fc-dayGrid-view .fc-body .fc-row {
-    min-height: 0em;
+  min-height: 0em;
 }
 
 #calendar .fc-toolbar .fc-right .btn-group {
-    margin: 4px;
+  margin: 4px;
 }
 
 #calendar .fc-event .data-ace {
-    color: #fff;
+  color: #fff;
 }
 
 #calendar .fc-event a.data-ace:hover,
-#calender .fc-event i.hide-contest:hover
-{
-    color: black;
+#calender .fc-event i.hide-contest:hover {
+  color: black;
 }
 
 #calendar .fc-day-today {
-    background: #e8f4fa;
-    border: 3px solid #8fcae8;
+  background: #e8f4fa;
+  border: 3px solid #8fcae8;
 }

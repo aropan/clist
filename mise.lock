@@ -39,6 +39,51 @@ checksum = "sha256:12a239698d4f0926523cb51a9b00a560615d6237e9a748c563a74f4708f4a
 url = "https://github.com/astral-sh/ruff/releases/download/0.12.7/ruff-x86_64-pc-windows-msvc.zip"
 url_api = "https://api.github.com/repos/astral-sh/ruff/releases/assets/277570970"
 
+[[tools."aqua:biomejs/biome"]]
+version = "2.5.5"
+backend = "aqua:biomejs/biome"
+
+[tools."aqua:biomejs/biome"."platforms.linux-arm64"]
+checksum = "sha256:836d16eea672a4e92966e019582f606ef4a687496abbf6d547f31a5ef8a33548"
+url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.5.5/biome-linux-arm64"
+url_api = "https://api.github.com/repos/biomejs/biome/releases/assets/484416084"
+provenance = "github-attestations"
+
+[tools."aqua:biomejs/biome"."platforms.linux-arm64-musl"]
+checksum = "sha256:0f487c28eca2c87e0eb79b73ad84c9fc0bbab6a6cf3513f5fedbc74ef2ca2d0b"
+url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.5.5/biome-linux-arm64-musl"
+url_api = "https://api.github.com/repos/biomejs/biome/releases/assets/484416087"
+provenance = "github-attestations"
+
+[tools."aqua:biomejs/biome"."platforms.linux-x64"]
+checksum = "sha256:12ecb833102c8bf8ab6ede7ecd5b6e6fc76e8af95b3ef356933a1f5330afc028"
+url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.5.5/biome-linux-x64"
+url_api = "https://api.github.com/repos/biomejs/biome/releases/assets/484416085"
+
+[tools."aqua:biomejs/biome"."platforms.linux-x64-musl"]
+checksum = "sha256:549fea27c74212aaeb2c737346028facbcca7a93f66cf4aa145388dd8b18d7bc"
+url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.5.5/biome-linux-x64-musl"
+url_api = "https://api.github.com/repos/biomejs/biome/releases/assets/484416086"
+provenance = "github-attestations"
+
+[tools."aqua:biomejs/biome"."platforms.macos-arm64"]
+checksum = "sha256:6072d68d3a4faf74c2802c106654904f2052f85675a3d1632213dd977a4b64bb"
+url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.5.5/biome-darwin-arm64"
+url_api = "https://api.github.com/repos/biomejs/biome/releases/assets/484416090"
+provenance = "github-attestations"
+
+[tools."aqua:biomejs/biome"."platforms.macos-x64"]
+checksum = "sha256:81f7f09a1ffacd225a65a29e2506ad02013b95964e684554cc5cc7ae9db005b4"
+url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.5.5/biome-darwin-x64"
+url_api = "https://api.github.com/repos/biomejs/biome/releases/assets/484416089"
+provenance = "github-attestations"
+
+[tools."aqua:biomejs/biome"."platforms.windows-x64"]
+checksum = "sha256:f24c77f79d02dff42bfa4ee62e31b0522754d87eaaa3202435c7126cdb30ebd2"
+url = "https://github.com/biomejs/biome/releases/download/%40biomejs/biome%402.5.5/biome-win32-x64.exe"
+url_api = "https://api.github.com/repos/biomejs/biome/releases/assets/484416083"
+provenance = "github-attestations"
+
 [[tools."github:PHP-CS-Fixer/PHP-CS-Fixer"]]
 version = "3.95.15"
 backend = "github:PHP-CS-Fixer/PHP-CS-Fixer"

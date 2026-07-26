@@ -1,46 +1,60 @@
-$(function() {
+$(function () {
   var n_data_column = {};
-  var data_column_selector = '[data-column]'
-  $(data_column_selector).click(function() {
-    var data_column = $(this).attr('data-column')
-    var class_value = $(this).attr('class').split(' ').find(el => el.startsWith('progress-bar-'))
-    var rows = $('[data-column="' + data_column + '"').not('.' + class_value).closest('tr')
-    n_data_column[data_column] = 1 - (n_data_column[data_column] || 0)
+  var data_column_selector = "[data-column]";
+  $(data_column_selector).click(function () {
+    var data_column = $(this).attr("data-column");
+    var class_value = $(this)
+      .attr("class")
+      .split(" ")
+      .find((el) => el.startsWith("progress-bar-"));
+    var rows = $('[data-column="' + data_column + '"')
+      .not("." + class_value)
+      .closest("tr");
+    n_data_column[data_column] = 1 - (n_data_column[data_column] || 0);
 
-    var class_status = class_value.split('-').pop()
-    var header_class = 'text-' + class_status
-    var column_index = $(this).closest('td').index()
-    var header_selector = '#resources th:eq(' + column_index + ')'
+    var class_status = class_value.split("-").pop();
+    var header_class = "text-" + class_status;
+    var column_index = $(this).closest("td").index();
+    var header_selector = "#resources th:eq(" + column_index + ")";
     if (n_data_column[data_column]) {
-      $(header_selector).addClass(header_class)
-      update_urls_params({[data_column]: class_status})
+      $(header_selector).addClass(header_class);
+      update_urls_params({ [data_column]: class_status });
     } else {
-      $(header_selector).attr('class').split(' ')
-        .filter(el => el.startsWith('text-'))
-        .forEach(el => $(header_selector).removeClass(el))
-      update_urls_params({[data_column]: undefined})
+      $(header_selector)
+        .attr("class")
+        .split(" ")
+        .filter((el) => el.startsWith("text-"))
+        .forEach((el) => $(header_selector).removeClass(el));
+      update_urls_params({ [data_column]: undefined });
     }
 
-    var count_delta = n_data_column[data_column]? 1 : -1
+    var count_delta = n_data_column[data_column] ? 1 : -1;
     rows
-      .each((_, el) => $(el).attr('data-count', parseInt($(el).attr('data-count') || '0') + count_delta))
-      .each((_, el) => $(el).attr('data-count') == '0'? $(el).show() : $(el).hide())
-  })
-  var avg_width = $(data_column_selector).parent().toArray().reduce((partial_sum, el) => partial_sum + $(el).width(), 0) / $(data_column_selector).length
-  $(data_column_selector).parent().each(function () { $(this).width(avg_width); })
+      .each((_, el) => $(el).attr("data-count", parseInt($(el).attr("data-count") || "0") + count_delta))
+      .each((_, el) => ($(el).attr("data-count") == "0" ? $(el).show() : $(el).hide()));
+  });
+  var avg_width =
+    $(data_column_selector)
+      .parent()
+      .toArray()
+      .reduce((partial_sum, el) => partial_sum + $(el).width(), 0) / $(data_column_selector).length;
+  $(data_column_selector)
+    .parent()
+    .each(function () {
+      $(this).width(avg_width);
+    });
 
-
-  var url = new URL(window.location.href)
-  $('tr:nth(1) ' + data_column_selector).each(function() {
-    var data_column = $(this).attr('data-column')
-    var class_status = url.searchParams.get(data_column)
-    if (!['success', 'warning', 'danger', 'info'].includes(class_status)) {
-      return
+  var url = new URL(window.location.href);
+  $("tr:nth(1) " + data_column_selector).each(function () {
+    var data_column = $(this).attr("data-column");
+    var class_status = url.searchParams.get(data_column);
+    if (!["success", "warning", "danger", "info"].includes(class_status)) {
+      return;
     }
-    var class_value = 'progress-bar-' + class_status
-    var table_cell = $('.' + class_value + '[data-column="' + data_column + '"]').first()
+    var class_value = "progress-bar-" + class_status;
+    var table_cell = $("." + class_value + '[data-column="' + data_column + '"]').first();
     if (table_cell) {
-      table_cell.click()
+      table_cell.click();
     }
-  })
-})
+  });
+});

@@ -1,23 +1,23 @@
 #filter {
-    margin-left: 10px;
+  margin-left: 10px;
 }
 
 #filter > * {
-    max-width: 100px;
-    display: inline-table;
+  max-width: 100px;
+  display: inline-table;
 }
 
 #filter .tooltip.top .tooltip-inner {
-    background-color: #555;
-    min-width: 200px;
+  background-color: #555;
+  min-width: 200px;
 }
 
 #filter .tooltip.top .tooltip-arrow {
-    border-top-color: #555;
+  border-top-color: #555;
 }
 
 #time-view-search {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
 }
