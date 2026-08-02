@@ -12,6 +12,7 @@ import yaml
 from ratelimiter import RateLimiter
 
 from clist.templatetags.extras import as_number, get_item
+from logify.live import tqdm
 from ranking.management.modules import conf
 from ranking.management.modules.common import LOG, REQ, BaseModule
 from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse
@@ -90,7 +91,13 @@ class Statistic(BaseModule):
             problems_id = variables.pop("problems")
             problems_short = [chr(ord("A") + idx) for idx in range(len(problems_id))]
             problems_data = zip(problems_short, problems_id)
-            for problem_info in executor.map(fetch_problem, problems_data):
+            fetched_problems = executor.map(fetch_problem, problems_data)
+            for problem_info in tqdm(
+                fetched_problems,
+                total=len(problems_id),
+                desc="problem details",
+                unit="problem",
+            ):
                 problems_infos.append(problem_info)
 
         result = {}

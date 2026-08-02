@@ -9,10 +9,10 @@ from copy import deepcopy
 from urllib.parse import urljoin, urlparse
 
 from ratelimiter import RateLimiter
-from tqdm import tqdm
 
 from clist.models import Contest
 from clist.templatetags.extras import as_number, get_item, slug
+from logify.live import tqdm
 from ranking.management.modules.common import REQ, BaseModule, parsed_table
 from ranking.management.modules.excepts import FailOnGetResponse
 

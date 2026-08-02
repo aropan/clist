@@ -7,7 +7,8 @@ from urllib.parse import urljoin
 
 from ratelimiter import RateLimiter
 
-from ranking.management.modules.common import REQ, BaseModule
+from logify.live import tqdm
+from ranking.management.modules.common import LOG, REQ, BaseModule
 from ranking.management.modules.excepts import ExceptionParseStandings
 
 
@@ -46,6 +47,7 @@ class Statistic(BaseModule):
                 offset += limit
             return problems_infos
 
+        LOG.info("Fetching problem metadata")
         problems_infos = fetch_problems()
         if problems_infos is None:
             problems_infos = OrderedDict()
@@ -132,15 +134,23 @@ class Statistic(BaseModule):
                         solved += 1
                 r["solved"] = {"solving": solved}
 
+        standings_progress = tqdm(total=1, desc="standings pages", unit="page")
+        LOG.info("Fetching first standings page")
         data = fetch_page(1)
         if "rows" not in data:
             raise ExceptionParseStandings(json.dumps(data))
         proccess_data(data)
+        total_pages = (data["total"] + limit - 1) // limit
+        standings_progress.total = max(total_pages, 1)
+        standings_progress.update()
 
         with PoolExecutor(max_workers=4) as executor:
-            total_pages = (data["total"] + limit - 1) // limit
-            for data in executor.map(fetch_page, range(2, total_pages + 1)):
+            pages = range(2, total_pages + 1)
+            pages_data = executor.map(fetch_page, pages)
+            for data in pages_data:
                 proccess_data(data)
+                standings_progress.update()
+        standings_progress.close()
 
         if problems_results.issubset({0, 1}):
             for r in result.values():

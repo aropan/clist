@@ -42,6 +42,8 @@ scrape_configs:
             cf_ipcountry: cf_ipcountry
             cf_visitor: cf_visitor
             cf_verified_bot: cf_verified_bot
+            limit_req_key: limit_req_key
+            limit_req_status: limit_req_status
       - template:
           source: level
           template: '{{ if regexMatch "^5" .status }}error{{ else if regexMatch "^4" .status }}warn{{ else }}info{{ end }}'
@@ -72,6 +74,7 @@ scrape_configs:
           request_time:
           upstream_addr:
           upstream_response_time:
+          upstream_status:
           user_agent:
           referer:
           fwd_for:
@@ -80,6 +83,8 @@ scrape_configs:
           cf_ipcountry:
           cf_visitor:
           cf_verified_bot:
+          limit_req_key:
+          limit_req_status:
           search_engine:
           ai_bot:
           section:

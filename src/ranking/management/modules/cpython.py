@@ -8,7 +8,7 @@ from collections import OrderedDict
 from time import sleep
 from urllib.parse import urljoin
 
-from ranking.management.modules.common import REQ, BaseModule
+from ranking.management.modules.common import LOG, REQ, BaseModule
 from ranking.management.modules.excepts import FailOnGetResponse
 from utils.timetools import parse_datetime
 
@@ -30,6 +30,7 @@ def query(url, *args, **kwargs):
                 sleep_time = int(match.group("seconds")) + 1
             except Exception:
                 pass
+            LOG.info("Rate limit wait: attempt=%d/%d, seconds=%d", attempt + 1, n_attempt, sleep_time)
             sleep(sleep_time)
 
 

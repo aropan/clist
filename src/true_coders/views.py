@@ -6,6 +6,7 @@ import operator
 import re
 from collections import Counter
 from datetime import timedelta
+from uuid import uuid4
 
 import django_rq
 import humanize
@@ -65,13 +66,16 @@ from clist.templatetags.extras import (
     query_transform,
     quote_url,
     relative_url,
+    url_transform,
 )
 from clist.templatetags.extras import slug as slugify
-from clist.templatetags.extras import url_transform
 from clist.utils import update_accounts_by_coders
 from clist.views import get_timeformat, get_timezone, main
 from events.models import Team, TeamStatus
 from favorites.models import Activity
+from logify.access import can_view_live_related
+from logify.models import EventLog, EventStatus
+from logify.rq import fail_live_event_logs, interrupt_live_event_logs
 from my_oauth.models import Service
 from notes.models import Note
 from notification.forms import Notification, NotificationForm
@@ -1056,7 +1060,7 @@ def settings(request, tab=None):
     )
 
 
-@django_rq.job
+@django_rq.job("default", on_failure=fail_live_event_logs, on_stopped=interrupt_live_event_logs)
 def call_command_parse_statistics(**kwargs):
     return call_command("parse_statistic", **kwargs)
 
@@ -1727,7 +1731,26 @@ def change(request):
         if not has_update_statistics_permission(user, contest):
             return HttpResponseBadRequest("You have no permission to update statistics for this contest")
 
-        call_command_parse_statistics.delay(contest_id=pk)
+        job_id = str(uuid4())
+        event_log = EventLog.objects.create(
+            name="parse_statistic",
+            related=contest,
+            status=EventStatus.NONE,
+            message="Update queued. Waiting for the worker to start...",
+            job_id=job_id,
+            is_live_stream=True,
+        )
+        try:
+            call_command_parse_statistics.delay(contest_id=pk, job_id=job_id)
+        except Exception as e:
+            event_log.update(status=EventStatus.FAILED, message="", error=str(e))
+            raise
+        return JsonResponse({
+            "status": "ok",
+            "job_id": job_id,
+            "can_view_live_log": can_view_live_related(user, contest),
+            "live_logs_data_url": reverse("ranking:live_logs_data"),
+        })
     elif name == "pre-delete-user":
 
         class RollbackException(Exception):

@@ -7,6 +7,7 @@ from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from flatten_dict import flatten
 from ratelimiter import RateLimiter
 
+from logify.live import tqdm
 from ranking.management.modules.common import REQ, BaseModule
 from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse
 
@@ -74,6 +75,7 @@ class Statistic(BaseModule):
             has_old_rating = False
             page = 0
             stop = False
+            progress = tqdm(total=1, desc="standings pages", unit="page")
             while total > 0 and not stop:
                 stop = True
                 page += 1
@@ -157,6 +159,13 @@ class Statistic(BaseModule):
                             r[f] = stats[f]
 
                     stop = False
+
+                if total > 0 and not stop:
+                    progress.total += 1
+                progress.update()
+            if not progress.n:
+                progress.update()
+            progress.close()
 
             if not has_old_rating:
                 for r in result.values():

@@ -1,7 +1,9 @@
-from django.test import SimpleTestCase
-from rq.job import validate_job_id
+from unittest import mock
 
-from utils.rq import get_resource_job_id
+from django.test import SimpleTestCase
+from rq.job import JobStatus, validate_job_id
+
+from utils.rq import get_resource_job_id, is_job_active
 from utils.strings import split_team_name_and_members
 
 
@@ -15,6 +17,56 @@ class GetResourceJobIdTest(SimpleTestCase):
         job_id = get_resource_job_id("parse_accounts", "nerc.itmo.ru/school")
         validate_job_id(job_id)
         assert job_id == "parse_accounts_nerc-itmo-ru-school"
+
+
+class IsJobActiveTest(SimpleTestCase):
+    def setUp(self):
+        self.queue = mock.Mock()
+        self.queue.started_job_registry.get_job_ids.return_value = []
+
+    @mock.patch("utils.rq.Worker.all")
+    def test_active_job_hash_is_enough(self, workers):
+        job = mock.Mock()
+        job.get_status.return_value = JobStatus.STARTED
+
+        assert is_job_active(self.queue, "parse_statistics_example-com", job)
+        job.get_status.assert_called_once_with(refresh=False)
+        self.queue.started_job_registry.get_job_ids.assert_not_called()
+        workers.assert_not_called()
+
+    @mock.patch("utils.rq.Worker.all", return_value=[])
+    def test_terminal_job_hash_is_not_active(self, workers):
+        for status in (JobStatus.STOPPED, JobStatus.CANCELED):
+            with self.subTest(status=status):
+                job = mock.Mock()
+                job.get_status.return_value = status
+
+                assert not is_job_active(self.queue, "parse_statistics_example-com", job)
+
+        assert self.queue.started_job_registry.get_job_ids.call_count == 2
+        assert workers.call_count == 2
+
+    @mock.patch("utils.rq.Worker.all")
+    def test_started_execution_keeps_missing_job_active(self, workers):
+        self.queue.started_job_registry.get_job_ids.return_value = ["parse_statistics_example-com"]
+
+        assert is_job_active(self.queue, "parse_statistics_example-com", job=None)
+        self.queue.started_job_registry.get_job_ids.assert_called_once_with(cleanup=False)
+        workers.assert_not_called()
+
+    @mock.patch("utils.rq.Worker.all")
+    def test_worker_keeps_missing_job_active(self, workers):
+        worker = mock.Mock()
+        worker.get_current_job_id.return_value = "parse_statistics_example-com"
+        workers.return_value = [worker]
+
+        assert is_job_active(self.queue, "parse_statistics_example-com", job=None)
+        workers.assert_called_once_with(queue=self.queue)
+
+    @mock.patch("utils.rq.Worker.all", return_value=[])
+    def test_missing_job_without_execution_or_worker_is_inactive(self, workers):
+        assert not is_job_active(self.queue, "parse_statistics_example-com", job=None)
+        workers.assert_called_once_with(queue=self.queue)
 
 
 class SplitTeamNameAndMembersTest(SimpleTestCase):

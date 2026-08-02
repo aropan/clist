@@ -72,6 +72,8 @@ def api_query(
     times = prev_time_queries.setdefault((key, secret), [])
     if len(times) == 5:
         delta = max(4 - (time() - times[0]), 0)
+        if delta:
+            LOG.info("API rate limit wait: seconds=%.3f", delta)
         sleep(delta)
         times.clear()
     times.append(time())
@@ -948,8 +950,9 @@ class Statistic(BaseModule):
             handles = ";".join(users)
             data = api_query(method="user.info", params={"handles": handles})
             if data["status"] == "OK":
+                infos = data["result"]
                 for index in range(len(users)):
-                    users[index] = data["result"][index]["handle"]
+                    users[index] = infos[index]["handle"]
                 break
             if data["status"] == "FAILED" and (
                 match := re.search("handles: User with handle (?P<handle>.*) not found", data["comment"])
@@ -970,7 +973,6 @@ class Statistic(BaseModule):
                     last_index = index
             else:
                 raise NameError(f"data = {data}")
-            infos = data["result"]
         else:
             if users:
                 raise ValueError("Many failed query")

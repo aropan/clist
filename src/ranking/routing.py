@@ -4,4 +4,5 @@ from ranking import consumers
 
 websocket_urlpatterns = [
     re_path(r"ws/contest/$", consumers.ContestConsumer.as_asgi()),
+    re_path(r"ws/live-log/$", consumers.LiveLogConsumer.as_asgi()),
 ]

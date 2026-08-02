@@ -3,6 +3,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.utils import timezone
+from rq import get_current_job
 
 from logify.event_status import EventStatus
 from pyclist.models import BaseManager, BaseModel
@@ -11,6 +12,8 @@ from pyclist.models import BaseManager, BaseModel
 class EventLogManager(BaseManager):
     def create(self, *args, **kwargs):
         kwargs.setdefault("environment", settings.ENVIRONMENT)
+        if current_job := get_current_job():
+            kwargs.setdefault("job_id", current_job.id)
         return super().create(*args, **kwargs)
 
     def get_queryset(self):
@@ -20,6 +23,29 @@ class EventLogManager(BaseManager):
 class EnvironmentEventLogManager(EventLogManager):
     def get_queryset(self):
         return super().get_queryset().filter(environment=settings.ENVIRONMENT)
+
+    def interrupt_in_progress(self, job_id, error):
+        if not job_id:
+            return 0
+        return self.filter(job_id=job_id, status=EventStatus.IN_PROGRESS).update(
+            status=EventStatus.INTERRUPTED,
+            error=error,
+            elapsed=timezone.now() - models.F("created"),
+        )
+
+    def finish_active(self, job_id, status, error):
+        if not job_id:
+            return []
+        event_logs = list(
+            self.filter(
+                job_id=job_id,
+                status__in=(EventStatus.NONE, EventStatus.IN_PROGRESS),
+                is_live_stream=True,
+            )
+        )
+        for event_log in event_logs:
+            event_log.update(status=status, message="", error=error)
+        return event_logs
 
 
 class EventLog(BaseModel):
@@ -32,12 +58,27 @@ class EventLog(BaseModel):
     error = models.TextField(blank=True, null=True, default=None)
     elapsed = models.DurationField(blank=True, null=True, default=None)
     environment = models.CharField(max_length=20, blank=True)
+    job_id = models.CharField(max_length=512, blank=True, null=True)
+    is_live_stream = models.BooleanField(blank=True, null=True)
 
     objects = EventLogManager()
     env_objects = EnvironmentEventLogManager()
 
+    class Meta:
+        indexes = (
+            models.Index(
+                fields=["job_id", "environment"],
+                condition=models.Q(job_id__isnull=False),
+                name="event_job_environment_idx",
+            ),
+        )
+        permissions = (("view_all_live_updates", "Can view all live updates"),)
+
     def __str__(self):
         return f"{self.related} EventLog#{self.id}"
+
+    def related_is(self, model):
+        return self.content_type_id == ContentType.objects.get_for_model(model).pk
 
     def update(self, status=None, message=None, error=None):
         update_fields = ["elapsed"]

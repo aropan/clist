@@ -12,8 +12,9 @@ from django.utils import timezone
 from first import first
 from PIL import Image
 
+from logify.live import tqdm
 from ranking.management.modules import conf
-from ranking.management.modules.common import REQ, BaseModule, parsed_table
+from ranking.management.modules.common import LOG, REQ, BaseModule, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings
 
 
@@ -32,7 +33,9 @@ class Statistic(BaseModule):
 
             unauthorized = not re.search('<form[^>]*action="sign_out"[^>]*>', page)
             if unauthorized:
-                for attempt in range(20):
+                LOG.info("Authentication required; starting captcha recognition")
+                auth_progress = tqdm(total=20, desc="captcha attempts", unit="attempt")
+                for _ in range(20):
                     while True:
                         value = f"{random.random():.16f}"
                         image_bytes = req.get(f"https://projecteuler.net/captcha/show_captcha.php?{value}")
@@ -57,14 +60,20 @@ class Statistic(BaseModule):
                     match = re.search('<p[^>]*class="warning"[^>]*>(?P<message>[^<]*)</p>', page)
                     if match:
                         req.print(match.group("message"))
+                        auth_progress.update()
                     else:
+                        auth_progress.total = auth_progress.n + 1
+                        auth_progress.update()
                         break
                 else:
+                    auth_progress.close()
                     raise ExceptionParseStandings("Did not recognize captcha for sign in")
+                auth_progress.close()
                 page = req.get(self.standings_url)
 
             return page
 
+        LOG.info("Fetching standings through the proxy pool")
         with REQ.with_proxy(
             time_limit=5,
             n_limit=25,

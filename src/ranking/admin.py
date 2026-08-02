@@ -130,8 +130,8 @@ class RatingAdmin(BaseModelAdmin):
     def parse_statistic(self, request, queryset):
         ids = queryset.values_list("contest", flat=True).distinct()
         contests = Contest.objects.filter(id__in=ids)
-        count, total = parse_stat().parse_statistic(contests=contests, with_check=False)
-        self.message_user(request, "%d of %d parsed." % (count, total))
+        result = parse_stat().parse_statistic(contests=contests, with_check=False)
+        self.message_user(request, "%d of %d parsed." % (result.count, result.total))
 
     parse_statistic.short_description = "Parse statistic"
 

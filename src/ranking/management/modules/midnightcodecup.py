@@ -3,6 +3,7 @@
 import re
 
 from clist.templatetags.extras import as_number
+from logify.live import tqdm
 from ranking.management.modules.common import REQ, BaseModule, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings
 from utils.requester import FailOnGetResponse
@@ -65,7 +66,8 @@ class Statistic(BaseModule):
             result[member] = r
 
         if self.standings_url.endswith("/standings/"):
-            for short, problem_info in problem_infos.items():
+            problems = problem_infos.items()
+            for short, problem_info in tqdm(problems, total=len(problem_infos), desc="problem pages", unit="problem"):
                 try:
                     problem_url = self.standings_url.replace("/standings/", f"/problems/{short}/")
                     problem_page, problem_url = REQ.get(problem_url, return_url=True)

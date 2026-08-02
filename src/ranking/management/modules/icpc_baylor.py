@@ -16,6 +16,7 @@ from django.utils.timezone import now
 from lxml import etree
 
 from clist.templatetags.extras import get_item
+from logify.live import tqdm
 from ranking.management.modules.codeforces import _get as codeforces_get
 from ranking.management.modules.common import LOG, REQ, BaseModule, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse
@@ -249,7 +250,7 @@ class Statistic(BaseModule):
 
         standings_urls = []
         if not self.standings_url:
-            for url in (
+            standings_sources = (
                 "https://icpc.global/scoreboard/",
                 "https://pc2.ecs.baylor.edu/scoreboard/",
                 f"http://static.kattis.com/icpc/wf{year}/",
@@ -258,7 +259,8 @@ class Statistic(BaseModule):
                 f"http://web.archive.org/web/{year}/https://icpc.global/scoreboard/",
                 f"https://cphof.org/standings/icpc/{year}",
                 icpc_api_standings_url,
-            ):
+            )
+            for url in tqdm(standings_sources, desc="standings sources", unit="source"):
                 try:
                     page = REQ.get(url)
                 except FailOnGetResponse:
@@ -283,7 +285,8 @@ class Statistic(BaseModule):
         if not standings_urls:
             raise ExceptionParseStandings(f"Not found standings url year = {year}")
 
-        for standings_url in standings_urls:
+        for candidate_index, standings_url in enumerate(standings_urls, start=1):
+            LOG.info("Parsing standings candidate: %d/%d", candidate_index, len(standings_urls))
             if (
                 not re.search(r"\b[0-9]{4}\b", standings_url)
                 and now() - self.start_time > timedelta(days=30)

@@ -1,3 +1,5 @@
+{% load logify %}
+
 <div class="navbar navbar-default navbar-static-top fullscreen-hidden">
     <div class="container-fluid">
         <div class="navbar-header">
@@ -60,75 +62,77 @@
                 {% endblock %}
             </ul>
             <ul class="nav navbar-nav navbar-right">
-                {% get_notification_messages_badges user request.path as notification_messages_badges %}
+                {% for navbar in request.as_coder_or_coder.settings.navbar %}
+                {% url navbar.url as navbar_url %}
+                {% if navbar_url %}
+                <li><a href="{{ navbar_url }}">{% icon_to navbar.icon False %}</a></li>
+                {% endif %}
+                {% endfor %}
+                {% if user.is_superuser %}
                 <li>
-                    {% for navbar in request.as_coder_or_coder.settings.navbar %}
-                    {% url navbar.url as navbar_url %}
-                    {% if navbar_url %}
-                    <li><a href="{{ navbar_url }}">{% icon_to navbar.icon False %}</a></li>
+                    {% if navbar_admin_model %}
+                    {% define navbar_admin_model.admin_changelist_viewname as navbar_admin_viewname %}
                     {% endif %}
-                    {% endfor %}
-                    {% if user.is_superuser %}
-                    <li>
-                        {% if navbar_admin_model %}
-                        {% define navbar_admin_model.admin_changelist_viewname as navbar_admin_viewname %}
-                        {% endif %}
-                        <a href="{% if navbar_admin_viewname %}{% url 'admin:'|concat:navbar_admin_viewname %}{% else %}{% url 'admin:index' %}{% endif %}">
-                        {% icon_to 'admin' navbar_admin_viewname|default:'admin'|title_field position='bottom' %}
-                        </a>
-                    </li>
+                    <a href="{% if navbar_admin_viewname %}{% url 'admin:'|concat:navbar_admin_viewname %}{% else %}{% url 'admin:index' %}{% endif %}">
+                    {% icon_to 'admin' navbar_admin_viewname|default:'admin'|title_field position='bottom' %}
+                    </a>
+                </li>
+                {% endif %}
+                {% if user.is_authenticated %}
+                    <li><a href="{% url 'coder:profile' user.username %}">{{ user.username }}</a></li>
+                {% else %}
+                    {% url 'auth:login' as login_url %}
+                    {% if request.path != login_url %}
+                    <li><a href="{{ login_url }}"><i class="fa fa-sign-in-alt">&nbsp;</i>Log in / Sign up</a></li>
                     {% endif %}
-                    {% if user.is_authenticated %}
-                        <li><a href="{% url 'coder:profile' user.username %}">{{ user.username }}</a></li>
-                    {% else %}
-                        {% url 'auth:login' as login_url %}
-                        {% if request.path != login_url %}
-                        <li><a href="{{ login_url }}"><i class="fa fa-sign-in-alt">&nbsp;</i>Log in / Sign up</a></li>
-                        {% endif %}
-                    {% endif %}
-                        <li class="dropdown-menu-hover">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                                {{ notification_messages_badges }}
-                                <i class="fa fa-caret-down"></i>
-                            </a>
+                {% endif %}
 
-                            <ul class="dropdown-menu{% if not user.is_authenticated %} login-signup{% endif %}">
-                                {% if not user.is_authenticated %}
-                                <li><a href="{% url 'coder:my_profile' %}" class="authorized"><i class="fa fa-user"></i> Profile</a></li>
-                                <li role="separator" class="divider"></li>
-                                {% endif %}
-                                <li><a href="{% url 'notification:messages' %}" class="authorized"><i class="far fa-comment-alt"></i>&nbsp;Messages {{ notification_messages_badges }}</a></li>
-                                <li role="separator" class="divider"></li>
-                                <li class="dropdown-header">User Settings</li>
-                                <li><a href="{% url 'coder:settings' 'preferences' %}" class="authorized"><i class="fa fa-cog"></i>&nbsp;Preferences</a></li>
-                                <li><a href="{% url 'coder:settings' 'social' %}" class="authorized"><i class="fas fa-info-circle"></i>&nbsp;Social</a></li>
-                                <li><a href="{% url 'coder:settings' 'accounts' %}" class="authorized"><i class="fas fa-users"></i>&nbsp;Accounts</a></li>
-                                <li><a href="{% url 'coder:settings' 'filters' %}" class="authorized"><i class="fa fa-filter"></i>&nbsp;Filters</a></li>
-                                <li><a href="{% url 'coder:settings' 'lists' %}" class="authorized"><i class="fas fa-list"></i>&nbsp;Lists</a></li>
-                                <li><a href="{% url 'coder:settings' 'notifications' %}" class="authorized"><i class="fa fa-bullhorn"></i>&nbsp;Notifications</a></li>
-                                <li><a href="{% url 'coder:settings' 'calendars' %}" class="authorized"><i class="far fa-calendar-alt"></i>&nbsp;Calendars</a></li>
-                                <li><a href="{% url 'coder:settings' 'subscriptions' %}" class="authorized">{% icon_to 'subscription' '' %}&nbsp;Subscriptions</a></li>
-                                <li role="separator" class="divider"></li>
-                                <li class="dropdown-header">Tools</li>
-                                <li><a href="{% url 'clist:api:latest:index' %}"><i class="fas fa-terminal"></i>&nbsp;API</a></li>
-                                <li><a href="{% url 'telegram:me' %}" target="_blank" class="authorized" rel="noopener noreferrer"><i class="fab fa-telegram-plane"></i>&nbsp;@{{ telegram_bot_name }}</a></li>
-                                <li><a href="{% url 'ranking:make_versus' %}">{% icon_to 'versus' '' %}&nbsp;Versus</a></li>
-                                <li><a href="{% url 'ranking:virtual_start' %}" class="authorized">{% icon_to 'virtual_start' '' %}&nbsp;Virtual Start</a></li>
-                                <li><a href="{% url 'oauth2_provider:list' %}" class="authorized"><i class="fas fa-exchange-alt"></i>&nbsp;OAuth</a></li>
-                                <li><a href="{% url 'clist:api:latest:index' %}#atom-and-rss"><i class="fas fa-rss"></i>&nbsp;Atom&RSS</a></li>
-                                <li role="separator" class="divider"></li>
-                                <li class="dropdown-header">Support</li>
-                                <li><a href="https://github.com/aropan/clist/issues" rel="noopener noreferrer"><i class="fab fa-github"></i>&nbsp;Github</a></li>
-                                <li><a href="https://t.me/clistby/552" rel="noopener noreferrer"><i class="fab fa-telegram-plane"></i>&nbsp;Telegram</a></li>
-                                <li><a href="https://discord.gg/ADqQs9NWhb" rel="noopener noreferrer"><i class="fab fa-discord"></i>&nbsp;Discord</a></li>
-                                <li role="separator" class="divider"></li>
-                                <li><a href="{% url 'clist:links' %}"><i class="fas fa-link"></i>&nbsp;Links</a></li>
-                                {% if user.is_authenticated %}
-                                <li role="separator" class="divider"></li>
-                                <li><a href="{% url 'auth:logout' %}"><i class="fa fa-sign-out-alt"></i> Log out</a></li>
-                                {% endif %}
-                            </ul>
-                        </li>
+                {% get_notification_messages_badges user request.path as notification_messages_badges %}
+                <li class="dropdown-menu-hover">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                        {{ notification_messages_badges }}
+                        <i class="fa fa-caret-down"></i>
+                    </a>
+
+                    <ul class="dropdown-menu{% if not user.is_authenticated %} login-signup{% endif %}">
+                        {% if not user.is_authenticated %}
+                        <li><a href="{% url 'coder:my_profile' %}" class="authorized"><i class="fa fa-user"></i> Profile</a></li>
+                        <li role="separator" class="divider"></li>
+                        {% endif %}
+                        <li><a href="{% url 'notification:messages' %}" class="authorized"><i class="far fa-comment-alt"></i>&nbsp;Messages {{ notification_messages_badges }}</a></li>
+                        <li role="separator" class="divider"></li>
+                        <li class="dropdown-header">User Settings</li>
+                        <li><a href="{% url 'coder:settings' 'preferences' %}" class="authorized"><i class="fa fa-cog"></i>&nbsp;Preferences</a></li>
+                        <li><a href="{% url 'coder:settings' 'social' %}" class="authorized"><i class="fas fa-info-circle"></i>&nbsp;Social</a></li>
+                        <li><a href="{% url 'coder:settings' 'accounts' %}" class="authorized"><i class="fas fa-users"></i>&nbsp;Accounts</a></li>
+                        <li><a href="{% url 'coder:settings' 'filters' %}" class="authorized"><i class="fa fa-filter"></i>&nbsp;Filters</a></li>
+                        <li><a href="{% url 'coder:settings' 'lists' %}" class="authorized"><i class="fas fa-list"></i>&nbsp;Lists</a></li>
+                        <li><a href="{% url 'coder:settings' 'notifications' %}" class="authorized"><i class="fa fa-bullhorn"></i>&nbsp;Notifications</a></li>
+                        <li><a href="{% url 'coder:settings' 'calendars' %}" class="authorized"><i class="far fa-calendar-alt"></i>&nbsp;Calendars</a></li>
+                        <li><a href="{% url 'coder:settings' 'subscriptions' %}" class="authorized">{% icon_to 'subscription' '' %}&nbsp;Subscriptions</a></li>
+                        <li role="separator" class="divider"></li>
+                        <li class="dropdown-header">Tools</li>
+                        <li><a href="{% url 'clist:api:latest:index' %}"><i class="fas fa-terminal"></i>&nbsp;API</a></li>
+                        <li><a href="{% url 'telegram:me' %}" target="_blank" class="authorized" rel="noopener noreferrer"><i class="fab fa-telegram-plane"></i>&nbsp;@{{ telegram_bot_name }}</a></li>
+                        <li><a href="{% url 'ranking:make_versus' %}">{% icon_to 'versus' '' %}&nbsp;Versus</a></li>
+                        <li><a href="{% url 'ranking:virtual_start' %}" class="authorized">{% icon_to 'virtual_start' '' %}&nbsp;Virtual Start</a></li>
+                        <li><a href="{% url 'oauth2_provider:list' %}" class="authorized"><i class="fas fa-exchange-alt"></i>&nbsp;OAuth</a></li>
+                        <li><a href="{% url 'clist:api:latest:index' %}#atom-and-rss"><i class="fas fa-rss"></i>&nbsp;Atom&RSS</a></li>
+                        {% if user|can_view_live_updates %}
+                        <li><a href="{% url 'ranking:live_logs' %}"><i class="fas fa-stream"></i>&nbsp;Live logs</a></li>
+                        {% endif %}
+                        <li role="separator" class="divider"></li>
+                        <li class="dropdown-header">Support</li>
+                        <li><a href="https://github.com/aropan/clist/issues" rel="noopener noreferrer"><i class="fab fa-github"></i>&nbsp;Github</a></li>
+                        <li><a href="https://t.me/clistby/552" rel="noopener noreferrer"><i class="fab fa-telegram-plane"></i>&nbsp;Telegram</a></li>
+                        <li><a href="https://discord.gg/ADqQs9NWhb" rel="noopener noreferrer"><i class="fab fa-discord"></i>&nbsp;Discord</a></li>
+                        <li role="separator" class="divider"></li>
+                        <li><a href="{% url 'clist:links' %}"><i class="fas fa-link"></i>&nbsp;Links</a></li>
+                        {% if user.is_authenticated %}
+                        <li role="separator" class="divider"></li>
+                        <li><a href="{% url 'auth:logout' %}"><i class="fa fa-sign-out-alt"></i> Log out</a></li>
+                        {% endif %}
+                    </ul>
                 </li>
             </ul>
         </div>

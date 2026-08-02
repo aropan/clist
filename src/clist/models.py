@@ -47,6 +47,7 @@ contest_and_resource_permissions = (
     ("view_private_fields", "Can view private fields"),
     ("sort_by_fields", "Can sort by specific fields"),
     ("view_statistics_logs", "Can view statistics logs"),
+    ("view_live_updates", "Can view live updates"),
 )
 
 

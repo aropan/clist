@@ -6,10 +6,13 @@
 {% block end-head %}
 <link href="{% static_ts 'css/standings.css' %}" rel="stylesheet">
 <link href="{% static_ts 'css/finalists.css' %}" rel="stylesheet">
+<link href="{% static_ts 'css/live_log.css' %}" rel="stylesheet">
 
 <script src="{% static_ts 'js/jquery.timeago.js' %}"></script>
 <script src="{% static_ts 'js/countdown.js' %}"></script>
+<script src="{% static_ts 'js/live_log.js' %}"></script>
 <script src="{% static_ts 'js/finalists.js' %}"></script>
+<script>contest_pk = {{ contest.pk }}</script>
 
 {% endblock %}
 
@@ -178,27 +181,7 @@
   {% endif %}
 </div>
 
-<div class="modal" id="update-statistics-log">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <span class="lead">
-          <a href="{% if other_contests %}{% url 'ranking:standings_by_id' contest.pk %}{% else %}{{ contest.standings_url|default:contest.url }}{% endif %}">{{ contest.title }}</a>
-        </span>
-        <button id="modal-update-statistics-btn" class="btn btn-primary btn-sm pull-right" onclick="update_statistics(this); return false">
-          {% icon_to 'update' default='Update statistics' %}
-        </button>
-      </div>
-      <div class="modal-body">
-        <div id="update-statistics-progress" class="progress hidden">
-          <span id="update-statistics-progress-text"></span>
-          <div id="update-statistics-progress-bar" class="progress-bar progress-bar-success" style="width:0%"></div>
-        </div>
-        <pre id="update-statistics-log-output"></pre>
-      </div>
-    </div>
-  </div>
-</div>
+{% include "update_statistics_log_modal.html" with show_update_button=True %}
 
 {% if scrollable_table %}
 <script>$(window).resize(update_table_sticky)</script>

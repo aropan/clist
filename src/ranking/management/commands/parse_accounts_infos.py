@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from collections import defaultdict
+from dataclasses import dataclass
 from datetime import timedelta
 from logging import getLogger
 
@@ -14,13 +15,15 @@ from django.db.models import Case, F, IntegerField, Min, Q, Value, When
 from django.utils import timezone
 from django_print_sql import print_sql_decorator
 from tailslide import Percentile
-from tqdm import tqdm
 
 from clist.models import Resource
+from logify.live import LiveLogSession, tqdm
 from logify.models import EventLog, EventStatus
+from logify.rq import fail_live_event_logs, interrupt_live_event_logs, interrupt_stale_event_logs
 from notification.models import Subscription
 from notification.utils import compose_message_by_submissions, send_messages
 from pyclist.decorators import analyze_db_queries
+from ranking.management.modules.common import LOG
 from ranking.management.modules.excepts import ExceptionParseAccounts, ProxyLimitReached
 from ranking.models import Account
 from ranking.utils import account_update_contest_additions, rename_account
@@ -28,7 +31,7 @@ from true_coders.models import Coder, CoderList
 from utils.attrdict import AttrDict
 from utils.countrier import Countrier
 from utils.mathutils import min_with_none
-from utils.rq import get_resource_job_id
+from utils.rq import get_resource_job_id, is_job_active
 from utils.strings import sanitize_data, sanitize_text
 from utils.traceback_with_vars import colored_format_exc
 
@@ -73,6 +76,16 @@ def get_coderlist_value(account, func, field):
     return aggregation["field_value"]
 
 
+@dataclass
+class ParseAccountsInfosResult:
+    status: EventStatus = EventStatus.COMPLETED
+    message: str | None = None
+    error: str | None = None
+
+    def update_event_log(self, event_log):
+        event_log.update(status=self.status, message=self.message, error=self.error)
+
+
 class Command(BaseCommand):
     help = "Parsing accounts infos"
 
@@ -107,9 +120,6 @@ class Command(BaseCommand):
         self.stdout.write(str(options))
         args = AttrDict(options)
 
-        has_custom_params = args.query or args.limit or args.all
-        regular_update = not has_custom_params
-
         if args.resources:
             resources = Resource.get(args.resources)
             args.split_by_resource = False
@@ -117,6 +127,28 @@ class Command(BaseCommand):
             resources = Resource.available_for_update_objects
             resources = resources.filter(has_accounts_infos_update=True)
 
+        live_event_log = self._create_live_event_log(args, resources)
+        if live_event_log is None:
+            self._parse_accounts_infos(args, resources)
+            return
+
+        with LiveLogSession(live_event_log, self.logger) as live_session:
+            live_session.add_logger(LOG)
+            live_session.status(EventStatus.IN_PROGRESS)
+            try:
+                parse_result = self._parse_accounts_infos(args, resources, live_event_log=live_event_log)
+            except BaseException as e:
+                live_event_log.update(status=EventStatus.FAILED, error=str(e))
+                live_session.status(EventStatus.FAILED, str(e))
+                raise
+            else:
+                parse_result.update_event_log(live_event_log)
+                live_session.status(parse_result.status, parse_result.message)
+
+    def _parse_accounts_infos(self, args, resources, live_event_log=None):
+        parse_result = ParseAccountsInfosResult()
+        has_custom_params = args.query or args.limit or args.all
+        regular_update = not has_custom_params
         countrier = Countrier()
 
         now = timezone.now()
@@ -156,8 +188,9 @@ class Command(BaseCommand):
 
                             if args.update_new_year:
                                 update = accounts.filter(new_year_condition).exclude(condition).update(updated=now)
-                                self.logger.info(f"update new year = {update}")
-                                return
+                                parse_result.message = f"update new year = {update}"
+                                self.logger.info(parse_result.message)
+                                return parse_result
 
                             condition |= new_year_condition & Q(modified__lt=now - timedelta(days=1))
 
@@ -212,10 +245,9 @@ class Command(BaseCommand):
                 active_resources.append(resource)
                 continue
 
-            event_log = EventLog.objects.create(
-                name="parse_accounts_infos",
-                related=resource,
-                status=EventStatus.IN_PROGRESS,
+            event_log = self._get_resource_event_log(
+                live_event_log,
+                resource,
                 message=f"{len(accounts)} of {total} accounts",
             )
             count = 0
@@ -439,7 +471,15 @@ class Command(BaseCommand):
                     self.logger.error(f"Parse accounts infos changing update time: {e}")
 
             message = f"{count} of {total} accounts, {dict(n_counter)}"
-            event_log.update(status=event_status, message=message, error=exception_error)
+            resource_result = ParseAccountsInfosResult(
+                status=event_status,
+                message=message,
+                error=exception_error,
+            )
+            if event_log.is_live_stream:
+                parse_result = resource_result
+            else:
+                resource_result.update_event_log(event_log)
 
             self.logger.info(f"Parsed accounts infos (resource = {resource}): {message}")
             if update_submissions_info:
@@ -458,15 +498,51 @@ class Command(BaseCommand):
                 job_id = get_resource_job_id("parse_accounts", resource.host)
 
                 job = queue.fetch_job(job_id)
-                if not job or job.is_finished or job.is_failed:
+                if not is_job_active(queue, job_id, job):
+                    job_status = job.get_status() if job else "missing"
+                    error = f"RQ job {job_id} is no longer active (status: {job_status})"
+                    n_interrupted = interrupt_stale_event_logs(job_id, error)
+                    if n_interrupted:
+                        self.logger.warning(f"Interrupted {n_interrupted} stale event logs for job = {job_id}")
                     kwargs = {"resources": [resource.host]}
-                    job = queue.enqueue(call_command, "parse_accounts_infos", **kwargs, job_id=job_id)
+                    job = queue.enqueue(
+                        call_command,
+                        "parse_accounts_infos",
+                        **kwargs,
+                        job_id=job_id,
+                        on_failure=fail_live_event_logs,
+                        on_stopped=interrupt_live_event_logs,
+                    )
                     self.logger.info(f"Added {resource} parse_accounts job to queue: job = {job}")
                 else:
-                    self.logger.info(f"{resource} parse_accounts job already in queue: job = {job}")
-            return
+                    self.logger.info(f"{resource} parse_accounts job is active: job = {job or job_id}")
+            return parse_result
 
         total_update_submissions_info = n_total_counter.pop("update_submissions_info", {})
         self.logger.info(f"Total: {dict(n_total_counter)}")
         if total_update_submissions_info:
             self.logger.info(f"Total update submissions info: {total_update_submissions_info}")
+        return parse_result
+
+    @staticmethod
+    def _create_live_event_log(args, resources):
+        if args.split_by_resource or len(resources) != 1:
+            return None
+        return EventLog.objects.create(
+            name="parse_accounts_infos",
+            related=resources[0],
+            status=EventStatus.IN_PROGRESS,
+            is_live_stream=True,
+        )
+
+    @staticmethod
+    def _get_resource_event_log(live_event_log, resource, message):
+        if live_event_log is not None:
+            live_event_log.update_message(message)
+            return live_event_log
+        return EventLog.objects.create(
+            name="parse_accounts_infos",
+            related=resource,
+            status=EventStatus.IN_PROGRESS,
+            message=message,
+        )

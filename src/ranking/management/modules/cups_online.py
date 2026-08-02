@@ -15,9 +15,9 @@ import arrow
 import pytz
 from django.core.cache import cache
 from django.utils.timezone import now
-from tqdm import tqdm
 
 from clist.templatetags.extras import get_problem_short
+from logify.live import tqdm
 from ranking.management.modules import conf
 from ranking.management.modules.common import REQ, BaseModule, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings
@@ -145,13 +145,20 @@ class Statistic(BaseModule):
         result = OrderedDict()
         errors = []
         problems_infos = OrderedDict()
+        standings_progress = tqdm(total=1, desc="standings pages", unit="page")
+        n_standings_pages = 0
 
         for standings_data in standings_list:
             standings_url = urljoin(self.host_url, standings_data["standings_url"])
             api_standings_url = urljoin(self.host_url, standings_data["api_standings_url"])
             has_penalty = False
             while api_standings_url:
+                if n_standings_pages:
+                    standings_progress.total += 1
+                    standings_progress.refresh()
                 data = REQ.get(api_standings_url, return_json=True, ignore_codes={404})
+                n_standings_pages += 1
+                standings_progress.update()
 
                 if "results" not in data:
                     errors.append(f"response = {data}")
@@ -240,6 +247,8 @@ class Statistic(BaseModule):
 
             if result:
                 break
+
+        standings_progress.close()
 
         if not result and errors:
             raise ExceptionParseStandings(errors)

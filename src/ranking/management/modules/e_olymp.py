@@ -8,6 +8,7 @@ from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from ratelimiter import RateLimiter
 
 from clist.templatetags.extras import normalize_field
+from logify.live import tqdm
 from ranking.management.modules.common import REQ, BaseModule
 from ranking.management.modules.excepts import ExceptionParseStandings
 
@@ -85,6 +86,7 @@ query GetScoreboard($id: ID!, $first: Int, $offset: Int) {
 """
         offset = 0
         result = {}
+        progress = tqdm(total=1, desc="standings pages", unit="page")
         while True:
             data = {"query": scoreboard_query, "variables": {"id": self.key, "first": 100, "offset": offset}}
             data = REQ.get(self.API_URL, post=json.dumps(data), return_json=True)
@@ -143,8 +145,13 @@ query GetScoreboard($id: ID!, $first: Int, $offset: Int) {
                         to_clear = False
                 if to_clear:
                     result.pop(member_id)
-            if not data["pageInfo"]["hasNextPage"]:
+            has_next_page = data["pageInfo"]["hasNextPage"]
+            if has_next_page:
+                progress.total += 1
+            progress.update()
+            if not has_next_page:
                 break
+        progress.close()
 
         standings = {
             "url": standings_url,

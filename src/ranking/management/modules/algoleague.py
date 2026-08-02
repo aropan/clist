@@ -4,6 +4,7 @@ from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 
 from clist.templatetags.extras import get_item, normalize_field
+from logify.live import tqdm
 from ranking.management.modules.common import REQ, BaseModule
 from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse
 
@@ -50,6 +51,7 @@ class Statistic(BaseModule):
         else:
             raise ExceptionParseStandings("Unknown participant type: " + participant_type)
 
+        progress = tqdm(total=total_pages, desc="standings pages", unit="page")
         while page < total_pages:
             url = self.API_STANDINGS_URL_FORMAT_.format(contest_id=contest_id, offset=page * count, count=count)
             data = REQ.get(url, return_json=True)
@@ -97,7 +99,10 @@ class Statistic(BaseModule):
                     result.pop(handle)
                     continue
             total_pages = (data["totalCount"] - 1) // count + 1
+            progress.total = max(total_pages, page + 1)
+            progress.update()
             page += 1
+        progress.close()
 
         sorted_rows = sorted(result.values(), key=lambda x: (-x["solving"], x["time"]))
         last_score, last_rank = None, None

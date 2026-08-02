@@ -9,6 +9,7 @@ import time
 import urllib.parse
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
+from contextlib import nullcontext
 from copy import deepcopy
 from datetime import timedelta
 
@@ -16,9 +17,9 @@ import arrow
 from django.utils.timezone import now
 from first import first
 from ratelimiter import RateLimiter
-from tqdm import tqdm
 
 from clist.templatetags.extras import as_number, get_problem_key, is_solved
+from logify.live import tqdm
 from ranking.management.modules import conf
 from ranking.management.modules.common import LOG, REQ, BaseModule, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse, ProxyLimitReached
@@ -139,12 +140,14 @@ class Statistic(BaseModule):
         result = standings["result"]
 
         n_workers = 2
-        with PoolExecutor(max_workers=n_workers) as executor:
-            submissions = tqdm(
-                executor.map(self.fetch_submissions, fusers), total=len(fusers), desc="gettings first page"
-            )
+        with (
+            PoolExecutor(max_workers=n_workers) as executor,
+            tqdm(total=len(fusers), desc="getting first page") as first_pages_progress,
+        ):
+            submissions = executor.map(self.fetch_submissions, fusers)
 
             for fuser, page_submissions in zip(fusers, submissions):
+                first_pages_progress.update()
                 if page_submissions is None:
                     break
                 url, page, table, _ = page_submissions
@@ -230,49 +233,81 @@ class Statistic(BaseModule):
                 d_page = n_workers
 
                 self._stop = False
-                while not self._stop and not self._forbidden:
-                    n_page = c_page + d_page
-                    n_empty_tables = 0
-                    fetch_submissions_user = functools.partial(self.fetch_submissions, fuser)
+                first_page = last_page
+                progress_context = (
+                    tqdm(
+                        total=d_page,
+                        desc=f"getting submissions: pages ({first_page};{first_page + d_page}]",
+                    )
+                    if fuser is None
+                    else nullcontext()
+                )
+                with progress_context as submissions_progress:
+                    while not self._stop and not self._forbidden:
+                        n_page = c_page + d_page
+                        n_empty_tables = 0
+                        fetch_submissions_user = functools.partial(self.fetch_submissions, fuser)
 
-                    submissions_iter = executor.map(fetch_submissions_user, range(last_page + 1, n_page + 1))
-                    if fuser is None:
-                        submissions_iter = tqdm(
-                            submissions_iter,
-                            total=n_page - last_page,
-                            desc=f"getting submissions for ({last_page};{n_page}]",
-                        )
+                        if submissions_progress is not None:
+                            description = f"getting submissions: pages ({first_page};{n_page}]"
+                            if (
+                                submissions_progress.total != n_page - first_page
+                                or submissions_progress.desc != description
+                            ):
+                                submissions_progress.total = n_page - first_page
+                                submissions_progress.set_description_str(description)
 
-                    for page_submissions in submissions_iter:
-                        if page_submissions is None:
-                            submissions_info["last_page"] = c_page
-                            submissions_info["last_page_st"] = last_page_st
-                            LOG.info(f"stopped after ({last_page};{c_page}] of {n_page}")
-                            self._stop = True
-                            break
-
-                        url, page, table, c_page_ = page_submissions
-                        submission_time = process_page(url, page, table)
-                        last_page_st = max(last_page_st, submission_time)
-
-                        if not table:
-                            n_empty_tables += 1
-                            if n_empty_tables >= n_workers:
+                        submissions_iter = executor.map(fetch_submissions_user, range(last_page + 1, n_page + 1))
+                        for page_submissions in submissions_iter:
+                            if page_submissions is None:
+                                submissions_info["last_page"] = c_page
+                                submissions_info["last_page_st"] = last_page_st
+                                LOG.info(f"stopped after ({last_page};{c_page}] of {n_page}")
                                 self._stop = True
-                                break
-                        else:
-                            c_page = c_page_
-                            n_empty_tables = 0
+                            else:
+                                url, page, table, c_page_ = page_submissions
+                                submission_time = process_page(url, page, table)
+                                last_page_st = max(last_page_st, submission_time)
 
-                        if submission_time < limit_st:
-                            self._stop = True
-                            break
-                    last_page = n_page
-                    d_page *= 2
+                                if not table:
+                                    n_empty_tables += 1
+                                    if n_empty_tables >= n_workers:
+                                        self._stop = True
+                                else:
+                                    c_page = c_page_
+                                    n_empty_tables = 0
+
+                                if not self._stop and submission_time < limit_st:
+                                    self._stop = True
+
+                            if submissions_progress is not None:
+                                if (
+                                    not self._stop
+                                    and not self._forbidden
+                                    and submissions_progress.n + 1 == submissions_progress.total
+                                ):
+                                    next_n_page = c_page + d_page * 2
+                                    submissions_progress.total = next_n_page - first_page
+                                    submissions_progress.set_description_str(
+                                        f"getting submissions: pages ({first_page};{next_n_page}]",
+                                    )
+                                submissions_progress.update()
+
+                            if self._stop or self._forbidden:
+                                break
+
+                        last_page = n_page
+                        d_page *= 2
+
+                    if submissions_progress is not None and submissions_progress.n < submissions_progress.total:
+                        submissions_progress.update(submissions_progress.total - submissions_progress.n)
                 if "last_page" not in submissions_info:
                     submissions_info["last_submission_time"] = (
                         last_submission_time if last_page == self.DEFAULT_LAST_PAGE else last_page_st
                     )
+
+            if first_pages_progress.n < first_pages_progress.total:
+                first_pages_progress.update(first_pages_progress.total - first_pages_progress.n)
 
     @post_save_req
     def get_standings(self, users=None, statistics=None, **kwargs):

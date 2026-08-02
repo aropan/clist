@@ -2,10 +2,11 @@
 # -*- coding: utf-8 -*-
 
 import re
-from pprint import pprint
-from functools import partial
 from collections import OrderedDict
+from functools import partial
+from pprint import pprint
 
+from logify.live import tqdm
 from ranking.management.modules.common import REQ, BaseModule
 from ranking.management.modules.excepts import ExceptionParseStandings
 
@@ -26,14 +27,15 @@ class Statistic(BaseModule):
         result = {}
         standings_url = None
         problems_info = OrderedDict()
-        for url, upsolve in (
+        sources = (
             (self.url, False),
             (self.url.replace(".html", "-upsolving.html"), True),
             (self.url.replace("-training-", "-practice-"), True),
             (self.key, False),
             (self.key.replace(".html", "-upsolving.html"), True),
             (self.key.replace("-training-", "-practice-"), True),
-        ):
+        )
+        for url, upsolve in tqdm(sources, desc="standings sources", unit="source"):
             if upsolve and url in [self.url, self.key]:
                 continue
             try:

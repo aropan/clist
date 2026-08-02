@@ -5,7 +5,6 @@ from collections import defaultdict
 from logging import getLogger
 
 import numpy as np
-import tqdm
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.db.models import Case, F, FloatField, Q, When
@@ -15,6 +14,8 @@ from prettytable import PrettyTable
 from sql_util.utils import SubqueryCount
 
 from clist.models import Contest, Resource
+from logify import live as tqdm
+from logify.live import register_live_logger
 from logify.models import EventLog, EventStatus
 from ranking.models import Statistics
 from utils.attrdict import AttrDict
@@ -200,6 +201,7 @@ class Command(BaseCommand):
         global args
         self.stdout.write(str(options))
         args = AttrDict(options)
+        register_live_logger(self.logger)
 
         resources = Resource.objects.all()
         if args.resources:

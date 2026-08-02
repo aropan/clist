@@ -5,6 +5,8 @@
 
 {% block end-head %}
 <link href="{% static_ts 'css/standings.css' %}" rel="stylesheet">
+<link href="{% static_ts 'css/live_log.css' %}" rel="stylesheet">
+<script src="{% static_ts 'js/live_log.js' %}"></script>
 <script src="{% static_ts 'js/standings.js' %}"></script>
 
 {% include "highlight.html" %}
@@ -28,6 +30,9 @@
   contest_timeline = {{ contest_timeline|default:"{}"|to_json }}
   freeze_duration = {{ freeze_duration|to_json }}
   contest_pk = {{ contest.pk }}
+  {% if can_view_contest_live_log %}
+  contest_live_logs_data_url = "{% url 'ranking:live_logs_data' %}"
+  {% endif %}
   shown_timeline = false
   standings_filtered = {{ with_row_num|lower }}
   with_detail = {{ with_detail|lower }}
@@ -157,6 +162,8 @@
       <a href="" id="update_statistics_btn" onclick="update_statistics(this); return false">
         {% icon_to 'update' default='Update statistics' %}
       </a>
+      {% endif %}
+      {% if can_view_contest_live_log %}
       <a href="" id="show_update_statistics_log_btn" onclick="show_update_statistics_log(this); return false" class="hidden">
         {% icon_to 'log' default='Show log' %}
       </a>
@@ -452,27 +459,9 @@
   </div>
 </div>
 
-<div class="modal" id="update-statistics-log">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <span class="lead">
-          <a href="{% if other_contests %}{% url 'ranking:standings_by_id' contest.pk %}{% else %}{{ contest.standings_url|default:contest.url }}{% endif %}">{{ contest.title }}</a>
-        </span>
-        <button id="modal-update-statistics-btn" class="btn btn-primary btn-sm pull-right" onclick="update_statistics(this); return false">
-          {% icon_to 'update' default='Update statistics' %}
-        </button>
-      </div>
-      <div class="modal-body">
-        <div id="update-statistics-progress" class="progress hidden">
-          <span id="update-statistics-progress-text"></span>
-          <div id="update-statistics-progress-bar" class="progress-bar progress-bar-success" style="width:0%"></div>
-        </div>
-        <pre id="update-statistics-log-output"></pre>
-      </div>
-    </div>
-  </div>
-</div>
+{% if show_update_statistics_log %}
+{% include "update_statistics_log_modal.html" with show_update_button=user|has_update_statistics_permission:contest %}
+{% endif %}
 
 {% if with_table_inner_scroll %}
 <script>$(window).resize(update_table_sticky)</script>

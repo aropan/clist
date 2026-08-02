@@ -21,5 +21,7 @@ urlpatterns = [
     re_path(r"^participants/(?P<contest_id>[0-9]+)/$", views.finalists, name="finalists_by_id"),
     re_path(r"^participants/(?P<contests_ids>[0-9]+(?:,[0-9]+)+)/$", views.finalists, name="finalists_by_ids"),
     re_path(r"^participants/(?P<title_slug>[^/]+)/$", views.finalists, name="finalists_by_slug"),
+    re_path(r"^logs/live/$", views.live_logs, name="live_logs"),
+    re_path(r"^logs/live/data/$", views.live_logs_data, name="live_logs_data"),
     re_path(r"^logs/statistics/", views.statistics_logs, name="statistics_logs"),
 ]

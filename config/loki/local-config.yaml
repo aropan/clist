@@ -54,6 +54,7 @@ limits_config:
   ingestion_burst_size_mb: 60
 
   max_streams_per_user:    5000
+  max_query_series:        5000
 
   retention_period:        168h
 

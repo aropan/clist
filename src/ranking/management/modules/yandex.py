@@ -10,12 +10,12 @@ from copy import deepcopy
 from datetime import timedelta
 from urllib.parse import urljoin
 
-import tqdm
 from django.utils import timezone
 from ipwhois import IPWhois
 from ratelimiter import RateLimiter
 
 from clist.templatetags.extras import as_number, get_item, is_improved_solution
+from logify import live as tqdm
 from my_oauth.models import Service
 from ranking.management.modules.common import LOG, REQ, BaseModule, parsed_table
 from ranking.management.modules.common.locator import Locator
@@ -78,6 +78,7 @@ class Statistic(BaseModule):
         size = 10000
         total = None
         n_submissions = 0
+        progress = tqdm.tqdm(total=1, desc="submission pages", unit="page")
         while total is None or page * size < total:
             page += 1
             url = f"{Statistic.YANDEX_API_URL}/contests/{contest_id}/submissions?page={page}&pageSize={size}"
@@ -85,11 +86,16 @@ class Statistic(BaseModule):
                 data = REQ.get(url, headers=headers, return_json=True)
             except FailOnGetResponse as e:
                 LOG.warning(f"Fail to get submission ids: {e}")
+                progress.total = progress.n + 1
+                progress.update()
                 break
+            total = data["count"]
+            progress.total = max((total - 1) // size + 1, 1)
+            progress.update()
             for submission in data["submissions"]:
                 n_submissions += 1
                 yield submission
-            total = data["count"]
+        progress.close()
         LOG.info(f"{n_submissions} submissions fetched from {contest_id} contest")
 
     def _get_submission_infos(self, names_result):

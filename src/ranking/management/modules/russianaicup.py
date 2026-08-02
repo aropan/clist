@@ -12,9 +12,9 @@ from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from datetime import datetime, timedelta
 
 import pytz
-import tqdm
 from ratelimiter import RateLimiter
 
+from logify import live as tqdm
 from ranking.management.modules.common import REQ, BaseModule, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse
 

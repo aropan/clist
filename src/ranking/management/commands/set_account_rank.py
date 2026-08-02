@@ -8,12 +8,11 @@ from django.db.models import F, FloatField, Min, Q, Window
 from django.db.models.functions import Cast, Rank
 from django.utils import timezone
 from django_print_sql import print_sql_decorator
-from tqdm import tqdm
 
 from clist.models import Resource
 from clist.templatetags.extras import get_item
+from logify.live import stream_event_log, tqdm
 from logify.models import EventLog, EventStatus
-from logify.utils import failed_on_exception
 from ranking.models import Account
 from utils.attrdict import AttrDict
 from utils.json_field import FloatJSONF
@@ -74,12 +73,15 @@ class Command(BaseCommand):
         n_updated = 0
         for resource in tqdm(resources, total=len(resources), desc="resources"):
             event_log = EventLog.objects.create(
-                name="set_account_rank", related=resource, status=EventStatus.IN_PROGRESS
+                name="set_account_rank",
+                related=resource,
+                status=EventStatus.IN_PROGRESS,
+                is_live_stream=True,
             )
             field = "resource_rank"
             coloring_field = get_item(resource, "info.ratings.chartjs.coloring_field")
             resource_update_fields = []
-            with failed_on_exception(event_log):
+            with stream_event_log(event_log, self.logger):
                 base_qs = Account.objects.filter(resource=resource, rating__isnull=False)
                 n_rating_accounts = base_qs.count()
                 base_qs = base_qs.annotate(_rank=resource_rank)
@@ -143,10 +145,10 @@ class Command(BaseCommand):
                     if updated_rating:
                         resource_update_fields.append("ratings")
 
-            resource_update_fields.extend(["rank_update_time", "n_rating_accounts"])
-            resource.rank_update_time = now
-            resource.n_rating_accounts = n_rating_accounts
-            resource.save(update_fields=resource_update_fields)
-            event_log.update_status(EventStatus.COMPLETED, message=message)
+                resource_update_fields.extend(["rank_update_time", "n_rating_accounts"])
+                resource.rank_update_time = now
+                resource.n_rating_accounts = n_rating_accounts
+                resource.save(update_fields=resource_update_fields)
+                event_log.update_status(EventStatus.COMPLETED, message=message)
 
         self.logger.info("n_updated = %d", n_updated)

@@ -8,10 +8,10 @@ from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from copy import deepcopy
 from datetime import timedelta
 
-import tqdm
 import yaml
 
 from clist.templatetags.extras import as_number, slug
+from logify import live as tqdm
 from ranking.management.modules.common import LOG, REQ, BaseModule, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse
 

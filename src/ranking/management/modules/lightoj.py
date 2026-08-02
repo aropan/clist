@@ -9,6 +9,7 @@ from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from urllib.parse import urljoin
 
 from clist.templatetags.extras import get_item
+from logify.live import tqdm
 from ranking.management.modules.common import REQ, BaseModule
 from ranking.management.modules.excepts import FailOnGetResponse
 from utils.timetools import parse_datetime
@@ -18,10 +19,13 @@ class Statistic(BaseModule):
     def get_standings(self, users=None, statistics=None, **kwargs):
         slug = self.url.rstrip("/").rsplit("/", 1)[-1]
         api_standings_url = urljoin(self.url, f"/api/v1/contest/{slug}/public-ranking")
+        progress = tqdm(total=1, desc="standings pages", unit="page")
         try:
             data = REQ.get(api_standings_url, return_json=True)
         except FailOnGetResponse as e:
             if "Contest not found" in e.response:
+                progress.update()
+                progress.close()
                 return {"action": "delete"}
             raise e
 
@@ -41,7 +45,8 @@ class Statistic(BaseModule):
 
         total = get_item(data, "data.ranking.frozenRanklistJson.total")
         per_page = get_item(data, "data.ranking.frozenRanklistJson.perPage")
-        n_pages = (total - 1) // per_page + 1
+        n_pages = max((total - 1) // per_page + 1, 1)
+        progress.total = n_pages
         for page in range(n_pages):
             if page:
                 data = REQ.get(api_standings_url, params={"page": page + 1}, return_json=True)
@@ -97,6 +102,8 @@ class Statistic(BaseModule):
                             problem["time_in_seconds"] = time
                     else:
                         problem["result"] = f"-{attempts}"
+            progress.update()
+        progress.close()
 
         standings = {
             "url": os.path.join(self.url, "ranklist"),

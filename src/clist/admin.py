@@ -48,8 +48,8 @@ class ContestAdmin(BaseModelAdmin):
         extra = 0
 
     def parse_statistic(self, request, queryset):
-        count, total = parse_stat().parse_statistic(queryset, with_check=False)
-        self.message_user(request, "%d of %d parsed." % (count, total))
+        result = parse_stat().parse_statistic(queryset, with_check=False)
+        self.message_user(request, "%d of %d parsed." % (result.count, result.total))
 
     parse_statistic.short_description = "Parse statistic"
 

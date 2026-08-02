@@ -3,7 +3,7 @@
 
 import xml.etree.ElementTree as ET
 
-import tqdm
+from logify import live as tqdm
 
 
 def parse_int(s):

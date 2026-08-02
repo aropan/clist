@@ -1,0 +1,23 @@
+apiVersion: 1
+
+datasources:
+  - name: CLIST PostgreSQL
+    uid: clist-postgres
+    type: postgres
+    access: proxy
+    url: db:5432
+    user: grafana_reader
+    isDefault: false
+    editable: false
+    version: 2
+    secureJsonData:
+      password: $GF_POSTGRES_READER_PASSWORD
+    jsonData:
+      database: clistdb
+      sslmode: disable
+      maxOpenConns: 2
+      maxIdleConns: 1
+      maxIdleConnsAuto: false
+      connMaxLifetime: 14400
+      postgresVersion: 1400
+      timescaledb: false

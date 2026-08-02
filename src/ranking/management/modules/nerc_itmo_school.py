@@ -4,9 +4,8 @@
 import re
 from collections import OrderedDict, defaultdict
 
-import tqdm
-
 from clist.templatetags.extras import as_number
+from logify import live as tqdm
 from ranking.management.modules.common import DOT, REQ, SPACE, BaseModule, parsed_table
 from ranking.management.modules.common.locator import Locator
 from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse

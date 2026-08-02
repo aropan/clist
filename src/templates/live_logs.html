@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block ogtitle %}{% block title %}Live logs{% endblock %}{% endblock %}
+
+{% block end-head %}
+<link href="{% static_ts 'css/live_log.css' %}" rel="stylesheet">
+<script src="{% static_ts 'js/live_log.js' %}"></script>
+<script src="{% static_ts 'js/live_logs.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+
+<div id="live-log-app" class="row" data-runs-url="{% url 'ranking:live_logs_data' %}">
+  <div class="live-log-runs-column col-md-4 col-lg-3">
+    <div class="panel panel-default">
+      <div class="panel-heading">Active runs</div>
+      <div id="live-log-runs" class="list-group"></div>
+      <div id="live-log-empty" class="panel-body text-muted">No active live updates available.</div>
+    </div>
+  </div>
+  <div class="live-log-viewer-column col-md-8 col-lg-9">
+    <div class="live-log-viewer-panel panel panel-default">
+      <div class="live-log-viewer-heading panel-heading">
+        <span>Log</span>
+        <span class="text-muted" aria-hidden="true">·</span>
+        <span id="live-log-event-type" class="live-log-event-type text-muted hidden"></span>
+        <span id="live-log-event-type-separator" class="text-muted hidden" aria-hidden="true">·</span>
+        <strong id="live-log-title" class="live-log-title text-muted">Select an active run</strong>
+        <span id="live-log-status" class="label label-default hidden"></span>
+      </div>
+      {% include "live_log_viewer.html" with output_id="live-log-output" progress_id="live-log-progress-list" %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}

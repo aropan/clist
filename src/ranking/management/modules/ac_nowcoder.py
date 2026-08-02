@@ -4,11 +4,11 @@ import re
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 
-import tqdm
 from django.utils import timezone
 from ratelimiter import RateLimiter
 
 from clist.templatetags.extras import as_number, normalize_field
+from logify import live as tqdm
 from ranking.management.modules.common import REQ, BaseModule
 from ranking.management.modules.excepts import ExceptionParseAccounts, ExceptionParseStandings
 
@@ -28,10 +28,12 @@ class Statistic(BaseModule):
         api_problem_url = self.API_PROBLEM_URL_FORMAT_.format(self)
         page = 1
         data = None
+        problem_progress = tqdm.tqdm(total=1, desc="problem pages", unit="page")
         while data is None or page < data["basicInfo"]["pageCount"]:
             url = f"{api_problem_url}&page={page}&_={timestamp}"
             data = REQ.get(url, return_json=True, with_curl=True)
             data = data["data"]
+            problem_progress.total = max(data["basicInfo"]["pageCount"], 1)
             for problem in data["data"]:
                 problem_info = dict(
                     short=problem["index"],
@@ -45,7 +47,12 @@ class Statistic(BaseModule):
                 if self.contest.standings_kind == "scoring":
                     problem_info["full_score"] = problem["score"]
                 problem_infos.append(problem_info)
+            problem_progress.update()
             page += 1
+        if problem_progress.n < problem_progress.total:
+            problem_progress.total = problem_progress.n
+            problem_progress.refresh()
+        problem_progress.close()
 
         result = OrderedDict()
         hidden_fields = set()

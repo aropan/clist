@@ -8,7 +8,6 @@ from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from urllib.parse import urljoin
 
 import arrow
-import tqdm
 from django.db import transaction
 from django.db.models import OuterRef
 from ratelimiter import RateLimiter
@@ -23,8 +22,9 @@ from clist.templatetags.extras import (
     is_improved_solution,
     is_solved,
 )
+from logify import live as tqdm
 from ranking.management.modules.common import REQ, BaseModule, parsed_table
-from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse, ExceptionParseAccounts
+from ranking.management.modules.excepts import ExceptionParseAccounts, ExceptionParseStandings, FailOnGetResponse
 from ranking.utils import create_upsolving_statistic
 
 

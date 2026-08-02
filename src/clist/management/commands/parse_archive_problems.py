@@ -9,12 +9,11 @@ from logging import getLogger
 from django.core.management.base import BaseCommand
 from django.db.models import Q
 from django.utils import timezone
-from tqdm import tqdm
 
 from clist.models import Problem, Resource
 from clist.templatetags.extras import canonize
+from logify.live import stream_event_log, tqdm
 from logify.models import EventLog, EventStatus
-from logify.utils import failed_on_exception
 from utils.attrdict import AttrDict
 from utils.timetools import parse_duration
 
@@ -48,9 +47,12 @@ class Command(BaseCommand):
 
         for resource in resources:
             event_log = EventLog.objects.create(
-                name="parse_archive_problems", related=resource, status=EventStatus.IN_PROGRESS
+                name="parse_archive_problems",
+                related=resource,
+                status=EventStatus.IN_PROGRESS,
+                is_live_stream=True,
             )
-            with failed_on_exception(event_log):
+            with stream_event_log(event_log, self.logger):
                 counter = defaultdict(int)
                 now = timezone.now()
                 archive_problems = resource.plugin.Statistic.get_archive_problems(resource=resource, limit=args.limit)

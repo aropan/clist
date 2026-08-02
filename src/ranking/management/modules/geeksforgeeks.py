@@ -9,14 +9,47 @@ from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 import dateutil.parser
 from ratelimiter import RateLimiter
 
-from clist.templatetags.extras import as_number
 from ranking.management.modules import conf
 from ranking.management.modules.common import REQ, BaseModule
 from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse
 
 
 class Statistic(BaseModule):
-    PROFILE_DATA_URL_FORMAT = "https://www.geeksforgeeks.org/gfg-assets/_next/data/{buildid}/user/{handle}.json"
+    @staticmethod
+    def _parse_app_profile(page):
+        chunks = []
+        regex = r"<script[^>]*>\s*self\.__next_f\.push\((?P<data>\[.*?\])\)\s*</script>"
+        for match in re.finditer(regex, page, re.DOTALL):
+            try:
+                push_data = json.loads(match.group("data"))
+            except json.JSONDecodeError:
+                continue
+            if (
+                isinstance(push_data, list)
+                and len(push_data) > 1
+                and push_data[0] == 1
+                and isinstance(push_data[1], str)
+            ):
+                chunks.append(push_data[1])
+
+        flight_data = "".join(chunks)
+        decoder = json.JSONDecoder()
+        for match in re.finditer(r"(?:^|\n)[0-9a-f]+:", flight_data):
+            try:
+                record, _ = decoder.raw_decode(flight_data, match.end())
+            except json.JSONDecodeError:
+                continue
+
+            stack = [record]
+            while stack:
+                value = stack.pop()
+                if isinstance(value, dict):
+                    if value.get("username") and isinstance(value.get("articleCount"), dict):
+                        return value
+                    stack.extend(value.values())
+                elif isinstance(value, list):
+                    stack.extend(value)
+        return None
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -56,7 +89,7 @@ class Statistic(BaseModule):
                     time = dateutil.parser.parse(last_correct_submission + "+05:30")
                     delta = time - self.start_time
                     r["time"] = self.to_time(delta)
-                for k, v in list(row.items()):
+                for k, _ in list(row.items()):
                     if k.endswith("_score"):
                         r[k] = row.pop(k)
 
@@ -66,7 +99,7 @@ class Statistic(BaseModule):
             data = fetch_and_process_page(0)
         except FailOnGetResponse as e:
             if e.code == 403:
-                raise ExceptionParseStandings(str(e))
+                raise ExceptionParseStandings(str(e)) from e
             raise e
         total = data["results"]["rows_count"]
         per_page = len(data["results"]["ranks_list"])
@@ -95,34 +128,15 @@ class Statistic(BaseModule):
                 if e.code == 308 or e.code == 500:
                     return False
                 raise e
-            regex = '<script[^>]*id="__NEXT_DATA__"[^>]*type="application/json"[^>]*>(?P<data>[^<]*)</script>'
-            match = re.search(regex, page)
-            next_data = json.loads(match.group("data"))
 
-            data = next_data["props"].pop("pageProps")
-
-            if data.get("__N_REDIRECT_STATUS") == 307 and (redirect := data.get("__N_REDIRECT")):
-                if match := re.search("https://[^/]*geeksforgeeks.org/user/(?P<user>[^/]*)/?", redirect):
-                    return {"rename": match.group("user"), "handle": account.key}
-
-            info = {}
-            if "userInfo" not in data:
+            profile = Statistic._parse_app_profile(page)
+            if profile is None:
                 return False
-            info = data.pop("userInfo")
-            info["handle"] = data.pop("userHandle")
+            info = profile["articleCount"].copy()
+            info["handle"] = profile["username"]
 
             if info["handle"] != account.key:
                 return {"rename": info["handle"], "handle": account.key}
-
-            contest_data = data.pop("contestData")
-            if contest_data is None:
-                info["contest_data"] = []
-            else:
-                user_contest_data = contest_data.pop("user_contest_data")
-                info.update(contest_data)
-                contest_data = user_contest_data.pop("contest_data")
-                info.update(user_contest_data)
-                info["contest_data"] = contest_data
 
             return info
 
@@ -145,27 +159,8 @@ class Statistic(BaseModule):
                     yield data
                     continue
 
-                contest_addition_update = {}
-                for contest_data in data.pop("contest_data"):
-                    contest_key = contest_data.pop("slug")
-                    update = contest_addition_update.setdefault(contest_key, OrderedDict())
-                    update["rating_change"] = contest_data.pop("rating_change")
-                    update["new_rating"] = contest_data.pop("display_rating")
-                    update["_rank"] = contest_data.pop("rank")
-
-                if (rating := as_number(data.get("current_rating"), force=True)) is not None:
-                    data["rating"] = rating
-
                 for k in list(data.keys()):
                     if isinstance(data[k], (dict, list, tuple)):
                         data.pop(k)
 
-                ret = {
-                    "info": data,
-                    "contest_addition_update_params": {
-                        "update": contest_addition_update,
-                        "clear_rating_change": True,
-                    },
-                }
-
-                yield ret
+                yield {"info": data}

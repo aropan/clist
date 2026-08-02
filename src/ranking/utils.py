@@ -11,7 +11,6 @@ from copy import deepcopy
 from datetime import timedelta
 from pydoc import locate
 
-import tqdm
 from django.apps import apps
 from django.conf import settings
 from django.core.management import call_command
@@ -24,6 +23,7 @@ from django_super_deduper.merge import MergedModelInstance
 from sql_util.utils import Exists
 
 from clist.templatetags.extras import add_prefix_to_problem_short, get_item, get_problem_short, redirect_login, slug
+from logify import live as tqdm
 from pyclist.middleware import RedirectException
 from ranking.management.modules.common import LOG
 from ranking.models import Account, Statistics

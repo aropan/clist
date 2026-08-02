@@ -4,7 +4,6 @@
 import html
 import json
 import re
-import sys
 import time
 import traceback
 from collections import OrderedDict, defaultdict
@@ -15,13 +14,13 @@ from urllib.parse import quote, urljoin
 
 import arrow
 import requests
-import tqdm
 from django.db import transaction
 from django.db.models import Q
 from first import first
 from ratelimiter import RateLimiter
 
 from clist.templatetags.extras import as_number, get_item, is_improved_solution, is_solved, slug
+from logify import live as tqdm
 from ranking.management.modules import conf
 from ranking.management.modules.common import LOG, REQ, BaseModule, CustomRequester, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse, ProxyLimitReached
@@ -140,7 +139,7 @@ class Statistic(BaseModule):
             n_page = 0
             per_page = 150
             n_total_page = None
-            pbar = None
+            pbar = tqdm.tqdm(total=1, desc="standings pages", unit="page")
             ranking_type = None
             problem_infos = {}
             to_update_partial = []
@@ -156,7 +155,7 @@ class Statistic(BaseModule):
 
                 for url in urls:
                     delay = 5
-                    for _ in range(10):
+                    for attempt in range(10):
                         try:
                             page = REQ.get(url, headers=headers)
                             data = json.loads(page)
@@ -165,11 +164,8 @@ class Statistic(BaseModule):
                         except Exception:
                             traceback.print_exc()
                             delay = min(100, delay * 2)
-                            sys.stdout.write(f"url = {url}\n")
-                            sys.stdout.write(f"Sleep {delay}... ")
-                            sys.stdout.flush()
+                            LOG.info("Standings retry wait: attempt=%d/%d, seconds=%d", attempt + 1, 10, delay)
                             time.sleep(delay)
-                            sys.stdout.write("Done\n")
                     else:
                         raise ExceptionParseStandings(f"Failed getting {n_page} by url {url}")
 
@@ -209,7 +205,7 @@ class Statistic(BaseModule):
                                 writers[writer] += 1
 
                         n_total_page = data["availablePages"]
-                        pbar = tqdm.tqdm(total=n_total_page * len(urls))
+                        pbar.total = max(n_total_page * len(urls), 1)
                         ranking_type = data["contest_info"]["ranking_type"]
 
                     for d in data["list"]:
@@ -294,7 +290,6 @@ class Statistic(BaseModule):
                                 if k in stat:
                                     row[k] = stat[k]
                         hidden_fields |= set(list(d.keys()))
-                    pbar.set_description(f"key={key} url={url}")
                     pbar.update()
 
             if not users:
@@ -305,8 +300,7 @@ class Statistic(BaseModule):
                     else:
                         problem.pop("partial", None)
 
-            if pbar is not None:
-                pbar.close()
+            pbar.close()
 
         has_penalty = False
         for row in result.values():

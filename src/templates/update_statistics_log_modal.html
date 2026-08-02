@@ -1,0 +1,22 @@
+<div class="modal" id="update-statistics-log">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="live-log-viewer-heading modal-header">
+        <span>Log</span>
+        <span class="text-muted" aria-hidden="true">·</span>
+        <span id="update-statistics-event-type" class="live-log-event-type text-muted hidden"></span>
+        <span id="update-statistics-event-type-separator" class="text-muted hidden" aria-hidden="true">·</span>
+        <strong>
+          <a href="{% if other_contests %}{% url 'ranking:standings_by_id' contest.pk %}{% else %}{{ contest.standings_url|default:contest.url }}{% endif %}">{{ contest.title }}</a>
+        </strong>
+        <span id="update-statistics-status" class="label label-default hidden"></span>
+        {% if show_update_button %}
+        <button id="modal-update-statistics-btn" class="btn btn-primary btn-sm pull-right" onclick="update_statistics(this); return false">
+          {% icon_to 'update' default='Update statistics' %}
+        </button>
+        {% endif %}
+      </div>
+      {% include "live_log_viewer.html" with output_id="update-statistics-log-output" progress_id="update-statistics-progress-list" %}
+    </div>
+  </div>
+</div>

@@ -1648,8 +1648,6 @@ $(() => {
     const data = JSON.parse(e.data);
     if (data.type == "standings") {
       update_standings(data);
-    } else if (data.type == "update_statistics") {
-      update_statistics_log(data);
     }
     n_messages += 1;
   };
@@ -1673,97 +1671,6 @@ $(() => {
     }
   };
 });
-
-/*
- * Update statistics
- */
-
-function replace_update_statistics_btn() {
-  $("#update_statistics_btn").addClass("hidden");
-  $("#show_update_statistics_log_btn").removeClass("hidden");
-}
-
-function show_update_statistics_log() {
-  replace_update_statistics_btn();
-  var log_modal = $("#update-statistics-log");
-  log_modal.modal("show");
-  $("#show_update_statistics_log_btn i").removeClass("fa-fade");
-}
-
-function spin_update_statistics_modal_btn(value) {
-  var modal_btn = $("#modal-update-statistics-btn");
-  if (value) {
-    modal_btn.attr("disabled", true);
-    modal_btn.find("i").addClass("fa-spin");
-  } else {
-    modal_btn.attr("disabled", false);
-    modal_btn.find("i").removeClass("fa-spin");
-  }
-}
-
-function update_statistics(e) {
-  show_update_statistics_log();
-
-  var icon = $(e).find("i");
-  icon.addClass("fa-spin");
-  var btn = icon.closest("a");
-  btn.attr("disabled", "disabled");
-  $.ajax({
-    type: "POST",
-    url: change_url,
-    data: {
-      pk: coder_pk,
-      name: "update-statistics",
-      id: contest_pk,
-    },
-    error: log_ajax_error_callback,
-    success: () => {
-      notify("Queued update", "success");
-    },
-    complete: (jqXHR, textStatus) => {
-      icon.removeClass("fa-spin");
-      btn.attr("disabled", false);
-      spin_update_statistics_modal_btn(textStatus == "success");
-    },
-  });
-  event.preventDefault();
-}
-
-function update_statistics_log(data) {
-  replace_update_statistics_btn();
-
-  var log_output = $("#update-statistics-log-output");
-  if (data.line) {
-    var line = $("<span>").text(data.line + "\n");
-    log_output.prepend(line);
-    $("#show_update_statistics_log_btn i").addClass("fa-fade");
-  }
-  if (data.progress !== undefined) {
-    var progress_bar = $("#update-statistics-progress-bar");
-    progress_bar.css("width", data.progress * 100 + "%");
-    progress_bar.removeClass("progress-bar-striped");
-    progress_bar.removeClass("active");
-    var progress_text = $("#update-statistics-progress-text");
-    progress_text.text(data.desc);
-    $("#update-statistics-progress").removeClass("hidden");
-  } else if (data.raw !== undefined) {
-    var progress_bar = $("#update-statistics-progress-bar");
-    progress_bar.css("width", "100%");
-    progress_bar.addClass("progress-bar-striped");
-    progress_bar.addClass("active");
-    var progress_text = $("#update-statistics-progress-text");
-    progress_text.text(data.raw);
-    $("#update-statistics-progress").removeClass("hidden");
-  }
-
-  var is_done = data.done !== undefined;
-  if (is_done) {
-    var line = $('<div class="horizontal-line"></div>');
-    log_output.prepend(line);
-    $("#update-statistics-progress").addClass("hidden");
-  }
-  spin_update_statistics_modal_btn(!is_done);
-}
 
 function open_submissions(btn) {
   var url = $(btn).data("url");

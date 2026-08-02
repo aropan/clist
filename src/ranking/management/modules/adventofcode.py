@@ -10,10 +10,10 @@ from urllib.parse import urljoin
 
 import arrow
 import django.utils.timezone
-import tqdm
 
 from clist.models import Contest
 from clist.templatetags.extras import get_item, is_hidden
+from logify import live as tqdm
 from ranking.management.modules import conf
 from ranking.management.modules.common import REQ, BaseModule
 from ranking.management.modules.excepts import ExceptionParseStandings

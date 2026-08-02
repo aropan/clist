@@ -7,7 +7,6 @@ from datetime import timedelta
 from logging import getLogger
 from pprint import pprint  # noqa
 
-import tqdm
 from django.core.management.base import BaseCommand
 from django.db.models import Q
 from django.utils.timezone import now
@@ -16,6 +15,8 @@ from sql_util.utils import SubqueryCount
 from clist.models import Contest, Resource
 from clist.templatetags.extras import as_number, get_item, get_problem_key, get_problem_short, is_solved
 from clist.utils import update_problems
+from logify import live as tqdm
+from logify.live import register_live_logger
 from logify.models import EventLog, EventStatus
 from utils.attrdict import AttrDict
 from utils.json_field import JSONF
@@ -169,6 +170,7 @@ class Command(BaseCommand):
         global args
         self.stdout.write(str(options))
         args = AttrDict(options)
+        register_live_logger(self.logger)
 
         resources = Resource.objects.all()
         if args.resources:

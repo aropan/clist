@@ -14,12 +14,12 @@ from functools import lru_cache, partial
 from urllib.parse import urljoin
 
 import arrow
-import tqdm
 import yaml
 from django.db import transaction
 from ratelimiter import RateLimiter
 
 from clist.templatetags.extras import as_number, get_item, is_improved_solution, is_solved
+from logify import live as tqdm
 from ranking.management.modules.common import LOG, REQ, BaseModule
 from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse, ProxyLimitReached
 from ranking.utils import clear_problems_fields, create_upsolving_statistic

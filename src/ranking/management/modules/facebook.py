@@ -11,9 +11,10 @@ from time import sleep
 
 import pytz
 import requests
-import tqdm
 from django.utils.timezone import now
 from ratelimiter import RateLimiter
+
+from logify import live as tqdm
 
 # from ranking.management.modules import conf
 from ranking.management.modules.common import LOG, REQ, BaseModule

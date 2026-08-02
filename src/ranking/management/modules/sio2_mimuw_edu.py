@@ -6,6 +6,7 @@ import re
 from urllib.parse import urljoin
 
 from clist.templatetags.extras import as_number
+from logify.live import tqdm
 from ranking.management.modules.common import REQ, BaseModule, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings, InitModuleException
 
@@ -65,6 +66,7 @@ class Statistic(BaseModule):
         full_scores = set()
 
         page = 1
+        progress = tqdm(total=1, desc="standings pages", unit="page")
         while page is not None:
             content = REQ.get(self.standings_url + f"?page={page}")
 
@@ -74,6 +76,8 @@ class Statistic(BaseModule):
                 p = int(match.group("page"))
                 if p > page and (next_page is None or p < next_page):
                     next_page = p
+            if next_page is not None:
+                progress.total += 1
             page = next_page
 
             table = parsed_table.ParsedTable(
@@ -104,6 +108,8 @@ class Statistic(BaseModule):
                 if not problems:
                     continue
                 result[row["member"]] = row
+            progress.update()
+        progress.close()
 
         last = None
         for idx, row in enumerate(sorted(result.values(), key=lambda r: -r["solving"]), start=1):

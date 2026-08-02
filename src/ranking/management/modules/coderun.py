@@ -3,6 +3,7 @@
 from urllib.parse import urljoin
 
 from clist.templatetags.extras import get_item, normalize_field
+from logify.live import tqdm
 from ranking.management.modules.common import REQ, BaseModule
 from ranking.management.modules.excepts import ExceptionParseStandings
 from utils.timetools import now, parse_datetime
@@ -38,6 +39,7 @@ class Statistic(BaseModule):
             total_pages = None
             problems = []
             problems_scores = get_item(self, "info.parse.problemScores")
+            progress = tqdm(total=1, desc="problem pages", unit="page")
             while total_pages is None or page <= total_pages:
                 url = api_problem_url.format(page=page, page_size=page_size)
                 data = REQ.get(url, return_json=True)
@@ -86,7 +88,10 @@ class Statistic(BaseModule):
 
                     problems.append(problem)
                 total_pages = (data["total"] - 1) // page_size + 1
+                progress.total = max(total_pages, page)
+                progress.update()
                 page += 1
+            progress.close()
             return problems
 
         def get_result():
@@ -97,6 +102,7 @@ class Statistic(BaseModule):
             page = 1
             page_size = 100
             total_pages = None
+            progress = tqdm(total=1, desc="standings pages", unit="page")
             while total_pages is None or page <= total_pages:
                 url = api_standings_url.format(page=page, page_size=page_size)
                 data = REQ.get(url, return_json=True)
@@ -116,7 +122,10 @@ class Statistic(BaseModule):
                     r["solved"] = {"solving": solved}
 
                 total_pages = (data["totalSize"] - 1) // page_size + 1
+                progress.total = max(total_pages, page)
+                progress.update()
                 page += 1
+            progress.close()
             return result
 
         problems_infos = get_problems()

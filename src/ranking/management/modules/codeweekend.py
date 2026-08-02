@@ -8,6 +8,7 @@ from urllib.parse import urljoin
 from django.utils import timezone
 
 from clist.templatetags.extras import as_number, get_item, slug
+from logify.live import tqdm
 from ranking.management.modules.common import REQ, BaseModule
 from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse
 
@@ -21,7 +22,8 @@ class Statistic(BaseModule):
         divisions_problems = OrderedDict()
         divisions_order = []
         result = {}
-        for division in ("live", "day2", "day1", "upsolving"):
+        divisions = ("live", "day2", "day1", "upsolving")
+        for division in tqdm(divisions, desc="standings divisions", unit="division"):
             api_url = api_urls.get(division)
             if not api_url:
                 continue

@@ -6,8 +6,7 @@ import re
 from collections import OrderedDict
 from datetime import timedelta
 
-import tqdm
-
+from logify import live as tqdm
 from ranking.management.modules.common import DOT, LOG, REQ, SPACE, BaseModule, parsed_table
 from ranking.management.modules.common.locator import Locator
 from ranking.management.modules.excepts import ExceptionParseStandings

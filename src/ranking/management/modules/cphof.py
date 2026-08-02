@@ -11,10 +11,10 @@ from urllib.parse import unquote, urljoin, urlparse
 from django.conf import settings
 from django.db import transaction
 from django.db.models import Q
-from tqdm import tqdm
 
 from clist.models import Contest, Resource
 from clist.templatetags.extras import as_number
+from logify.live import tqdm
 from notification.models import NotificationMessage
 from ranking.management.modules.common import LOG, REQ, BaseModule, parsed_table
 from ranking.management.modules.excepts import ExceptionParseAccounts, ExceptionParseStandings, FailOnGetResponse

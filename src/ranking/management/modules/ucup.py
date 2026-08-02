@@ -11,6 +11,7 @@ import yaml
 from django.db.models import Q
 
 from clist.templatetags.extras import as_number, get_item, is_yes, slug
+from logify.live import tqdm
 from ranking.management.modules.common import LOG, REQ, BaseModule, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse
 from utils.strings import split_team_name_and_members, string_iou, strip_tags
@@ -55,6 +56,7 @@ class Statistic(BaseModule):
         prefix = contest.standings_url[: match.start()]
         suffix = contest.standings_url[match.end() :]
         contest_id = int(match.group())
+        LOG.info("Searching adjacent standings pages: candidates=%d", 29)
         for delta in range(1, 30):
             url = f"{prefix}{contest_id + delta}{suffix}"
             page, code = REQ.get(url, return_code=True, ignore_codes={403, 404})
@@ -173,7 +175,13 @@ class Statistic(BaseModule):
                     problems_short[idx] = chr(ord("A") + idx)
             problems_id = variables.pop("problems")
             problems_data = zip(problems_short, problems_id)
-            for problem_info in executor.map(fetch_problem, problems_data):
+            fetched_problems = executor.map(fetch_problem, problems_data)
+            for problem_info in tqdm(
+                fetched_problems,
+                total=len(problems_id),
+                desc="problem details",
+                unit="problem",
+            ):
                 problems_infos.append(problem_info)
 
         result = {}

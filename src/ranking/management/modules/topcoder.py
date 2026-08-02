@@ -12,10 +12,10 @@ from math import isclose
 from urllib.parse import parse_qs, quote, urljoin
 
 import dateutil.parser
-import tqdm
 from lxml import etree
 
 from clist.templatetags.extras import as_number, asfloat, toint
+from logify import live as tqdm
 from ranking.management.modules import conf
 from ranking.management.modules.common import LOG, REQ, BaseModule, parsed_table, save_proxy
 from ranking.management.modules.excepts import ExceptionParseAccounts, ExceptionParseStandings, InitModuleException

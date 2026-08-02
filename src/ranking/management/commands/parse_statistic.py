@@ -5,19 +5,21 @@ import logging
 import operator
 import os
 import re
+import sys
+import threading
+import traceback
 from collections import OrderedDict, defaultdict
+from contextlib import contextmanager
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from functools import cache
 from html import unescape
 from math import isclose
 from random import shuffle
+from time import monotonic
 
 import arrow
 import django_rq
-import humanize
-import tqdm as _tqdm
-from asgiref.sync import async_to_sync
-from channels.layers import get_channel_layer
 from django.conf import settings
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
@@ -25,6 +27,7 @@ from django.db import transaction
 from django.db.models import Exists, F, Max, OuterRef, Prefetch, Q
 from django.utils.timezone import now as timezone_now
 from django_print_sql import print_sql_decorator
+from rq import get_current_job
 
 from clist.models import Contest, Problem, Resource
 from clist.templatetags.extras import (
@@ -44,12 +47,14 @@ from clist.templatetags.extras import (
     time_in_seconds_format,
 )
 from clist.utils import create_contest_problem_discussions, update_problems, update_writers
+from logify.live import LiveLogSession, tqdm
 from logify.models import EventLog, EventStatus
+from logify.rq import fail_live_event_logs, interrupt_live_event_logs, interrupt_stale_event_logs
 from notification.models import NotificationMessage, Subscription
 from notification.utils import compose_message_by_problems, compose_message_by_submissions, send_messages
 from pyclist.decorators import analyze_db_queries
 from ranking.management.commands.parse_accounts_infos import rename_account
-from ranking.management.modules.common import REQ, UNCHANGED
+from ranking.management.modules.common import LOG, REQ, UNCHANGED
 from ranking.management.modules.excepts import (
     ExceptionParseStandings,
     FailOnGetResponse,
@@ -65,113 +70,87 @@ from utils.attrdict import AttrDict
 from utils.countrier import Countrier
 from utils.logger import suppress_db_logging_context
 from utils.mathutils import min_with_none
-from utils.rq import get_resource_job_id
+from utils.rq import get_resource_job_id, is_job_active
 from utils.timetools import parse_datetime
 from utils.tools import sum_data, sum_lists
 from utils.traceback_with_vars import colored_format_exc
 
 EPS = 1e-9
+LONG_OPERATION_WARNING_SECONDS = 30 * 60
+SAFE_STANDINGS_ACTIONS = frozenset(("delete", "getRatingChanges", "skip"))
 
 
-class ChannelLayerHandler(logging.Handler):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.channel_layer = get_channel_layer()
-        self.group_name = None
-        self.capacity = 0
-        self.states = None
-
-    def emit(self, record):
-        if not self.group_name or not self.capacity:
-            return
-        log_entry = self.format(record)
-        self.send_message(log_entry)
-
-    def send_done(self, done=False):
-        if not self.group_name:
-            return
-        self.send_message("DONE" if done else "FAILED", done=done)
-        self.group_name = None
-
-    def send_message(self, message, **kwargs):
-        context = {"type": "update_statistics", "line": message}
-        context.update(kwargs)
-        async_to_sync(self.channel_layer.group_send)(self.group_name, context)
-        self.decrease_capacity()
-
-    def send_progress(self, progress_bar: _tqdm.tqdm):
-        if not self.group_name or not self.capacity:
-            return
-        if not progress_bar.n or not progress_bar.total:
-            context = {
-                "type": "update_statistics",
-                "raw": str(progress_bar),
-            }
-        else:
-            n = min(progress_bar.n, progress_bar.total)
-            total = progress_bar.total
-            desc = progress_bar.desc
-            state = (n, total)
-
-            if desc not in self.states:
-                if n < total:
-                    self.states[desc] = state
-                return
-            if self.states[desc] == state:
-                return
-
-            if n == total:
-                self.states.pop(desc)
-            else:
-                self.states[desc] = state
-
-            rate = progress_bar.format_dict["rate"]
-            estimate_time = (total - n) / rate if rate else None
-            estimate_time_str = f"{humanize.naturaldelta(timedelta(seconds=estimate_time))}" if estimate_time else "…"
-            percentage = n / total
-            context = {
-                "type": "update_statistics",
-                "progress": percentage,
-                "desc": f"{desc} ({percentage * 100:.2f}%, {estimate_time_str})",
-            }
-        async_to_sync(self.channel_layer.group_send)(self.group_name, context)
-        self.decrease_capacity()
-
-    def decrease_capacity(self):
-        self.capacity -= 1
-        if self.capacity == 0:
-            context = {"type": "update_statistics", "line": "REACH_LOGGING_LIMIT"}
-            async_to_sync(self.channel_layer.group_send)(self.group_name, context)
-
-    def set_contest(self, contest):
-        self.group_name = contest.channel_update_statistics_group_name
-        self.capacity = settings.CHANNEL_LAYERS_CAPACITY - 10
-        self.states = {}
-
-    def __del__(self):
-        self.send_done()
+class ContestUpdatedDuringFetch(Exception):
+    pass
 
 
-class tqdm(_tqdm.tqdm):
-    _channel_layer_handler = None
+@dataclass
+class ParseStatisticResult:
+    count: int = 0
+    total: int = 0
+    status: EventStatus = EventStatus.COMPLETED
+    message: str | None = None
 
-    def __init__(self, *args, **kwargs):
-        kwargs["mininterval"] = 0.2
-        super().__init__(*args, **kwargs)
 
-    def __iter__(self):
-        for obj in super().__iter__():
-            yield obj
-            self._channel_layer_handler.send_progress(self)
-        self._channel_layer_handler.send_progress(self)
+@contextmanager
+def log_long_operation(logger, operation, warning_seconds=LONG_OPERATION_WARNING_SECONDS, **context):
+    context_string = ", ".join(f"{key}={value}" for key, value in context.items())
+    caller_thread_id = threading.get_ident()
+    started = monotonic()
 
-    def update(self, *args, **kwargs):
-        super().update(*args, **kwargs)
-        self._channel_layer_handler.send_progress(self)
+    def log_warning():
+        frame = sys._current_frames().get(caller_thread_id)
+        stack = "".join(traceback.format_stack(frame)) if frame is not None else "unavailable"
+        logger.warning(
+            f"{operation} is still running after {warning_seconds} seconds: {context_string}\n"
+            f"Caller thread stack:\n{stack}",
+        )
 
-    def close(self, *args, **kwargs):
-        super().close(*args, **kwargs)
-        self._channel_layer_handler.send_progress(self)
+    timer = threading.Timer(warning_seconds, log_warning)
+    timer.daemon = True
+    timer.start()
+    logger.info(f"{operation} started: {context_string}")
+    completed = False
+    try:
+        yield
+        completed = True
+    finally:
+        timer.cancel()
+        if completed:
+            elapsed = monotonic() - started
+            logger.info(
+                f"{operation} finished in {elapsed:.3f} seconds: {context_string}",
+            )
+
+
+def get_standings_log_summary(standings):
+    if not isinstance(standings, dict):
+        return "rows=unknown, problems=unknown, fields=unknown"
+
+    def collection_size(field):
+        value = standings.get(field)
+        if value is None:
+            return 0
+        return len(value) if isinstance(value, (dict, list, set, tuple)) else "unknown"
+
+    summary = [
+        f"rows={collection_size('result')}",
+        f"problems={collection_size('problems')}",
+        f"fields={len(standings)}",
+    ]
+
+    parsed_percentage = standings.get("parsed_percentage")
+    if isinstance(parsed_percentage, (int, float)) and not isinstance(parsed_percentage, bool):
+        summary.append(f"parsed={parsed_percentage:.2f}%")
+
+    action = standings.get("action")
+    if isinstance(action, tuple):
+        action = action[0] if action else None
+    if action is not None:
+        safe_action = action if isinstance(action, str) and action in SAFE_STANDINGS_ACTIONS else "other"
+        summary.append(f"action={safe_action}")
+
+    return ", ".join(summary)
 
 
 def canonize_name(name):
@@ -272,17 +251,8 @@ class Command(BaseCommand):
         allow_delete_statistics=None,
         clear_submissions_info=None,
         split_by_resource=None,
-    ):
-        channel_layer_handler = ChannelLayerHandler()
-        formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s", datefmt="%Y-%b-%d %H:%M:%S")
-        channel_layer_handler.setFormatter(formatter)
-        channel_layer_handler.setLevel(logging.INFO)
-        root_logger = logging.getLogger()
-        root_logger.addHandler(channel_layer_handler)
-
-        tqdm._channel_layer_handler = channel_layer_handler
-        _tqdm.tqdm = tqdm
-
+        live_event_log=None,
+    ) -> ParseStatisticResult | None:
         now = timezone_now()
         stage_delay = timedelta(days=1)
 
@@ -370,9 +340,7 @@ class Command(BaseCommand):
         countrier = Countrier()
 
         has_error = False
-        count = 0
-        total = 0
-        n_contest_progress = 0
+        parse_result = ParseStatisticResult()
         n_account_time_update = 0
         n_statistics_total = 0
         n_statistics_created = 0
@@ -389,39 +357,38 @@ class Command(BaseCommand):
                 job_id = get_resource_job_id("parse_statistics", resource.host)
 
                 job = queue.fetch_job(job_id)
-                if not job or job.is_finished or job.is_failed:
+                if not is_job_active(queue, job_id, job):
+                    job_status = job.get_status() if job else "missing"
+                    error = f"RQ job {job_id} is no longer active (status: {job_status})"
+                    n_interrupted = interrupt_stale_event_logs(job_id, error)
+                    if n_interrupted:
+                        self.logger.warning(f"Interrupted {n_interrupted} stale event logs for job = {job_id}")
                     kwargs = {"resources": [resource.host]}
-                    job = queue.enqueue(call_command, "parse_statistic", **kwargs, job_id=job_id)
+                    job = queue.enqueue(
+                        call_command,
+                        "parse_statistic",
+                        **kwargs,
+                        job_id=job_id,
+                        on_failure=fail_live_event_logs,
+                        on_stopped=interrupt_live_event_logs,
+                    )
                     self.logger.info(f"Added {resource} parse_statistics job to queue: job = {job}")
                 else:
-                    self.logger.info(f"{resource} parse_statistics job already in queue: job = {job}")
+                    self.logger.info(f"{resource} parse_statistics job is active: job = {job or job_id}")
             return None
-
-        if len(resources) == 1 and len(contests) > 3:
-            resource_event_log = EventLog.objects.create(
-                name="parse_statistic",
-                related=contests[0].resource,
-                status=EventStatus.IN_PROGRESS,
-            )
-        else:
-            resource_event_log = None
 
         processed_group = set()
         error_counter = defaultdict(int)
         for contest in progress_bar:
             if stop_on_error and has_error:
                 break
-            if resource_event_log:
-                message = f"progress {n_contest_progress} of {len(contests)} ({count} parsed), contest = {contest}"
-                resource_event_log.update_message(message)
-            n_contest_progress += 1
 
-            channel_layer_handler.set_contest(contest)
             resource = contest.resource
             if not hasattr(resource, "module"):
                 self.logger.warning(f"contest = {contest}")
                 self.logger.warning(f"resource = {resource}")
                 self.logger.error("Not found module")
+                parse_result.status = EventStatus.WARNING
                 continue
             if resource.has_upsolving and not with_stats:
                 self.logger.warning(
@@ -429,7 +396,7 @@ class Command(BaseCommand):
                 )
                 continue
 
-            group = contest.info.pop("__parse_statistics_group", None)
+            group = contest.info.get("__parse_statistics_group")
             if group and group in processed_group:
                 self.logger.info(f"Skip contest = {contest} because already processed group = {group}")
                 continue
@@ -438,7 +405,7 @@ class Command(BaseCommand):
             self.logger.info(f"Contest = {contest}")
             progress_bar.set_description(f"contest = {contest}")
             progress_bar.refresh()
-            total += 1
+            parse_result.total += 1
 
             inherit_stage = contest.info.get("_inherit_stage")
             has_stage = hasattr(contest, "stage")
@@ -453,14 +420,27 @@ class Command(BaseCommand):
             if has_stage:
                 self.logger.info(f"update stage = {contest.stage}")
                 stages_ids.append(contest.stage.pk)
-                count += 1
+                parse_result.count += 1
                 continue
 
             parsed = False
             exception_error = None
             user_info_has_rating = {}
             to_update_socket = contest.is_running() or contest.has_hidden_results or force_socket
-            event_log = EventLog.objects.create(name="parse_statistic", related=contest, status=EventStatus.IN_PROGRESS)
+            is_live_contest_event_log = (
+                live_event_log is not None
+                and live_event_log.related_is(Contest)
+                and live_event_log.object_id == contest.pk
+            )
+            event_log = (
+                live_event_log
+                if is_live_contest_event_log
+                else EventLog.objects.create(
+                    name="parse_statistic",
+                    related=contest,
+                    status=EventStatus.IN_PROGRESS,
+                )
+            )
             contest_log_counter = defaultdict(int)
 
             try:
@@ -493,182 +473,204 @@ class Command(BaseCommand):
                     subscription_first_ac = subscriptions.filter(with_first_accepted=True).exists()
 
                 plugin = resource.plugin.Statistic(contest=contest)
+                parsed_time_before_fetch = contest.parsed_time
 
-                with transaction.atomic():
-                    _ = Contest.objects.select_for_update().get(pk=contest.pk)
+                statistics_users = copy.deepcopy(specific_users)
+                if resource.has_standings_renamed_account and specific_users:
+                    renamings = AccountRenaming.objects.filter(resource=resource, old_key__in=specific_users)
+                    renamings = renamings.values_list("new_key", flat=True)
+                    statistics_users.extend(renamings)
 
-                    statistics_users = copy.deepcopy(specific_users)
-                    if resource.has_standings_renamed_account and specific_users:
-                        renamings = AccountRenaming.objects.filter(resource=resource, old_key__in=specific_users)
-                        renamings = renamings.values_list("new_key", flat=True)
-                        statistics_users.extend(renamings)
+                statistics_by_key = {}
+                more_statistics_by_key = {}
+                statistics_to_delete = set()
+                has_statistics = False
+                n_skip_on_update = 0
+                if not no_update_results:
+                    statistics = Statistics.objects.filter(contest=contest).select_related("account")
+                    if specific_users:
+                        statistics = statistics.filter(account__key__in=statistics_users)
+                    for s in statistics.iterator():
+                        addition = s.addition or {}
+                        if addition.get("_skip_on_update"):
+                            n_skip_on_update += 1
+                            contest_log_counter["skip_on_update"] += 1
+                            continue
+                        if with_stats:
+                            statistics_by_key[s.account.key] = addition
+                            more_statistics_by_key[s.account.key] = {
+                                "pk": s.pk,
+                                "place": s.place,
+                                "score": s.solving,
+                                "_no_update_n_contests": s.skip_in_stats,
+                            }
+                            has_statistics = True
+                        statistics_to_delete.add(s.pk)
+                if clear_submissions_info:
+                    contest.submissions_info = {}
+                standings_statistics = copy.deepcopy(statistics_by_key)
+                for row in list(standings_statistics.values()):
+                    if old_key := row.get("_old_key"):
+                        standings_statistics[old_key] = row
 
-                    with REQ:
-                        statistics_by_key = {}
-                        more_statistics_by_key = {}
-                        statistics_to_delete = set()
-                        has_statistics = False
-                        n_skip_on_update = 0
-                        if not no_update_results:
-                            statistics = Statistics.objects.filter(contest=contest).select_related("account")
-                            if specific_users:
-                                statistics = statistics.filter(account__key__in=statistics_users)
-                            for s in statistics.iterator():
-                                addition = s.addition or {}
-                                if addition.get("_skip_on_update"):
-                                    n_skip_on_update += 1
-                                    contest_log_counter["skip_on_update"] += 1
-                                    continue
-                                if with_stats:
-                                    statistics_by_key[s.account.key] = addition
-                                    more_statistics_by_key[s.account.key] = {
-                                        "pk": s.pk,
-                                        "place": s.place,
-                                        "score": s.solving,
-                                        "_no_update_n_contests": s.skip_in_stats,
-                                    }
-                                    has_statistics = True
-                                statistics_to_delete.add(s.pk)
-                        if clear_submissions_info:
-                            contest.submissions_info = {}
-                            contest.save(update_fields=["submissions_info"])
-                        standings_statistics = copy.deepcopy(statistics_by_key)
-                        for row in list(standings_statistics.values()):
-                            if old_key := row.get("_old_key"):
-                                standings_statistics[old_key] = row
-                        standings = plugin.get_standings(
-                            users=copy.deepcopy(specific_users),
-                            statistics=standings_statistics,
-                            more_statistics=copy.deepcopy(more_statistics_by_key),
+                operation_context = {
+                    "contest_id": contest.pk,
+                    "resource": resource.host,
+                    "job_id": event_log.job_id,
+                }
+                with log_long_operation(self.logger, "Get standings", **operation_context), REQ:
+                    standings = plugin.get_standings(
+                        users=copy.deepcopy(specific_users),
+                        statistics=standings_statistics,
+                        more_statistics=copy.deepcopy(more_statistics_by_key),
+                    )
+                self.logger.info(
+                    f"Standings summary: {get_standings_log_summary(standings)}, "
+                    f"contest_id={contest.pk}, resource={resource.host}"
+                )
+
+                with log_long_operation(self.logger, "Apply standings", **operation_context), transaction.atomic(), REQ:
+                    lock_started = monotonic()
+                    self.logger.info(f"Contest lock waiting: contest_id={contest.pk}")
+                    locked_contest = Contest.objects.select_for_update().get(pk=contest.pk)
+                    self.logger.info(
+                        f"Contest lock acquired in {monotonic() - lock_started:.3f} seconds: contest_id={contest.pk}"
+                    )
+                    if locked_contest.parsed_time != parsed_time_before_fetch:
+                        raise ContestUpdatedDuringFetch(
+                            f"Contest {contest.pk} was parsed by another process while standings were fetched "
+                            f"(parsed_time changed from {parsed_time_before_fetch} to {locked_contest.parsed_time})"
                         )
-                        has_standings_result = bool(standings.get("result"))
+                    contest = locked_contest
 
-                        if standings_filters := get_item(contest, "info.standings.filters"):
-                            result = standings.setdefault("result", {})
-                            changed = False
-                            for member in list(result.keys()):
-                                row = result[member]
-                                for filter_ in standings_filters:
-                                    if (value := row.get(filter_["field"])) and not re.search(filter_["regex"], value):
-                                        result.pop(member)
-                                        changed = True
-                                        break
-                            if changed:
-                                rows = [r for r in result.values() if r.get("place")]
-                                rows = sorted(rows, key=lambda r: r["place"])
-                                last_place, last_rank = None, None
-                                for rank, row in enumerate(rows, start=1):
-                                    if last_place != row["place"]:
-                                        last_place, last_rank = row["place"], rank
-                                    row["place"] = last_rank
+                    has_standings_result = bool(standings.get("result"))
 
-                        if standings_modifiers := get_item(contest, "info.standings.modifiers"):
-                            result = standings.setdefault("result", {})
-                            for row in result.values():
-                                for modifier in standings_modifiers:
-                                    if (value := row.get(modifier["field"])) and (
-                                        match := re.search(modifier["regex"], value)
-                                    ):
-                                        row[modifier["field"]] = match.group("value")
+                    if standings_filters := get_item(contest, "info.standings.filters"):
+                        result = standings.setdefault("result", {})
+                        changed = False
+                        for member in list(result.keys()):
+                            row = result[member]
+                            for filter_ in standings_filters:
+                                if (value := row.get(filter_["field"])) and not re.search(filter_["regex"], value):
+                                    result.pop(member)
+                                    changed = True
+                                    break
+                        if changed:
+                            rows = [r for r in result.values() if r.get("place")]
+                            rows = sorted(rows, key=lambda r: r["place"])
+                            last_place, last_rank = None, None
+                            for rank, row in enumerate(rows, start=1):
+                                if last_place != row["place"]:
+                                    last_place, last_rank = row["place"], rank
+                                row["place"] = last_rank
 
-                        if resource.has_upsolving:
-                            result = standings.setdefault("result", {})
-                            for member, row in statistics_by_key.items():
-                                result_row = result.get(member)
-                                stat = more_statistics_by_key[member]
-                                has_skip_stats = row.get("_no_update_n_contests") and stat["_no_update_n_contests"]
-                                if result_row is None:
-                                    has_problem_result = any("result" in p for p in row.get("problems", {}).values())
-                                    if has_problem_result:
-                                        continue
-                                    has_rating_field = any(field in row for field in Resource.ALL_RATING_FIELDS)
-                                    if has_rating_field or has_skip_stats:
-                                        statistics_to_delete.remove(stat["pk"])
-                                        contest_log_counter["skip_no_update"] += 1
-                                        continue
-                                    row = copy.deepcopy(row)
-                                    row["member"] = member
-                                    row["_no_update_n_contests"] = True
-                                    result[member] = row
-                                elif (
-                                    result_row.get("_no_update_n_contests")
-                                    and canonize(result_row.get("problems")) == canonize(row.get("problems"))
-                                    and ("solving" not in result_row or isclose(result_row["solving"], stat["score"]))
-                                    and ("place" not in result_row or str(result_row["place"]) == str(stat["place"]))
-                                    and has_skip_stats
+                    if standings_modifiers := get_item(contest, "info.standings.modifiers"):
+                        result = standings.setdefault("result", {})
+                        for row in result.values():
+                            for modifier in standings_modifiers:
+                                if (value := row.get(modifier["field"])) and (
+                                    match := re.search(modifier["regex"], value)
                                 ):
+                                    row[modifier["field"]] = match.group("value")
+
+                    if resource.has_upsolving:
+                        result = standings.setdefault("result", {})
+                        for member, row in statistics_by_key.items():
+                            result_row = result.get(member)
+                            stat = more_statistics_by_key[member]
+                            has_skip_stats = row.get("_no_update_n_contests") and stat["_no_update_n_contests"]
+                            if result_row is None:
+                                has_problem_result = any("result" in p for p in row.get("problems", {}).values())
+                                if has_problem_result:
+                                    continue
+                                has_rating_field = any(field in row for field in Resource.ALL_RATING_FIELDS)
+                                if has_rating_field or has_skip_stats:
                                     statistics_to_delete.remove(stat["pk"])
                                     contest_log_counter["skip_no_update"] += 1
-                                    result.pop(member)
-
-                        keep_results = standings.pop("keep_results", False)
-                        skip_instead_update = standings.pop("keep_results_to_skip", False)
-                        parsed_percentage = standings.pop("parsed_percentage", None)
-                        if keep_results or skip_instead_update:
-                            reset_place = parsed_percentage and not contest.parsed_percentage
-                            reset_place_ids = set()
-                            result = standings.setdefault("result", {})
-                            for member, row in statistics_by_key.items():
-                                if member in result:
                                     continue
-                                more_stat = more_statistics_by_key[member]
-                                pk = more_stat["pk"]
-                                if pk in statistics_to_delete:
-                                    statistics_to_delete.remove(pk)
-                                    row = copy.deepcopy(row)
-                                    row["member"] = member
-                                    if skip_instead_update:
-                                        if more_stat["place"]:
-                                            row["solving"] = more_stat["score"]
-                                            row["_last_place"] = more_stat["place"]
-                                            row["place"] = None
-                                            more_stat["place"] = None
-                                        row["_no_update_n_contests"] = True
-                                        contest_log_counter["skip_instead_update"] += 1
-                                    else:
-                                        row["_skip_update"] = True
-                                        contest_log_counter["skip_update"] += 1
-                                    result[member] = row
-                                    if reset_place:
-                                        row.pop("place", None)
-                                        reset_place_ids.add(pk)
-                            if reset_place_ids:
-                                Statistics.objects.filter(pk__in=reset_place_ids).update(place=None, place_as_int=None)
+                                row = copy.deepcopy(row)
+                                row["member"] = member
+                                row["_no_update_n_contests"] = True
+                                result[member] = row
+                            elif (
+                                result_row.get("_no_update_n_contests")
+                                and canonize(result_row.get("problems")) == canonize(row.get("problems"))
+                                and ("solving" not in result_row or isclose(result_row["solving"], stat["score"]))
+                                and ("place" not in result_row or str(result_row["place"]) == str(stat["place"]))
+                                and has_skip_stats
+                            ):
+                                statistics_to_delete.remove(stat["pk"])
+                                contest_log_counter["skip_no_update"] += 1
+                                result.pop(member)
 
-                        if get_item(resource, "info.standings.keep_rating_fields"):
-                            result = standings.setdefault("result", {})
-                            for member, row in statistics_by_key.items():
-                                rating_data = {f: row[f] for f in Resource.ALL_RATING_FIELDS if f in row}
-                                if not rating_data:
-                                    continue
-                                result_row = result.setdefault(member, {"member": member})
-                                result_row.update(rating_data)
+                    keep_results = standings.pop("keep_results", False)
+                    skip_instead_update = standings.pop("keep_results_to_skip", False)
+                    parsed_percentage = standings.pop("parsed_percentage", None)
+                    if keep_results or skip_instead_update:
+                        reset_place = parsed_percentage and not contest.parsed_percentage
+                        reset_place_ids = set()
+                        result = standings.setdefault("result", {})
+                        for member, row in statistics_by_key.items():
+                            if member in result:
+                                continue
+                            more_stat = more_statistics_by_key[member]
+                            pk = more_stat["pk"]
+                            if pk in statistics_to_delete:
+                                statistics_to_delete.remove(pk)
+                                row = copy.deepcopy(row)
+                                row["member"] = member
+                                if skip_instead_update:
+                                    if more_stat["place"]:
+                                        row["solving"] = more_stat["score"]
+                                        row["_last_place"] = more_stat["place"]
+                                        row["place"] = None
+                                        more_stat["place"] = None
+                                    row["_no_update_n_contests"] = True
+                                    contest_log_counter["skip_instead_update"] += 1
+                                else:
+                                    row["_skip_update"] = True
+                                    contest_log_counter["skip_update"] += 1
+                                result[member] = row
+                                if reset_place:
+                                    row.pop("place", None)
+                                    reset_place_ids.add(pk)
+                        if reset_place_ids:
+                            Statistics.objects.filter(pk__in=reset_place_ids).update(place=None, place_as_int=None)
 
-                        if get_item(resource, "info.standings.skip_not_solving"):
-                            result = standings.setdefault("result", {})
-                            for member in list(result):
-                                row = result[member]
-                                if not row.get("solving"):
-                                    contest_log_counter["skip_not_solving"] += 1
-                                    result.pop(member)
+                    if get_item(resource, "info.standings.keep_rating_fields"):
+                        result = standings.setdefault("result", {})
+                        for member, row in statistics_by_key.items():
+                            rating_data = {f: row[f] for f in Resource.ALL_RATING_FIELDS if f in row}
+                            if not rating_data:
+                                continue
+                            result_row = result.setdefault(member, {"member": member})
+                            result_row.update(rating_data)
 
-                        if get_item(resource, "info.standings.skip_country"):
-                            result = standings.setdefault("result", {})
-                            for row in result.values():
-                                if "country" in row:
-                                    row["__country"] = row.pop("country")
-                                    contest_log_counter["skip_country"] += 1
+                    if get_item(resource, "info.standings.skip_not_solving"):
+                        result = standings.setdefault("result", {})
+                        for member in list(result):
+                            row = result[member]
+                            if not row.get("solving"):
+                                contest_log_counter["skip_not_solving"] += 1
+                                result.pop(member)
 
-                        if get_item(resource, "info.standings.skip_rating"):
-                            result = standings.setdefault("result", {})
-                            for row in result.values():
-                                for field in Resource.ALL_RATING_FIELDS:
-                                    if field in row:
-                                        row[f"__{field}"] = row.pop(field)
-                                        contest_log_counter["skip_rating"] += 1
+                    if get_item(resource, "info.standings.skip_country"):
+                        result = standings.setdefault("result", {})
+                        for row in result.values():
+                            if "country" in row:
+                                row["__country"] = row.pop("country")
+                                contest_log_counter["skip_country"] += 1
 
-                        for key, more_stat in more_statistics_by_key.items():
-                            statistics_by_key[key].update(more_stat)
+                    if get_item(resource, "info.standings.skip_rating"):
+                        result = standings.setdefault("result", {})
+                        for row in result.values():
+                            for field in Resource.ALL_RATING_FIELDS:
+                                if field in row:
+                                    row[f"__{field}"] = row.pop(field)
+                                    contest_log_counter["skip_rating"] += 1
+
+                    for key, more_stat in more_statistics_by_key.items():
+                        statistics_by_key[key].update(more_stat)
 
                     update_fields = []
                     for field, attr in (
@@ -769,8 +771,13 @@ class Command(BaseCommand):
                         if standings_problems and not no_update_problems:
                             standings_problems = plugin.merge_dict(standings_problems, contest.info.get("problems"))
                             update_problems(contest, standings_problems, force=force_problems)
-                        count += 1
+                        parse_result.count += 1
                         event_log.update_status(status=EventStatus.CANCELLED, message="no_update_results")
+                        if is_live_contest_event_log:
+                            parse_result.status = EventStatus.CANCELLED
+                            parse_result.message = "no_update_results"
+                        if specific_users and not is_live_contest_event_log:
+                            event_log.delete()
                         continue
 
                     if resource.has_standings_renamed_account:
@@ -2105,11 +2112,12 @@ class Command(BaseCommand):
                             call_command("set_coder_problems", contest=contest.pk)
 
                 if has_standings_result:
-                    count += 1
+                    parse_result.count += 1
                 parsed = has_standings_result
                 event_status = EventStatus.COMPLETED
-            except (ExceptionParseStandings, InitModuleException, ProxyLimitReached) as e:
+            except (ContestUpdatedDuringFetch, ExceptionParseStandings, InitModuleException, ProxyLimitReached) as e:
                 event_status = EventStatus.WARNING
+                parse_result.status = EventStatus.WARNING
                 if with_reparse and isinstance(e, ExceptionParseStandings):
                     contest.statistics_update_done()
                 exception_error = str(e)
@@ -2117,6 +2125,7 @@ class Command(BaseCommand):
                 progress_bar.set_postfix(exception=str(e), cid=str(contest.pk))
             except Exception as e:
                 event_status = EventStatus.FAILED
+                parse_result.status = EventStatus.WARNING
                 if isinstance(e, FailOnGetResponse) and e.code in {403}:
                     event_status = EventStatus.WARNING
                 exception_error = str(e)
@@ -2164,11 +2173,13 @@ class Command(BaseCommand):
             messages = []
             if contest_log_counter:
                 messages += [f"log_counter = {dict(contest_log_counter)}"]
-            event_log.update(status=event_status, message="\n\n".join(messages), error=exception_error)
-            if specific_users:
+            event_message = "\n\n".join(messages)
+            if is_live_contest_event_log:
+                parse_result.message = event_message or None
+            event_log.update(status=event_status, message=event_message, error=exception_error)
+            if specific_users and not is_live_contest_event_log:
                 event_log.delete()
             self.logger.info(f"log_counter = {dict(contest_log_counter)}")
-            channel_layer_handler.send_done(done=parsed)
         if error_counter:
             self.logger.info(f"error_counter = {dict(error_counter)}")
 
@@ -2185,14 +2196,12 @@ class Command(BaseCommand):
                     event_log = EventLog.objects.create(
                         name="parse_statistic", related=stage, status=EventStatus.IN_PROGRESS
                     )
-                    channel_layer_handler.set_contest(stage.contest)
                     stage.contest.statistic_timing = now + stage_delay
                     stage.contest.save(update_fields=["statistic_timing"])
                     update_stage(stage)
-                    channel_layer_handler.send_done(done=True)
                     event_log.update_status(EventStatus.COMPLETED)
                 except Exception as e:
-                    channel_layer_handler.send_done(done=False)
+                    parse_result.status = EventStatus.WARNING
                     event_log.update_status(EventStatus.FAILED, message=str(e))
                     raise e
             return ret
@@ -2204,22 +2213,31 @@ class Command(BaseCommand):
                 else:
                     advanced_update_stage(stage)
 
-        if resource_event_log:
-            resource_event_log.delete()
         progress_bar.close()
 
-        self.logger.info(f"Number of parsed contests: {count} of {total}")
+        summary_message = f"Number of parsed contests: {parse_result.count} of {parse_result.total}"
+        self.logger.info(summary_message)
+        if live_event_log is None or live_event_log.related_is(Resource):
+            parse_result.message = summary_message
         if n_calculated_problem_rating:
-            self.logger.info(f"Number of calculate rating problem: {n_calculated_problem_rating} of {total}")
+            self.logger.info(
+                f"Number of calculate rating problem: {n_calculated_problem_rating} of {parse_result.total}"
+            )
         if n_calculated_rating_prediction:
-            self.logger.info(f"Number of calculate rating prediction: {n_calculated_rating_prediction} of {total}")
+            self.logger.info(
+                f"Number of calculate rating prediction: {n_calculated_rating_prediction} of {parse_result.total}"
+            )
         if n_inherited_medals:
-            self.logger.info(f"Number of inherited medals: {n_inherited_medals} of {total}")
+            self.logger.info(f"Number of inherited medals: {n_inherited_medals} of {parse_result.total}")
         self.logger.info(f"Number of updated account time: {n_account_time_update}")
         self.logger.info(f"Number of created statistics: {n_statistics_created} of {n_statistics_total}")
 
-        root_logger.removeHandler(channel_layer_handler)
-        return count, total
+        if live_event_log is not None:
+            live_event_log.update(status=parse_result.status, message=parse_result.message)
+            if specific_users:
+                live_event_log.delete()
+
+        return parse_result
 
     @print_sql_decorator(count_only=True)
     @analyze_db_queries()
@@ -2265,7 +2283,7 @@ class Command(BaseCommand):
         if args.reparse:
             contests = contests.filter(statistics_update_required=True)
 
-        self.parse_statistic(
+        parse_kwargs = dict(
             contests=contests,
             previous_days=args.days,
             limit=args.limit,
@@ -2300,4 +2318,57 @@ class Command(BaseCommand):
             allow_delete_statistics=args.allow_delete_statistics,
             clear_submissions_info=args.clear_submissions_info,
             split_by_resource=args.split_by_resource,
+        )
+        live_event_log = self._create_live_event_log(args, contests, resources if args.resources else None)
+        if live_event_log is None:
+            self.parse_statistic(**parse_kwargs)
+            return
+
+        with LiveLogSession(live_event_log, self.logger) as live_session:
+            live_session.add_logger(LOG)
+            if live_event_log.status == EventStatus.NONE:
+                live_event_log.update(status=EventStatus.IN_PROGRESS, message="")
+            else:
+                live_event_log.update(status=EventStatus.IN_PROGRESS)
+            live_session.status(EventStatus.IN_PROGRESS)
+            try:
+                parse_result = self.parse_statistic(live_event_log=live_event_log, **parse_kwargs)
+            except BaseException as e:
+                live_event_log.update(status=EventStatus.FAILED, error=str(e))
+                live_session.status(EventStatus.FAILED, str(e))
+                raise
+            else:
+                live_session.status(parse_result.status, parse_result.message)
+
+    def _create_live_event_log(self, args, contests, resources):
+        if args.split_by_resource:
+            return None
+
+        related = None
+        if args.contest_id and "," not in str(args.contest_id):
+            related = contests.filter(pk=args.contest_id).select_related("resource").first()
+        elif resources is not None and len(resources) == 1:
+            related = resources[0]
+        if related is None:
+            return None
+
+        if current_job := get_current_job():
+            event_log = (
+                EventLog.env_objects.filter(
+                    job_id=current_job.id,
+                    name="parse_statistic",
+                    status=EventStatus.NONE,
+                    is_live_stream=True,
+                )
+                .order_by("-created")
+                .first()
+            )
+            if event_log is not None:
+                return event_log
+
+        return EventLog.objects.create(
+            name="parse_statistic",
+            related=related,
+            status=EventStatus.IN_PROGRESS,
+            is_live_stream=True,
         )

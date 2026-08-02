@@ -10,9 +10,9 @@ from datetime import datetime, timedelta
 from threading import Lock
 from time import sleep
 
-import tqdm
 from first import first
 
+from logify import live as tqdm
 from ranking.management.modules import conf
 from ranking.management.modules.common import REQ, BaseModule, parsed_table
 from ranking.management.modules.common.locator import Locator

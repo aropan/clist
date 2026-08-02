@@ -11,6 +11,8 @@ class EventLogAdmin(BaseModelAdmin):
         "id",
         "related_object_link",
         "name",
+        "job_id",
+        "is_live_stream",
         "status",
         "message",
         "error",
@@ -18,8 +20,8 @@ class EventLogAdmin(BaseModelAdmin):
         "elapsed",
         "environment",
     ]
-    list_filter = ["environment", "name", "status", "resource"]
-    search_fields = ["contest__title", "contest__host", "resource__host", "name", "message", "error"]
+    list_filter = ["environment", "name", "status", "is_live_stream", "resource"]
+    search_fields = ["contest__title", "contest__host", "resource__host", "name", "job_id", "message", "error"]
     search_entirely = True
 
     def related_object_link(self, obj):

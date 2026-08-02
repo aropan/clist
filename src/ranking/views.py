@@ -55,6 +55,14 @@ from clist.templatetags.extras import (
 )
 from clist.templatetags.extras import timezone as set_timezone
 from clist.views import get_group_list, get_timeformat, get_timezone
+from logify.access import (
+    can_view_any_live_updates,
+    can_view_live_related,
+    get_active_live_event_logs,
+    get_live_event_log_for_contest,
+    get_live_event_log_for_job,
+    serialize_live_event_log,
+)
 from pyclist.decorators import bookmarked, context_pagination, extra_context_without_pagination, inject_contest
 from pyclist.middleware import RedirectException
 from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse, ProxyLimitReached
@@ -1822,6 +1830,10 @@ def standings(request, contest, other_contests=None, template="standings.html", 
     })
 
     context.update(n_highlight_context)
+    context["can_view_contest_live_log"] = can_view_live_related(request.user, contest)
+    context["show_update_statistics_log"] = context["can_view_contest_live_log"] or has_update_statistics_permission(
+        request.user, contest
+    )
 
     if extra_context is not None:
         context.update(extra_context)
@@ -2612,3 +2624,29 @@ def statistics_logs(request, template="statistics_logs.html"):
         "log_type_options": log_type_options,
     }
     return template, context
+
+
+@login_required
+def live_logs(request):
+    if not can_view_any_live_updates(request.user):
+        return HttpResponseForbidden()
+    return render(request, "live_logs.html")
+
+
+@login_required
+def live_logs_data(request):
+    if not can_view_any_live_updates(request.user):
+        return HttpResponseForbidden()
+    if job_id := request.GET.get("job_id"):
+        event_log = get_live_event_log_for_job(request.user, job_id)
+        event_logs = [event_log] if event_log is not None else []
+    elif "contest_id" in request.GET:
+        contest_id = request.GET.get("contest_id", "")
+        contest = (
+            Contest.objects.select_related("resource").filter(pk=contest_id).first() if contest_id.isdigit() else None
+        )
+        event_log = get_live_event_log_for_contest(request.user, contest) if contest is not None else None
+        event_logs = [event_log] if event_log is not None else []
+    else:
+        event_logs = get_active_live_event_logs(request.user)
+    return JsonResponse({"event_logs": [serialize_live_event_log(event_log) for event_log in event_logs]})

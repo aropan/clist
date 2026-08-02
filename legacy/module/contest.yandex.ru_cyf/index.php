@@ -72,7 +72,8 @@ foreach ($raw_contests as $raw_contest) {
     }
     $ids[$raw_contest['key']] = true;
 
-    $page = curlexec($raw_contest['url']);
+    $contest_url = $raw_contest['url'];
+    $page = curlexec($contest_url);
     preg_match_all('#<div[^>]*class="status__prop"[^>]*>[^<]*<[^>]*>(?P<name>[^<]+)</[^>]*>[^<]*<[^>]*>(?<value>[^<]*)<(?:time[^>]*timestamp[^:]*:(?P<ts>[0-9]+))?#', $page, $ms, PREG_SET_ORDER);
     $values = [];
     foreach ($ms as $m) {
@@ -88,7 +89,7 @@ foreach ($raw_contests as $raw_contest) {
         $INFO['update']['default_fields'],
         [
             'title' => $title,
-            'url' => $raw_contest['url'],
+            'url' => $contest_url,
             'host' => $HOST,
             'rid' => $RID,
             'timezone' => $TIMEZONE,
@@ -97,6 +98,9 @@ foreach ($raw_contests as $raw_contest) {
             'upsolving_url' => get_item($raw_contest, ['upsolving_url']),
         ],
     );
+    if (str_ends_with($contest_url, '/standings')) {
+        $contest['standings_url'] = $contest_url;
+    }
     $contest['has_unlimited_statistics'] = empty($contest['upsolving_key']) ? 'false' : 'true';
 
     foreach (

@@ -52,7 +52,7 @@ DOT = "."
 
 UNCHANGED = "__unchanged__"
 
-LOG = logging.getLogger("ranking.modules")
+LOG = logging.getLogger("ranking.management.modules")
 
 
 class BaseModule(object, metaclass=ABCMeta):

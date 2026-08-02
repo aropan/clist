@@ -7,9 +7,9 @@ from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from copy import deepcopy
 from urllib.parse import unquote
 
-import tqdm
 from dateutil import parser
 
+from logify import live as tqdm
 from ranking.management.modules.common import REQ, BaseModule
 from ranking.management.modules.excepts import ExceptionParseStandings
 

@@ -9,12 +9,11 @@ from django.db.models import Case, Count, F, Q, When, Window
 from django.db.models.functions import Rank
 from django.utils import timezone
 from django_print_sql import print_sql_decorator
-from tqdm import tqdm
 
 from clist.models import Resource
 from clist.templatetags.extras import get_country_code, medal_as_n_medal_fields, place_as_n_place_field
+from logify.live import stream_event_log, tqdm
 from logify.models import EventLog, EventStatus
-from logify.utils import failed_on_exception
 from ranking.models import CountryAccount
 from utils.attrdict import AttrDict
 from utils.json_field import CharJSONF
@@ -82,9 +81,12 @@ class Command(BaseCommand):
         for resource in tqdm(resources, total=len(resources), desc="resources"):
             self.logger.info(f"set country fields for resource = {resource}")
             event_log = EventLog.objects.create(
-                name="set_country_fields", related=resource, status=EventStatus.IN_PROGRESS
+                name="set_country_fields",
+                related=resource,
+                status=EventStatus.IN_PROGRESS,
+                is_live_stream=True,
             )
-            with failed_on_exception(event_log):
+            with stream_event_log(event_log, self.logger):
                 with measure_time("country_accounts", logger=self.logger):
                     qs = resource.account_set.filter(country__isnull=False, account_type=resource.default_account_type)
                     qs = qs.values("country").annotate(count=Count("country"))
@@ -237,6 +239,6 @@ class Command(BaseCommand):
                         rating=None, n_rating_accounts=0, raw_rating=None, resource_rank=None
                     )
 
-            resource.country_rank_update_time = now
-            resource.save(update_fields=["country_rank_update_time"])
-            event_log.update_status(EventStatus.COMPLETED)
+                resource.country_rank_update_time = now
+                resource.save(update_fields=["country_rank_update_time"])
+                event_log.update_status(EventStatus.COMPLETED)

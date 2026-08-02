@@ -17,7 +17,6 @@ from statistics import mean
 from urllib.parse import urljoin
 
 import pytz
-import tqdm
 from django.core.cache import cache
 from django.utils import timezone
 from django.utils.safestring import mark_safe
@@ -26,6 +25,7 @@ from prettytable import PrettyTable
 from ratelimiter import RateLimiter
 
 from clist.templatetags.extras import get_item, normalize_field
+from logify import live as tqdm
 from ranking.management.modules.common import REQ, BaseModule
 from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse, InitModuleException
 from ranking.models import StatisticsLog
@@ -54,11 +54,13 @@ class Statistic(BaseModule):
         place = 0
         hidden_fields = ["timestamp", "last_submitted_at", "advancement_status"]
         fields_types = {"timestamp": ["timestamp"], "last_submitted_at": ["timestamp"]}
+        leaderboard_progress = tqdm.tqdm(total=1, desc="standings pages", unit="page")
         while (not total_pages and page == 0) or (total_pages and page < total_pages):
             page += 1
             url = api_leaderboard_url.format(page=page, round=self.round_name)
             data = REQ.get(url, return_json=True)
             total_pages = data["totalPages"]
+            leaderboard_progress.total = max(total_pages, 1)
             for row in data["leaderboard"]:
                 handle = row.pop("username")
                 r = result.setdefault(handle, {})
@@ -76,6 +78,8 @@ class Statistic(BaseModule):
                         v = parse_datetime(v).timestamp()
                     if k not in r:
                         r[k] = v
+            leaderboard_progress.update()
+        leaderboard_progress.close()
 
         api_games_url = urljoin(self.host, self.API_GAMES_URL)
 

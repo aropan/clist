@@ -3,6 +3,7 @@
 import json
 from collections import OrderedDict
 
+from logify.live import tqdm
 from ranking.management.modules.common import REQ, BaseModule
 
 
@@ -33,6 +34,7 @@ class Statistic(BaseModule):
                     "full_score": 100,
                 }
 
+        progress = tqdm(total=1, desc="standings pages", unit="page")
         while total_pages is None or curr_page < total_pages:
             curr_page += 1
             url = f"https://api.sort-me.org/getContestTable?contestid={self.key}&page={curr_page}"
@@ -40,6 +42,7 @@ class Statistic(BaseModule):
             data = json.loads(page)
 
             total_pages = data["pages"]
+            progress.total = max(total_pages, curr_page)
             for r in data["table"]:
                 handle = str(r.pop("uid"))
                 row = result.setdefault(handle, OrderedDict(member=handle))
@@ -64,6 +67,8 @@ class Statistic(BaseModule):
                     }
                 if not problems:
                     result.pop(handle)
+            progress.update()
+        progress.close()
 
         standings = {
             "result": result,
