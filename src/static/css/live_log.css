@@ -1,4 +1,5 @@
 .live-log-progress {
+  flex: 0 0 auto;
   margin-bottom: 10px;
 }
 
@@ -126,10 +127,13 @@
 }
 
 .live-log-progress-completed {
+  order: 1;
   opacity: 0.65;
 }
 
 .live-log-progress-list {
+  display: flex;
+  flex-direction: column;
   max-height: 130px;
   padding: 10px 15px 0;
   overflow-y: auto;

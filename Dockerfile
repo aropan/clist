@@ -21,12 +21,12 @@ RUN echo "if [ -f /etc/bash_completion ]; then . /etc/bash_completion; fi" >> ~/
 # Useful packages
 RUN apt install -y lsof htop vim
 
-# Setup python requirements
-COPY --from=ghcr.io/astral-sh/uv:0.5.3 /uv /uvx /bin/
-ENV UV_SYSTEM_PYTHON=1
+# Setup Python dependencies
+COPY --from=ghcr.io/astral-sh/uv:0.11.32 /uv /uvx /bin/
+ENV UV_PROJECT_ENVIRONMENT=/usr/local
 ENV UV_LINK_MODE=copy
-COPY requirements.txt overrides.txt .
-RUN --mount=type=cache,target=/root/.cache/uv uv pip install -r requirements.txt --override overrides.txt
+COPY pyproject.toml uv.lock .
+RUN --mount=type=cache,target=/root/.cache/uv uv sync --locked --no-install-project --inexact
 
 # Curl
 COPY src/scripts/install_curl.bash src/scripts/install_curl.sums ./

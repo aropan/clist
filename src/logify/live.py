@@ -435,12 +435,19 @@ class tqdm(_tqdm):
         self._live_completion = None
         super().__init__(*args, **kwargs)
 
+    def close(self):
+        was_disabled = getattr(self, "disable", True)
+        super().close()
+        total = getattr(self, "total", None)
+        if not was_disabled and (total is None or self.n < total):
+            self._publish_live_progress(finished=True)
+
     def display(self, msg=None, pos=None):
         ret = super().display(msg=msg, pos=pos)
         self._publish_live_progress()
         return ret
 
-    def _publish_live_progress(self):
+    def _publish_live_progress(self, *, finished=False):
         if self._live_session is None:
             return
 
@@ -449,7 +456,12 @@ class tqdm(_tqdm):
         completion = (self.n, total, self.desc) if completed else None
         current_time = monotonic()
         was_completed = self._live_completion is not None
-        if not completed and not was_completed and current_time - self._live_last_display < LIVE_PROGRESS_INTERVAL:
+        if (
+            not finished
+            and not completed
+            and not was_completed
+            and current_time - self._live_last_display < LIVE_PROGRESS_INTERVAL
+        ):
             return
         if completed and completion == self._live_completion:
             return
@@ -469,6 +481,7 @@ class tqdm(_tqdm):
             rate=rate,
             eta=eta,
             completed=completed,
+            finished=finished,
         )
         self._live_last_display = current_time
         self._live_completion = completion

@@ -209,6 +209,7 @@
 
     updateProgress(event) {
       const description = event.description || "Progress";
+      const finished = Boolean(event.completed || event.finished);
       let row = this.progress.children('[data-bar-id="' + event.bar_id + '"]');
       if (event.total === 0) {
         row.remove();
@@ -241,10 +242,10 @@
           .css("width", percentage + "%")
           .removeClass("progress-bar-striped active");
       } else {
-        row.find(".progress-bar").css("width", "100%").addClass("progress-bar-striped active");
+        row.find(".progress-bar").css("width", "100%").toggleClass("progress-bar-striped active", !finished);
       }
       row.find(".live-log-progress-label").text(details);
-      row.toggleClass("live-log-progress-completed", Boolean(event.completed));
+      row.toggleClass("live-log-progress-completed", finished);
     }
 
     formatDuration(seconds) {

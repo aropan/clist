@@ -408,7 +408,7 @@ class LiveTqdmTest(SimpleTestCase):
             second.close()
 
         bar_ids = [call.kwargs["bar_id"] for call in session.progress.call_args_list]
-        assert bar_ids == ["bar-1", "bar-2"]
+        assert list(dict.fromkeys(bar_ids)) == ["bar-1", "bar-2"]
 
     def test_expanded_total_emits_a_new_completion(self):
         session = mock.Mock()
@@ -449,8 +449,41 @@ class LiveTqdmTest(SimpleTestCase):
         assert event["total"] == 2
         assert event["completed"] is False
 
-    def test_close_and_del_are_not_overridden(self):
-        assert "close" not in tqdm.__dict__
+    def test_incomplete_close_finishes_live_progress(self):
+        session = mock.Mock()
+        session.next_bar_id.return_value = "bar-1"
+        with (
+            mock.patch("logify.live.get_current_session", return_value=session),
+            mock.patch("logify.live.monotonic", return_value=10),
+        ):
+            progress_bar = tqdm(total=3, file=io.StringIO(), mininterval=0)
+            progress_bar.update()
+            progress_bar.close()
+
+        event = session.progress.call_args.kwargs
+        assert event["current"] == 1
+        assert event["total"] == 3
+        assert event["completed"] is False
+        assert event["finished"] is True
+
+    def test_unknown_total_close_finishes_live_progress(self):
+        session = mock.Mock()
+        session.next_bar_id.return_value = "bar-1"
+        with (
+            mock.patch("logify.live.get_current_session", return_value=session),
+            mock.patch("logify.live.monotonic", return_value=10),
+        ):
+            progress_bar = tqdm(file=io.StringIO(), mininterval=0)
+            progress_bar.update()
+            progress_bar.close()
+
+        event = session.progress.call_args.kwargs
+        assert event["current"] == 1
+        assert event["total"] is None
+        assert event["completed"] is False
+        assert event["finished"] is True
+
+    def test_del_is_not_overridden(self):
         assert "__del__" not in tqdm.__dict__
 
 

@@ -643,7 +643,7 @@ class Statistic(BaseModule):
                     state["last_page"] = last_page
                     break
                 if progress_bar is None:
-                    progress_bar = tqdm.tqdm(total=max_page - last_page)
+                    progress_bar = tqdm.tqdm(total=max_page - last_page, desc="submission pages")
                 progress_bar.update()
                 if not process_submissions(data):
                     break
