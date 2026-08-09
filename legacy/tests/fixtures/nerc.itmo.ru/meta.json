@@ -1,0 +1,39 @@
+{
+    "host": "nerc.itmo.ru",
+    "rid": 104,
+    "path": "./module/nerc.itmo.ru/index.php",
+    "url": "https://nerc.itmo.ru/archive/index.html",
+    "parse_url": "https://nerc.itmo.ru/archive/index.html",
+    "timezone": "Europe/Moscow",
+    "api_url": null,
+    "info": {
+        "standings": {
+            "subname": "(?P<value>\\([^\\(]*\\))(?:\\s*[0-9]+-[0-9]+)?$",
+            "timeline": {
+                "time_factor": {
+                    "1": [
+                        60
+                    ],
+                    "2": [
+                        60,
+                        1
+                    ],
+                    "3": [
+                        3600,
+                        60,
+                        1
+                    ]
+                },
+                "time_rounding": "floor-minute"
+            }
+        },
+        "get_events": {
+            "colors": {
+                "darken": "#162E44",
+                "lighten": "#D0E0EF"
+            }
+        }
+    },
+    "parse_full_list": false,
+    "recorded_at": "2026-08-08 17:01:54"
+}

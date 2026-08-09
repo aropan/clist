@@ -3,11 +3,14 @@ import json
 import os
 import time
 import urllib.request
+from base64 import b64decode, b64encode
+from binascii import Error as Base64Error
 from contextlib import ExitStack, contextmanager
 from copy import deepcopy
 from hashlib import sha256
 from io import BytesIO, TextIOWrapper
-from pathlib import Path
+from pathlib import Path, PurePosixPath
+from tempfile import TemporaryDirectory
 from typing import NamedTuple
 from unittest.mock import patch
 from urllib.parse import parse_qsl, quote, urlencode, urlsplit, urlunsplit
@@ -26,7 +29,9 @@ from utils.lazy import LazyObject
 from utils.requester import requester
 
 PARSER_FIXTURES_ROOT = Path(__file__).parent / "fixtures" / "parsers"
-FIXTURE_FILENAMES = ("db.json", "expected_standings.json")
+FIXTURE_FILENAMES = ("db.json", "expected_standings.json", "httpcache.json")
+HTTP_CACHE_ARCHIVE_VERSION = 1
+HTTP_CACHE_FILENAME = "httpcache.json.gz"
 
 SNAPSHOT_FIELDS = ("result", "problems")
 IGNORED_FIELDS = {
@@ -85,10 +90,7 @@ def discover_parser_fixtures(root=PARSER_FIXTURES_ROOT):
     fixtures = []
     for db_path in root.rglob("db.json"):
         fixture_path = db_path.parent
-        if (
-            all(fixture_file_path(fixture_path, filename).is_file() for filename in FIXTURE_FILENAMES)
-            and (fixture_path / "httpcache").is_dir()
-        ):
+        if all(fixture_file_path(fixture_path, filename).is_file() for filename in FIXTURE_FILENAMES):
             fixtures.append(fixture_path)
     return sorted(fixtures, key=lambda path: path.relative_to(root).as_posix())
 
@@ -234,6 +236,88 @@ def write_json(path, data):
 def write_expected_standings(path, standings, compressed=False):
     filename = "expected_standings.json.gz" if compressed else "expected_standings.json"
     write_json(Path(path) / filename, normalize_standings(standings))
+
+
+def _http_cache_archive_name(name):
+    if not isinstance(name, str) or not name or "\\" in name:
+        raise ValueError(f"invalid HTTP cache archive path: {name!r}")
+    path = PurePosixPath(name)
+    if path.is_absolute() or path.as_posix() != name or any(part in {"", ".", ".."} for part in path.parts):
+        raise ValueError(f"invalid HTTP cache archive path: {name!r}")
+    return path
+
+
+def read_http_cache_archive(path):
+    path = Path(path)
+    try:
+        archive = read_json(path)
+    except (OSError, EOFError, gzip.BadGzipFile, json.JSONDecodeError) as error:
+        raise ValueError(f"invalid HTTP cache archive: {path}") from error
+    if not isinstance(archive, dict) or archive.get("version") != HTTP_CACHE_ARCHIVE_VERSION:
+        raise ValueError(f"unsupported HTTP cache archive format: {path}")
+    files = archive.get("files")
+    if not isinstance(files, dict):
+        raise ValueError(f"invalid HTTP cache archive files: {path}")
+
+    decoded = {}
+    for name, content in sorted(files.items()):
+        archive_path = _http_cache_archive_name(name)
+        if not isinstance(content, str):
+            raise ValueError(f"invalid HTTP cache archive content for {name!r}: {path}")
+        try:
+            decoded[archive_path] = b64decode(content, validate=True)
+        except (Base64Error, ValueError) as error:
+            raise ValueError(f"invalid HTTP cache archive content for {name!r}: {path}") from error
+    return decoded
+
+
+def pack_http_cache(cache_path, archive_path):
+    cache_path = Path(cache_path)
+    files = {}
+    for path in sorted(cache_path.rglob("*")):
+        if not path.is_file():
+            continue
+        relative_path = PurePosixPath(path.relative_to(cache_path).as_posix())
+        content = path.read_bytes()
+        if relative_path.suffix == ".gz":
+            try:
+                content = gzip.decompress(content)
+            except OSError as error:
+                raise ValueError(f"invalid gzip HTTP cache file: {path}") from error
+            relative_path = relative_path.with_suffix("")
+        name = _http_cache_archive_name(relative_path.as_posix()).as_posix()
+        if name in files:
+            raise ValueError(f"duplicate HTTP cache archive path: {name}")
+        files[name] = b64encode(content).decode("ascii")
+
+    write_json(
+        archive_path,
+        {
+            "files": files,
+            "version": HTTP_CACHE_ARCHIVE_VERSION,
+        },
+    )
+    return len(files)
+
+
+def unpack_http_cache(archive_path, cache_path):
+    cache_path = Path(cache_path)
+    cache_path.mkdir(parents=True, exist_ok=True)
+    for relative_path, content in read_http_cache_archive(archive_path).items():
+        path = cache_path.joinpath(*relative_path.parts)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(content)
+
+
+@contextmanager
+def materialized_http_cache(fixture_path):
+    archive_path = fixture_file_path(fixture_path, "httpcache.json")
+    if not archive_path.is_file():
+        raise FileNotFoundError(f"missing HTTP cache archive: {archive_path}")
+    with TemporaryDirectory(prefix="clist-parser-httpcache-") as temporary_directory:
+        cache_path = Path(temporary_directory)
+        unpack_http_cache(archive_path, cache_path)
+        yield cache_path
 
 
 def _request_url(request):
@@ -442,13 +526,14 @@ class ParserRegressionTestCase(TestCase):
         contest = Contest.objects.select_related("resource__module").get(pk=fixture_contest_pk(fixture_path))
 
         context = contest_standings_context(contest)
-        standings = get_standings(
-            contest,
-            fixture_path / "httpcache",
-            allow_network=False,
-            users=context.users,
-            statistics=context.statistics,
-        )
+        with materialized_http_cache(fixture_path) as cache_path:
+            standings = get_standings(
+                contest,
+                cache_path,
+                allow_network=False,
+                users=context.users,
+                statistics=context.statistics,
+            )
         actual = normalize_standings(standings)
         expected = read_json(fixture_file_path(fixture_path, "expected_standings.json"))
 

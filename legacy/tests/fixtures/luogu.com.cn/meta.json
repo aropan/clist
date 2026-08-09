@@ -1,0 +1,34 @@
+{
+    "host": "luogu.com.cn",
+    "rid": 162,
+    "path": "./module/luogu.com.cn/index.php",
+    "url": "https://www.luogu.com.cn/contest/list",
+    "parse_url": "https://www.luogu.com.cn/contest/list",
+    "timezone": null,
+    "api_url": null,
+    "info": {
+        "accounts": {
+            "limit": 400
+        },
+        "standings": {
+            "name_instead_key": true
+        },
+        "get_events": {
+            "colors": {
+                "darken": "#44163A",
+                "lighten": "#EFD0E8"
+            }
+        },
+        "statistics": {
+            "wait_rating": {
+                "days": 3,
+                "title_re": "\\brated\\b"
+            },
+            "account_updated_delta": {
+                "minutes": 1
+            }
+        }
+    },
+    "parse_full_list": false,
+    "recorded_at": "2026-08-08 17:01:28"
+}

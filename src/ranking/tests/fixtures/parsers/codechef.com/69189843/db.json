@@ -1,0 +1,3044 @@
+[
+  {
+    "fields": {
+      "accounts_fields": {
+        "types": {
+          "about_me": [
+            "str"
+          ],
+          "avatar_url": [
+            "str"
+          ],
+          "compile_error": [
+            "str"
+          ],
+          "institution": [
+            "str"
+          ],
+          "link": [
+            "str"
+          ],
+          "members": [
+            "list"
+          ],
+          "motto": [
+            "str"
+          ],
+          "organisation": [
+            "str"
+          ],
+          "problems_solved": [
+            "str"
+          ],
+          "runtime_error": [
+            "str"
+          ],
+          "solutions_accepted": [
+            "str"
+          ],
+          "solutions_submitted": [
+            "str"
+          ],
+          "student/professional": [
+            "str"
+          ],
+          "time_limit_exceeded": [
+            "str"
+          ],
+          "username": [
+            "str"
+          ],
+          "wrong_answer": [
+            "str"
+          ]
+        },
+        "verification_fields": [
+          "name",
+          "student/professional"
+        ]
+      },
+      "allow_delete_archived_statistics": false,
+      "api_url": null,
+      "auto_remove_started": false,
+      "avatar_url": "{info[avatar_url]}",
+      "avg_rating": 1267.361387153706,
+      "color": "#CC669E",
+      "contest_update_time": "2026-08-04T11:19:10.673Z",
+      "country_rank_update_time": "2026-08-04T12:20:08.518Z",
+      "created": "2013-02-03T00:00:00Z",
+      "default_account_type": 1,
+      "enable": true,
+      "has_account_last_submission": true,
+      "has_account_n_writers": true,
+      "has_account_verification": true,
+      "has_accounts_infos_update": true,
+      "has_country_medal": null,
+      "has_country_place": null,
+      "has_country_rating": true,
+      "has_inherit_medals_to_related": false,
+      "has_multi_account": true,
+      "has_problem_archive": false,
+      "has_problem_rating": true,
+      "has_problem_statistic": true,
+      "has_problem_update": true,
+      "has_rating_history": true,
+      "has_standings_renamed_account": false,
+      "has_statistic_medal": null,
+      "has_statistic_n_first_ac": null,
+      "has_statistic_n_total_solved": null,
+      "has_statistic_place": null,
+      "has_statistic_total_solving": null,
+      "has_submissions_statistics_log": false,
+      "has_upsolving": true,
+      "host": "codechef.com",
+      "icon_file": "resources/codechef_com.png",
+      "icon_updated_at": "2025-12-14T00:27:40.071Z",
+      "icon_url": null,
+      "info": {
+        "accounts": {
+          "limit": 300
+        },
+        "default_variables": {
+          "min_n_participations": "10"
+        },
+        "get_events": {
+          "colors": {
+            "darken": "#441630",
+            "lighten": "#EFD1E1"
+          }
+        },
+        "ratings": {
+          "problems": {
+            "ignore_missing_account": true
+          }
+        },
+        "standings": {
+          "avg_problem_width": true,
+          "timeline": {
+            "attempt_penalty": 1200,
+            "penalty_format": 3,
+            "penalty_more": 0,
+            "penalty_more_selector": ".addition-penalty-cell",
+            "penalty_rounding": "none",
+            "penalty_selector": ".addition-time-cell",
+            "time_factor": {
+              "1": [
+                1
+              ],
+              "2": [
+                60,
+                1
+              ],
+              "3": [
+                3600,
+                60,
+                1
+              ]
+            }
+          }
+        },
+        "statistics": {
+          "wait_rating": {
+            "days": 2
+          }
+        }
+      },
+      "modified": "2026-08-04T13:25:44.566Z",
+      "n_accounts": 1117720,
+      "n_accounts_to_update": 8901,
+      "n_contests": 2244,
+      "n_rating_accounts": 923358,
+      "n_statistics": 7370715,
+      "n_team_accounts": 82102,
+      "n_university_accounts": 0,
+      "parse_url": null,
+      "path": "./module/codechef.com/index.php",
+      "problem_archive_update_time": null,
+      "problem_rating_predictor": {},
+      "problem_url": null,
+      "problems_fields": {
+        "fixed_fields": [
+          "native_rating"
+        ],
+        "types": {
+          "best_tag": [
+            "str"
+          ],
+          "category_name": [
+            "str"
+          ],
+          "contest_key": [
+            "str"
+          ],
+          "editorial_url": [
+            "str"
+          ],
+          "first_ac__accounts": [
+            "list"
+          ],
+          "first_ac__in_seconds": [
+            "int"
+          ],
+          "first_ac__time": [
+            "str"
+          ],
+          "hints": [
+            "list"
+          ],
+          "is_challenge": [
+            "bool"
+          ],
+          "languages_supported": [
+            "list"
+          ],
+          "max_score": [
+            "int"
+          ],
+          "max_timelimit": [
+            "str"
+          ],
+          "native_rating": [
+            "int"
+          ],
+          "source_sizelimit": [
+            "str"
+          ],
+          "video_editorial_url": [
+            "str"
+          ],
+          "writers": [
+            "list"
+          ]
+        }
+      },
+      "profile_url": "https://www.codechef.com/users/{account}",
+      "rank_update_time": "2026-08-01T10:00:07.968Z",
+      "rating_prediction": null,
+      "rating_update_time": "2026-08-04T13:25:44.562Z",
+      "ratings": [
+        {
+          "color": "gray",
+          "hex_rgb": "#808080",
+          "high": 1400,
+          "hsl": [
+            0,
+            0,
+            0.5
+          ],
+          "low": -100500,
+          "name": "★",
+          "next": 1400,
+          "prev": -100500
+        },
+        {
+          "color": "green",
+          "hex_rgb": "#008000",
+          "high": 1600,
+          "hsl": [
+            0.33,
+            1,
+            0.25
+          ],
+          "low": 1400,
+          "name": "★★",
+          "next": 1600,
+          "prev": 1400
+        },
+        {
+          "color": "blue",
+          "hex_rgb": "#0000FF",
+          "high": 1800,
+          "hsl": [
+            0.67,
+            1,
+            0.5
+          ],
+          "low": 1600,
+          "name": "★★★",
+          "next": 1800,
+          "prev": 1600
+        },
+        {
+          "color": "violet",
+          "hex_rgb": "#AA00AA",
+          "high": 2000,
+          "hsl": [
+            0.83,
+            1,
+            0.33
+          ],
+          "low": 1800,
+          "name": "★★★★",
+          "next": 2000,
+          "prev": 1800
+        },
+        {
+          "color": "yellow",
+          "hex_rgb": "#BBBB00",
+          "high": 2200,
+          "hsl": [
+            0.17,
+            1,
+            0.37
+          ],
+          "low": 2000,
+          "name": "★★★★★",
+          "next": 2200,
+          "prev": 2000
+        },
+        {
+          "color": "orange",
+          "hex_rgb": "#FF8C00",
+          "high": 2500,
+          "hsl": [
+            0.09,
+            1,
+            0.5
+          ],
+          "low": 2200,
+          "name": "★★★★★★",
+          "next": 2500,
+          "prev": 2200
+        },
+        {
+          "color": "red",
+          "hex_rgb": "#FF0000",
+          "high": 3000,
+          "hsl": [
+            0,
+            1,
+            0.5
+          ],
+          "low": 2500,
+          "name": "★★★★★★★",
+          "next": 3000,
+          "prev": 2500
+        },
+        {
+          "color": "red",
+          "hex_rgb": "#FF0000",
+          "high": 100500,
+          "hsl": [
+            0.0,
+            1.0,
+            0.375
+          ],
+          "low": 3000,
+          "name": "★★★★★★★",
+          "prev": 2500
+        }
+      ],
+      "regexp": null,
+      "short_host": "cc",
+      "skip_for_contests_chart": false,
+      "statistics_fields": {
+        "types": {
+          "advanced": [
+            "bool"
+          ],
+          "country": [
+            "str"
+          ],
+          "division": [
+            "str"
+          ],
+          "institution": [
+            "NoneType",
+            "str"
+          ],
+          "institution_type": [
+            "NoneType",
+            "str"
+          ],
+          "is_user_premium": [
+            "bool"
+          ],
+          "medal": [
+            "str"
+          ],
+          "name": [
+            "NoneType",
+            "str"
+          ],
+          "new_rating": [
+            "int"
+          ],
+          "old_rating": [
+            "int"
+          ],
+          "penalty": [
+            "int"
+          ],
+          "rating": [
+            "str"
+          ],
+          "rating_change": [
+            "str",
+            "int"
+          ],
+          "time": [
+            "str"
+          ],
+          "total_time": [
+            "str"
+          ],
+          "user_gender": [
+            "NoneType",
+            "str"
+          ]
+        }
+      },
+      "timezone": "Asia/Calcutta",
+      "uid": "ogc7qt4hlg454ggkj9o6ttqnq8@group.calendar.google.com",
+      "url": "https://www.codechef.com/contests"
+    },
+    "model": "clist.resource",
+    "pk": 2
+  },
+  {
+    "fields": {
+      "created": "2019-05-08T23:44:51.688Z",
+      "delay_on_error": "01:00:00",
+      "delay_on_success": "08:00:00",
+      "delay_shortly_after": "00:05:00",
+      "enable": true,
+      "long_contest_divider": 15,
+      "long_contest_idle": "06:00:00",
+      "max_delay_after_end": "2 00:00:00",
+      "min_delay_after_end": null,
+      "modified": "2022-10-29T11:23:26.769Z",
+      "path": "ranking/management/modules/codechef",
+      "resource": 2,
+      "shortly_after": "00:30:00"
+    },
+    "model": "ranking.module",
+    "pk": 16
+  },
+  {
+    "fields": {
+      "allow_updating_statistics_for_participants": null,
+      "auto_updated": "2026-08-04T13:12:32Z",
+      "calculate_time": false,
+      "created": "2026-07-29T10:47:19.041Z",
+      "duration_in_secs": 10800,
+      "edit": null,
+      "elimination_tournament_info": {},
+      "end_time": "2026-08-03T16:30:00Z",
+      "finalists_info": {},
+      "has_fixed_rating_prediction_field": null,
+      "has_hidden_results": false,
+      "has_submissions": null,
+      "has_submissions_tests": null,
+      "has_unlimited_statistics": null,
+      "hide_unsolved_standings_problems": null,
+      "host": "codechef.com",
+      "info": {
+        "_timing_statistic_delta_seconds": 17280.0,
+        "fields": [
+          "time",
+          "problems",
+          "solved",
+          "old_rating",
+          "name",
+          "country",
+          "institution",
+          "institution_type",
+          "user_gender",
+          "is_user_premium"
+        ],
+        "fields_types": {
+          "country": [
+            "str"
+          ],
+          "institution": [
+            "str"
+          ],
+          "institution_type": [
+            "str",
+            "NoneType"
+          ],
+          "is_user_premium": [
+            "bool"
+          ],
+          "name": [
+            "str"
+          ],
+          "old_rating": [
+            "int"
+          ],
+          "problems": [
+            "dict"
+          ],
+          "solved": [
+            "dict"
+          ],
+          "time": [
+            "str"
+          ],
+          "user_gender": [
+            "str",
+            "NoneType"
+          ]
+        },
+        "hidden_fields": [
+          "user_gender",
+          "institution_type",
+          "is_user_premium",
+          "country",
+          "institution",
+          "name",
+          "old_rating"
+        ],
+        "problems": [
+          {
+            "category_name": "easy",
+            "code": "SNCO",
+            "contest_key": "DSAMONDAY014",
+            "is_challenge": false,
+            "languages_supported": [
+              "CPP20",
+              "PYTH 3",
+              "C",
+              "JAVA",
+              "PYP3"
+            ],
+            "max_score": 100,
+            "max_timelimit": "1",
+            "n_accepted": 9917,
+            "n_partial": 115,
+            "n_teams": 10032,
+            "n_total": 10101,
+            "name": "Equal Chocolates",
+            "short": "SNCO",
+            "source_sizelimit": "50000",
+            "tags": [
+              "major_oasis_27"
+            ],
+            "url": "https://www.codechef.com/problems/SNCO",
+            "writers": [
+              "major_oasis_27"
+            ]
+          },
+          {
+            "category_name": "easy",
+            "code": "BAIN",
+            "contest_key": "DSAMONDAY014",
+            "editorial_url": "https://discuss.codechef.com/problems/BAIN",
+            "is_challenge": false,
+            "languages_supported": [
+              "CPP20",
+              "PYTH 3",
+              "C",
+              "JAVA",
+              "PYP3",
+              "CS2",
+              "NODEJS",
+              "GO",
+              "PHP"
+            ],
+            "max_score": 100,
+            "max_timelimit": "1",
+            "n_accepted": 7970,
+            "n_partial": 760,
+            "n_teams": 8730,
+            "n_total": 10101,
+            "name": "Balanced Ingredients",
+            "short": "BAIN",
+            "source_sizelimit": "50000",
+            "tags": [
+              "brute-force",
+              "algorithms"
+            ],
+            "url": "https://www.codechef.com/problems/BAIN",
+            "writers": [
+              "major_oasis_27"
+            ]
+          },
+          {
+            "category_name": "medium",
+            "code": "CLSC",
+            "contest_key": "DSAMONDAY014",
+            "editorial_url": "https://discuss.codechef.com/problems/CLSC",
+            "hints": [
+              {
+                "id": 1,
+                "isActive": true,
+                "isDeleted": false,
+                "value": "The problem asks you to find the minimum possible absolute difference between two numbers from the given sequence $S$.\n"
+              },
+              {
+                "id": 2,
+                "isActive": true,
+                "isDeleted": false,
+                "value": "Suppose you picked two numbers $A$ and $B$ from the sequence $S$ where $A \\leq B$. What if there exists a number $C$ in the sequence $S$ such that $A \\lt C \\lt B$?\n- How does the difference between $A$ and $B$ compare to the difference between $C$ and $A$?\n- Since $A \\lt C \\lt B$, it follows that $C$ - $A$ $\\leq$ $B$ - $A$. \\\nSo, the pair $(A,C)$ is a better choice than $(A,B)$. \\\nWhat if there again exists a number $X$ in $S$ that is between $A$ and $C$?\n- Then it would again be better to take the pair $(A,X)$ over the pair $(A,C)$. \\\nAt which point can you be certain that you can not change one end of your pair and make it better?\n- If there are no numbers X in S such that $A \\lt X \\lt B$. \\\nTherefore, it is enough to only check the pairs of numbers which do not have any other number from $S$ between them. How would you do this?\n"
+              },
+              {
+                "id": 3,
+                "isActive": true,
+                "isDeleted": false,
+                "value": "Is there a certain rearrangement of the array $S$ in which numbers in each such pair are located one next to another? \n- Think of sorting. If you sort $S$ in increasing order, where can you find the pairs of numbers that have no other numbers from $S$ between them?\n- Those pairs are exactly the $N-1$ pairs of adjacent elements of $S$ when it is sorted in increasing order. So, now you only need to check the pairs $(S[i],S[i+1])$ for $i$ from $1$ to $N-1$.\n"
+              },
+              {
+                "id": 4,
+                "isActive": true,
+                "isDeleted": false,
+                "value": "How exactly would you now calculate the final solution?\n- Sort the array $S$. Store a variable $X$ for the solution. Run a loop from $1$ to $N-1$. How do you check the current pair $(S[i],S[i+1])$?\n- You need to check if the difference $S[i+1]-S[i]$ is smaller than the smallest difference so far which is $X$. \\\nIf it is, what should you do? \\\nChange $X$ to $S[i+1]-S[i]$. Otherwise, do not change it. \\\nThis would be something like “if($S[i+1]-S[i] < X$), then $X$ = $S[i+1]-S[i]$”.\n"
+              }
+            ],
+            "is_challenge": false,
+            "languages_supported": [
+              "CPP20",
+              "PYTH 3",
+              "C",
+              "JAVA",
+              "PYP3",
+              "CS2",
+              "NODEJS",
+              "GO",
+              "PHP",
+              "kotlin",
+              "rust",
+              "R",
+              "SQL"
+            ],
+            "max_score": 100,
+            "max_timelimit": "1",
+            "n_accepted": 7912,
+            "n_partial": 135,
+            "n_teams": 8047,
+            "n_total": 10101,
+            "name": "Closest Scores",
+            "short": "CLSC",
+            "source_sizelimit": "50000",
+            "tags": [
+              "sorting",
+              "brute-force",
+              "algorithms"
+            ],
+            "url": "https://www.codechef.com/problems/CLSC",
+            "writers": [
+              "major_oasis_27"
+            ]
+          },
+          {
+            "category_name": "medium",
+            "code": "RMWS",
+            "contest_key": "DSAMONDAY014",
+            "is_challenge": false,
+            "languages_supported": [
+              "CPP20",
+              "PYTH 3",
+              "C",
+              "JAVA",
+              "NODEJS"
+            ],
+            "max_score": 100,
+            "max_timelimit": "1",
+            "n_accepted": 1300,
+            "n_partial": 1319,
+            "n_teams": 2619,
+            "n_total": 10101,
+            "name": "Range Minimum with Swaps",
+            "short": "RMWS",
+            "source_sizelimit": "50000",
+            "tags": [
+              "major_oasis_27"
+            ],
+            "url": "https://www.codechef.com/problems/RMWS",
+            "writers": [
+              "major_oasis_27"
+            ]
+          },
+          {
+            "category_name": "hard",
+            "code": "MINP",
+            "contest_key": "DSAMONDAY014",
+            "is_challenge": false,
+            "languages_supported": [
+              "CPP20",
+              "PYTH 3",
+              "C",
+              "JAVA",
+              "NODEJS"
+            ],
+            "max_score": 100,
+            "max_timelimit": "1",
+            "n_accepted": 691,
+            "n_partial": 813,
+            "n_teams": 1504,
+            "n_total": 10101,
+            "name": "Minimum Incompatibility Partition",
+            "short": "MINP",
+            "source_sizelimit": "50000",
+            "tags": [
+              "major_oasis_27"
+            ],
+            "url": "https://www.codechef.com/problems/MINP",
+            "writers": [
+              "major_oasis_27"
+            ]
+          },
+          {
+            "category_name": "hard",
+            "code": "MDIT",
+            "contest_key": "DSAMONDAY014",
+            "is_challenge": false,
+            "languages_supported": [
+              "CPP20",
+              "PYTH 3",
+              "C",
+              "JAVA",
+              "PYP3",
+              "CS2",
+              "NODEJS",
+              "GO",
+              "PHP",
+              "kotlin",
+              "rust",
+              "R",
+              "SQL"
+            ],
+            "max_score": 100,
+            "max_timelimit": "1",
+            "n_accepted": 2340,
+            "n_partial": 107,
+            "n_teams": 2447,
+            "n_total": 10101,
+            "name": "Maximum Difference in a Tree",
+            "short": "MDIT",
+            "source_sizelimit": "50000",
+            "tags": [
+              "major_oasis_27"
+            ],
+            "url": "https://www.codechef.com/problems/MDIT",
+            "writers": [
+              "major_oasis_27"
+            ]
+          }
+        ],
+        "writers": [
+          "major_oasis_27"
+        ]
+      },
+      "invisible": false,
+      "is_auto_added": true,
+      "is_promoted": null,
+      "is_rated": null,
+      "key": "DSAMONDAY014",
+      "kind": null,
+      "link_statistic_timing": null,
+      "merging_contests": [],
+      "modified": "2026-07-29T10:47:19.041Z",
+      "n_problems": 6,
+      "n_statistics": 10101,
+      "notification_timing": "2026-07-29T10:49:12.810Z",
+      "parsed_percentage": null,
+      "parsed_time": "2026-08-04T11:19:10.673Z",
+      "problem_rating_hash": null,
+      "problem_rating_update_required": false,
+      "rating_prediction_fields": null,
+      "rating_prediction_hash": null,
+      "rating_prediction_timing": null,
+      "raw_info": {
+        "_outdated": {
+          "autoRefresh": false,
+          "partial_scores": {
+            "BAIN": [
+              {
+                "count": "2",
+                "score": "5"
+              },
+              {
+                "count": "8",
+                "score": "10"
+              },
+              {
+                "count": "129",
+                "score": "15"
+              },
+              {
+                "count": "27",
+                "score": "20"
+              },
+              {
+                "count": "525",
+                "score": "25"
+              },
+              {
+                "count": "6",
+                "score": "30"
+              },
+              {
+                "count": "43",
+                "score": "65"
+              },
+              {
+                "count": "1",
+                "score": "75"
+              },
+              {
+                "count": "9",
+                "score": "95"
+              },
+              {
+                "count": "7551",
+                "score": "100"
+              }
+            ],
+            "CLSC": [
+              {
+                "count": "14",
+                "score": "5"
+              },
+              {
+                "count": "5",
+                "score": "10"
+              },
+              {
+                "count": "3",
+                "score": "15"
+              },
+              {
+                "count": "4",
+                "score": "20"
+              },
+              {
+                "count": "9",
+                "score": "25"
+              },
+              {
+                "count": "23",
+                "score": "30"
+              },
+              {
+                "count": "3",
+                "score": "35"
+              },
+              {
+                "count": "1",
+                "score": "40"
+              },
+              {
+                "count": "3",
+                "score": "45"
+              },
+              {
+                "count": "2",
+                "score": "50"
+              },
+              {
+                "count": "1",
+                "score": "55"
+              },
+              {
+                "count": "6",
+                "score": "60"
+              },
+              {
+                "count": "1",
+                "score": "65"
+              },
+              {
+                "count": "3",
+                "score": "70"
+              },
+              {
+                "count": "27",
+                "score": "75"
+              },
+              {
+                "count": "2",
+                "score": "85"
+              },
+              {
+                "count": "4",
+                "score": "90"
+              },
+              {
+                "count": "12",
+                "score": "95"
+              },
+              {
+                "count": "7421",
+                "score": "100"
+              }
+            ],
+            "MDIT": [
+              {
+                "count": "27",
+                "score": "13"
+              },
+              {
+                "count": "1",
+                "score": "25"
+              },
+              {
+                "count": "25",
+                "score": "38"
+              },
+              {
+                "count": "4",
+                "score": "50"
+              },
+              {
+                "count": "12",
+                "score": "62"
+              },
+              {
+                "count": "1",
+                "score": "63"
+              },
+              {
+                "count": "4",
+                "score": "74"
+              },
+              {
+                "count": "4",
+                "score": "75"
+              },
+              {
+                "count": "5",
+                "score": "76"
+              },
+              {
+                "count": "11",
+                "score": "87"
+              },
+              {
+                "count": "2144",
+                "score": "100"
+              }
+            ],
+            "MINP": [
+              {
+                "count": "16",
+                "score": "5"
+              },
+              {
+                "count": "3",
+                "score": "9"
+              },
+              {
+                "count": "3",
+                "score": "10"
+              },
+              {
+                "count": "37",
+                "score": "14"
+              },
+              {
+                "count": "1",
+                "score": "15"
+              },
+              {
+                "count": "10",
+                "score": "19"
+              },
+              {
+                "count": "1",
+                "score": "20"
+              },
+              {
+                "count": "2",
+                "score": "23"
+              },
+              {
+                "count": "13",
+                "score": "24"
+              },
+              {
+                "count": "1",
+                "score": "25"
+              },
+              {
+                "count": "1",
+                "score": "27"
+              },
+              {
+                "count": "2",
+                "score": "28"
+              },
+              {
+                "count": "3",
+                "score": "29"
+              },
+              {
+                "count": "1",
+                "score": "33"
+              },
+              {
+                "count": "8",
+                "score": "34"
+              },
+              {
+                "count": "3",
+                "score": "39"
+              },
+              {
+                "count": "1",
+                "score": "41"
+              },
+              {
+                "count": "1",
+                "score": "43"
+              },
+              {
+                "count": "5",
+                "score": "44"
+              },
+              {
+                "count": "1",
+                "score": "46"
+              },
+              {
+                "count": "1",
+                "score": "48"
+              },
+              {
+                "count": "6",
+                "score": "52"
+              },
+              {
+                "count": "1",
+                "score": "53"
+              },
+              {
+                "count": "1",
+                "score": "56"
+              },
+              {
+                "count": "9",
+                "score": "59"
+              },
+              {
+                "count": "1",
+                "score": "61"
+              },
+              {
+                "count": "1",
+                "score": "66"
+              },
+              {
+                "count": "1",
+                "score": "67"
+              },
+              {
+                "count": "1",
+                "score": "68"
+              },
+              {
+                "count": "25",
+                "score": "73"
+              },
+              {
+                "count": "2",
+                "score": "77"
+              },
+              {
+                "count": "1",
+                "score": "78"
+              },
+              {
+                "count": "5",
+                "score": "81"
+              },
+              {
+                "count": "2",
+                "score": "82"
+              },
+              {
+                "count": "2",
+                "score": "83"
+              },
+              {
+                "count": "2",
+                "score": "86"
+              },
+              {
+                "count": "5",
+                "score": "87"
+              },
+              {
+                "count": "2",
+                "score": "90"
+              },
+              {
+                "count": "407",
+                "score": "91"
+              },
+              {
+                "count": "12",
+                "score": "92"
+              },
+              {
+                "count": "2",
+                "score": "95"
+              },
+              {
+                "count": "152",
+                "score": "96"
+              },
+              {
+                "count": "625",
+                "score": "100"
+              }
+            ],
+            "RMWS": [
+              {
+                "count": "65",
+                "score": "5"
+              },
+              {
+                "count": "17",
+                "score": "10"
+              },
+              {
+                "count": "24",
+                "score": "15"
+              },
+              {
+                "count": "25",
+                "score": "20"
+              },
+              {
+                "count": "17",
+                "score": "25"
+              },
+              {
+                "count": "7",
+                "score": "30"
+              },
+              {
+                "count": "38",
+                "score": "35"
+              },
+              {
+                "count": "27",
+                "score": "40"
+              },
+              {
+                "count": "8",
+                "score": "45"
+              },
+              {
+                "count": "2",
+                "score": "50"
+              },
+              {
+                "count": "1",
+                "score": "55"
+              },
+              {
+                "count": "1",
+                "score": "70"
+              },
+              {
+                "count": "618",
+                "score": "75"
+              },
+              {
+                "count": "259",
+                "score": "80"
+              },
+              {
+                "count": "35",
+                "score": "85"
+              },
+              {
+                "count": "38",
+                "score": "90"
+              },
+              {
+                "count": "50",
+                "score": "95"
+              },
+              {
+                "count": "1187",
+                "score": "100"
+              }
+            ],
+            "SNCO": [
+              {
+                "count": "1",
+                "score": "26"
+              },
+              {
+                "count": "21",
+                "score": "41"
+              },
+              {
+                "count": "2",
+                "score": "49"
+              },
+              {
+                "count": "1",
+                "score": "57"
+              },
+              {
+                "count": "1",
+                "score": "58"
+              },
+              {
+                "count": "28",
+                "score": "59"
+              },
+              {
+                "count": "56",
+                "score": "74"
+              },
+              {
+                "count": "9585",
+                "score": "100"
+              }
+            ]
+          },
+          "problems": {
+            "BAIN": {
+              "accuracy": 58.07,
+              "allow_submission": false,
+              "category_name": "main",
+              "code": "BAIN",
+              "is_added_to_practice": false,
+              "is_direct_submittable": false,
+              "name": "Balanced Ingredients",
+              "problem_url": "/problems/BAIN",
+              "status_url": "/status/BAIN",
+              "submit_url": "/problems/BAIN",
+              "successful_submissions": "7970",
+              "total_submissions": "15184",
+              "type": "3"
+            },
+            "CLSC": {
+              "accuracy": 82.54,
+              "allow_submission": false,
+              "category_name": "main",
+              "code": "CLSC",
+              "is_added_to_practice": false,
+              "is_direct_submittable": false,
+              "name": "Closest Scores",
+              "problem_url": "/problems/CLSC",
+              "status_url": "/status/CLSC",
+              "submit_url": "/problems/CLSC",
+              "successful_submissions": "7912",
+              "total_submissions": "10468",
+              "type": "3"
+            },
+            "MDIT": {
+              "accuracy": 69.31,
+              "allow_submission": false,
+              "category_name": "main",
+              "code": "MDIT",
+              "is_added_to_practice": false,
+              "is_direct_submittable": false,
+              "name": "Maximum Difference in a Tree",
+              "problem_url": "/problems/MDIT",
+              "status_url": "/status/MDIT",
+              "submit_url": "/problems/MDIT",
+              "successful_submissions": "2340",
+              "total_submissions": "3764",
+              "type": "3"
+            },
+            "MINP": {
+              "accuracy": 29.36,
+              "allow_submission": false,
+              "category_name": "main",
+              "code": "MINP",
+              "is_added_to_practice": false,
+              "is_direct_submittable": false,
+              "name": "Minimum Incompatibility Partition",
+              "problem_url": "/problems/MINP",
+              "status_url": "/status/MINP",
+              "submit_url": "/problems/MINP",
+              "successful_submissions": "691",
+              "total_submissions": "2769",
+              "type": "3"
+            },
+            "RMWS": {
+              "accuracy": 33.99,
+              "allow_submission": false,
+              "category_name": "main",
+              "code": "RMWS",
+              "is_added_to_practice": false,
+              "is_direct_submittable": false,
+              "name": "Range Minimum with Swaps",
+              "problem_url": "/problems/RMWS",
+              "status_url": "/status/RMWS",
+              "submit_url": "/problems/RMWS",
+              "successful_submissions": "1300",
+              "total_submissions": "4386",
+              "type": "3"
+            },
+            "SNCO": {
+              "accuracy": 88.41,
+              "allow_submission": false,
+              "category_name": "main",
+              "code": "SNCO",
+              "is_added_to_practice": false,
+              "is_direct_submittable": false,
+              "name": "Equal Chocolates",
+              "problem_url": "/problems/SNCO",
+              "status_url": "/status/SNCO",
+              "submit_url": "/problems/SNCO",
+              "successful_submissions": "9917",
+              "total_submissions": "12773",
+              "type": "3"
+            }
+          },
+          "time": {
+            "current": 1785838689,
+            "end": 1785774600,
+            "freezing": 0,
+            "start": 1785763800
+          }
+        },
+        "announcements": "<p>This is our <strong>RATED</strong> contest of our <strong>Monday Munch DSA Challenge Series. </strong>You will need to attempt <strong>6 DSA problems this week</strong>.</p>\n<p>There will be:</p>\n<ul>\n<li>2 Easy</li>\n<li>2 Medium</li>\n<li>2 Hard</li>\n</ul>\n<p>This Monday’s Munch contains problems from the topics:</p>\n<ul>\n<li>Array</li>\n<li>Recursion and Backtracking </li>\n<li>Trees</li>\n</ul>\n<p><strong>Contest rules</strong> - This is <strong>RATED</strong> contest. <strong>Note: DSA rating will be separate from your Competitive programming rating.</strong></p>\n<ul>\n<li>Use this as an opportunity to <strong>test and improve your DSA knowledge</strong>.</li>\n<li>The use of <strong>AI tools is strictly prohibited</strong> for solving problems. Please refer to CodeChef's <a href=\"../codeofconduct\">Code of Conduct</a></li>\n<li>Cheating is strictly prohibited during the test </li>\n</ul>\n<p>For feedback on problems, suggestions for future topics, or improvement ideas, feel free to reach out at <strong><a class=\"decorated-link cursor-pointer\" href=\"mailto:<redacted-email>\"><redacted-email> </a><br /></strong></p>",
+        "autoRefresh": true,
+        "banner": "https://cdn.codechef.com/download/small-banner/DSAMONDAY014/1785311069.jpg",
+        "code": "DSAMONDAY014",
+        "contest_editorials": "",
+        "contest_introduction": "",
+        "contest_video_editorials": "",
+        "custom_contest_page_meta_desc": "",
+        "custom_contest_page_title": "",
+        "division_generation": 3,
+        "duration": "180",
+        "ip": "152.53.187.243",
+        "isAssessmentContest": false,
+        "isParentContestRated": "0",
+        "isRanklistFrozen": false,
+        "isRatedContest": "1",
+        "is_OTP_required": false,
+        "is_a_parent_contest": false,
+        "is_contest_elements_visible": true,
+        "is_flexi_time_contest": false,
+        "is_linked_problems_contest": "0",
+        "is_older_rating_based_division_system": false,
+        "is_proctored": false,
+        "is_registration_enabled_contest": false,
+        "name": "Monday Munch - DSA Challenge 014 (Rated)",
+        "partial_scores": {
+          "BAIN": [
+            {
+              "count": "1",
+              "score": "5"
+            },
+            {
+              "count": "10",
+              "score": "10"
+            },
+            {
+              "count": "135",
+              "score": "15"
+            },
+            {
+              "count": "27",
+              "score": "20"
+            },
+            {
+              "count": "526",
+              "score": "25"
+            },
+            {
+              "count": "8",
+              "score": "30"
+            },
+            {
+              "count": "44",
+              "score": "65"
+            },
+            {
+              "count": "1",
+              "score": "75"
+            },
+            {
+              "count": "8",
+              "score": "95"
+            },
+            {
+              "count": "7970",
+              "score": "100"
+            }
+          ],
+          "CLSC": [
+            {
+              "count": "16",
+              "score": "5"
+            },
+            {
+              "count": "6",
+              "score": "10"
+            },
+            {
+              "count": "5",
+              "score": "15"
+            },
+            {
+              "count": "4",
+              "score": "20"
+            },
+            {
+              "count": "11",
+              "score": "25"
+            },
+            {
+              "count": "24",
+              "score": "30"
+            },
+            {
+              "count": "2",
+              "score": "35"
+            },
+            {
+              "count": "1",
+              "score": "40"
+            },
+            {
+              "count": "4",
+              "score": "45"
+            },
+            {
+              "count": "2",
+              "score": "50"
+            },
+            {
+              "count": "1",
+              "score": "55"
+            },
+            {
+              "count": "7",
+              "score": "60"
+            },
+            {
+              "count": "1",
+              "score": "65"
+            },
+            {
+              "count": "4",
+              "score": "70"
+            },
+            {
+              "count": "27",
+              "score": "75"
+            },
+            {
+              "count": "1",
+              "score": "80"
+            },
+            {
+              "count": "3",
+              "score": "85"
+            },
+            {
+              "count": "4",
+              "score": "90"
+            },
+            {
+              "count": "12",
+              "score": "95"
+            },
+            {
+              "count": "7912",
+              "score": "100"
+            }
+          ],
+          "MDIT": [
+            {
+              "count": "28",
+              "score": "13"
+            },
+            {
+              "count": "1",
+              "score": "25"
+            },
+            {
+              "count": "1",
+              "score": "26"
+            },
+            {
+              "count": "30",
+              "score": "38"
+            },
+            {
+              "count": "5",
+              "score": "50"
+            },
+            {
+              "count": "15",
+              "score": "62"
+            },
+            {
+              "count": "1",
+              "score": "63"
+            },
+            {
+              "count": "4",
+              "score": "74"
+            },
+            {
+              "count": "5",
+              "score": "75"
+            },
+            {
+              "count": "6",
+              "score": "76"
+            },
+            {
+              "count": "11",
+              "score": "87"
+            },
+            {
+              "count": "2340",
+              "score": "100"
+            }
+          ],
+          "MINP": [
+            {
+              "count": "19",
+              "score": "5"
+            },
+            {
+              "count": "4",
+              "score": "9"
+            },
+            {
+              "count": "3",
+              "score": "10"
+            },
+            {
+              "count": "39",
+              "score": "14"
+            },
+            {
+              "count": "1",
+              "score": "15"
+            },
+            {
+              "count": "12",
+              "score": "19"
+            },
+            {
+              "count": "2",
+              "score": "20"
+            },
+            {
+              "count": "2",
+              "score": "23"
+            },
+            {
+              "count": "15",
+              "score": "24"
+            },
+            {
+              "count": "1",
+              "score": "25"
+            },
+            {
+              "count": "1",
+              "score": "27"
+            },
+            {
+              "count": "2",
+              "score": "28"
+            },
+            {
+              "count": "3",
+              "score": "29"
+            },
+            {
+              "count": "1",
+              "score": "33"
+            },
+            {
+              "count": "7",
+              "score": "34"
+            },
+            {
+              "count": "3",
+              "score": "39"
+            },
+            {
+              "count": "1",
+              "score": "41"
+            },
+            {
+              "count": "1",
+              "score": "43"
+            },
+            {
+              "count": "5",
+              "score": "44"
+            },
+            {
+              "count": "1",
+              "score": "46"
+            },
+            {
+              "count": "1",
+              "score": "48"
+            },
+            {
+              "count": "6",
+              "score": "52"
+            },
+            {
+              "count": "1",
+              "score": "53"
+            },
+            {
+              "count": "1",
+              "score": "56"
+            },
+            {
+              "count": "13",
+              "score": "59"
+            },
+            {
+              "count": "1",
+              "score": "61"
+            },
+            {
+              "count": "1",
+              "score": "64"
+            },
+            {
+              "count": "1",
+              "score": "66"
+            },
+            {
+              "count": "2",
+              "score": "67"
+            },
+            {
+              "count": "27",
+              "score": "73"
+            },
+            {
+              "count": "2",
+              "score": "77"
+            },
+            {
+              "count": "2",
+              "score": "78"
+            },
+            {
+              "count": "5",
+              "score": "81"
+            },
+            {
+              "count": "2",
+              "score": "82"
+            },
+            {
+              "count": "2",
+              "score": "83"
+            },
+            {
+              "count": "3",
+              "score": "86"
+            },
+            {
+              "count": "5",
+              "score": "87"
+            },
+            {
+              "count": "1",
+              "score": "90"
+            },
+            {
+              "count": "437",
+              "score": "91"
+            },
+            {
+              "count": "13",
+              "score": "92"
+            },
+            {
+              "count": "1",
+              "score": "95"
+            },
+            {
+              "count": "163",
+              "score": "96"
+            },
+            {
+              "count": "691",
+              "score": "100"
+            }
+          ],
+          "RMWS": [
+            {
+              "count": "74",
+              "score": "5"
+            },
+            {
+              "count": "21",
+              "score": "10"
+            },
+            {
+              "count": "25",
+              "score": "15"
+            },
+            {
+              "count": "27",
+              "score": "20"
+            },
+            {
+              "count": "17",
+              "score": "25"
+            },
+            {
+              "count": "8",
+              "score": "30"
+            },
+            {
+              "count": "38",
+              "score": "35"
+            },
+            {
+              "count": "31",
+              "score": "40"
+            },
+            {
+              "count": "6",
+              "score": "45"
+            },
+            {
+              "count": "3",
+              "score": "50"
+            },
+            {
+              "count": "1",
+              "score": "55"
+            },
+            {
+              "count": "1",
+              "score": "70"
+            },
+            {
+              "count": "670",
+              "score": "75"
+            },
+            {
+              "count": "269",
+              "score": "80"
+            },
+            {
+              "count": "36",
+              "score": "85"
+            },
+            {
+              "count": "39",
+              "score": "90"
+            },
+            {
+              "count": "53",
+              "score": "95"
+            },
+            {
+              "count": "1300",
+              "score": "100"
+            }
+          ],
+          "SNCO": [
+            {
+              "count": "1",
+              "score": "26"
+            },
+            {
+              "count": "24",
+              "score": "41"
+            },
+            {
+              "count": "3",
+              "score": "49"
+            },
+            {
+              "count": "2",
+              "score": "57"
+            },
+            {
+              "count": "1",
+              "score": "58"
+            },
+            {
+              "count": "27",
+              "score": "59"
+            },
+            {
+              "count": "57",
+              "score": "74"
+            },
+            {
+              "count": "9917",
+              "score": "100"
+            }
+          ]
+        },
+        "penalisedUsersCount": 0,
+        "problems": {
+          "BAIN": {
+            "accuracy": 58.07,
+            "allow_submission": false,
+            "category_name": "main",
+            "code": "BAIN",
+            "is_added_to_practice": true,
+            "is_direct_submittable": false,
+            "name": "Balanced Ingredients",
+            "problem_url": "/problems/BAIN",
+            "status_url": "/status/BAIN",
+            "submit_url": "/problems/BAIN",
+            "successful_submissions": "7970",
+            "total_submissions": "15184",
+            "type": "3"
+          },
+          "CLSC": {
+            "accuracy": 82.54,
+            "allow_submission": false,
+            "category_name": "main",
+            "code": "CLSC",
+            "is_added_to_practice": true,
+            "is_direct_submittable": false,
+            "name": "Closest Scores",
+            "problem_url": "/problems/CLSC",
+            "status_url": "/status/CLSC",
+            "submit_url": "/problems/CLSC",
+            "successful_submissions": "7912",
+            "total_submissions": "10468",
+            "type": "3"
+          },
+          "MDIT": {
+            "accuracy": 69.31,
+            "allow_submission": false,
+            "category_name": "main",
+            "code": "MDIT",
+            "is_added_to_practice": true,
+            "is_direct_submittable": false,
+            "name": "Maximum Difference in a Tree",
+            "problem_url": "/problems/MDIT",
+            "status_url": "/status/MDIT",
+            "submit_url": "/problems/MDIT",
+            "successful_submissions": "2340",
+            "total_submissions": "3764",
+            "type": "3"
+          },
+          "MINP": {
+            "accuracy": 29.36,
+            "allow_submission": false,
+            "category_name": "main",
+            "code": "MINP",
+            "is_added_to_practice": true,
+            "is_direct_submittable": false,
+            "name": "Minimum Incompatibility Partition",
+            "problem_url": "/problems/MINP",
+            "status_url": "/status/MINP",
+            "submit_url": "/problems/MINP",
+            "successful_submissions": "691",
+            "total_submissions": "2769",
+            "type": "3"
+          },
+          "RMWS": {
+            "accuracy": 33.99,
+            "allow_submission": false,
+            "category_name": "main",
+            "code": "RMWS",
+            "is_added_to_practice": true,
+            "is_direct_submittable": false,
+            "name": "Range Minimum with Swaps",
+            "problem_url": "/problems/RMWS",
+            "status_url": "/status/RMWS",
+            "submit_url": "/problems/RMWS",
+            "successful_submissions": "1300",
+            "total_submissions": "4386",
+            "type": "3"
+          },
+          "SNCO": {
+            "accuracy": 88.41,
+            "allow_submission": false,
+            "category_name": "main",
+            "code": "SNCO",
+            "is_added_to_practice": true,
+            "is_direct_submittable": false,
+            "name": "Equal Chocolates",
+            "problem_url": "/problems/SNCO",
+            "status_url": "/status/SNCO",
+            "submit_url": "/problems/SNCO",
+            "successful_submissions": "9917",
+            "total_submissions": "12773",
+            "type": "3"
+          }
+        },
+        "problemsstats": {
+          "attempted": [],
+          "locked": [],
+          "partially_solved": [],
+          "solved": []
+        },
+        "rank_and_score": {
+          "rank": "NA",
+          "score": "NA"
+        },
+        "rules": "<h4>CodeChef: A Platform for Aspiring Programmers</h4>\n<p class=\"last\">CodeChef was created as a platform to help programmers make it big in the world of algorithms, computer programming, and programming contests. At CodeChef, our dedicated efforts are aimed at reviving the inner geek within you, as we proudly host a thrilling programming (coding) contest every Wednesday.</p>\n<h4>Contest Details:</h4>\n<ul class=\"last\">\n<li><strong>D</strong><strong>uration: </strong> 3.00 hours </li>\n<li><strong>Start Date: </strong>Monday, 3rd Aug, 2026 at 19:00 HRS (IST)</li>\n<li><strong>End Date: </strong>Monday, 3rd Aug, 2026 at 22:00 HRS (IST)</li>\n<li>Check your timezone <a href=\"https://www.timeanddate.com/worldclock/fixedtime.html?msg=DSA+Monday+Munch+14&amp;iso=20260803T19&amp;p1=44&amp;ah=3\" target=\"_blank\" rel=\"nofollow noreferrer noopener\">here</a>.</li>\n</ul>\n<h4>Eligibility Criteria: Anyone with a knack for programming</h4>\n<p class=\"last\">Our contests are open to all programmers across the globe.</p>\n<h4>What's in it for you?</h4>\n<p>The idea behind these programming contests is that we want you to learn while competing. Also, we believe that it is alright to refer to tutorials, books, and other materials, learn a concept, and then apply the same to solve a problem during a contest. But it is <strong>not alright to copy other people's solutions or seek other people's help to solve a problem. </strong>All the participants are expected to abide to <a class=\"button blue\" href=\"../codeofconduct\">CodeChef's Code Of Conduct</a>.</p>\n<h4>Rules and Regulations:</h4>\n<ul>\n<li>This is an IOI-style contest. This means that the problems will be partially graded. You will get the score for passing certain test data.</li>\n<li>The details of the failed test cases will also be visible on your solution page.</li>\n<li>You can submit solutions as many times as you'd like, there are no penalties for incorrect submissions. Only your best correct submission will be considered.</li>\n<li>Those who achieve the score first will be placed higher in the ranklist in case of a tie.</li>\n<li><strong>We have removed all the Institutions that we could not identify from our database. We request you to update your institutions once again by going to your profile page.</strong></li>\n<li>You can also send in your queries in an email to <a href=\"mailto:<redacted-email>\" target=\"_blank\" rel=\"noreferrer noopener\"><redacted-email></a>, during the contest.</li>\n<li>Please do not discuss strategy, suggestions, or tips in the comments during a live contest. Posting questions clarifying the problem statement is ok. If you are unsure, email us at <a href=\"mailto:<redacted-email>\" target=\"_blank\" rel=\"noreferrer noopener\"> <redacted-email></a>.</li>\n<li>Discussing CodeChef's problems or any aspect of a problem, on any other platform on the web, on identification, could lead to the disabling of the respective account and banning from the community.</li>\n</ul>\n<p><strong>Note: You can now \"Code, Compile, and Run\" your codes on our <a href=\"../ide\">Online IDE</a>.</strong></p>\n<p>However, if you are using any other online development environment, make sure that other contestants don't have access to your code. As a contestant, you are responsible for making sure others don't access the code that you submit. If you use Ideone, make sure to mark your submission \"private\" (not secret)\".</p>",
+        "stats": null,
+        "status": "success",
+        "time": {
+          "current": 1785842351,
+          "end": 1785774600,
+          "freezing": 0,
+          "start": 1785763800
+        },
+        "todos": [],
+        "ttl": 60,
+        "user": {
+          "username": null
+        },
+        "user_live_ratings_update_frequency": 15,
+        "visitedContests": []
+      },
+      "registration_url": null,
+      "related": null,
+      "resource": 2,
+      "series": null,
+      "set_matched_coders_to_members": null,
+      "slug": "monday-munch-dsa-challenge-014-rated",
+      "standings_kind": "scoring",
+      "standings_url": "https://www.codechef.com/DSAMONDAY014",
+      "start_time": "2026-08-03T13:30:00Z",
+      "statistic_timing": "2026-08-04T16:07:10.673Z",
+      "statistics_update_required": false,
+      "submissions_info": {},
+      "title": "Monday Munch - DSA Challenge 014 (Rated)",
+      "title_path": "monday.munch.dsa.challenge.014.rated",
+      "trial_standings_url": null,
+      "uid": "i8nkvr8du9q4ng5fqb57cg6bps",
+      "updated": "2026-08-04T13:12:32.654Z",
+      "upload_solved_problems_solutions": null,
+      "upsolving_key": null,
+      "upsolving_url": null,
+      "url": "https://www.codechef.com/DSAMONDAY014",
+      "variables": {},
+      "wait_for_successful_update_timing": null,
+      "with_advance": false,
+      "with_medals": false
+    },
+    "model": "clist.contest",
+    "pk": 69189843
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "IN",
+      "created": "2026-07-18T13:46:35.117Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "name": "Gokulraj Kr",
+        "student/professional": "Other",
+        "username": "gokulrajkr"
+      },
+      "key": "gokulrajkr",
+      "last_activity": "2026-08-03T13:30:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-08-04T11:23:07.526Z",
+      "n_bronze": null,
+      "n_contests": 5,
+      "n_first_ac": 0,
+      "n_first_places": 1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 32,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 32,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Gokulraj Kr",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 2,
+      "resource_rank": null,
+      "solving": 3200.0,
+      "submissions_info": {},
+      "total_solving": 3200.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-08-04T11:29:10.673Z",
+      "upsolving": null,
+      "url": "/account/gokulrajkr/resource/codechef.com/"
+    },
+    "model": "ranking.account",
+    "pk": 11519020
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "IN",
+      "created": "2026-02-18T16:27:56.652Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "institution": "Malla Reddy Engineering College for Women Secunderabad, Telangana, India",
+        "name": "CHEGONDA SPURTHI",
+        "rating": 1082,
+        "student/professional": "Student"
+      },
+      "key": "mrcw25rh1a6647",
+      "last_activity": "2026-08-03T13:30:00Z",
+      "last_rating_activity": "2026-07-29T14:30:00Z",
+      "last_submission": null,
+      "modified": "2026-08-04T11:23:07.601Z",
+      "n_bronze": null,
+      "n_contests": 7,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": 1,
+      "n_silver": null,
+      "n_solved": 20,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 20,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "CHEGONDA SPURTHI",
+      "need_verification": false,
+      "rating": 1082,
+      "rating50": 21,
+      "rating_prediction": null,
+      "rating_update_time": "2026-07-15T16:30:00Z",
+      "related": null,
+      "resource": 2,
+      "resource_rank": 758382,
+      "solving": 2080.0,
+      "submissions_info": {},
+      "total_solving": 2080.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-08-04T11:29:10.673Z",
+      "upsolving": null,
+      "url": "/account/mrcw25rh1a6647/resource/codechef.com/"
+    },
+    "model": "ranking.account",
+    "pk": 10027196
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "IN",
+      "created": "2026-07-13T14:21:45.768Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "institution": "Sri Vasavi Engineering College Tadepalligudem, Andhra Pradesh",
+        "name": "KOTHAPALLI RAMASUBRAHMANYA TARUN TEJOPATHI",
+        "rating": 1693,
+        "student/professional": "Student"
+      },
+      "key": "u24a81a0630",
+      "last_activity": "2026-08-03T13:30:00Z",
+      "last_rating_activity": "2026-07-29T14:30:00Z",
+      "last_submission": null,
+      "modified": "2026-08-04T11:23:26.713Z",
+      "n_bronze": null,
+      "n_contests": 5,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 23,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 1,
+      "n_total_solved": 23,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "KOTHAPALLI RAMASUBRAHMANYA TARUN TEJOPATHI",
+      "need_verification": false,
+      "rating": 1693,
+      "rating50": 33,
+      "rating_prediction": null,
+      "rating_update_time": "2026-07-29T17:00:00Z",
+      "related": null,
+      "resource": 2,
+      "resource_rank": 56036,
+      "solving": 2396.0,
+      "submissions_info": {},
+      "total_solving": 2396.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-08-04T11:29:10.673Z",
+      "upsolving": null,
+      "url": "/account/u24a81a0630/resource/codechef.com/"
+    },
+    "model": "ranking.account",
+    "pk": 11472126
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "IN",
+      "created": "2026-07-20T16:08:11.090Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "name": "EARICK ANTO",
+        "rating": 1166,
+        "student/professional": "Other"
+      },
+      "key": "earickanto",
+      "last_activity": "2026-08-03T13:30:00Z",
+      "last_rating_activity": "2026-07-29T14:30:00Z",
+      "last_submission": null,
+      "modified": "2026-08-04T11:23:29.704Z",
+      "n_bronze": null,
+      "n_contests": 5,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 47,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 47,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "EARICK ANTO",
+      "need_verification": false,
+      "rating": 1166,
+      "rating50": 23,
+      "rating_prediction": null,
+      "rating_update_time": "2026-07-29T17:00:00Z",
+      "related": null,
+      "resource": 2,
+      "resource_rank": 482577,
+      "solving": 2531.0,
+      "submissions_info": {},
+      "total_solving": 2531.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-08-04T11:29:10.673Z",
+      "upsolving": null,
+      "url": "/account/earickanto/resource/codechef.com/"
+    },
+    "model": "ranking.account",
+    "pk": 11541830
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "IN",
+      "created": "2026-02-18T15:30:25.423Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "institution": "Malla Reddy Engineering College for Women Secunderabad, Telangana, India",
+        "name": "VEERAMALLU VARSHITHA",
+        "rating": 1203,
+        "student/professional": "Student"
+      },
+      "key": "mrcw25rh1a66y2",
+      "last_activity": "2026-08-03T13:30:00Z",
+      "last_rating_activity": "2026-07-15T14:30:00Z",
+      "last_submission": null,
+      "modified": "2026-08-04T11:23:29.824Z",
+      "n_bronze": null,
+      "n_contests": 11,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 0,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 39,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 0,
+      "n_total_solved": 39,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "VEERAMALLU VARSHITHA",
+      "need_verification": false,
+      "rating": 1203,
+      "rating50": 24,
+      "rating_prediction": null,
+      "rating_update_time": "2026-07-15T16:30:00Z",
+      "related": null,
+      "resource": 2,
+      "resource_rank": 439497,
+      "solving": 4075.0,
+      "submissions_info": {},
+      "total_solving": 4075.0,
+      "try_fill_missed_ranks_time": "2026-03-02T18:30:35.676Z",
+      "try_renaming_check_time": "2026-03-02T18:30:35.589Z",
+      "updated": "2026-08-04T11:29:10.673Z",
+      "upsolving": null,
+      "url": "/account/mrcw25rh1a66y2/resource/codechef.com/"
+    },
+    "model": "ranking.account",
+    "pk": 10025484
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "IN",
+      "created": "2020-02-25T19:30:42.848Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "name": "Adesh Gaikwad",
+        "rating": 1655,
+        "student/professional": "Other"
+      },
+      "key": "whatsupadesh",
+      "last_activity": "2026-08-03T13:30:00Z",
+      "last_rating_activity": "2026-07-29T14:30:00Z",
+      "last_submission": null,
+      "modified": "2026-08-04T11:23:37.034Z",
+      "n_bronze": null,
+      "n_contests": 11,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 25,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 25,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Adesh Gaikwad",
+      "need_verification": false,
+      "rating": 1655,
+      "rating50": 33,
+      "rating_prediction": null,
+      "rating_update_time": "2026-07-29T17:00:00Z",
+      "related": null,
+      "resource": 2,
+      "resource_rank": 69729,
+      "solving": 2587.0,
+      "submissions_info": {},
+      "total_solving": 2587.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-08-04T11:29:10.673Z",
+      "upsolving": 0.0,
+      "url": "/account/whatsupadesh/resource/codechef.com/"
+    },
+    "model": "ranking.account",
+    "pk": 1533218
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "IN",
+      "created": "2026-08-04T11:23:42.383Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "name": "Mohammed Basheer M M",
+        "student/professional": "Other",
+        "username": "basheer_143"
+      },
+      "key": "basheer_143",
+      "last_activity": "2026-08-03T13:30:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-08-04T11:43:52.254Z",
+      "n_bronze": null,
+      "n_contests": 1,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 4,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 4,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Mohammed Basheer M M",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 2,
+      "resource_rank": null,
+      "solving": 565.0,
+      "submissions_info": {},
+      "total_solving": 565.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-08-04T23:59:59.999Z",
+      "upsolving": null,
+      "url": "/account/basheer_143/resource/codechef.com/"
+    },
+    "model": "ranking.account",
+    "pk": 11598593
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "IN",
+      "created": "2026-02-04T17:02:13.980Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "institution": "Malla Reddy Engineering College for Women Secunderabad, Telangana, India",
+        "name": "DUDDELA AVANI",
+        "rating": 1242,
+        "student/professional": "Student"
+      },
+      "key": "mrcw24rh1a6782",
+      "last_activity": "2026-08-03T13:30:00Z",
+      "last_rating_activity": "2026-03-25T14:30:00Z",
+      "last_submission": null,
+      "modified": "2026-08-04T11:23:43.697Z",
+      "n_bronze": null,
+      "n_contests": 13,
+      "n_first_ac": 0,
+      "n_first_places": 1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 48,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 48,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "DUDDELA AVANI",
+      "need_verification": false,
+      "rating": 1242,
+      "rating50": 24,
+      "rating_prediction": null,
+      "rating_update_time": "2026-03-25T16:30:00Z",
+      "related": null,
+      "resource": 2,
+      "resource_rank": 394447,
+      "solving": 4745.0,
+      "submissions_info": {},
+      "total_solving": 4745.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-08-04T11:29:10.673Z",
+      "upsolving": null,
+      "url": "/account/mrcw24rh1a6782/resource/codechef.com/"
+    },
+    "model": "ranking.account",
+    "pk": 9963798
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "IN",
+      "created": "2025-09-03T14:45:59.958Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar_url": "https://cdn.codechef.com/sites/default/files/uploads/pictures/546042380b49b60571bc9126dbaaff5e.jpg",
+        "institution": "Indian Institute of Technology Mandi Suran, Himachal Pradesh, India",
+        "name": "Vidyans Sankalp",
+        "rating": 1663,
+        "student/professional": "Student"
+      },
+      "key": "sankvid26",
+      "last_activity": "2026-08-03T13:30:00Z",
+      "last_rating_activity": "2026-06-24T14:30:00Z",
+      "last_submission": "2026-08-03T19:34:20.780Z",
+      "modified": "2026-08-04T11:34:22.504Z",
+      "n_bronze": null,
+      "n_contests": 21,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 67,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 74,
+      "n_upsolved": 7,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Vidyans Sankalp",
+      "need_verification": false,
+      "rating": 1663,
+      "rating50": 33,
+      "rating_prediction": null,
+      "rating_update_time": "2026-06-24T16:30:00Z",
+      "related": null,
+      "resource": 2,
+      "resource_rank": 66578,
+      "solving": 6700.0,
+      "submissions_info": {
+        "count": 12,
+        "last_submission_id": 1327620810,
+        "last_submission_time": "2026-08-04T15:54:00+00:00"
+      },
+      "total_solving": 7400.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-08-04T23:59:59.999Z",
+      "upsolving": 700.0,
+      "url": "/coder/SankVid26/?resource=2"
+    },
+    "model": "ranking.account",
+    "pk": 8937494
+  },
+  {
+    "fields": {
+      "account": 11519020,
+      "addition": {
+        "country": "IN",
+        "institution": "",
+        "institution_type": null,
+        "is_user_premium": true,
+        "name": "Gokulraj Kr",
+        "problems": {
+          "BAIN": {
+            "result": 100
+          },
+          "CLSC": {
+            "result": 100
+          },
+          "MDIT": {
+            "result": 100
+          },
+          "MINP": {
+            "result": 100
+          },
+          "RMWS": {
+            "result": 100
+          },
+          "SNCO": {
+            "result": 100
+          }
+        },
+        "solved": {
+          "solving": 6,
+          "upsolving": 0
+        },
+        "time": "00:05:33",
+        "user_gender": "Male"
+      },
+      "advanced": false,
+      "contest": 69189843,
+      "created": "2026-08-04T11:23:07.495Z",
+      "global_rating_change": null,
+      "last_activity": "2026-08-03T13:30:00Z",
+      "medal": null,
+      "modified": "2026-08-04T11:23:07.495Z",
+      "n_first_ac": 0,
+      "n_solved": 6,
+      "n_total_solved": 6,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "1",
+      "place_as_int": 1,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 2,
+      "skip_in_stats": false,
+      "solving": 600.0,
+      "total_solving": 600.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91359534
+  },
+  {
+    "fields": {
+      "account": 10027196,
+      "addition": {
+        "country": "IN",
+        "institution": "Malla Reddy Engineering College for Women",
+        "institution_type": "College",
+        "is_user_premium": true,
+        "name": "CHEGONDA SPURTHI",
+        "old_rating": 1082,
+        "problems": {
+          "BAIN": {
+            "result": 100
+          },
+          "CLSC": {
+            "result": 100
+          },
+          "MDIT": {
+            "result": 100
+          },
+          "MINP": {
+            "result": 100
+          },
+          "RMWS": {
+            "result": 100
+          },
+          "SNCO": {
+            "result": 100
+          }
+        },
+        "solved": {
+          "solving": 6,
+          "upsolving": 0
+        },
+        "time": "00:06:49",
+        "user_gender": "Other"
+      },
+      "advanced": false,
+      "contest": 69189843,
+      "created": "2026-08-04T11:23:07.579Z",
+      "global_rating_change": null,
+      "last_activity": "2026-08-03T13:30:00Z",
+      "medal": null,
+      "modified": "2026-08-04T11:23:07.579Z",
+      "n_first_ac": 0,
+      "n_solved": 6,
+      "n_total_solved": 6,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "2",
+      "place_as_int": 2,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 2,
+      "skip_in_stats": false,
+      "solving": 600.0,
+      "total_solving": 600.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91359535
+  },
+  {
+    "fields": {
+      "account": 11472126,
+      "addition": {
+        "country": "IN",
+        "institution": "Sri Vasavi Engineering College",
+        "institution_type": "College",
+        "is_user_premium": true,
+        "name": "KOTHAPALLI RAMASUBRAHMANYA TARUN TEJOPATHI",
+        "old_rating": 1693,
+        "problems": {
+          "BAIN": {
+            "result": 100
+          },
+          "CLSC": {
+            "result": 100
+          },
+          "MDIT": {
+            "result": 100
+          },
+          "MINP": {
+            "partial": true,
+            "result": 96
+          },
+          "RMWS": {
+            "result": 100
+          },
+          "SNCO": {
+            "result": 100
+          }
+        },
+        "solved": {
+          "solving": 6,
+          "upsolving": 0
+        },
+        "time": "00:13:36",
+        "user_gender": "Other"
+      },
+      "advanced": false,
+      "contest": 69189843,
+      "created": "2026-08-04T11:23:26.706Z",
+      "global_rating_change": null,
+      "last_activity": "2026-08-03T13:30:00Z",
+      "medal": null,
+      "modified": "2026-08-04T11:23:26.706Z",
+      "n_first_ac": 0,
+      "n_solved": 5,
+      "n_total_solved": 5,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "511",
+      "place_as_int": 511,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 2,
+      "skip_in_stats": false,
+      "solving": 596.0,
+      "total_solving": 596.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91360044
+  },
+  {
+    "fields": {
+      "account": 11541830,
+      "addition": {
+        "country": "IN",
+        "institution": "",
+        "institution_type": null,
+        "is_user_premium": false,
+        "name": "EARICK ANTO",
+        "old_rating": 1166,
+        "problems": {
+          "BAIN": {
+            "result": 100
+          },
+          "CLSC": {
+            "result": 100
+          },
+          "MDIT": {
+            "result": 100
+          },
+          "MINP": {
+            "result": 100
+          },
+          "RMWS": {
+            "partial": true,
+            "result": 95
+          },
+          "SNCO": {
+            "result": 100
+          }
+        },
+        "solved": {
+          "solving": 6,
+          "upsolving": 0
+        },
+        "time": "00:55:34",
+        "user_gender": ""
+      },
+      "advanced": false,
+      "contest": 69189843,
+      "created": "2026-08-04T11:23:29.697Z",
+      "global_rating_change": null,
+      "last_activity": "2026-08-03T13:30:00Z",
+      "medal": null,
+      "modified": "2026-08-04T11:23:29.697Z",
+      "n_first_ac": 0,
+      "n_solved": 5,
+      "n_total_solved": 5,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "596",
+      "place_as_int": 596,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 2,
+      "skip_in_stats": false,
+      "solving": 595.0,
+      "total_solving": 595.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91360129
+  },
+  {
+    "fields": {
+      "account": 10025484,
+      "addition": {
+        "country": "IN",
+        "institution": "Malla Reddy Engineering College for Women",
+        "institution_type": "College",
+        "is_user_premium": true,
+        "name": "VEERAMALLU VARSHITHA",
+        "old_rating": 1205,
+        "problems": {
+          "BAIN": {
+            "result": 100
+          },
+          "CLSC": {
+            "partial": true,
+            "result": 95
+          },
+          "MDIT": {
+            "result": 100
+          },
+          "MINP": {
+            "result": 100
+          },
+          "RMWS": {
+            "result": 100
+          },
+          "SNCO": {
+            "result": 100
+          }
+        },
+        "solved": {
+          "solving": 6,
+          "upsolving": 0
+        },
+        "time": "01:51:38",
+        "user_gender": "Female"
+      },
+      "advanced": false,
+      "contest": 69189843,
+      "created": "2026-08-04T11:23:29.812Z",
+      "global_rating_change": null,
+      "last_activity": "2026-08-03T13:30:00Z",
+      "medal": null,
+      "modified": "2026-08-04T11:23:29.812Z",
+      "n_first_ac": 0,
+      "n_solved": 5,
+      "n_total_solved": 5,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "599",
+      "place_as_int": 599,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 2,
+      "skip_in_stats": false,
+      "solving": 595.0,
+      "total_solving": 595.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91360132
+  },
+  {
+    "fields": {
+      "account": 1533218,
+      "addition": {
+        "country": "IN",
+        "institution": "",
+        "institution_type": null,
+        "is_user_premium": false,
+        "name": "Adesh Gaikwad",
+        "old_rating": 1655,
+        "problems": {
+          "BAIN": {
+            "result": 100
+          },
+          "CLSC": {
+            "result": 100
+          },
+          "MDIT": {
+            "partial": true,
+            "result": 87
+          },
+          "MINP": {
+            "result": 100
+          },
+          "RMWS": {
+            "result": 100
+          },
+          "SNCO": {
+            "result": 100
+          }
+        },
+        "solved": {
+          "solving": 6,
+          "upsolving": 0
+        },
+        "time": "00:54:01",
+        "user_gender": "Male"
+      },
+      "advanced": false,
+      "contest": 69189843,
+      "created": "2026-08-04T11:23:37.021Z",
+      "global_rating_change": null,
+      "last_activity": "2026-08-03T13:30:00Z",
+      "medal": null,
+      "modified": "2026-08-04T11:23:37.021Z",
+      "n_first_ac": 0,
+      "n_solved": 5,
+      "n_total_solved": 5,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "836",
+      "place_as_int": 836,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 2,
+      "skip_in_stats": false,
+      "solving": 587.0,
+      "total_solving": 587.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91360369
+  },
+  {
+    "fields": {
+      "account": 11598593,
+      "addition": {
+        "country": "IN",
+        "institution": "",
+        "institution_type": null,
+        "is_user_premium": true,
+        "name": "Mohammed Basheer M M",
+        "problems": {
+          "BAIN": {
+            "result": 100
+          },
+          "CLSC": {
+            "result": 100
+          },
+          "MDIT": {
+            "result": 100
+          },
+          "MINP": {
+            "partial": true,
+            "result": 91
+          },
+          "RMWS": {
+            "result": 100
+          },
+          "SNCO": {
+            "partial": true,
+            "result": 74
+          }
+        },
+        "solved": {
+          "solving": 6,
+          "upsolving": 0
+        },
+        "time": "01:31:32",
+        "user_gender": ""
+      },
+      "advanced": false,
+      "contest": 69189843,
+      "created": "2026-08-04T11:23:42.403Z",
+      "global_rating_change": null,
+      "last_activity": "2026-08-03T13:30:00Z",
+      "medal": null,
+      "modified": "2026-08-04T11:23:42.403Z",
+      "n_first_ac": 0,
+      "n_solved": 4,
+      "n_total_solved": 4,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "1021",
+      "place_as_int": 1021,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 2,
+      "skip_in_stats": false,
+      "solving": 565.0,
+      "total_solving": 565.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91360554
+  },
+  {
+    "fields": {
+      "account": 9963798,
+      "addition": {
+        "country": "IN",
+        "institution": "Malla Reddy Engineering College for Women",
+        "institution_type": "College",
+        "is_user_premium": true,
+        "name": "DUDDELA AVANI",
+        "old_rating": 1242,
+        "problems": {
+          "BAIN": {
+            "partial": true,
+            "result": 25
+          },
+          "CLSC": {
+            "result": 100
+          },
+          "MDIT": {
+            "result": 100
+          },
+          "MINP": {
+            "result": 100
+          },
+          "RMWS": {
+            "result": 100
+          },
+          "SNCO": {
+            "result": 100
+          }
+        },
+        "solved": {
+          "solving": 6,
+          "upsolving": 0
+        },
+        "time": "01:07:34",
+        "user_gender": "Other"
+      },
+      "advanced": false,
+      "contest": 69189843,
+      "created": "2026-08-04T11:23:43.689Z",
+      "global_rating_change": null,
+      "last_activity": "2026-08-03T13:30:00Z",
+      "medal": null,
+      "modified": "2026-08-04T11:23:43.689Z",
+      "n_first_ac": 0,
+      "n_solved": 5,
+      "n_total_solved": 5,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "1066",
+      "place_as_int": 1066,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 2,
+      "skip_in_stats": false,
+      "solving": 525.0,
+      "total_solving": 525.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91360599
+  },
+  {
+    "fields": {
+      "account": 8937494,
+      "addition": {
+        "country": "IN",
+        "institution": "Indian Institute of Technology Mandi",
+        "institution_type": "College",
+        "is_user_premium": false,
+        "name": "Vidyans Sankalp",
+        "old_rating": 1663,
+        "problems": {
+          "BAIN": {
+            "result": 100
+          },
+          "CLSC": {
+            "result": 100
+          },
+          "MDIT": {
+            "upsolving": {
+              "id": 1327614067,
+              "language": "C++",
+              "partial": false,
+              "result": 100,
+              "submission_time": 1785785660.780049,
+              "url": "https://www.codechef.com/viewsolution/1327614067",
+              "verdict": "AC"
+            }
+          },
+          "MINP": {
+            "result": 100
+          },
+          "SNCO": {
+            "result": 100
+          }
+        },
+        "solved": {
+          "solving": 4,
+          "upsolving": 0
+        },
+        "time": "01:15:54",
+        "user_gender": "Male"
+      },
+      "advanced": false,
+      "contest": 69189843,
+      "created": "2026-08-04T11:24:12.367Z",
+      "global_rating_change": null,
+      "last_activity": "2026-08-03T13:30:00Z",
+      "medal": null,
+      "modified": "2026-08-04T11:34:20.780Z",
+      "n_first_ac": 0,
+      "n_solved": 4,
+      "n_total_solved": 4,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "1932",
+      "place_as_int": 1932,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 2,
+      "skip_in_stats": false,
+      "solving": 400.0,
+      "total_solving": 400.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91361465
+  }
+]

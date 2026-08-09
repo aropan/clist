@@ -1,0 +1,961 @@
+[
+  {
+    "fields": {
+      "accounts_fields": {
+        "types": {
+          "avatar": [
+            "str"
+          ],
+          "bio": [
+            "str"
+          ],
+          "certifications": [
+            "list"
+          ],
+          "co_curricular_activities": [
+            "NoneType"
+          ],
+          "co_curricular_activities__description": [
+            "str"
+          ],
+          "co_curricular_activities__hash": [
+            "str"
+          ],
+          "college": [
+            "NoneType"
+          ],
+          "college__logo": [
+            "NoneType",
+            "str"
+          ],
+          "college__name": [
+            "str"
+          ],
+          "college__slug": [
+            "str"
+          ],
+          "contact_details": [
+            "NoneType"
+          ],
+          "country__code": [
+            "str"
+          ],
+          "country__name": [
+            "str"
+          ],
+          "description": [
+            "NoneType",
+            "str"
+          ],
+          "educations": [
+            "list"
+          ],
+          "experiences": [
+            "list"
+          ],
+          "first_name": [
+            "str"
+          ],
+          "follower_count": [
+            "int"
+          ],
+          "following_count": [
+            "int"
+          ],
+          "gender": [
+            "NoneType",
+            "int"
+          ],
+          "gender_display": [
+            "NoneType",
+            "str"
+          ],
+          "has_prior_coding_experience": [
+            "NoneType",
+            "bool"
+          ],
+          "hide_timestamps": [
+            "bool"
+          ],
+          "is_executive": [
+            "bool"
+          ],
+          "is_followed": [
+            "bool"
+          ],
+          "is_mentor": [
+            "bool"
+          ],
+          "is_mock_interviewer": [
+            "bool"
+          ],
+          "is_placement_coordinator": [
+            "bool"
+          ],
+          "is_reviewer": [
+            "bool"
+          ],
+          "is_success_champion": [
+            "bool"
+          ],
+          "kyc_detail": [
+            "NoneType"
+          ],
+          "kyc_detail__is_aadhaar_verified": [
+            "bool"
+          ],
+          "kyc_detail__is_pan_verified": [
+            "bool"
+          ],
+          "last_name": [
+            "str"
+          ],
+          "projects": [
+            "list"
+          ],
+          "self_skills": [
+            "list"
+          ],
+          "social_profiles": [
+            "list"
+          ],
+          "username": [
+            "str"
+          ],
+          "username_update_count": [
+            "int"
+          ]
+        },
+        "verification_fields": [
+          "bio",
+          "description"
+        ]
+      },
+      "allow_delete_archived_statistics": false,
+      "api_url": null,
+      "auto_remove_started": false,
+      "avatar_url": "{info[avatar]}",
+      "avg_rating": 1243.8857452879477,
+      "color": "#C3CC65",
+      "contest_update_time": "2024-09-26T10:49:06Z",
+      "country_rank_update_time": "2025-03-18T23:32:02.014Z",
+      "created": "2021-08-24T23:56:51.651Z",
+      "default_account_type": 1,
+      "enable": true,
+      "has_account_last_submission": null,
+      "has_account_n_writers": null,
+      "has_account_verification": true,
+      "has_accounts_infos_update": true,
+      "has_country_medal": null,
+      "has_country_place": null,
+      "has_country_rating": true,
+      "has_inherit_medals_to_related": false,
+      "has_multi_account": false,
+      "has_problem_archive": false,
+      "has_problem_rating": true,
+      "has_problem_statistic": true,
+      "has_problem_update": false,
+      "has_rating_history": true,
+      "has_standings_renamed_account": false,
+      "has_statistic_medal": null,
+      "has_statistic_n_first_ac": null,
+      "has_statistic_n_total_solved": true,
+      "has_statistic_place": true,
+      "has_statistic_total_solving": true,
+      "has_submissions_statistics_log": false,
+      "has_upsolving": false,
+      "host": "my.newtonschool.co",
+      "icon_file": "resources/my_newtonschool_co.ico",
+      "icon_updated_at": "2026-03-07T00:06:38.477Z",
+      "icon_url": null,
+      "info": {
+        "get_events": {
+          "colors": {
+            "darken": "#404416",
+            "lighten": "#ECEFD0"
+          }
+        },
+        "standings": {
+          "timeline": {
+            "attempt_penalty": 600,
+            "time_factor": {
+              "1": [
+                60
+              ],
+              "2": [
+                3600,
+                60
+              ],
+              "3": [
+                86400,
+                3600,
+                60
+              ]
+            }
+          }
+        }
+      },
+      "modified": "2026-03-09T00:26:55.945Z",
+      "n_accounts": 81968,
+      "n_accounts_to_update": 0,
+      "n_contests": 48,
+      "n_rating_accounts": 45869,
+      "n_statistics": 110062,
+      "n_team_accounts": 0,
+      "n_university_accounts": 0,
+      "parse_url": null,
+      "path": "./module/my.newtonschool.co/index.php",
+      "problem_archive_update_time": null,
+      "problem_rating_predictor": {},
+      "problem_url": null,
+      "problems_fields": {
+        "types": {}
+      },
+      "profile_url": "https://my.newtonschool.co/user/{account}/",
+      "rank_update_time": "2024-07-13T21:00:04Z",
+      "rating_prediction": null,
+      "rating_update_time": "2024-07-13T20:45:09Z",
+      "ratings": [
+        {
+          "color": "gray",
+          "hex_rgb": "#808080",
+          "high": 1400,
+          "hsl": [
+            0,
+            0,
+            0.5
+          ],
+          "low": -100500,
+          "next": 1400,
+          "prev": -100500
+        },
+        {
+          "color": "green",
+          "hex_rgb": "#008000",
+          "high": 1600,
+          "hsl": [
+            0.33,
+            1,
+            0.25
+          ],
+          "low": 1400,
+          "next": 1600,
+          "prev": 1400
+        },
+        {
+          "color": "blue",
+          "hex_rgb": "#0000FF",
+          "high": 1800,
+          "hsl": [
+            0.67,
+            1,
+            0.5
+          ],
+          "low": 1600,
+          "next": 1800,
+          "prev": 1600
+        },
+        {
+          "color": "violet",
+          "hex_rgb": "#AA00AA",
+          "high": 2000,
+          "hsl": [
+            0.83,
+            1,
+            0.33
+          ],
+          "low": 1800,
+          "next": 2000,
+          "prev": 1800
+        },
+        {
+          "color": "yellow",
+          "hex_rgb": "#BBBB00",
+          "high": 2200,
+          "hsl": [
+            0.17,
+            1,
+            0.37
+          ],
+          "low": 2000,
+          "next": 2200,
+          "prev": 2000
+        },
+        {
+          "color": "orange",
+          "hex_rgb": "#FF8C00",
+          "high": 2500,
+          "hsl": [
+            0.09,
+            1,
+            0.5
+          ],
+          "low": 2200,
+          "next": 2500,
+          "prev": 2200
+        },
+        {
+          "color": "red",
+          "hex_rgb": "#FF0000",
+          "high": 3000,
+          "hsl": [
+            0,
+            1,
+            0.5
+          ],
+          "low": 2500,
+          "next": 3000,
+          "prev": 2500
+        },
+        {
+          "color": "red",
+          "hex_rgb": "#FF0000",
+          "high": 100500,
+          "hsl": [
+            0,
+            1,
+            0.375
+          ],
+          "low": 3000,
+          "prev": 2500
+        }
+      ],
+      "regexp": null,
+      "short_host": "newton",
+      "skip_for_contests_chart": false,
+      "statistics_fields": {
+        "types": {
+          "college": [
+            "str"
+          ],
+          "country": [
+            "str"
+          ],
+          "last_solved": [
+            "time",
+            "float"
+          ],
+          "name": [
+            "str"
+          ],
+          "new_rating": [
+            "int"
+          ],
+          "penalty": [
+            "int"
+          ],
+          "rating_change": [
+            "int"
+          ]
+        }
+      },
+      "timezone": null,
+      "uid": "h3kd0t65pejrr0f5lave397trc@group.calendar.google.com",
+      "url": "https://my.newtonschool.co/contest/all/"
+    },
+    "model": "clist.resource",
+    "pk": 130
+  },
+  {
+    "fields": {
+      "created": "2021-08-25T00:41:08.718Z",
+      "delay_on_error": "01:00:00",
+      "delay_on_success": "08:00:00",
+      "delay_shortly_after": "00:05:00",
+      "enable": true,
+      "long_contest_divider": 15,
+      "long_contest_idle": "06:00:00",
+      "max_delay_after_end": "2 00:00:00",
+      "min_delay_after_end": "00:10:00",
+      "modified": "2022-04-05T03:17:55.230Z",
+      "path": "ranking/management/modules/my_newtonschool",
+      "resource": 130,
+      "shortly_after": "00:30:00"
+    },
+    "model": "ranking.module",
+    "pk": 60
+  },
+  {
+    "fields": {
+      "allow_updating_statistics_for_participants": null,
+      "auto_updated": "2024-10-25T17:27:51Z",
+      "calculate_time": false,
+      "created": "2024-09-24T10:27:35.950Z",
+      "duration_in_secs": 7200,
+      "edit": null,
+      "elimination_tournament_info": {},
+      "end_time": "2024-09-24T17:30:00Z",
+      "finalists_info": {},
+      "has_fixed_rating_prediction_field": null,
+      "has_hidden_results": false,
+      "has_submissions": null,
+      "has_submissions_tests": null,
+      "has_unlimited_statistics": null,
+      "hide_unsolved_standings_problems": null,
+      "host": "my.newtonschool.co",
+      "info": {
+        "fields": [
+          "name",
+          "penalty",
+          "last_solved",
+          "country",
+          "college",
+          "problems"
+        ],
+        "fields_types": {
+          "college": [
+            "str"
+          ],
+          "country": [
+            "str"
+          ],
+          "last_solved": [
+            "float",
+            "time"
+          ],
+          "name": [
+            "str"
+          ],
+          "penalty": [
+            "int"
+          ],
+          "problems": [
+            "dict"
+          ]
+        },
+        "hidden_fields": [
+          "last_solved",
+          "college"
+        ],
+        "problems": [
+          {
+            "code": "5x96ocz1zjjf",
+            "n_accepted": 211,
+            "n_teams": 256,
+            "n_total": 258,
+            "name": "Leap Year (Developer Hiring Challenge September'24)",
+            "rating": 0,
+            "short": "Q1"
+          },
+          {
+            "code": "8m661oxll5tk",
+            "n_accepted": 2,
+            "n_teams": 138,
+            "n_total": 258,
+            "name": "Sasha's LCM (Developer Hiring Challenge September'24)",
+            "rating": 2577,
+            "short": "Q2"
+          },
+          {
+            "code": "392fiexs0cib",
+            "n_accepted": 59,
+            "n_teams": 117,
+            "n_total": 258,
+            "name": "AND tuples (Developer Hiring Challenge September'24)",
+            "rating": 1492,
+            "short": "Q3"
+          },
+          {
+            "code": "vdsm4omp4d6f",
+            "n_accepted": 4,
+            "n_teams": 94,
+            "n_total": 258,
+            "name": "Reverse NIM? (Developer Hiring Challenge September'24)",
+            "rating": 1900,
+            "short": "Q4"
+          },
+          {
+            "code": "c7m1bkewhpz1",
+            "n_teams": 53,
+            "n_total": 258,
+            "name": "Bodega Orders",
+            "rating": 3099,
+            "short": "Q5"
+          }
+        ]
+      },
+      "invisible": false,
+      "is_auto_added": true,
+      "is_promoted": null,
+      "is_rated": null,
+      "key": "dnpxotzj9sa4/mvd7x4mnc13c",
+      "kind": null,
+      "link_statistic_timing": null,
+      "merging_contests": [],
+      "modified": "2024-09-24T10:27:35.950Z",
+      "n_problems": 5,
+      "n_statistics": 258,
+      "notification_timing": "2024-09-24T10:29:15.187Z",
+      "parsed_percentage": null,
+      "parsed_time": "2024-09-26T10:49:06.861Z",
+      "problem_rating_hash": "a7c5592bf2582d10de1672a7eebd80e54b59192e0491eaff27fe58be603794aa",
+      "problem_rating_update_required": false,
+      "rating_prediction_fields": null,
+      "rating_prediction_hash": null,
+      "rating_prediction_timing": null,
+      "raw_info": {},
+      "registration_url": null,
+      "related": null,
+      "resource": 130,
+      "series": null,
+      "set_matched_coders_to_members": null,
+      "slug": "developer-hiring-challenge-september24",
+      "standings_kind": null,
+      "standings_url": "https://my.newtonschool.co/course/dnpxotzj9sa4/assignment/mvd7x4mnc13c/dashboard/?tab=leaderboard",
+      "start_time": "2024-09-24T15:30:00Z",
+      "statistic_timing": "2024-09-26T18:49:06.861Z",
+      "statistics_update_required": false,
+      "submissions_info": {},
+      "title": "Developer Hiring Challenge September'24",
+      "title_path": "developer.hiring.challenge.september24",
+      "trial_standings_url": null,
+      "uid": "5cktpoddsq10nji5dj3arib0u8",
+      "updated": "2024-10-25T17:27:51.349Z",
+      "upload_solved_problems_solutions": null,
+      "upsolving_key": null,
+      "upsolving_url": null,
+      "url": "https://my.newtonschool.co/course/dnpxotzj9sa4/assignment/mvd7x4mnc13c/dashboard/",
+      "variables": {},
+      "wait_for_successful_update_timing": null,
+      "with_advance": false,
+      "with_medals": false
+    },
+    "model": "clist.contest",
+    "pk": 54226122
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "CN",
+      "created": "2023-01-28T19:12:04.937Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar": "https://ui-avatars.com/api/?background=4655B7&color=fff&name=Yiming%20Li&size=128",
+        "bio": "",
+        "certifications": [],
+        "co_curricular_activities": {},
+        "college": null,
+        "contact_details": null,
+        "country": {
+          "code": "cn",
+          "name": "China"
+        },
+        "description": null,
+        "educations": [],
+        "experiences": [],
+        "first_name": "Yiming",
+        "follower_count": 6,
+        "following_count": 0,
+        "gender": null,
+        "gender_display": null,
+        "has_prior_coding_experience": null,
+        "hide_timestamps": false,
+        "is_executive": false,
+        "is_followed": false,
+        "is_mentor": false,
+        "is_mock_interviewer": false,
+        "is_placement_coordinator": false,
+        "is_reviewer": false,
+        "is_success_champion": false,
+        "kyc_detail": null,
+        "last_name": "Li",
+        "projects": [],
+        "rating": 3242,
+        "self_skills": [],
+        "social_profiles": [],
+        "username": "liympanda",
+        "username_update_count": 1
+      },
+      "key": "liympanda",
+      "last_activity": "2024-09-24T15:30:00Z",
+      "last_rating_activity": "2024-03-04T15:30:00Z",
+      "last_submission": null,
+      "modified": "2026-01-04T00:20:11.736Z",
+      "n_bronze": null,
+      "n_contests": 7,
+      "n_first_ac": 0,
+      "n_first_places": 1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 6,
+      "n_second_places": 1,
+      "n_silver": null,
+      "n_solved": 34,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 4,
+      "n_total_solved": 34,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Yiming Li",
+      "need_verification": false,
+      "rating": 3242,
+      "rating50": 64,
+      "rating_prediction": null,
+      "rating_update_time": "2024-09-26T10:49:06Z",
+      "related": null,
+      "resource": 130,
+      "resource_rank": 8,
+      "solving": 34.0,
+      "submissions_info": {},
+      "total_solving": 34.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-01-04T23:59:59.999Z",
+      "upsolving": 0.0,
+      "url": "/coder/liympanda/?resource=130"
+    },
+    "model": "ranking.account",
+    "pk": 5300597
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "IN",
+      "created": "2022-08-31T18:24:38.188Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar": "https://ui-avatars.com/api/?background=492615&color=fff&name=Murali%20Tallapalli&size=128",
+        "bio": "",
+        "certifications": [],
+        "co_curricular_activities": {},
+        "college": {
+          "logo": null,
+          "name": "National Institute Of Technology, Silchar, Assam",
+          "slug": "national-institute-of-technology-silchar-assam"
+        },
+        "contact_details": null,
+        "country": {
+          "code": "in",
+          "name": "India"
+        },
+        "description": null,
+        "educations": [],
+        "experiences": [],
+        "first_name": "Murali",
+        "follower_count": 0,
+        "following_count": 1,
+        "gender": 1,
+        "gender_display": "Male",
+        "has_prior_coding_experience": null,
+        "hide_timestamps": false,
+        "is_executive": false,
+        "is_followed": false,
+        "is_mentor": false,
+        "is_mock_interviewer": false,
+        "is_placement_coordinator": false,
+        "is_reviewer": false,
+        "is_success_champion": false,
+        "kyc_detail": null,
+        "last_name": "Tallapalli",
+        "projects": [],
+        "rating": 1231,
+        "self_skills": [],
+        "social_profiles": [],
+        "username": "tallapallimurali987",
+        "username_update_count": 0
+      },
+      "key": "tallapallimurali987",
+      "last_activity": "2024-09-24T15:30:00Z",
+      "last_rating_activity": "2022-08-31T15:30:00Z",
+      "last_submission": null,
+      "modified": "2026-01-04T00:20:13.663Z",
+      "n_bronze": null,
+      "n_contests": 3,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 8,
+      "n_subscribers": 0,
+      "n_third_places": 1,
+      "n_top_ten_places": null,
+      "n_total_solved": 8,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Murali Tallapalli",
+      "need_verification": false,
+      "rating": 1231,
+      "rating50": 24,
+      "rating_prediction": null,
+      "rating_update_time": "2024-09-26T10:49:06Z",
+      "related": null,
+      "resource": 130,
+      "resource_rank": 20991,
+      "solving": 8.0,
+      "submissions_info": {},
+      "total_solving": 8.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-01-04T23:59:59.999Z",
+      "upsolving": 0.0,
+      "url": "/account/tallapallimurali987/resource/my.newtonschool.co/"
+    },
+    "model": "ranking.account",
+    "pk": 4656070
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "IN",
+      "created": "2024-09-24T18:06:10.361Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar": "https://ui-avatars.com/api/?background=4655B7&color=fff&name=DHANUSH&size=128",
+        "bio": "",
+        "certifications": [],
+        "co_curricular_activities": {},
+        "college": {
+          "logo": null,
+          "name": "Godavari Institute Of Engineering And Technology, Rajahmundry",
+          "slug": "godavari-institute-of-engineering-and-technology-rajahmundry"
+        },
+        "contact_details": null,
+        "country": {
+          "code": "in",
+          "name": "India"
+        },
+        "description": null,
+        "educations": [],
+        "experiences": [],
+        "first_name": "DHANUSH",
+        "follower_count": 2,
+        "following_count": 1,
+        "gender": 1,
+        "gender_display": "Male",
+        "has_prior_coding_experience": null,
+        "hide_timestamps": false,
+        "is_executive": false,
+        "is_followed": false,
+        "is_mentor": false,
+        "is_mock_interviewer": false,
+        "is_placement_coordinator": false,
+        "is_reviewer": false,
+        "is_success_champion": false,
+        "kyc_detail": null,
+        "last_name": "",
+        "projects": [],
+        "self_skills": [],
+        "social_profiles": [],
+        "username": "dhanushgollavilli02",
+        "username_update_count": 0
+      },
+      "key": "dhanushgollavilli02",
+      "last_activity": "2024-09-24T15:30:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-01-03T00:13:50.265Z",
+      "n_bronze": null,
+      "n_contests": 1,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 2,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 1,
+      "n_total_solved": 2,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "DHANUSH ",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 130,
+      "resource_rank": null,
+      "solving": 2.0,
+      "submissions_info": {},
+      "total_solving": 2.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-01-03T23:59:59.999Z",
+      "upsolving": 0.0,
+      "url": "/account/dhanushgollavilli02/resource/my.newtonschool.co/"
+    },
+    "model": "ranking.account",
+    "pk": 7528502
+  },
+  {
+    "fields": {
+      "account": 5300597,
+      "addition": {
+        "country": "cn",
+        "last_solved": 1727195190.0,
+        "name": "Yiming Li",
+        "penalty": 91,
+        "problems": {
+          "Q1": {
+            "result": "+",
+            "time": "0:02"
+          },
+          "Q2": {
+            "result": "+",
+            "time": "0:15"
+          },
+          "Q3": {
+            "result": "+",
+            "time": "0:18"
+          },
+          "Q4": {
+            "result": "+",
+            "time": "0:56"
+          }
+        }
+      },
+      "advanced": false,
+      "contest": 54226122,
+      "created": "2024-09-24T18:06:10.119Z",
+      "global_rating_change": null,
+      "last_activity": "2024-09-24T15:30:00Z",
+      "medal": null,
+      "modified": "2025-03-18T00:41:26.960Z",
+      "n_first_ac": 0,
+      "n_solved": 4,
+      "n_total_solved": 4,
+      "n_upsolved": 0,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "1",
+      "place_as_int": 1,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 130,
+      "skip_in_stats": false,
+      "solving": 4.0,
+      "total_solving": 4.0,
+      "upsolving": 0.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 69350306
+  },
+  {
+    "fields": {
+      "account": 4656070,
+      "addition": {
+        "college": "National Institute Of Technology, Silchar, Assam",
+        "country": "in",
+        "last_solved": 1727198903.0,
+        "name": "Murali Tallapalli",
+        "penalty": 269,
+        "problems": {
+          "Q1": {
+            "result": "+1",
+            "time": "0:21"
+          },
+          "Q3": {
+            "result": "+1",
+            "time": "1:58"
+          },
+          "Q4": {
+            "result": "+2",
+            "time": "1:30"
+          }
+        }
+      },
+      "advanced": false,
+      "contest": 54226122,
+      "created": "2024-09-24T18:06:10.300Z",
+      "global_rating_change": null,
+      "last_activity": "2024-09-24T15:30:00Z",
+      "medal": null,
+      "modified": "2025-03-18T00:41:24.482Z",
+      "n_first_ac": 0,
+      "n_solved": 3,
+      "n_total_solved": 3,
+      "n_upsolved": 0,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "3",
+      "place_as_int": 3,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 130,
+      "skip_in_stats": false,
+      "solving": 3.0,
+      "total_solving": 3.0,
+      "upsolving": 0.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 69350308
+  },
+  {
+    "fields": {
+      "account": 7528502,
+      "addition": {
+        "college": "Godavari Institute Of Engineering And Technology, Rajahmundry",
+        "country": "in",
+        "last_solved": 1727192748.0,
+        "name": "DHANUSH ",
+        "penalty": 23,
+        "problems": {
+          "Q1": {
+            "result": "+",
+            "time": "0:08"
+          },
+          "Q2": {
+            "result": "-1"
+          },
+          "Q3": {
+            "result": "+",
+            "time": "0:15"
+          },
+          "Q5": {
+            "result": "-1"
+          }
+        }
+      },
+      "advanced": false,
+      "contest": 54226122,
+      "created": "2024-09-24T18:06:10.377Z",
+      "global_rating_change": null,
+      "last_activity": "2024-09-24T15:30:00Z",
+      "medal": null,
+      "modified": "2025-03-18T00:41:24.523Z",
+      "n_first_ac": 0,
+      "n_solved": 2,
+      "n_total_solved": 2,
+      "n_upsolved": 0,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "5",
+      "place_as_int": 5,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 130,
+      "skip_in_stats": false,
+      "solving": 2.0,
+      "total_solving": 2.0,
+      "upsolving": 0.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 69350310
+  }
+]

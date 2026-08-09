@@ -1,0 +1,1192 @@
+[
+  {
+    "fields": {
+      "accounts_fields": {
+        "types": {
+          "avatar": [
+            "str"
+          ],
+          "city": [
+            "str"
+          ],
+          "contribution": [
+            "int"
+          ],
+          "firstName": [
+            "str"
+          ],
+          "friendOfCount": [
+            "int"
+          ],
+          "handle": [
+            "str"
+          ],
+          "lastName": [
+            "str"
+          ],
+          "lastOnlineTimeSeconds": [
+            "int"
+          ],
+          "maxRank": [
+            "str"
+          ],
+          "maxRating": [
+            "int"
+          ],
+          "name_ru": [
+            "str"
+          ],
+          "openId": [
+            "str"
+          ],
+          "organization": [
+            "str"
+          ],
+          "rank": [
+            "str"
+          ],
+          "registrationTimeSeconds": [
+            "int"
+          ],
+          "titlePhoto": [
+            "str"
+          ],
+          "vkId": [
+            "str"
+          ]
+        },
+        "verification_fields": [
+          "firstName",
+          "lastName"
+        ]
+      },
+      "allow_delete_archived_statistics": false,
+      "api_url": null,
+      "auto_remove_started": false,
+      "avatar_url": "{info[avatar]}",
+      "avg_rating": 1277.7317418007292,
+      "color": "#84CC66",
+      "contest_update_time": "2026-08-01T17:10:10.035Z",
+      "country_rank_update_time": "2026-08-03T19:20:06.024Z",
+      "created": "2013-02-03T00:00:00Z",
+      "default_account_type": 1,
+      "enable": true,
+      "has_account_last_submission": true,
+      "has_account_n_writers": true,
+      "has_account_verification": true,
+      "has_accounts_infos_update": true,
+      "has_country_medal": null,
+      "has_country_place": null,
+      "has_country_rating": true,
+      "has_inherit_medals_to_related": false,
+      "has_multi_account": false,
+      "has_problem_archive": false,
+      "has_problem_rating": true,
+      "has_problem_statistic": true,
+      "has_problem_update": false,
+      "has_rating_history": true,
+      "has_standings_renamed_account": false,
+      "has_statistic_medal": null,
+      "has_statistic_n_first_ac": null,
+      "has_statistic_n_total_solved": null,
+      "has_statistic_place": true,
+      "has_statistic_total_solving": null,
+      "has_submissions_statistics_log": false,
+      "has_upsolving": true,
+      "host": "codeforces.com",
+      "icon_file": "resources/codeforces_com.png",
+      "icon_updated_at": "2025-12-14T00:15:15Z",
+      "icon_url": null,
+      "info": {
+        "accounts": {
+          "delta": {
+            "days": 100
+          },
+          "force_on_new_year": true
+        },
+        "default_variables": {
+          "min_n_participations": "6"
+        },
+        "get_events": {
+          "colors": {
+            "darken": "#244416",
+            "lighten": "#DAEFD1"
+          }
+        },
+        "ratings": {
+          "adjustment": {
+            "deltas": [
+              900,
+              550,
+              300,
+              150,
+              50,
+              0
+            ],
+            "filter": {
+              "field": "registrationTimeSeconds",
+              "operator": "gt",
+              "value": 1590278400
+            }
+          }
+        },
+        "standings": {
+          "timeline": {
+            "attempt_penalty": 600,
+            "challenge_score": false,
+            "full_score_reduction_factor": 0.004,
+            "guaranteed_full_score_factor": 0.3,
+            "penalty_score_more": 50,
+            "time_factor": {
+              "1": [
+                60
+              ],
+              "2": [
+                3600,
+                60
+              ],
+              "3": [
+                86400,
+                3600,
+                60
+              ]
+            }
+          }
+        }
+      },
+      "modified": "2026-08-04T13:03:09.044Z",
+      "n_accounts": 1459261,
+      "n_accounts_to_update": 0,
+      "n_contests": 2144,
+      "n_rating_accounts": 950313,
+      "n_statistics": 34486274,
+      "n_team_accounts": 0,
+      "n_university_accounts": 0,
+      "parse_url": "https://codeforces.com/contests?locale=en",
+      "path": "./module/codeforces.com/index.php",
+      "problem_archive_update_time": null,
+      "problem_rating_predictor": {},
+      "problem_url": null,
+      "problems_fields": {
+        "types": {
+          "first_ac__accounts": [
+            "list"
+          ],
+          "first_ac__in_seconds": [
+            "int"
+          ],
+          "first_ac__time": [
+            "str"
+          ],
+          "full_score": [
+            "float"
+          ],
+          "max_score": [
+            "float",
+            "int"
+          ],
+          "min_score": [
+            "float"
+          ]
+        }
+      },
+      "profile_url": "https://codeforces.com/profile/{account}",
+      "rank_update_time": "2026-08-03T12:45:07.459Z",
+      "rating_prediction": null,
+      "rating_update_time": "2026-08-04T00:51:24.920Z",
+      "ratings": [
+        {
+          "color": "gray",
+          "hex_rgb": "#808080",
+          "high": 1200,
+          "hsl": [
+            0,
+            0,
+            0.5
+          ],
+          "low": -100500,
+          "name": "Newbie",
+          "next": 1200,
+          "prev": -100500
+        },
+        {
+          "color": "green",
+          "hex_rgb": "#008000",
+          "high": 1400,
+          "hsl": [
+            0.33,
+            1,
+            0.25
+          ],
+          "low": 1200,
+          "name": "Pupil",
+          "next": 1400,
+          "prev": 1200
+        },
+        {
+          "color": "cyan",
+          "hex_rgb": "#03A89E",
+          "high": 1600,
+          "hsl": [
+            0.49,
+            0.96,
+            0.34
+          ],
+          "low": 1400,
+          "name": "Specialist",
+          "next": 1600,
+          "prev": 1400
+        },
+        {
+          "color": "blue",
+          "hex_rgb": "#0000FF",
+          "high": 1900,
+          "hsl": [
+            0.67,
+            1,
+            0.5
+          ],
+          "low": 1600,
+          "name": "Expert",
+          "next": 1900,
+          "prev": 1600
+        },
+        {
+          "color": "violet",
+          "hex_rgb": "#AA00AA",
+          "high": 2100,
+          "hsl": [
+            0.83,
+            1,
+            0.33
+          ],
+          "low": 1900,
+          "name": "Candidate Master",
+          "next": 2100,
+          "prev": 1900
+        },
+        {
+          "color": "orange",
+          "hex_rgb": "#FF8C00",
+          "high": 2300,
+          "hsl": [
+            0.09,
+            1,
+            0.5
+          ],
+          "low": 2100,
+          "name": "Master",
+          "next": 2400,
+          "prev": 2100
+        },
+        {
+          "color": "orange",
+          "hex_rgb": "#FF8C00",
+          "high": 2400,
+          "hsl": [
+            0.09,
+            1,
+            0.375
+          ],
+          "low": 2300,
+          "name": "International Master",
+          "next": 2400,
+          "prev": 2100
+        },
+        {
+          "color": "red",
+          "hex_rgb": "#FF0000",
+          "high": 2600,
+          "hsl": [
+            0,
+            1,
+            0.5
+          ],
+          "low": 2400,
+          "name": "Grandmaster",
+          "next": 4000,
+          "prev": 2400
+        },
+        {
+          "color": "red",
+          "hex_rgb": "#FF0000",
+          "high": 3000,
+          "hsl": [
+            0,
+            1,
+            0.375
+          ],
+          "low": 2600,
+          "name": "International Grandmaster",
+          "next": 4000,
+          "prev": 2400
+        },
+        {
+          "color": "legendary",
+          "hex_rgb": "#FF0000",
+          "high": 4000,
+          "hsl": [
+            0,
+            1,
+            0.28125
+          ],
+          "low": 3000,
+          "name": "Legendary Grandmaster",
+          "next": 4000,
+          "prev": 2400
+        },
+        {
+          "color": "tourist",
+          "hex_rgb": "#000000",
+          "high": 100500,
+          "hsl": [
+            0,
+            0,
+            0
+          ],
+          "low": 4000,
+          "name": "Tourist",
+          "prev": 4000
+        }
+      ],
+      "regexp": null,
+      "short_host": "cf",
+      "skip_for_contests_chart": false,
+      "statistics_fields": {
+        "types": {
+          "advanced": [
+            "bool"
+          ],
+          "country": [
+            "_ElementUnicodeResult"
+          ],
+          "medal": [
+            "str"
+          ],
+          "name": [
+            "str"
+          ],
+          "new_rating": [
+            "int"
+          ],
+          "old_rating": [
+            "int"
+          ],
+          "participant_type": [
+            "list"
+          ],
+          "penalty": [
+            "int"
+          ],
+          "rating_change": [
+            "str"
+          ],
+          "room": [
+            "int",
+            "str"
+          ],
+          "team_id": [
+            "int",
+            "str"
+          ]
+        }
+      },
+      "timezone": "Europe/Moscow",
+      "uid": "br1o1n70iqgrrbc875vcehacjg@group.calendar.google.com",
+      "url": "https://codeforces.com/contests"
+    },
+    "model": "clist.resource",
+    "pk": 1
+  },
+  {
+    "fields": {
+      "created": "2016-02-10T05:57:38Z",
+      "delay_on_error": "00:30:00",
+      "delay_on_success": "12:00:00",
+      "delay_shortly_after": "00:05:00",
+      "enable": true,
+      "long_contest_divider": 20,
+      "long_contest_idle": "06:00:00",
+      "max_delay_after_end": "7 00:00:00",
+      "min_delay_after_end": null,
+      "modified": "2025-02-11T15:22:36.634Z",
+      "path": "ranking/management/modules/codeforces",
+      "resource": 1,
+      "shortly_after": "00:30:00"
+    },
+    "model": "ranking.module",
+    "pk": 3
+  },
+  {
+    "fields": {
+      "allow_updating_statistics_for_participants": null,
+      "auto_updated": "2026-02-15T00:21:33.483Z",
+      "calculate_time": false,
+      "created": "2026-02-15T00:21:33.477Z",
+      "duration_in_secs": 1468800,
+      "edit": null,
+      "elimination_tournament_info": {},
+      "end_time": "2026-03-02T00:00:00Z",
+      "finalists_info": {
+        "fields": [
+          "rating",
+          "maxRating"
+        ],
+        "has_country": true,
+        "has_name": false,
+        "max_accounts_size": 1,
+        "n_finalists": 93,
+        "parse_args": {
+          "additional_fields": [
+            "rating",
+            "maxRating"
+          ],
+          "contest": 65400106,
+          "cphof_url_field": null,
+          "dryrun": false,
+          "filter_field": null,
+          "filter_value": null,
+          "force_color": false,
+          "from_handles": [
+            "244mhq",
+            "Adam_GS",
+            "Agreb",
+            "Akulyat",
+            "Amoo_Safar",
+            "Art.ogo",
+            "Burunduk1",
+            "DanielChang",
+            "Dominater069",
+            "DylanSmith",
+            "Edu175",
+            "Endagorion",
+            "Gassa",
+            "Geothermal",
+            "Gheal",
+            "Golovanov399",
+            "Hamed_Ghaffari",
+            "Intellegent",
+            "Kaey",
+            "Kira_1234",
+            "Kriz_Wu",
+            "Mark_Pr",
+            "McPqndq",
+            "Merkurev",
+            "NickMish",
+            "Nikitosh",
+            "OrangeEye",
+            "Ormlis",
+            "Pacybwoah",
+            "Petr",
+            "PvPro",
+            "RP-1",
+            "SSerxhs",
+            "SanguineChameleon",
+            "SomethingNew",
+            "StelIawinD",
+            "TadijaSebez",
+            "Um_nik",
+            "Wansur",
+            "__baozii__",
+            "__jk__",
+            "ahyeon",
+            "aimoon",
+            "alireza_kaviani",
+            "andrei_boaca",
+            "anpaio",
+            "antontrygubO_o",
+            "aropan",
+            "aryanc403",
+            "awesomeguy856",
+            "awoo",
+            "bashkort",
+            "cadmiumky",
+            "carcinisation",
+            "conqueror_of_tourist",
+            "contee",
+            "defnotmee",
+            "dmraykhan",
+            "ecnerwala",
+            "elsantodel90",
+            "enot110",
+            "errorgorn",
+            "feecIe6418",
+            "golomb",
+            "hengliao",
+            "izban",
+            "jonathanirvings",
+            "kevinxiehk",
+            "kevinyang",
+            "kondasujay2",
+            "ksun48",
+            "leinad2",
+            "lethan3",
+            "literalchild",
+            "makrav",
+            "maomao90",
+            "meowcneil",
+            "mxj_helen",
+            "nifeshe",
+            "orz",
+            "p0tato",
+            "pashka",
+            "peti1234",
+            "platter",
+            "qiuzx",
+            "rolandpetrean",
+            "sevlll777",
+            "snowysecret",
+            "tourist",
+            "turmax",
+            "wery0",
+            "wxhtzdy",
+            "xiaowuc1"
+          ],
+          "from_info": true,
+          "from_url": null,
+          "member_field": null,
+          "member_from_url": null,
+          "name_field": null,
+          "no_color": false,
+          "pythonpath": null,
+          "resource": "codeforces.com",
+          "resource_fields": [
+            "cf"
+          ],
+          "settings": null,
+          "skip_checks": false,
+          "traceback": false,
+          "verbosity": 1
+        },
+        "resource": 1,
+        "resources": [
+          1
+        ]
+      },
+      "has_fixed_rating_prediction_field": false,
+      "has_hidden_results": false,
+      "has_submissions": null,
+      "has_submissions_tests": null,
+      "has_unlimited_statistics": null,
+      "hide_unsolved_standings_problems": null,
+      "host": "codeforces.com",
+      "info": {
+        "_bracket_data_url": "https://codeforces.com/publish/blitz2026/bracket.json",
+        "fields": [
+          "problems"
+        ],
+        "fields_types": {
+          "problems": [
+            "dict"
+          ]
+        },
+        "hidden_fields": [],
+        "problems": [
+          {
+            "n_accepted": 29,
+            "n_failed": 29,
+            "n_teams": 58,
+            "n_total": 93,
+            "name": "Round 1"
+          },
+          {
+            "n_accepted": 32,
+            "n_failed": 32,
+            "n_teams": 64,
+            "n_total": 93,
+            "name": "Round 2"
+          },
+          {
+            "n_accepted": 16,
+            "n_failed": 16,
+            "n_teams": 32,
+            "n_total": 93,
+            "name": "Round 3"
+          },
+          {
+            "n_accepted": 8,
+            "n_failed": 8,
+            "n_teams": 16,
+            "n_total": 93,
+            "name": "Round 4"
+          },
+          {
+            "n_accepted": 4,
+            "n_failed": 4,
+            "n_teams": 8,
+            "n_total": 93,
+            "name": "Quarterfinals"
+          },
+          {
+            "n_accepted": 2,
+            "n_failed": 2,
+            "n_teams": 4,
+            "n_total": 93,
+            "name": "Semifinals"
+          },
+          {
+            "n_accepted": 1,
+            "n_failed": 1,
+            "n_teams": 2,
+            "n_total": 93,
+            "name": "Finals"
+          }
+        ]
+      },
+      "invisible": false,
+      "is_auto_added": false,
+      "is_promoted": null,
+      "is_rated": null,
+      "key": "codeforces-blitz-cup-2026",
+      "kind": "elimination",
+      "link_statistic_timing": null,
+      "merging_contests": [],
+      "modified": "2026-02-15T00:21:33.477Z",
+      "n_problems": 7,
+      "n_statistics": 93,
+      "notification_timing": "2026-02-15T00:21:33.483Z",
+      "parsed_percentage": null,
+      "parsed_time": "2026-03-08T12:41:05.686Z",
+      "problem_rating_hash": null,
+      "problem_rating_update_required": false,
+      "rating_prediction_fields": {},
+      "rating_prediction_hash": null,
+      "rating_prediction_timing": null,
+      "raw_info": {},
+      "registration_url": null,
+      "related": null,
+      "resource": 1,
+      "series": null,
+      "set_matched_coders_to_members": null,
+      "slug": "codeforces-blitz-cup-2026",
+      "standings_kind": "scoring",
+      "standings_url": "https://codeforces.com/blog/entry/150813",
+      "start_time": "2026-02-13T00:00:00Z",
+      "statistic_timing": "2026-03-09T00:41:05.686Z",
+      "statistics_update_required": false,
+      "submissions_info": {},
+      "title": "Codeforces Blitz Cup 2026",
+      "title_path": "codeforces.blitz.cup.2026",
+      "trial_standings_url": null,
+      "uid": "70n86hpv5fliqldpeb0o14mins",
+      "updated": "2026-03-08T12:41:19.805Z",
+      "upload_solved_problems_solutions": null,
+      "upsolving_key": null,
+      "upsolving_url": null,
+      "url": "https://codeforces.com/blog/entry/150813",
+      "variables": {},
+      "wait_for_successful_update_timing": null,
+      "with_advance": false,
+      "with_medals": false
+    },
+    "model": "clist.contest",
+    "pk": 65400106
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "GB",
+      "created": "2016-02-10T06:15:06Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar": "https://userpic.codeforces.org/65550/avatar/238da5f90652e9d6.jpg",
+        "city": "London",
+        "contribution": 145,
+        "country": "United Kingdom",
+        "firstName": "Aleksei",
+        "friendOfCount": 20115,
+        "handle": "Um_nik",
+        "lastName": "Daniliuk",
+        "lastOnlineTimeSeconds": 1784185771,
+        "maxRank": "legendary grandmaster",
+        "maxRating": 3663,
+        "name": "Aleksei Daniliuk",
+        "organization": "Um_nik Training Center",
+        "rank": "legendary grandmaster",
+        "rating": 3389,
+        "registrationTimeSeconds": 1348065816,
+        "titlePhoto": "https://userpic.codeforces.org/65550/title/f473a58c80b87e06.jpg"
+      },
+      "key": "Um_nik",
+      "last_activity": "2026-07-16T14:50:44Z",
+      "last_rating_activity": "2025-11-23T12:21:48Z",
+      "last_submission": "2026-03-01T18:43:06Z",
+      "modified": "2026-07-17T06:08:30.018Z",
+      "n_bronze": null,
+      "n_contests": 522,
+      "n_first_ac": 5,
+      "n_first_places": 57,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 283,
+      "n_second_places": 38,
+      "n_silver": null,
+      "n_solved": 183,
+      "n_subscribers": 0,
+      "n_third_places": 28,
+      "n_top_ten_places": 160,
+      "n_total_solved": 189,
+      "n_upsolved": 6,
+      "n_win": null,
+      "n_writers": 15,
+      "name": "Aleksei Daniliuk",
+      "need_verification": false,
+      "rating": 3389,
+      "rating50": 67,
+      "rating_prediction": null,
+      "rating_update_time": "2026-07-16T17:15:00Z",
+      "related": null,
+      "resource": 1,
+      "resource_rank": 17,
+      "solving": 165981.0,
+      "submissions_info": {},
+      "total_solving": 166136.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-10-25T23:59:59.999Z",
+      "upsolving": 155.0,
+      "url": "/coder/Um_nik/?resource=1"
+    },
+    "model": "ranking.account",
+    "pk": 1160
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "CA",
+      "created": "2016-02-10T06:15:07Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "contribution": 35,
+        "country": "Canada",
+        "firstName": "Kevin",
+        "friendOfCount": 8512,
+        "handle": "ksun48",
+        "lastName": "Sun",
+        "lastOnlineTimeSeconds": 1785124914,
+        "maxRank": "legendary grandmaster",
+        "maxRating": 3781,
+        "name": "Kevin Sun",
+        "organization": "MIT",
+        "rank": "legendary grandmaster",
+        "rating": 3208,
+        "registrationTimeSeconds": 1325801676
+      },
+      "key": "ksun48",
+      "last_activity": "2026-07-26T14:37:41Z",
+      "last_rating_activity": "2026-05-23T17:03:57Z",
+      "last_submission": "2026-06-15T15:42:56Z",
+      "modified": "2026-07-27T06:31:11.180Z",
+      "n_bronze": null,
+      "n_contests": 496,
+      "n_first_ac": 50,
+      "n_first_places": 47,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 204,
+      "n_second_places": 28,
+      "n_silver": null,
+      "n_solved": 462,
+      "n_subscribers": 0,
+      "n_third_places": 26,
+      "n_top_ten_places": 103,
+      "n_total_solved": 492,
+      "n_upsolved": 30,
+      "n_win": null,
+      "n_writers": 4,
+      "name": "Kevin Sun",
+      "need_verification": false,
+      "rating": 3208,
+      "rating50": 64,
+      "rating_prediction": null,
+      "rating_update_time": "2026-07-26T17:05:00Z",
+      "related": null,
+      "resource": 1,
+      "resource_rank": 40,
+      "solving": 471039.0,
+      "submissions_info": {},
+      "total_solving": 478485.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-10-18T23:59:59.999Z",
+      "upsolving": 7446.0,
+      "url": "/coder/ksun48/?resource=1"
+    },
+    "model": "ranking.account",
+    "pk": 1515
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "TW",
+      "created": "2022-10-13T17:41:53.197Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "city": "Taipei",
+        "contribution": 1,
+        "country": "Taiwan",
+        "friendOfCount": 103,
+        "handle": "Pacybwoah",
+        "lastOnlineTimeSeconds": 1785129565,
+        "maxRank": "grandmaster",
+        "maxRating": 2448,
+        "name": "",
+        "organization": "National Taiwan University",
+        "rank": "international master",
+        "rating": 2364,
+        "registrationTimeSeconds": 1663162264
+      },
+      "key": "Pacybwoah",
+      "last_activity": "2026-07-26T14:42:42Z",
+      "last_rating_activity": "2025-11-23T11:45:15Z",
+      "last_submission": null,
+      "modified": "2026-07-27T06:31:12.707Z",
+      "n_bronze": null,
+      "n_contests": 66,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 0,
+      "n_second_places": 0,
+      "n_silver": null,
+      "n_solved": 121,
+      "n_subscribers": 0,
+      "n_third_places": 0,
+      "n_top_ten_places": 0,
+      "n_total_solved": 130,
+      "n_upsolved": 9,
+      "n_win": null,
+      "n_writers": 0,
+      "name": null,
+      "need_verification": false,
+      "rating": 2364,
+      "rating50": 47,
+      "rating_prediction": null,
+      "rating_update_time": "2026-07-26T17:05:00Z",
+      "related": null,
+      "resource": 1,
+      "resource_rank": 3127,
+      "solving": 98783.0,
+      "submissions_info": {},
+      "total_solving": 103885.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-11-04T23:59:59.999Z",
+      "upsolving": 5102.0,
+      "url": "/account/Pacybwoah/resource/codeforces.com/"
+    },
+    "model": "ranking.account",
+    "pk": 4797971
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "GB",
+      "created": "2019-05-14T03:47:24.373Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar": "https://userpic.codeforces.org/911575/avatar/71336bd1bef7b1a3.jpg",
+        "city": "London",
+        "contribution": 21,
+        "country": "United Kingdom",
+        "firstName": "Erekle",
+        "friendOfCount": 298,
+        "handle": "erekle",
+        "lastName": "Roinishvili",
+        "lastOnlineTimeSeconds": 1780856663,
+        "maxRank": "grandmaster",
+        "maxRating": 2544,
+        "name": "Erekle Roinishvili",
+        "organization": "University of Cambridge",
+        "rank": "master",
+        "rating": 2198,
+        "registrationTimeSeconds": 1549737190,
+        "titlePhoto": "https://userpic.codeforces.org/911575/title/8a589852f2d4cf6b.jpg"
+      },
+      "key": "erekle",
+      "last_activity": "2026-04-01T15:45:24Z",
+      "last_rating_activity": "2024-03-15T14:35:00Z",
+      "last_submission": "2026-04-13T17:37:51Z",
+      "modified": "2026-06-17T00:20:30.573Z",
+      "n_bronze": null,
+      "n_contests": 119,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 34,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 146,
+      "n_upsolved": 112,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Erekle Roinishvili",
+      "need_verification": false,
+      "rating": 2198,
+      "rating50": 43,
+      "rating_prediction": null,
+      "rating_update_time": "2026-04-13T16:35:00Z",
+      "related": null,
+      "resource": 1,
+      "resource_rank": 7017,
+      "solving": 20727.0,
+      "submissions_info": {},
+      "total_solving": 26976.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-09-25T23:59:59.999Z",
+      "upsolving": 6249.0,
+      "url": "/coder/erekle/?resource=1"
+    },
+    "model": "ranking.account",
+    "pk": 640016
+  },
+  {
+    "fields": {
+      "account": 1160,
+      "addition": {
+        "problems": {
+          "Finals": {
+            "result": "23 : 22",
+            "result_verdict": "accepted",
+            "standings_url": "https://codeforces.com/spectator/ranklist/Finals__ksun48_vs_Um_nik_mFyRURMv"
+          },
+          "Quarterfinals": {
+            "result": "33 : 12",
+            "result_verdict": "accepted",
+            "standings_url": "https://codeforces.com/spectator/ranklist/Quarterfinals__Geothermal_vs_Um_nik_AWmTgPOZ"
+          },
+          "Round 1": {},
+          "Round 2": {
+            "result": "33 : 0",
+            "result_verdict": "accepted"
+          },
+          "Round 3": {
+            "result": "21 : 12",
+            "result_verdict": "accepted",
+            "standings_url": "https://codeforces.com/spectator/ranklist/Round_3__Um_nik_vs_Endagorion_YkBcwsaW"
+          },
+          "Round 4": {
+            "result": "27 : 6",
+            "result_verdict": "accepted",
+            "standings_url": "https://codeforces.com/spectator/ranklist/Round_4__Um_nik_vs_Dominater069_RMsZlmtC"
+          },
+          "Semifinals": {
+            "result": "21 : 12",
+            "result_verdict": "accepted",
+            "standings_url": "https://codeforces.com/spectator/ranklist/Semifinals__Ormlis_vs_Um_nik_PzBDDumu"
+          }
+        }
+      },
+      "advanced": false,
+      "contest": 65400106,
+      "created": "2026-02-28T10:57:50.763Z",
+      "global_rating_change": null,
+      "last_activity": "2026-02-13T00:00:00Z",
+      "medal": null,
+      "modified": "2026-03-08T12:41:06.997Z",
+      "n_first_ac": 0,
+      "n_solved": 6,
+      "n_total_solved": 6,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "1",
+      "place_as_int": 1,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 1,
+      "skip_in_stats": false,
+      "solving": 8.0,
+      "total_solving": 8.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 85959507
+  },
+  {
+    "fields": {
+      "account": 1515,
+      "addition": {
+        "problems": {
+          "Finals": {
+            "result": "22 : 23",
+            "result_verdict": "rejected",
+            "standings_url": "https://codeforces.com/spectator/ranklist/Finals__ksun48_vs_Um_nik_mFyRURMv"
+          },
+          "Quarterfinals": {
+            "result": "29 : 4",
+            "result_verdict": "accepted",
+            "standings_url": "https://codeforces.com/spectator/ranklist/Quarterfinals__ksun48_vs_244mhq_egGpTihj"
+          },
+          "Round 1": {},
+          "Round 2": {
+            "result": "27 : 18",
+            "result_verdict": "accepted",
+            "standings_url": "https://codeforces.com/spectator/ranklist/Round_2__ksun48_vs_nifeshe_VtHvXudr"
+          },
+          "Round 3": {
+            "result": "17 : 16",
+            "result_verdict": "accepted",
+            "standings_url": "https://codeforces.com/spectator/ranklist/Round_3__ksun48_vs_Adam_GS_lFgzzVRz"
+          },
+          "Round 4": {
+            "result": "45 : 0",
+            "result_verdict": "accepted",
+            "standings_url": "https://codeforces.com/spectator/ranklist/Round_4__ksun48_vs_errorgorn_ILMlXgRE"
+          },
+          "Semifinals": {
+            "result": "18 : 15",
+            "result_verdict": "accepted",
+            "standings_url": "https://codeforces.com/spectator/ranklist/Semifinals__feecIe6418_vs_ksun48_hcLirRkr"
+          }
+        }
+      },
+      "advanced": false,
+      "contest": 65400106,
+      "created": "2026-02-28T10:57:49.559Z",
+      "global_rating_change": null,
+      "last_activity": "2026-02-13T00:00:00Z",
+      "medal": null,
+      "modified": "2026-03-08T12:41:06.502Z",
+      "n_first_ac": 0,
+      "n_solved": 5,
+      "n_total_solved": 5,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "2",
+      "place_as_int": 2,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 1,
+      "skip_in_stats": false,
+      "solving": 7.0,
+      "total_solving": 7.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 85959449
+  },
+  {
+    "fields": {
+      "account": 4797971,
+      "addition": {
+        "problems": {
+          "Round 1": {
+            "result": "14 : 9",
+            "result_verdict": "accepted"
+          },
+          "Round 2": {
+            "result": "16 : 7",
+            "result_verdict": "accepted",
+            "standings_url": "https://codeforces.com/spectator/ranklist/Round_2__peti1234_vs_Pacybwoah_bfCETvbS"
+          },
+          "Round 3": {
+            "result": "13 : 20",
+            "result_verdict": "rejected",
+            "standings_url": "https://codeforces.com/spectator/ranklist/Round_3__Pacybwoah_vs___baozii___DKHTbarS"
+          }
+        }
+      },
+      "advanced": false,
+      "contest": 65400106,
+      "created": "2026-02-28T10:57:49.462Z",
+      "global_rating_change": null,
+      "last_activity": "2026-02-13T00:00:00Z",
+      "medal": null,
+      "modified": "2026-03-08T12:41:06.464Z",
+      "n_first_ac": 0,
+      "n_solved": 2,
+      "n_total_solved": 2,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "17",
+      "place_as_int": 17,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 1,
+      "skip_in_stats": false,
+      "solving": 3.0,
+      "total_solving": 3.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 85959445
+  },
+  {
+    "fields": {
+      "account": 640016,
+      "addition": {
+        "problems": {
+          "Round 1": {
+            "result": "5 : 4",
+            "result_verdict": "accepted",
+            "standings_url": "https://codeforces.com/spectator/ranklist/Round_1__PvPro_vs_erekle_FMwWYCdY"
+          },
+          "Round 2": {
+            "result": "19 : 14",
+            "result_verdict": "accepted",
+            "standings_url": "https://codeforces.com/spectator/ranklist/Round_2__Burunduk1_vs_erekle_MSXvviUv"
+          },
+          "Round 3": {
+            "result": "0 : 33",
+            "result_verdict": "rejected",
+            "standings_url": "https://codeforces.com/spectator/ranklist/Round_3__turmax_vs_erekle_OiMMXaqm"
+          }
+        }
+      },
+      "advanced": false,
+      "contest": 65400106,
+      "created": "2026-02-28T10:57:49.942Z",
+      "global_rating_change": null,
+      "last_activity": "2026-02-13T00:00:00Z",
+      "medal": null,
+      "modified": "2026-03-08T12:41:06.647Z",
+      "n_first_ac": 0,
+      "n_solved": 2,
+      "n_total_solved": 2,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "17",
+      "place_as_int": 17,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 1,
+      "skip_in_stats": false,
+      "solving": 3.0,
+      "total_solving": 3.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 85959466
+  }
+]

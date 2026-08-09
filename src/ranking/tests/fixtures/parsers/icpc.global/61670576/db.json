@@ -1,0 +1,2173 @@
+[
+  {
+    "fields": {
+      "accounts_fields": {
+        "types": {
+          "logo": [
+            "str"
+          ]
+        },
+        "verification_fields": []
+      },
+      "allow_delete_archived_statistics": false,
+      "api_url": null,
+      "auto_remove_started": false,
+      "avatar_url": "https://clist.by/media/{info[avatar_relpath_]}",
+      "avg_rating": null,
+      "color": "#CCAB66",
+      "contest_update_time": "2025-09-04T11:50:25Z",
+      "country_rank_update_time": "2025-10-09T13:00:35.511Z",
+      "created": "2015-11-23T03:11:31Z",
+      "default_account_type": 2,
+      "enable": false,
+      "has_account_last_submission": null,
+      "has_account_n_writers": null,
+      "has_account_verification": false,
+      "has_accounts_infos_update": false,
+      "has_country_medal": true,
+      "has_country_place": false,
+      "has_country_rating": false,
+      "has_inherit_medals_to_related": false,
+      "has_multi_account": true,
+      "has_problem_archive": false,
+      "has_problem_rating": false,
+      "has_problem_statistic": true,
+      "has_problem_update": false,
+      "has_rating_history": false,
+      "has_standings_renamed_account": false,
+      "has_statistic_medal": true,
+      "has_statistic_n_first_ac": true,
+      "has_statistic_n_total_solved": false,
+      "has_statistic_place": true,
+      "has_statistic_total_solving": false,
+      "has_submissions_statistics_log": false,
+      "has_upsolving": false,
+      "host": "icpc.global",
+      "icon_file": "resources/icpc_baylor_edu.ico",
+      "icon_updated_at": "2026-02-15T00:09:10.881Z",
+      "icon_url": null,
+      "info": {
+        "get_events": {
+          "colors": {
+            "darken": "#443616",
+            "lighten": "#EFE5D1"
+          }
+        },
+        "standings": {
+          "download_avatar_checksum_field": "Last-Modified",
+          "name_instead_key": true,
+          "timeline": {
+            "time_factor": {
+              "1": [
+                60
+              ],
+              "2": [
+                60,
+                1
+              ],
+              "3": [
+                3600,
+                60,
+                1
+              ]
+            }
+          }
+        }
+      },
+      "modified": "2026-03-05T00:10:14.355Z",
+      "n_accounts": 3686,
+      "n_accounts_to_update": null,
+      "n_contests": 33,
+      "n_rating_accounts": null,
+      "n_statistics": 2946,
+      "n_team_accounts": 0,
+      "n_university_accounts": 580,
+      "parse_url": "https://docs.icpc.global/wf-schedule/",
+      "path": "./module/icpc.baylor.edu/index.php",
+      "problem_archive_update_time": null,
+      "problem_rating_predictor": {},
+      "problem_url": null,
+      "problems_fields": {
+        "types": {
+          "color__name": [
+            "str"
+          ],
+          "color__rgb": [
+            "str"
+          ],
+          "first_ac__accounts": [
+            "list"
+          ],
+          "first_ac__in_seconds": [
+            "int"
+          ],
+          "first_ac__time": [
+            "int"
+          ],
+          "has_first_ac": [
+            "bool"
+          ],
+          "test_data_count": [
+            "int"
+          ],
+          "time_limit": [
+            "float",
+            "int"
+          ]
+        }
+      },
+      "profile_url": null,
+      "rank_update_time": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "ratings": [],
+      "regexp": null,
+      "short_host": "icpc",
+      "skip_for_contests_chart": false,
+      "statistics_fields": {
+        "types": {
+          "country": [
+            "str"
+          ],
+          "medal": [
+            "str"
+          ],
+          "name": [
+            "str"
+          ],
+          "penalty": [
+            "int"
+          ],
+          "people": [
+            "list"
+          ],
+          "region": [
+            "NoneType",
+            "str"
+          ],
+          "team_id": [
+            "str"
+          ],
+          "university": [
+            "str"
+          ],
+          "universityurl": [
+            "NoneType",
+            "str"
+          ]
+        }
+      },
+      "timezone": "UTC",
+      "uid": "m9vkcuhoombbogj6oh090p8tbs@group.calendar.google.com",
+      "url": "https://icpc.global/worldfinals/schedule"
+    },
+    "model": "clist.resource",
+    "pk": 86
+  },
+  {
+    "fields": {
+      "created": "2023-02-19T07:15:13.311Z",
+      "delay_on_error": "00:30:00",
+      "delay_on_success": "1 00:00:00",
+      "delay_shortly_after": "00:05:00",
+      "enable": true,
+      "long_contest_divider": 100,
+      "long_contest_idle": "06:00:00",
+      "max_delay_after_end": "5 00:00:00",
+      "min_delay_after_end": null,
+      "modified": "2023-02-19T07:15:13.311Z",
+      "path": "ranking/management/modules/icpc_baylor",
+      "resource": 86,
+      "shortly_after": "00:30:00"
+    },
+    "model": "ranking.module",
+    "pk": 73
+  },
+  {
+    "fields": {
+      "aliases": [
+        "icpc-world-finals",
+        "icpc"
+      ],
+      "created": "2023-03-11T19:49:32.836Z",
+      "modified": "2023-03-11T19:55:25.150Z",
+      "name": "International Collegiate Programming Contest",
+      "short": "ICPC",
+      "slug": "icpc"
+    },
+    "model": "clist.contestseries",
+    "pk": 38
+  },
+  {
+    "fields": {
+      "allow_updating_statistics_for_participants": null,
+      "auto_updated": "2025-09-02T10:25:30Z",
+      "calculate_time": true,
+      "created": "2025-09-02T10:25:30.980Z",
+      "duration_in_secs": 18000,
+      "edit": null,
+      "elimination_tournament_info": {},
+      "end_time": "2025-09-04T11:50:00Z",
+      "finalists_info": {},
+      "has_fixed_rating_prediction_field": null,
+      "has_hidden_results": false,
+      "has_submissions": null,
+      "has_submissions_tests": null,
+      "has_unlimited_statistics": null,
+      "hide_unsolved_standings_problems": null,
+      "host": "icpc.global",
+      "info": {
+        "fields": [
+          "problems",
+          "name",
+          "penalty",
+          "people",
+          "region",
+          "country",
+          "team_id",
+          "_members",
+          "university",
+          "universityurl",
+          "medal"
+        ],
+        "fields_types": {
+          "_members": [
+            "list"
+          ],
+          "country": [
+            "str"
+          ],
+          "name": [
+            "str"
+          ],
+          "penalty": [
+            "int"
+          ],
+          "people": [
+            "list"
+          ],
+          "problems": [
+            "dict"
+          ],
+          "region": [
+            "str"
+          ],
+          "team_id": [
+            "str"
+          ],
+          "university": [
+            "str"
+          ],
+          "universityurl": [
+            "str"
+          ]
+        },
+        "hidden_fields": [
+          "country",
+          "university",
+          "region",
+          "people",
+          "_members",
+          "universityurl",
+          "team_id"
+        ],
+        "problems": [
+          {
+            "_first_ac_time": 73,
+            "has_first_ac": true,
+            "n_accepted": 45,
+            "n_teams": 65,
+            "n_total": 139,
+            "short": "A"
+          },
+          {
+            "_first_ac_time": 53,
+            "has_first_ac": true,
+            "n_accepted": 8,
+            "n_teams": 26,
+            "n_total": 139,
+            "short": "B"
+          },
+          {
+            "n_teams": 4,
+            "n_total": 139,
+            "short": "C"
+          },
+          {
+            "_first_ac_time": 14,
+            "has_first_ac": true,
+            "n_accepted": 138,
+            "n_teams": 139,
+            "n_total": 139,
+            "short": "D"
+          },
+          {
+            "_first_ac_time": 113,
+            "has_first_ac": true,
+            "n_accepted": 20,
+            "n_teams": 37,
+            "n_total": 139,
+            "short": "E"
+          },
+          {
+            "_first_ac_time": 17,
+            "has_first_ac": true,
+            "n_accepted": 135,
+            "n_teams": 138,
+            "n_total": 139,
+            "short": "F"
+          },
+          {
+            "_first_ac_time": 270,
+            "has_first_ac": true,
+            "n_accepted": 2,
+            "n_teams": 7,
+            "n_total": 139,
+            "short": "G"
+          },
+          {
+            "_first_ac_time": 71,
+            "has_first_ac": true,
+            "n_accepted": 66,
+            "n_teams": 91,
+            "n_total": 139,
+            "short": "H"
+          },
+          {
+            "_first_ac_time": 23,
+            "has_first_ac": true,
+            "n_accepted": 135,
+            "n_teams": 136,
+            "n_total": 139,
+            "short": "I"
+          },
+          {
+            "_first_ac_time": 35,
+            "has_first_ac": true,
+            "n_accepted": 128,
+            "n_teams": 136,
+            "n_total": 139,
+            "short": "J"
+          },
+          {
+            "_first_ac_time": 69,
+            "has_first_ac": true,
+            "n_accepted": 72,
+            "n_teams": 88,
+            "n_total": 139,
+            "short": "K"
+          },
+          {
+            "_first_ac_time": 6,
+            "has_first_ac": true,
+            "n_accepted": 138,
+            "n_teams": 139,
+            "n_total": 139,
+            "short": "L"
+          }
+        ],
+        "standings": {
+          "external_urls": [
+            {
+              "name": "icpc.kimden.online",
+              "url": "https://icpc.kimden.online/wf/2025/"
+            },
+            {
+              "name": "zibada.guru",
+              "url": "https://zibada.guru/finals/2025/"
+            }
+          ],
+          "per_page": null
+        },
+        "use_codeforces_list": {
+          "fields": {
+            "members": [
+              "Member 1",
+              "Member 2",
+              "Member 3"
+            ],
+            "university": "University"
+          },
+          "resource": 1,
+          "url": "https://codeforces.com/blog/entry/143861"
+        },
+        "use_zibada_list": {
+          "resource": 1,
+          "url": "https://zibada.guru/finals/2025/teams.js"
+        }
+      },
+      "invisible": false,
+      "is_auto_added": true,
+      "is_promoted": true,
+      "is_rated": null,
+      "key": "2025",
+      "kind": null,
+      "link_statistic_timing": "2025-10-07T13:21:36.968Z",
+      "merging_contests": [],
+      "modified": "2025-10-03T14:41:25.381Z",
+      "n_problems": 12,
+      "n_statistics": 139,
+      "notification_timing": "2025-09-04T06:14:34.576Z",
+      "parsed_percentage": null,
+      "parsed_time": "2025-10-05T13:44:26.221Z",
+      "problem_rating_hash": null,
+      "problem_rating_update_required": false,
+      "rating_prediction_fields": null,
+      "rating_prediction_hash": null,
+      "rating_prediction_timing": null,
+      "raw_info": {},
+      "registration_url": null,
+      "related": null,
+      "resource": 86,
+      "series": 38,
+      "set_matched_coders_to_members": null,
+      "slug": "49th-icpc-world-finals-baku-azerbaijan",
+      "standings_kind": "icpc",
+      "standings_url": "https://worldfinals.icpc.global/scoreboard/2025/finals/index.html",
+      "start_time": "2025-09-04T06:50:00Z",
+      "statistic_timing": "2025-10-06T13:44:26.221Z",
+      "statistics_update_required": false,
+      "submissions_info": {},
+      "title": "49th ICPC World Finals. Baku, Azerbaijan",
+      "title_path": "49th.icpc.world.finals.baku.azerbaijan",
+      "trial_standings_url": null,
+      "uid": "gnlo483paeqjfqh5eo8uil0shk",
+      "updated": "2025-10-07T13:21:37.100Z",
+      "upload_solved_problems_solutions": null,
+      "upsolving_key": null,
+      "upsolving_url": null,
+      "url": "https://docs.icpc.global/wf-schedule/",
+      "variables": {},
+      "wait_for_successful_update_timing": null,
+      "with_advance": false,
+      "with_medals": true
+    },
+    "model": "clist.contest",
+    "pk": 61670576
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "RU",
+      "created": "2025-09-04T07:13:13.545Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "St. Petersburg State University 2024-2025",
+      "last_activity": "2025-09-04T07:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-10-06T23:21:43.791Z",
+      "n_bronze": null,
+      "n_contests": 1,
+      "n_first_ac": 1,
+      "n_first_places": 1,
+      "n_gold": 1,
+      "n_listvalues": 0,
+      "n_medals": 1,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 11,
+      "n_subscribers": 1,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 11,
+      "n_upsolved": 0,
+      "n_win": 1,
+      "n_writers": 0,
+      "name": "St. Petersburg State University",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 86,
+      "resource_rank": null,
+      "solving": 11.0,
+      "submissions_info": {},
+      "total_solving": 11.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2025-09-04T07:13:13.546Z",
+      "upsolving": 0.0,
+      "url": "/account/St.%20Petersburg%20State%20University%202024-2025/resource/icpc.global/"
+    },
+    "model": "ranking.account",
+    "pk": 8955498
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "CN",
+      "created": "2025-09-04T07:13:13.702Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "Beijing Jiaotong University 2024-2025",
+      "last_activity": "2025-09-04T07:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-10-05T23:59:46.816Z",
+      "n_bronze": null,
+      "n_contests": 1,
+      "n_first_ac": 1,
+      "n_first_places": null,
+      "n_gold": 1,
+      "n_listvalues": 0,
+      "n_medals": 1,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 10,
+      "n_subscribers": 0,
+      "n_third_places": 1,
+      "n_top_ten_places": null,
+      "n_total_solved": 10,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Beijing Jiaotong University",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 86,
+      "resource_rank": null,
+      "solving": 10.0,
+      "submissions_info": {},
+      "total_solving": 10.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2025-09-04T07:13:13.702Z",
+      "upsolving": 0.0,
+      "url": "/account/Beijing%20Jiaotong%20University%202024-2025/resource/icpc.global/"
+    },
+    "model": "ranking.account",
+    "pk": 8955501
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "CN",
+      "created": "2025-09-04T07:13:14.149Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "Tsinghua University 2024-2025",
+      "last_activity": "2025-09-04T07:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-10-05T23:59:46.950Z",
+      "n_bronze": null,
+      "n_contests": 1,
+      "n_first_ac": 1,
+      "n_first_places": null,
+      "n_gold": 1,
+      "n_listvalues": 0,
+      "n_medals": 1,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 9,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 1,
+      "n_total_solved": 9,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Tsinghua University",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 86,
+      "resource_rank": null,
+      "solving": 9.0,
+      "submissions_info": {},
+      "total_solving": 9.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2025-09-04T07:13:14.149Z",
+      "upsolving": 0.0,
+      "url": "/account/Tsinghua%20University%202024-2025/resource/icpc.global/"
+    },
+    "model": "ranking.account",
+    "pk": 8955510
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "CN",
+      "created": "2025-09-04T07:13:14.362Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "Peking University 2024-2025",
+      "last_activity": "2025-09-04T07:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-10-05T23:59:46.779Z",
+      "n_bronze": null,
+      "n_contests": 1,
+      "n_first_ac": 1,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": 1,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": null,
+      "n_silver": 1,
+      "n_solved": 9,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 1,
+      "n_total_solved": 9,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Peking University",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 86,
+      "resource_rank": null,
+      "solving": 9.0,
+      "submissions_info": {},
+      "total_solving": 9.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2025-09-04T07:13:14.362Z",
+      "upsolving": 0.0,
+      "url": "/account/Peking%20University%202024-2025/resource/icpc.global/"
+    },
+    "model": "ranking.account",
+    "pk": 8955514
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "US",
+      "created": "2025-09-04T07:13:15.484Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "Harvard University 2024-2025",
+      "last_activity": "2025-09-04T07:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-10-05T23:59:46.878Z",
+      "n_bronze": null,
+      "n_contests": 1,
+      "n_first_ac": 1,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": 1,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": null,
+      "n_silver": 1,
+      "n_solved": 9,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 1,
+      "n_total_solved": 9,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Harvard University",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 86,
+      "resource_rank": null,
+      "solving": 9.0,
+      "submissions_info": {},
+      "total_solving": 9.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2025-09-04T07:13:15.484Z",
+      "upsolving": 0.0,
+      "url": "/account/Harvard%20University%202024-2025/resource/icpc.global/"
+    },
+    "model": "ranking.account",
+    "pk": 8955536
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "US",
+      "created": "2025-09-04T07:13:14.301Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "Massachusetts Institute of Technology 2024-2025",
+      "last_activity": "2025-09-04T07:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-10-05T23:59:46.897Z",
+      "n_bronze": null,
+      "n_contests": 1,
+      "n_first_ac": 1,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": 1,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": null,
+      "n_silver": 1,
+      "n_solved": 9,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 1,
+      "n_total_solved": 9,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Massachusetts Institute of Technology",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 86,
+      "resource_rank": null,
+      "solving": 9.0,
+      "submissions_info": {},
+      "total_solving": 9.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2025-09-04T07:13:14.301Z",
+      "upsolving": 0.0,
+      "url": "/account/Massachusetts%20Institute%20of%20Technology%202024-2025/resource/icpc.global/"
+    },
+    "model": "ranking.account",
+    "pk": 8955513
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "DE",
+      "created": "2025-09-04T07:13:17.846Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "Karlsruhe Institute of Technology 2024-2025",
+      "last_activity": "2025-09-04T07:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-10-05T23:59:46.769Z",
+      "n_bronze": null,
+      "n_contests": 1,
+      "n_first_ac": 1,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 9,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 9,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Karlsruhe Institute of Technology",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 86,
+      "resource_rank": null,
+      "solving": 9.0,
+      "submissions_info": {},
+      "total_solving": 9.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2025-09-04T07:13:17.846Z",
+      "upsolving": 0.0,
+      "url": "/account/Karlsruhe%20Institute%20of%20Technology%202024-2025/resource/icpc.global/"
+    },
+    "model": "ranking.account",
+    "pk": 8955589
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "IR",
+      "created": "2025-09-04T07:13:13.657Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "Sharif University of Technology 2024-2025",
+      "last_activity": "2025-09-04T07:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-10-05T23:59:46.795Z",
+      "n_bronze": null,
+      "n_contests": 1,
+      "n_first_ac": 1,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 9,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 9,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Sharif University of Technology",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 86,
+      "resource_rank": null,
+      "solving": 9.0,
+      "submissions_info": {},
+      "total_solving": 9.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2025-09-04T07:13:13.657Z",
+      "upsolving": 0.0,
+      "url": "/account/Sharif%20University%20of%20Technology%202024-2025/resource/icpc.global/"
+    },
+    "model": "ranking.account",
+    "pk": 8955500
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "US",
+      "created": "2025-09-04T07:13:13.276Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "University of Illinois Urbana-Champaign 2024-2025",
+      "last_activity": "2025-09-04T07:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-10-05T23:59:46.969Z",
+      "n_bronze": null,
+      "n_contests": 1,
+      "n_first_ac": 1,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 8,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 8,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "University of Illinois Urbana-Champaign",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 86,
+      "resource_rank": null,
+      "solving": 8.0,
+      "submissions_info": {},
+      "total_solving": 8.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2025-09-04T07:13:13.276Z",
+      "upsolving": 0.0,
+      "url": "/account/University%20of%20Illinois%20Urbana-Champaign%202024-2025/resource/icpc.global/"
+    },
+    "model": "ranking.account",
+    "pk": 8955494
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "SG",
+      "created": "2025-09-04T07:13:13.485Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "National University of Singapore 2024-2025",
+      "last_activity": "2025-09-04T07:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-10-05T23:59:46.935Z",
+      "n_bronze": null,
+      "n_contests": 1,
+      "n_first_ac": 1,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 8,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 8,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "National University of Singapore",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 86,
+      "resource_rank": null,
+      "solving": 8.0,
+      "submissions_info": {},
+      "total_solving": 8.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2025-09-04T07:13:13.485Z",
+      "upsolving": 0.0,
+      "url": "/account/National%20University%20of%20Singapore%202024-2025/resource/icpc.global/"
+    },
+    "model": "ranking.account",
+    "pk": 8955497
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "US",
+      "created": "2025-09-04T07:13:18.473Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "The University of Chicago 2024-2025",
+      "last_activity": "2025-09-04T07:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-10-05T23:59:31.903Z",
+      "n_bronze": null,
+      "n_contests": 1,
+      "n_first_ac": 1,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 7,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 7,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "The University of Chicago",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 86,
+      "resource_rank": null,
+      "solving": 7.0,
+      "submissions_info": {},
+      "total_solving": 7.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2025-09-04T07:13:18.473Z",
+      "upsolving": 0.0,
+      "url": "/account/The%20University%20of%20Chicago%202024-2025/resource/icpc.global/"
+    },
+    "model": "ranking.account",
+    "pk": 8955605
+  },
+  {
+    "fields": {
+      "account": 8955498,
+      "addition": {
+        "_members": [
+          {
+            "account": "turmax",
+            "resource": 1,
+            "without_country": true
+          },
+          {
+            "account": "LeoPro",
+            "resource": 1,
+            "without_country": true
+          },
+          {
+            "account": "fastmath",
+            "resource": 1,
+            "without_country": true
+          }
+        ],
+        "country": "Russia",
+        "medal": "gold",
+        "name": "St. Petersburg State University",
+        "penalty": 1478,
+        "people": [
+          "Ivan Kazmenko, Coach",
+          "Leonid Danilevich, Contestant",
+          "Maksim Turevskii, Contestant",
+          "Fedor Ushakov, Contestant",
+          "Nikolay Dubchuk, Co-coach",
+          "Mikhail Ivanov, Co-coach",
+          "Andrei Lopatin, Co-coach",
+          "Aleksandr Savchenko, Co-coach"
+        ],
+        "problems": {
+          "A": {
+            "result": "+1",
+            "time": 255
+          },
+          "B": {
+            "first_ac": true,
+            "result": "+1",
+            "time": 53
+          },
+          "D": {
+            "result": "+",
+            "time": 37
+          },
+          "E": {
+            "result": "+2",
+            "time": 150
+          },
+          "F": {
+            "result": "+",
+            "time": 20
+          },
+          "G": {
+            "result": "+2",
+            "time": 298
+          },
+          "H": {
+            "result": "+1",
+            "time": 195
+          },
+          "I": {
+            "result": "+",
+            "time": 42
+          },
+          "J": {
+            "result": "+1",
+            "time": 81
+          },
+          "K": {
+            "result": "+2",
+            "time": 128
+          },
+          "L": {
+            "result": "+",
+            "time": 19
+          }
+        },
+        "region": "Northern Eurasia",
+        "team_id": "St. Petersburg State University (Polar Bear Transform)",
+        "university": "St. Petersburg State University",
+        "universityurl": "https://english.spbu.ru"
+      },
+      "advanced": false,
+      "contest": 61670576,
+      "created": "2025-09-04T07:13:13.576Z",
+      "global_rating_change": null,
+      "last_activity": "2025-09-04T06:50:00Z",
+      "medal": "gold",
+      "modified": "2025-10-05T13:44:30.448Z",
+      "n_first_ac": 1,
+      "n_solved": 11,
+      "n_total_solved": 11,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 1478.0,
+      "place": "1",
+      "place_as_int": 1,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 86,
+      "skip_in_stats": false,
+      "solving": 11.0,
+      "total_solving": 11.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 80431750
+  },
+  {
+    "fields": {
+      "account": 8955501,
+      "addition": {
+        "_members": [
+          {
+            "account": "Su_Zipei",
+            "resource": 1,
+            "without_country": true
+          },
+          {
+            "account": "StarSilk",
+            "resource": 1,
+            "without_country": true
+          },
+          {
+            "account": "Lirnited",
+            "resource": 1,
+            "without_country": true
+          }
+        ],
+        "country": "China",
+        "medal": "gold",
+        "name": "Beijing Jiaotong University",
+        "penalty": 1425,
+        "people": [
+          "Hua Huang, Coach",
+          "Yuzhe Guo, Contestant",
+          "Xiuyuan Si, Contestant",
+          "Heming Xia, Contestant",
+          "Qingyong Li, Co-coach",
+          "Huating Xu, Co-coach"
+        ],
+        "problems": {
+          "A": {
+            "result": "+1",
+            "time": 225
+          },
+          "B": {
+            "result": "+1",
+            "time": 204
+          },
+          "C": {
+            "result": "-1",
+            "time": "300:00"
+          },
+          "D": {
+            "result": "+",
+            "time": 57
+          },
+          "E": {
+            "result": "+1",
+            "time": 270
+          },
+          "F": {
+            "result": "+1",
+            "time": 52
+          },
+          "H": {
+            "result": "+1",
+            "time": 132
+          },
+          "I": {
+            "result": "+1",
+            "time": 84
+          },
+          "J": {
+            "result": "+1",
+            "time": 107
+          },
+          "K": {
+            "result": "+",
+            "time": 148
+          },
+          "L": {
+            "first_ac": true,
+            "first_ac_of_all": true,
+            "result": "+",
+            "time": 6
+          }
+        },
+        "region": "Asia East",
+        "team_id": "Beijing Jiaotong University (miemiemie)",
+        "university": "Beijing Jiaotong University",
+        "universityurl": "https://en.bjtu.edu.cn"
+      },
+      "advanced": false,
+      "contest": 61670576,
+      "created": "2025-09-04T07:13:13.726Z",
+      "global_rating_change": null,
+      "last_activity": "2025-09-04T06:50:00Z",
+      "medal": "gold",
+      "modified": "2025-10-05T13:44:30.471Z",
+      "n_first_ac": 1,
+      "n_solved": 10,
+      "n_total_solved": 10,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 1425.0,
+      "place": "3",
+      "place_as_int": 3,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 86,
+      "skip_in_stats": false,
+      "solving": 10.0,
+      "total_solving": 10.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 80431753
+  },
+  {
+    "fields": {
+      "account": 8955510,
+      "addition": {
+        "_members": [
+          {
+            "account": "ix35",
+            "resource": 1,
+            "without_country": true
+          },
+          {
+            "account": "He_Ren",
+            "resource": 1,
+            "without_country": true
+          },
+          {
+            "account": "dengyaotriangle",
+            "resource": 1,
+            "without_country": true
+          }
+        ],
+        "country": "China",
+        "medal": "gold",
+        "name": "Tsinghua University",
+        "penalty": 865,
+        "people": [
+          "Xiaojun Wu, Coach",
+          "Yiping Liu, Contestant",
+          "Chengzhang Wan, Contestant",
+          "Jingxing Zhang, Contestant",
+          "Shanshan Li, Co-coach"
+        ],
+        "problems": {
+          "A": {
+            "result": "+2",
+            "time": 139
+          },
+          "C": {
+            "result": "-1",
+            "time": "224:52"
+          },
+          "D": {
+            "result": "+",
+            "time": 33
+          },
+          "E": {
+            "result": "+",
+            "time": 174
+          },
+          "F": {
+            "result": "+1",
+            "time": 27
+          },
+          "G": {
+            "result": "-1",
+            "time": "300:00"
+          },
+          "H": {
+            "first_ac": true,
+            "result": "+",
+            "time": 71
+          },
+          "I": {
+            "result": "+",
+            "time": 87
+          },
+          "J": {
+            "result": "+1",
+            "time": 84
+          },
+          "K": {
+            "result": "+",
+            "time": 157
+          },
+          "L": {
+            "result": "+",
+            "time": 13
+          }
+        },
+        "region": "Asia East",
+        "team_id": "Tsinghua University (world. search (you);)",
+        "university": "Tsinghua University",
+        "universityurl": "http://www.tsinghua.edu.cn"
+      },
+      "advanced": false,
+      "contest": 61670576,
+      "created": "2025-09-04T07:13:14.180Z",
+      "global_rating_change": null,
+      "last_activity": "2025-09-04T06:50:00Z",
+      "medal": "gold",
+      "modified": "2025-10-05T13:44:30.483Z",
+      "n_first_ac": 1,
+      "n_solved": 9,
+      "n_total_solved": 9,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 865.0,
+      "place": "4",
+      "place_as_int": 4,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 86,
+      "skip_in_stats": false,
+      "solving": 9.0,
+      "total_solving": 9.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 80431762
+  },
+  {
+    "fields": {
+      "account": 8955514,
+      "addition": {
+        "_members": [
+          {
+            "account": "wygzgyw",
+            "resource": 1,
+            "without_country": true
+          },
+          {
+            "account": "aaaaawa",
+            "resource": 1,
+            "without_country": true
+          },
+          {
+            "account": "Wu_Ren",
+            "resource": 1,
+            "without_country": true
+          }
+        ],
+        "country": "China",
+        "medal": "silver",
+        "name": "Peking University",
+        "penalty": 887,
+        "people": [
+          "Guojie Luo, Coach",
+          "Yanru Guan, Contestant",
+          "Zhi Zhang, Contestant",
+          "Jianfeng Zhu, Contestant",
+          "Qinjian Zhang, Co-coach"
+        ],
+        "problems": {
+          "A": {
+            "result": "+",
+            "time": 180
+          },
+          "D": {
+            "first_ac": true,
+            "result": "+",
+            "time": 14
+          },
+          "E": {
+            "result": "+1",
+            "time": 168
+          },
+          "F": {
+            "result": "+",
+            "time": 50
+          },
+          "H": {
+            "result": "+",
+            "time": 113
+          },
+          "I": {
+            "result": "+",
+            "time": 57
+          },
+          "J": {
+            "result": "+",
+            "time": 76
+          },
+          "K": {
+            "result": "+",
+            "time": 183
+          },
+          "L": {
+            "result": "+",
+            "time": 26
+          }
+        },
+        "region": "Asia East",
+        "team_id": "Peking University (open your brain)",
+        "university": "Peking University",
+        "universityurl": "http://www.pku.edu.cn"
+      },
+      "advanced": false,
+      "contest": 61670576,
+      "created": "2025-09-04T07:13:14.387Z",
+      "global_rating_change": null,
+      "last_activity": "2025-09-04T06:50:00Z",
+      "medal": "silver",
+      "modified": "2025-10-05T13:44:30.495Z",
+      "n_first_ac": 1,
+      "n_solved": 9,
+      "n_total_solved": 9,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 887.0,
+      "place": "5",
+      "place_as_int": 5,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 86,
+      "skip_in_stats": false,
+      "solving": 9.0,
+      "total_solving": 9.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 80431766
+  },
+  {
+    "fields": {
+      "account": 8955536,
+      "addition": {
+        "_members": [],
+        "country": "United States",
+        "medal": "silver",
+        "name": "Harvard University",
+        "penalty": 995,
+        "people": [
+          "Yingying Wu, Coach",
+          "Andrew Gu, Contestant",
+          "Gabriel Wu, Contestant",
+          "Maxwell Zen, Contestant"
+        ],
+        "problems": {
+          "A": {
+            "result": "+",
+            "time": 124
+          },
+          "D": {
+            "result": "+",
+            "time": 35
+          },
+          "E": {
+            "result": "+",
+            "time": 238
+          },
+          "F": {
+            "result": "+3",
+            "time": 78
+          },
+          "H": {
+            "result": "+1",
+            "time": 190
+          },
+          "I": {
+            "result": "+",
+            "time": 62
+          },
+          "J": {
+            "result": "+",
+            "time": 101
+          },
+          "K": {
+            "first_ac": true,
+            "result": "+",
+            "time": 69
+          },
+          "L": {
+            "result": "+",
+            "time": 18
+          }
+        },
+        "region": "North America",
+        "team_id": "Harvard University (Harvard Undergraduate Consulting Group)",
+        "university": "Harvard University",
+        "universityurl": "http://www.harvard.edu"
+      },
+      "advanced": false,
+      "contest": 61670576,
+      "created": "2025-09-04T07:13:15.513Z",
+      "global_rating_change": null,
+      "last_activity": "2025-09-04T06:50:00Z",
+      "medal": "silver",
+      "modified": "2025-10-05T13:44:30.507Z",
+      "n_first_ac": 1,
+      "n_solved": 9,
+      "n_total_solved": 9,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 995.0,
+      "place": "6",
+      "place_as_int": 6,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 86,
+      "skip_in_stats": false,
+      "solving": 9.0,
+      "total_solving": 9.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 80431788
+  },
+  {
+    "fields": {
+      "account": 8955513,
+      "addition": {
+        "_members": [],
+        "country": "United States",
+        "medal": "silver",
+        "name": "Massachusetts Institute of Technology",
+        "penalty": 1123,
+        "people": [
+          "Jaehyun Koo, Coach",
+          "Egor Lifar, Contestant",
+          "Richard Qi, Contestant",
+          "Semyon Savkin, Contestant"
+        ],
+        "problems": {
+          "A": {
+            "result": "+",
+            "time": 233
+          },
+          "B": {
+            "result": "-2",
+            "time": "300:00"
+          },
+          "D": {
+            "result": "+",
+            "time": 14
+          },
+          "E": {
+            "first_ac": true,
+            "result": "+",
+            "time": 113
+          },
+          "F": {
+            "result": "+",
+            "time": 36
+          },
+          "H": {
+            "result": "+5",
+            "time": 204
+          },
+          "I": {
+            "result": "+",
+            "time": 50
+          },
+          "J": {
+            "result": "+3",
+            "time": 121
+          },
+          "K": {
+            "result": "+",
+            "time": 145
+          },
+          "L": {
+            "result": "+1",
+            "time": 27
+          }
+        },
+        "region": "North America",
+        "team_id": "Massachusetts Institute of Technology (Mex Foundation)",
+        "university": "Massachusetts Institute of Technology",
+        "universityurl": "https://www.mit.edu/"
+      },
+      "advanced": false,
+      "contest": 61670576,
+      "created": "2025-09-04T07:13:14.330Z",
+      "global_rating_change": null,
+      "last_activity": "2025-09-04T06:50:00Z",
+      "medal": "silver",
+      "modified": "2025-10-05T13:44:30.437Z",
+      "n_first_ac": 1,
+      "n_solved": 9,
+      "n_total_solved": 9,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 1123.0,
+      "place": "8",
+      "place_as_int": 8,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 86,
+      "skip_in_stats": false,
+      "solving": 9.0,
+      "total_solving": 9.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 80431765
+  },
+  {
+    "fields": {
+      "account": 8955589,
+      "addition": {
+        "_members": [
+          {
+            "account": "LuCpp",
+            "resource": 1,
+            "without_country": true
+          },
+          {
+            "account": "dranjohn",
+            "resource": 1,
+            "without_country": true
+          },
+          {
+            "account": "Anonymous_Noob",
+            "resource": 1,
+            "without_country": true
+          }
+        ],
+        "country": "Germany",
+        "name": "Karlsruhe Institute of Technology",
+        "penalty": 1199,
+        "people": [
+          "Michael Zündorf, Coach",
+          "Jonathan Dransfeld, Contestant",
+          "Lucas Schwebler, Contestant",
+          "Yidi Zang, Contestant",
+          "Miriam Goetze, Co-coach"
+        ],
+        "problems": {
+          "A": {
+            "result": "+1",
+            "time": 133
+          },
+          "B": {
+            "result": "-1",
+            "time": "300:00"
+          },
+          "D": {
+            "result": "+",
+            "time": 45
+          },
+          "E": {
+            "result": "+1",
+            "time": 292
+          },
+          "F": {
+            "result": "+",
+            "time": 59
+          },
+          "H": {
+            "result": "+1",
+            "time": 207
+          },
+          "I": {
+            "first_ac": true,
+            "result": "+",
+            "time": 23
+          },
+          "J": {
+            "result": "+1",
+            "time": 92
+          },
+          "K": {
+            "result": "+",
+            "time": 234
+          },
+          "L": {
+            "result": "+",
+            "time": 34
+          }
+        },
+        "region": "Europe",
+        "team_id": "Karlsruhe Institute of Technology (Kindergarten Timelimit)",
+        "university": "Karlsruhe Institute of Technology",
+        "universityurl": "https://www.kit.edu/english/"
+      },
+      "advanced": false,
+      "contest": 61670576,
+      "created": "2025-09-04T07:13:17.870Z",
+      "global_rating_change": null,
+      "last_activity": "2025-09-04T06:50:00Z",
+      "medal": null,
+      "modified": "2025-10-05T13:44:28.371Z",
+      "n_first_ac": 1,
+      "n_solved": 9,
+      "n_total_solved": 9,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 1199.0,
+      "place": "13",
+      "place_as_int": 13,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 86,
+      "skip_in_stats": false,
+      "solving": 9.0,
+      "total_solving": 9.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 80431841
+  },
+  {
+    "fields": {
+      "account": 8955500,
+      "addition": {
+        "_members": [
+          {
+            "account": "Amoo_Safar",
+            "resource": 1,
+            "without_country": true
+          },
+          {
+            "account": "Keshi",
+            "resource": 1,
+            "without_country": true
+          },
+          {
+            "account": "AmShZ",
+            "resource": 1,
+            "without_country": true
+          }
+        ],
+        "country": "Iran",
+        "name": "Sharif University of Technology",
+        "penalty": 1329,
+        "people": [
+          "Hamid Zarrabi-Zadeh, Coach",
+          "Alireza Keshavarz, Contestant",
+          "Ali Safary, Contestant",
+          "AmirMohamad Shahrezaei, Contestant"
+        ],
+        "problems": {
+          "A": {
+            "first_ac": true,
+            "result": "+",
+            "time": 73
+          },
+          "B": {
+            "result": "-4",
+            "time": "300:00"
+          },
+          "D": {
+            "result": "+",
+            "time": 23
+          },
+          "E": {
+            "result": "+",
+            "time": 244
+          },
+          "F": {
+            "result": "+",
+            "time": 44
+          },
+          "H": {
+            "result": "+3",
+            "time": 257
+          },
+          "I": {
+            "result": "+2",
+            "time": 136
+          },
+          "J": {
+            "result": "+3",
+            "time": 158
+          },
+          "K": {
+            "result": "+",
+            "time": 213
+          },
+          "L": {
+            "result": "+",
+            "time": 21
+          }
+        },
+        "region": "Asia West",
+        "team_id": "Sharif University of Technology (Ballmer Peak)",
+        "university": "Sharif University of Technology",
+        "universityurl": "https://en.sharif.ir"
+      },
+      "advanced": false,
+      "contest": 61670576,
+      "created": "2025-09-04T07:13:13.683Z",
+      "global_rating_change": null,
+      "last_activity": "2025-09-04T06:50:00Z",
+      "medal": null,
+      "modified": "2025-10-05T13:44:28.411Z",
+      "n_first_ac": 1,
+      "n_solved": 9,
+      "n_total_solved": 9,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 1329.0,
+      "place": "16",
+      "place_as_int": 16,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 86,
+      "skip_in_stats": false,
+      "solving": 9.0,
+      "total_solving": 9.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 80431752
+  },
+  {
+    "fields": {
+      "account": 8955494,
+      "addition": {
+        "_members": [
+          {
+            "account": "YuukiS",
+            "resource": 1,
+            "without_country": true
+          },
+          {
+            "account": "satoshi",
+            "resource": 1,
+            "without_country": true
+          },
+          {
+            "account": "conqueror_of_tourist",
+            "resource": 1,
+            "without_country": true
+          }
+        ],
+        "country": "United States",
+        "name": "University of Illinois Urbana-Champaign",
+        "penalty": 774,
+        "people": [
+          "Mattox Beckman, Coach",
+          "Dilhan Salgado, Contestant",
+          "Yuuki Sawanoi, Contestant",
+          "Zhikun Wang, Contestant",
+          "Da Wei Zheng, Co-coach"
+        ],
+        "problems": {
+          "A": {
+            "result": "+1",
+            "time": 252
+          },
+          "D": {
+            "result": "+1",
+            "time": 36
+          },
+          "F": {
+            "first_ac": true,
+            "result": "+",
+            "time": 17
+          },
+          "G": {
+            "result": "-16",
+            "time": "300:00"
+          },
+          "H": {
+            "result": "+",
+            "time": 104
+          },
+          "I": {
+            "result": "+",
+            "time": 87
+          },
+          "J": {
+            "result": "+",
+            "time": 60
+          },
+          "K": {
+            "result": "+",
+            "time": 162
+          },
+          "L": {
+            "result": "+",
+            "time": 16
+          }
+        },
+        "region": "North America",
+        "team_id": "University of Illinois Urbana-Champaign (Ippatsu)",
+        "university": "University of Illinois Urbana-Champaign",
+        "universityurl": "http://illinois.edu"
+      },
+      "advanced": false,
+      "contest": 61670576,
+      "created": "2025-09-04T07:13:13.309Z",
+      "global_rating_change": null,
+      "last_activity": "2025-09-04T06:50:00Z",
+      "medal": null,
+      "modified": "2025-10-05T13:44:28.478Z",
+      "n_first_ac": 1,
+      "n_solved": 8,
+      "n_total_solved": 8,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 774.0,
+      "place": "20",
+      "place_as_int": 20,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 86,
+      "skip_in_stats": false,
+      "solving": 8.0,
+      "total_solving": 8.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 80431746
+  },
+  {
+    "fields": {
+      "account": 8955497,
+      "addition": {
+        "_members": [
+          {
+            "account": "yuto1115",
+            "resource": 1,
+            "without_country": true
+          },
+          {
+            "account": "penguinman",
+            "resource": 1,
+            "without_country": true
+          },
+          {
+            "account": "Wailydest",
+            "resource": 1,
+            "without_country": true
+          }
+        ],
+        "country": "Singapore",
+        "name": "National University of Singapore",
+        "penalty": 923,
+        "people": [
+          "Eldon Chung, Coach",
+          "Hibiki Nishiwaki, Contestant",
+          "Yuto Watanabe, Contestant",
+          "Roman Yanushevskyi, Contestant",
+          "Adi Prabawa, Co-coach",
+          "Sun Teck Tan, Co-coach"
+        ],
+        "problems": {
+          "A": {
+            "result": "+",
+            "time": 119
+          },
+          "D": {
+            "result": "+",
+            "time": 16
+          },
+          "F": {
+            "result": "+",
+            "time": 29
+          },
+          "G": {
+            "first_ac": true,
+            "result": "+",
+            "time": 270
+          },
+          "H": {
+            "result": "-6",
+            "time": "300:00"
+          },
+          "I": {
+            "result": "+",
+            "time": 85
+          },
+          "J": {
+            "result": "+1",
+            "time": 45
+          },
+          "K": {
+            "result": "+1",
+            "time": 299
+          },
+          "L": {
+            "result": "+",
+            "time": 20
+          }
+        },
+        "region": "Asia Pacific",
+        "team_id": "National University of Singapore (Jägermeister)",
+        "university": "National University of Singapore",
+        "universityurl": "http://www.nus.edu.sg"
+      },
+      "advanced": false,
+      "contest": 61670576,
+      "created": "2025-09-04T07:13:13.511Z",
+      "global_rating_change": null,
+      "last_activity": "2025-09-04T06:50:00Z",
+      "medal": null,
+      "modified": "2025-10-05T13:44:28.545Z",
+      "n_first_ac": 1,
+      "n_solved": 8,
+      "n_total_solved": 8,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 923.0,
+      "place": "25",
+      "place_as_int": 25,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 86,
+      "skip_in_stats": false,
+      "solving": 8.0,
+      "total_solving": 8.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 80431749
+  },
+  {
+    "fields": {
+      "account": 8955605,
+      "addition": {
+        "_members": [
+          {
+            "account": "fextivity",
+            "resource": 1,
+            "without_country": true
+          },
+          {
+            "account": "VHPro",
+            "resource": 1,
+            "without_country": true
+          },
+          {
+            "account": "luciocf",
+            "resource": 1,
+            "without_country": true
+          }
+        ],
+        "country": "United States",
+        "name": "The University of Chicago",
+        "penalty": 804,
+        "people": [
+          "Ziyi Zhang, Coach",
+          "Lucio Cardoso Dias Figueiredo Filho, Contestant",
+          "Hung Pham, Contestant",
+          "Bach Tran, Contestant",
+          "Jessup Jong, Co-coach"
+        ],
+        "problems": {
+          "A": {
+            "result": "-1",
+            "time": "300:00"
+          },
+          "B": {
+            "result": "+3",
+            "time": 261
+          },
+          "D": {
+            "result": "+",
+            "time": 28
+          },
+          "F": {
+            "result": "+2",
+            "time": 84
+          },
+          "I": {
+            "result": "+",
+            "time": 81
+          },
+          "J": {
+            "first_ac": true,
+            "result": "+",
+            "time": 35
+          },
+          "K": {
+            "result": "+1",
+            "time": 146
+          },
+          "L": {
+            "result": "+",
+            "time": 49
+          }
+        },
+        "region": "North America",
+        "team_id": "The University of Chicago (pocpocpoc)",
+        "university": "The University of Chicago",
+        "universityurl": "http://www.cs.uchicago.edu"
+      },
+      "advanced": false,
+      "contest": 61670576,
+      "created": "2025-09-04T07:13:18.495Z",
+      "global_rating_change": null,
+      "last_activity": "2025-09-04T06:50:00Z",
+      "medal": null,
+      "modified": "2025-10-05T13:44:28.842Z",
+      "n_first_ac": 1,
+      "n_solved": 7,
+      "n_total_solved": 7,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 804.0,
+      "place": "47",
+      "place_as_int": 47,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 86,
+      "skip_in_stats": false,
+      "solving": 7.0,
+      "total_solving": 7.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 80431857
+  }
+]

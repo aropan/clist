@@ -1,0 +1,692 @@
+[
+    {
+        "duration": "166:00",
+        "end_time": "2026-03-27 22:00:00 CET",
+        "host": "noi26.kattis.com",
+        "key": "noi26.p2i4mo",
+        "rid": 168,
+        "timezone": null,
+        "title": "Nordic Olympiad in Informatics 2026 upsolving",
+        "url": "https://noi26.kattis.com/contests/p2i4mo"
+    },
+    {
+        "duration": "168:00",
+        "end_time": "2025-05-30 22:00:00 CEST",
+        "host": "napc25.kattis.com",
+        "key": "napc25.napc25day1upsolving",
+        "rid": 168,
+        "timezone": null,
+        "title": "NAPC 2025 day 1 upsolving",
+        "url": "https://napc25.kattis.com/contests/napc25day1upsolving"
+    },
+    {
+        "duration": "168:00",
+        "end_time": "2025-05-31 23:30:00 CEST",
+        "host": "napc25.kattis.com",
+        "key": "napc25.napc25day2upsolving",
+        "rid": 168,
+        "timezone": null,
+        "title": "NAPC 2025 day 2 upsolving",
+        "url": "https://napc25.kattis.com/contests/napc25day2upsolving"
+    },
+    {
+        "duration": "2:00",
+        "end_time": "2024-11-16 05:00:00 CET",
+        "host": "nasouth24.kattis.com",
+        "key": "nasouth24.scusa24warmup",
+        "rid": 168,
+        "timezone": null,
+        "title": "ICPC South Central USA  2024 - Frenzy Friday Before Regionals",
+        "url": "https://nasouth24.kattis.com/contests/scusa24warmup"
+    },
+    {
+        "duration": "2:00",
+        "end_time": "2025-05-23 21:30:00 CEST",
+        "host": "napc25.kattis.com",
+        "key": "napc25.napc25day1",
+        "rid": 168,
+        "timezone": null,
+        "title": "NAPC 2025 day 1",
+        "url": "https://napc25.kattis.com/contests/napc25day1"
+    },
+    {
+        "duration": "2:00",
+        "end_time": "2025-11-08 05:00:00 CET",
+        "host": "nasouth25.kattis.com",
+        "key": "nasouth25.scusa25warmup",
+        "rid": 168,
+        "timezone": null,
+        "title": "ICPC South Central USA 2025 - Frenzy Friday Before Regionals",
+        "url": "https://nasouth25.kattis.com/contests/scusa25warmup"
+    },
+    {
+        "duration": "2:00",
+        "end_time": "2026-03-20 16:30:00 CET",
+        "host": "napc26.kattis.com",
+        "key": "napc26.u7hk82",
+        "rid": 168,
+        "timezone": null,
+        "title": "NA Programming Camp 2026",
+        "url": "https://napc26.kattis.com/contests/u7hk82"
+    },
+    {
+        "duration": "2:00",
+        "end_time": "2026-03-20 16:30:00 CET",
+        "host": "napc26.kattis.com",
+        "key": "napc26.zy48sk",
+        "rid": 168,
+        "timezone": null,
+        "title": "NA Programming Camp 2026 - Unofficial Mirror (coaches etc.)",
+        "url": "https://napc26.kattis.com/contests/zy48sk"
+    },
+    {
+        "duration": "2:15",
+        "end_time": "2024-05-24 14:30:00 EDT",
+        "host": "napc24.kattis.com",
+        "key": "napc24.napc24day1",
+        "rid": 168,
+        "timezone": null,
+        "title": "NA Programming Camp 2024 - Day 1",
+        "url": "https://napc24.kattis.com/contests/napc24day1"
+    },
+    {
+        "duration": "2:15",
+        "end_time": "2024-05-24 14:30:00 EDT",
+        "host": "napc24.kattis.com",
+        "key": "napc24.napc24day1open",
+        "rid": 168,
+        "timezone": null,
+        "title": "NA Programming Camp 2024 - Day 1 (Open)",
+        "url": "https://napc24.kattis.com/contests/napc24day1open"
+    },
+    {
+        "duration": "2:30",
+        "end_time": "2024-05-25 15:30:00 EDT",
+        "host": "napc24.kattis.com",
+        "key": "napc24.napc24day2",
+        "rid": 168,
+        "timezone": null,
+        "title": "NA Programming Camp 2024 - Day 2",
+        "url": "https://napc24.kattis.com/contests/napc24day2"
+    },
+    {
+        "duration": "2:30",
+        "end_time": "2024-05-25 15:30:00 EDT",
+        "host": "napc24.kattis.com",
+        "key": "napc24.s8mo8a",
+        "rid": 168,
+        "timezone": null,
+        "title": "NA Programming Camp 2024 - Day 2 (Open)",
+        "url": "https://napc24.kattis.com/contests/s8mo8a"
+    },
+    {
+        "duration": "2:30",
+        "end_time": "2025-05-24 23:30:00 CEST",
+        "host": "napc25.kattis.com",
+        "key": "napc25.napc25day2",
+        "rid": 168,
+        "timezone": null,
+        "title": "NAPC 2025 day 2",
+        "url": "https://napc25.kattis.com/contests/napc25day2"
+    },
+    {
+        "duration": "35069:00",
+        "host": "napc26.kattis.com",
+        "key": "napc26.qrirdg",
+        "rid": 168,
+        "start_time": "2026-03-20 17:00:00 CET",
+        "timezone": null,
+        "title": "NA Programming Camp 2026 - Upsolve",
+        "url": "https://napc26.kattis.com/contests/qrirdg"
+    },
+    {
+        "duration": "3:00",
+        "end_time": "2024-05-26 12:30:00 EDT",
+        "host": "nsachallenge24.kattis.com",
+        "key": "nsachallenge24.nsachallenge24",
+        "rid": 168,
+        "timezone": null,
+        "title": "2024 ICPC Challenge - powered by NSA",
+        "url": "https://nsachallenge24.kattis.com/contests/nsachallenge24"
+    },
+    {
+        "duration": "3:00",
+        "end_time": "2024-05-26 12:30:00 EDT",
+        "host": "nsachallenge24.kattis.com",
+        "key": "nsachallenge24.nsachallenge24open",
+        "rid": 168,
+        "timezone": null,
+        "title": "ICPC Challenge 2024 - powered by NSA - Coaches and Guests",
+        "url": "https://nsachallenge24.kattis.com/contests/nsachallenge24open"
+    },
+    {
+        "duration": "4:00",
+        "end_time": "2024-03-16 15:00:00 MDT",
+        "host": "uapc24.kattis.com",
+        "key": "uapc24.uapc24d1",
+        "rid": 168,
+        "timezone": null,
+        "title": "University of Alberta Programming Contest 2024 - Division 1",
+        "url": "https://uapc24.kattis.com/contests/uapc24d1"
+    },
+    {
+        "duration": "4:00",
+        "end_time": "2024-03-16 15:00:00 MDT",
+        "host": "uapc24.kattis.com",
+        "key": "uapc24.uapc24d2",
+        "rid": 168,
+        "timezone": null,
+        "title": "University of Alberta Programming Contest 2024 - Division 2",
+        "url": "https://uapc24.kattis.com/contests/uapc24d2"
+    },
+    {
+        "duration": "4:00",
+        "end_time": "2024-03-16 15:00:00 MDT",
+        "host": "uapc24.kattis.com",
+        "key": "uapc24.uapc24open",
+        "rid": 168,
+        "timezone": null,
+        "title": "University of Alberta Programming Contest 2024 - Open",
+        "url": "https://uapc24.kattis.com/contests/uapc24open"
+    },
+    {
+        "duration": "4:00",
+        "end_time": "2025-03-15 15:00:00 MDT",
+        "host": "uapc25.kattis.com",
+        "key": "uapc25.uapc25d1",
+        "rid": 168,
+        "timezone": null,
+        "title": "University of Alberta Programming Contest 2025 - Division 1",
+        "url": "https://uapc25.kattis.com/contests/uapc25d1"
+    },
+    {
+        "duration": "4:00",
+        "end_time": "2025-03-15 15:00:00 MDT",
+        "host": "uapc25.kattis.com",
+        "key": "uapc25.uapc25d2",
+        "rid": 168,
+        "timezone": null,
+        "title": "University of Alberta Programming Contest 2025 - Division 2",
+        "url": "https://uapc25.kattis.com/contests/uapc25d2"
+    },
+    {
+        "duration": "4:00",
+        "end_time": "2025-03-15 15:00:00 MDT",
+        "host": "uapc25.kattis.com",
+        "key": "uapc25.uapc25open",
+        "rid": 168,
+        "timezone": null,
+        "title": "University of Alberta Programming Contest 2025 - Open",
+        "url": "https://uapc25.kattis.com/contests/uapc25open"
+    },
+    {
+        "duration": "4:00",
+        "end_time": "2026-03-07 23:00:00 CET",
+        "host": "uapc26.kattis.com",
+        "key": "uapc26.uapc26d1",
+        "rid": 168,
+        "timezone": null,
+        "title": "University of Alberta Programming Contest 2026 - Division 1",
+        "url": "https://uapc26.kattis.com/contests/uapc26d1"
+    },
+    {
+        "duration": "4:00",
+        "end_time": "2026-03-07 23:00:00 CET",
+        "host": "uapc26.kattis.com",
+        "key": "uapc26.uapc26d2",
+        "rid": 168,
+        "timezone": null,
+        "title": "University of Alberta Programming Contest 2026 - Division 2",
+        "url": "https://uapc26.kattis.com/contests/uapc26d2"
+    },
+    {
+        "duration": "4:00",
+        "end_time": "2026-03-07 23:00:00 CET",
+        "host": "uapc26.kattis.com",
+        "key": "uapc26.uapc26hs",
+        "rid": 168,
+        "timezone": null,
+        "title": "University of Alberta Programming Contest 2026 - High School",
+        "url": "https://uapc26.kattis.com/contests/uapc26hs"
+    },
+    {
+        "duration": "4:00",
+        "end_time": "2026-03-07 23:00:00 CET",
+        "host": "uapc26.kattis.com",
+        "key": "uapc26.uapc26open",
+        "rid": 168,
+        "timezone": null,
+        "title": "University of Alberta Programming Contest 2026 - Open",
+        "url": "https://uapc26.kattis.com/contests/uapc26open"
+    },
+    {
+        "duration": "5:00",
+        "end_time": "2024-03-10 01:00:00 CET",
+        "host": "ccpc24.kattis.com",
+        "key": "ccpc24.ccpc24d1",
+        "rid": 168,
+        "timezone": null,
+        "title": "Calgary Collegiate Programming Contest 2024 - Division 1",
+        "url": "https://ccpc24.kattis.com/contests/ccpc24d1"
+    },
+    {
+        "duration": "5:00",
+        "end_time": "2024-03-10 01:00:00 CET",
+        "host": "ccpc24.kattis.com",
+        "key": "ccpc24.ccpc24d2",
+        "rid": 168,
+        "timezone": null,
+        "title": "Calgary Collegiate Programming Contest 2024 - Division 2",
+        "url": "https://ccpc24.kattis.com/contests/ccpc24d2"
+    },
+    {
+        "duration": "5:00",
+        "end_time": "2024-03-10 01:00:00 CET",
+        "host": "ccpc24.kattis.com",
+        "key": "ccpc24.ccpc24open",
+        "rid": 168,
+        "timezone": null,
+        "title": "Calgary Collegiate Programming Contest 2024 - Open Division",
+        "url": "https://ccpc24.kattis.com/contests/ccpc24open"
+    },
+    {
+        "duration": "5:00",
+        "end_time": "2024-07-23 13:00:00 CEST",
+        "host": "egoi24.kattis.com",
+        "key": "egoi24.egoi24-day1",
+        "rid": 168,
+        "timezone": null,
+        "title": "European Girls' Olympiad in Informatics 2024 (day 1)",
+        "url": "https://egoi24.kattis.com/contests/egoi24-day1"
+    },
+    {
+        "duration": "5:00",
+        "end_time": "2024-07-25 13:00:00 CEST",
+        "host": "egoi24.kattis.com",
+        "key": "egoi24.egoi24-day2",
+        "rid": 168,
+        "timezone": null,
+        "title": "European Girls' Olympiad in Informatics 2024 (day 2)",
+        "url": "https://egoi24.kattis.com/contests/egoi24-day2"
+    },
+    {
+        "duration": "5:00",
+        "end_time": "2024-07-29 21:00:00 CEST",
+        "host": "egoi24.kattis.com",
+        "key": "egoi24.ujej2n",
+        "rid": 168,
+        "timezone": null,
+        "title": "European Girls' Olympiad in Informatics 2024 (day 2 mirror)",
+        "url": "https://egoi24.kattis.com/contests/ujej2n"
+    },
+    {
+        "duration": "5:00",
+        "end_time": "2024-07-29 21:00:00 CEST",
+        "host": "egoi24.kattis.com",
+        "key": "egoi24.ytetr9",
+        "rid": 168,
+        "timezone": null,
+        "title": "European Girls' Olympiad in Informatics 2024 (day 1 mirror)",
+        "url": "https://egoi24.kattis.com/contests/ytetr9"
+    },
+    {
+        "duration": "5:00",
+        "end_time": "2024-10-05 16:00:00 CEST",
+        "host": "ncpc24.kattis.com",
+        "key": "ncpc24.ncpc24",
+        "rid": 168,
+        "timezone": null,
+        "title": "The 2024 Nordic Collegiate Programming Contest",
+        "url": "https://ncpc24.kattis.com/contests/ncpc24"
+    },
+    {
+        "duration": "5:00",
+        "end_time": "2024-10-06 01:00:00 CEST",
+        "host": "naq24.kattis.com",
+        "key": "naq24.naq24",
+        "rid": 168,
+        "timezone": null,
+        "title": "ICPC North America Qualifier 2024",
+        "url": "https://naq24.kattis.com/contests/naq24"
+    },
+    {
+        "duration": "5:00",
+        "end_time": "2024-10-27 00:30:00 CEST",
+        "host": "acpc24.kattis.com",
+        "key": "acpc24.acpc24d1",
+        "rid": 168,
+        "timezone": null,
+        "title": "Alberta Collegiate Programming Contest 2024 - Division 1",
+        "url": "https://acpc24.kattis.com/contests/acpc24d1"
+    },
+    {
+        "duration": "5:00",
+        "end_time": "2024-10-27 00:30:00 CEST",
+        "host": "acpc24.kattis.com",
+        "key": "acpc24.acpc24d2",
+        "rid": 168,
+        "timezone": null,
+        "title": "Alberta Collegiate Programming Contest 2024 - Division 2",
+        "url": "https://acpc24.kattis.com/contests/acpc24d2"
+    },
+    {
+        "duration": "5:00",
+        "end_time": "2024-10-27 00:30:00 CEST",
+        "host": "acpc24.kattis.com",
+        "key": "acpc24.acpc24open",
+        "rid": 168,
+        "timezone": null,
+        "title": "Alberta Collegiate Programming Contest 2024 - Open Division",
+        "url": "https://acpc24.kattis.com/contests/acpc24open"
+    },
+    {
+        "duration": "5:00",
+        "end_time": "2024-11-09 16:00:00 MST",
+        "host": "rmc24.kattis.com",
+        "key": "rmc24.rmc24",
+        "rid": 168,
+        "timezone": null,
+        "title": "2024 Rocky Mountain Regional Contest",
+        "url": "https://rmc.kattis.com/contests/rmc24"
+    },
+    {
+        "duration": "5:00",
+        "end_time": "2024-11-09 17:00:00 CST",
+        "host": "mcpc24.kattis.com",
+        "key": "mcpc24.mcpc24",
+        "rid": 168,
+        "timezone": null,
+        "title": "2024 Mid-Central USA Programming Contest",
+        "url": "https://mcpc24.kattis.com/contests/mcpc24"
+    },
+    {
+        "duration": "5:00",
+        "end_time": "2024-11-09 17:00:00 CST",
+        "host": "ncna24.kattis.com",
+        "key": "ncna24.ncna24",
+        "rid": 168,
+        "timezone": null,
+        "title": "2024 North Central NA Regional Contest",
+        "url": "https://ncna24.kattis.com/contests/ncna24"
+    },
+    {
+        "duration": "5:00",
+        "end_time": "2024-11-10 16:00:00 EST",
+        "host": "naeast24.kattis.com",
+        "key": "naeast24.naeast24",
+        "rid": 168,
+        "timezone": null,
+        "title": "ICPC NA East Division 2024",
+        "url": "https://naeast24.kattis.com/contests/naeast24"
+    },
+    {
+        "duration": "5:00",
+        "end_time": "2024-11-17 00:30:00 CET",
+        "host": "nasouth24.kattis.com",
+        "key": "nasouth24.nasouth24d1",
+        "rid": 168,
+        "timezone": null,
+        "title": "ICPC NA South Division 2024 - Division 1",
+        "url": "https://nasouth24.kattis.com/contests/nasouth24d1"
+    },
+    {
+        "duration": "5:00",
+        "end_time": "2024-11-17 00:30:00 CET",
+        "host": "nasouth24.kattis.com",
+        "key": "nasouth24.nasouth24d2",
+        "rid": 168,
+        "timezone": null,
+        "title": "ICPC NA South Division 2024 - Division 2",
+        "url": "https://nasouth24.kattis.com/contests/nasouth24d2"
+    },
+    {
+        "duration": "5:00",
+        "end_time": "2025-03-09 01:00:00 CET",
+        "host": "ccpc25.kattis.com",
+        "key": "ccpc25.ccpc25d1",
+        "rid": 168,
+        "timezone": null,
+        "title": "Calgary Collegiate Programming Contest 2025 - Division 1",
+        "url": "https://ccpc25.kattis.com/contests/ccpc25d1"
+    },
+    {
+        "duration": "5:00",
+        "end_time": "2025-03-09 01:00:00 CET",
+        "host": "ccpc25.kattis.com",
+        "key": "ccpc25.ccpc25d2",
+        "rid": 168,
+        "timezone": null,
+        "title": "Calgary Collegiate Programming Contest 2025 - Division 2",
+        "url": "https://ccpc25.kattis.com/contests/ccpc25d2"
+    },
+    {
+        "duration": "5:00",
+        "end_time": "2025-03-09 01:00:00 CET",
+        "host": "ccpc25.kattis.com",
+        "key": "ccpc25.ccpc25open",
+        "rid": 168,
+        "timezone": null,
+        "title": "Calgary Collegiate Programming Contest 2025 - Open Division",
+        "url": "https://ccpc25.kattis.com/contests/ccpc25open"
+    },
+    {
+        "duration": "5:00",
+        "end_time": "2025-07-16 14:00:00 CEST",
+        "host": "egoi25.kattis.com",
+        "key": "egoi25.egoi25-day1",
+        "rid": 168,
+        "timezone": null,
+        "title": "European Girls' Olympiad in Informatics 2025 - Day 1",
+        "url": "https://egoi25.kattis.com/contests/egoi25-day1"
+    },
+    {
+        "duration": "5:00",
+        "end_time": "2025-07-18 14:15:00 CEST",
+        "host": "egoi25.kattis.com",
+        "key": "egoi25.egoi25-day2",
+        "rid": 168,
+        "timezone": null,
+        "title": "European Girls' Olympiad in Informatics 2025 - Day 2",
+        "url": "https://egoi25.kattis.com/contests/egoi25-day2"
+    },
+    {
+        "duration": "5:00",
+        "end_time": "2025-07-28 00:00:00 CEST",
+        "host": "egoi25.kattis.com",
+        "key": "egoi25.egoi25-day1mirror",
+        "rid": 168,
+        "timezone": null,
+        "title": "European Girls' Olympiad in Informatics 2025 - Day 1 mirror",
+        "url": "https://egoi25.kattis.com/contests/egoi25-day1mirror"
+    },
+    {
+        "duration": "5:00",
+        "end_time": "2025-07-28 00:00:00 CEST",
+        "host": "egoi25.kattis.com",
+        "key": "egoi25.egoi25-day2mirror",
+        "rid": 168,
+        "timezone": null,
+        "title": "European Girls' Olympiad in Informatics 2025 - Day 2 mirror",
+        "url": "https://egoi25.kattis.com/contests/egoi25-day2mirror"
+    },
+    {
+        "duration": "5:00",
+        "end_time": "2025-10-04 16:00:00 CEST",
+        "host": "ncpc25.kattis.com",
+        "key": "ncpc25.ncpc25",
+        "rid": 168,
+        "timezone": null,
+        "title": "The 2025 Nordic Collegiate Programming Contest",
+        "url": "https://ncpc25.kattis.com/contests/ncpc25"
+    },
+    {
+        "duration": "5:00",
+        "end_time": "2025-10-12 01:00:00 CEST",
+        "host": "naq25.kattis.com",
+        "key": "naq25.naq25",
+        "rid": 168,
+        "timezone": null,
+        "title": "ICPC North America Qualifier 2025",
+        "url": "https://naq25.kattis.com/contests/naq25"
+    },
+    {
+        "duration": "5:00",
+        "end_time": "2025-10-18 16:30:00 MDT",
+        "host": "acpc25.kattis.com",
+        "key": "acpc25.i4bbbd",
+        "rid": 168,
+        "timezone": null,
+        "title": "Alberta Collegiate Programming Contest 2025 Division 1",
+        "url": "https://acpc25.kattis.com/contests/i4bbbd"
+    },
+    {
+        "duration": "5:00",
+        "end_time": "2025-10-18 16:30:00 MDT",
+        "host": "acpc25.kattis.com",
+        "key": "acpc25.k8s8ci",
+        "rid": 168,
+        "timezone": null,
+        "title": "Alberta Collegiate Programming Contest 2025 Division 2",
+        "url": "https://acpc25.kattis.com/contests/k8s8ci"
+    },
+    {
+        "duration": "5:00",
+        "end_time": "2025-10-18 16:30:00 MDT",
+        "host": "acpc25.kattis.com",
+        "key": "acpc25.of3qws",
+        "rid": 168,
+        "timezone": null,
+        "title": "Alberta Collegiate Programming Contest 2025 Open",
+        "url": "https://acpc25.kattis.com/contests/of3qws"
+    },
+    {
+        "duration": "5:00",
+        "end_time": "2025-11-08 15:00:00 MST",
+        "host": "rmc25.kattis.com",
+        "key": "rmc25.rmc25",
+        "rid": 168,
+        "timezone": null,
+        "title": "2025 Rocky Mountain Regional Contest",
+        "url": "https://rmc25.kattis.com/contests/rmc25"
+    },
+    {
+        "duration": "5:00",
+        "end_time": "2025-11-08 17:00:00 CST",
+        "host": "mcpc25.kattis.com",
+        "key": "mcpc25.mcpc25",
+        "rid": 168,
+        "timezone": null,
+        "title": "2025 Mid-Central USA Programming Contest",
+        "url": "https://mcpc25.kattis.com/contests/mcpc25"
+    },
+    {
+        "duration": "5:00",
+        "end_time": "2025-11-08 17:00:00 CST",
+        "host": "ncna25.kattis.com",
+        "key": "ncna25.ncna25",
+        "rid": 168,
+        "timezone": null,
+        "title": "2025 North Central NA Regional Contest",
+        "url": "https://ncna25.kattis.com/contests/ncna25"
+    },
+    {
+        "duration": "5:00",
+        "end_time": "2025-11-09 00:30:00 CET",
+        "host": "nasouth25.kattis.com",
+        "key": "nasouth25.nasouth25d1",
+        "rid": 168,
+        "timezone": null,
+        "title": "ICPC NA South Division 2025 - Division 1",
+        "url": "https://nasouth25.kattis.com/contests/nasouth25d1"
+    },
+    {
+        "duration": "5:00",
+        "end_time": "2025-11-09 00:30:00 CET",
+        "host": "nasouth25.kattis.com",
+        "key": "nasouth25.nasouth25d2",
+        "rid": 168,
+        "timezone": null,
+        "title": "ICPC NA South Division 2025 - Division 2",
+        "url": "https://nasouth25.kattis.com/contests/nasouth25d2"
+    },
+    {
+        "duration": "5:00",
+        "end_time": "2025-11-09 16:15:00 EST",
+        "host": "naeast25.kattis.com",
+        "key": "naeast25.naeast25",
+        "rid": 168,
+        "timezone": null,
+        "title": "ICPC NA East Division 2025",
+        "url": "https://naeast25.kattis.com/contests/naeast25"
+    },
+    {
+        "duration": "5:00",
+        "end_time": "2026-03-19 17:00:00 CET",
+        "host": "noi26.kattis.com",
+        "key": "noi26.noi26",
+        "rid": 168,
+        "timezone": null,
+        "title": "Nordic Olympiad in Informatics 2026",
+        "url": "https://noi26.kattis.com/contests/noi26"
+    },
+    {
+        "duration": "5:00",
+        "end_time": "2026-03-28 23:00:00 CET",
+        "host": "ccpc26.kattis.com",
+        "key": "ccpc26.ccpc26div1",
+        "rid": 168,
+        "timezone": null,
+        "title": "Calgary Collegiate Programming Contest 2026 - Division I",
+        "url": "https://ccpc26.kattis.com/contests/ccpc26div1"
+    },
+    {
+        "duration": "5:00",
+        "end_time": "2026-03-28 23:00:00 CET",
+        "host": "ccpc26.kattis.com",
+        "key": "ccpc26.ccpc26div2",
+        "rid": 168,
+        "timezone": null,
+        "title": "Calgary Collegiate Programming Contest 2026 - Division II",
+        "url": "https://ccpc26.kattis.com/contests/ccpc26div2"
+    },
+    {
+        "duration": "5:00",
+        "end_time": "2026-03-28 23:00:00 CET",
+        "host": "ccpc26.kattis.com",
+        "key": "ccpc26.ccpc26open",
+        "rid": 168,
+        "timezone": null,
+        "title": "Calgary Collegiate Programming Contest 2026 - Open Division",
+        "url": "https://ccpc26.kattis.com/contests/ccpc26open"
+    },
+    {
+        "duration": "72:00",
+        "end_time": "2024-05-27 17:30:00 EDT",
+        "host": "napc24.kattis.com",
+        "key": "napc24.z7zh33",
+        "rid": 168,
+        "timezone": null,
+        "title": "NAPC Day 1 Upsolve",
+        "url": "https://napc24.kattis.com/contests/z7zh33"
+    },
+    {
+        "duration": "72:00",
+        "end_time": "2024-05-28 15:50:00 EDT",
+        "host": "napc24.kattis.com",
+        "key": "napc24.u4bsvm",
+        "rid": 168,
+        "timezone": null,
+        "title": "NAPC Day 2 Upsolve",
+        "url": "https://napc24.kattis.com/contests/u4bsvm"
+    },
+    {
+        "duration": "99999:00",
+        "host": "ccpc26.kattis.com",
+        "key": "ccpc26.bnouur",
+        "rid": 168,
+        "start_time": "2026-04-01 23:30:00 CEST",
+        "timezone": null,
+        "title": "CCPC 2026 Upsolve",
+        "url": "https://ccpc26.kattis.com/contests/bnouur"
+    }
+]

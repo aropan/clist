@@ -26,7 +26,10 @@ from ranking.tests.parser_regression import (
     discover_parser_fixtures,
     fixture_file_path,
     get_standings,
+    materialized_http_cache,
     normalize_standings,
+    pack_http_cache,
+    read_http_cache_archive,
     use_parser_cache,
     write_json,
 )
@@ -79,6 +82,52 @@ class ParserRegressionHelpersTest(SimpleTestCase):
             assert first[:3] == b"\x1f\x8b\x08"
             assert first[3] & 0x08 == 0
             assert first[4:8] == b"\0\0\0\0"
+
+    def test_http_cache_archive_is_deterministic_and_round_trips(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            cache_path = root / "httpcache"
+            cache_path.mkdir()
+            (cache_path / "page.html").write_bytes(b"public response")
+            (cache_path / "page.html.meta.json").write_text('{"code": 200}\n')
+            first_archive = root / "first-httpcache.json.gz"
+            second_archive = root / "second-httpcache.json.gz"
+
+            assert pack_http_cache(cache_path, first_archive) == 2
+            assert pack_http_cache(cache_path, second_archive) == 2
+            assert first_archive.read_bytes() == second_archive.read_bytes()
+            assert read_http_cache_archive(first_archive) == {
+                Path("page.html"): b"public response",
+                Path("page.html.meta.json"): b'{"code": 200}\n',
+            }
+
+            fixture_path = root / "fixture"
+            fixture_path.mkdir()
+            first_archive.replace(fixture_path / "httpcache.json.gz")
+            with materialized_http_cache(fixture_path) as materialized_cache:
+                assert (materialized_cache / "page.html").read_bytes() == b"public response"
+                assert (materialized_cache / "page.html.meta.json").read_text() == '{"code": 200}\n'
+
+    def test_http_cache_archive_normalizes_inner_gzip(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            cache_path = root / "httpcache"
+            cache_path.mkdir()
+            with gzip.open(cache_path / "page.html.gz", "wb") as output_file:
+                output_file.write(b"compressed response")
+
+            archive_path = root / "httpcache.json.gz"
+            pack_http_cache(cache_path, archive_path)
+
+            assert read_http_cache_archive(archive_path) == {Path("page.html"): b"compressed response"}
+
+    def test_http_cache_archive_rejects_unsafe_paths(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            archive_path = Path(temporary_directory) / "httpcache.json.gz"
+            write_json(archive_path, {"files": {"../secret": ""}, "version": 1})
+
+            with pytest.raises(ValueError, match="invalid HTTP cache archive path"):
+                read_http_cache_archive(archive_path)
 
     def test_normalize_standings_filters_volatile_fields(self):
         standings = {
@@ -213,8 +262,13 @@ class ParserRegressionHelpersTest(SimpleTestCase):
 
     def test_discover_parser_fixtures_accepts_gzipped_expected_snapshot(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
-            fixture_path = Path(temporary_directory) / "1" / "2"
-            (fixture_path / "httpcache").mkdir(parents=True)
+            root = Path(temporary_directory)
+            fixture_path = root / "1" / "2"
+            fixture_path.mkdir(parents=True)
+            cache_path = root / "recording-cache"
+            cache_path.mkdir(parents=True)
+            (cache_path / "page.html").write_text("cached response")
+            pack_http_cache(cache_path, fixture_path / "httpcache.json.gz")
             (fixture_path / "db.json").write_text("{}")
             with gzip.open(fixture_path / "expected_standings.json.gz", "wt") as output_file:
                 json.dump({}, output_file)

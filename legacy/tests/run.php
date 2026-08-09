@@ -44,13 +44,15 @@ foreach ($meta_files as $meta_file) {
     }
     try {
         fixture_validate_recording($fixture_dir);
+        $cache_dir = fixture_materialize_http_cache($fixture_dir);
     } catch (RuntimeException $e) {
         echo fixture_colorize('FAIL', '31') . " $host ({$e->getMessage()})\n";
         $failures += 1;
         continue;
     }
     $expected = file_get_contents($expected_file);
-    $code = fixture_exec_child(fixture_module_command($fixture_dir, 'replay', true), $stdout, $stderr);
+    $code = fixture_exec_child(fixture_module_command($fixture_dir, 'replay', true, $cache_dir), $stdout, $stderr);
+    fixture_rmdir_recursive($cache_dir);
     if ($code !== 0) {
         echo fixture_colorize('FAIL', '31') . " $host (exit code $code)\n";
         foreach (explode("\n", trim($stderr . "\n" . $stdout)) as $line) {

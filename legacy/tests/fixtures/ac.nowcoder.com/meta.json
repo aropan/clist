@@ -1,0 +1,22 @@
+{
+    "host": "ac.nowcoder.com",
+    "rid": 166,
+    "path": "./module/ac.nowcoder.com/index.php",
+    "url": "https://ac.nowcoder.com/acm/contest/vip-index",
+    "parse_url": "https://ac.nowcoder.com/acm/contest/vip-index",
+    "timezone": null,
+    "api_url": null,
+    "info": {
+        "standings": {
+            "name_instead_key": true
+        },
+        "get_events": {
+            "colors": {
+                "darken": "#411644",
+                "lighten": "#EDD0EF"
+            }
+        }
+    },
+    "parse_full_list": false,
+    "recorded_at": "2026-08-08 17:01:18"
+}

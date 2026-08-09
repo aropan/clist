@@ -1,0 +1,2818 @@
+[
+  {
+    "fields": {
+      "accounts_fields": {
+        "types": {},
+        "verification_fields": []
+      },
+      "allow_delete_archived_statistics": false,
+      "api_url": null,
+      "auto_remove_started": false,
+      "avatar_url": null,
+      "avg_rating": null,
+      "color": "#659ACC",
+      "contest_update_time": "2025-12-17T21:06:22.928Z",
+      "country_rank_update_time": "2025-12-20T22:00:06.839Z",
+      "created": "2018-12-02T07:26:38.319Z",
+      "default_account_type": 1,
+      "enable": true,
+      "has_account_last_submission": null,
+      "has_account_n_writers": null,
+      "has_account_verification": false,
+      "has_accounts_infos_update": false,
+      "has_country_medal": null,
+      "has_country_place": null,
+      "has_country_rating": false,
+      "has_inherit_medals_to_related": false,
+      "has_multi_account": true,
+      "has_problem_archive": false,
+      "has_problem_rating": false,
+      "has_problem_statistic": true,
+      "has_problem_update": false,
+      "has_rating_history": false,
+      "has_standings_renamed_account": false,
+      "has_statistic_medal": false,
+      "has_statistic_n_first_ac": false,
+      "has_statistic_n_total_solved": false,
+      "has_statistic_place": false,
+      "has_statistic_total_solving": false,
+      "has_submissions_statistics_log": false,
+      "has_upsolving": false,
+      "host": "nerc.itmo.ru",
+      "icon_file": "resources/nerc_itmo_ru.png",
+      "icon_updated_at": "2025-12-14T21:04:36Z",
+      "icon_url": null,
+      "info": {
+        "get_events": {
+          "colors": {
+            "darken": "#162E44",
+            "lighten": "#D0E0EF"
+          }
+        },
+        "standings": {
+          "subname": "(?P<value>\\([^\\(]*\\))(?:\\s*[0-9]+-[0-9]+)?$",
+          "timeline": {
+            "time_factor": {
+              "1": [
+                60
+              ],
+              "2": [
+                60,
+                1
+              ],
+              "3": [
+                3600,
+                60,
+                1
+              ]
+            },
+            "time_rounding": "floor-minute"
+          }
+        }
+      },
+      "modified": "2025-12-20T22:00:07.008Z",
+      "n_accounts": 18738,
+      "n_accounts_to_update": null,
+      "n_contests": 264,
+      "n_rating_accounts": null,
+      "n_statistics": 18312,
+      "n_team_accounts": 0,
+      "n_university_accounts": 0,
+      "parse_url": null,
+      "path": "./module/nerc.itmo.ru/index.php",
+      "problem_archive_update_time": null,
+      "problem_rating_predictor": {},
+      "problem_url": null,
+      "problems_fields": {
+        "types": {}
+      },
+      "profile_url": null,
+      "rank_update_time": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "ratings": [],
+      "regexp": null,
+      "short_host": "nerc",
+      "skip_for_contests_chart": false,
+      "statistics_fields": {
+        "types": {
+          "advanced": [
+            "bool"
+          ],
+          "diploma": [
+            "str"
+          ],
+          "medal": [
+            "str"
+          ],
+          "name": [
+            "str"
+          ],
+          "penalty": [
+            "int"
+          ],
+          "university": [
+            "str"
+          ]
+        }
+      },
+      "timezone": "Europe/Moscow",
+      "uid": "8meselq15pgamge1hu49m47deo@group.calendar.google.com",
+      "url": "https://nerc.itmo.ru/archive/index.html"
+    },
+    "model": "clist.resource",
+    "pk": 104
+  },
+  {
+    "fields": {
+      "created": "2018-12-02T07:31:56.370Z",
+      "delay_on_error": "00:30:00",
+      "delay_on_success": "1 00:00:00",
+      "delay_shortly_after": "00:05:00",
+      "enable": true,
+      "long_contest_divider": 100,
+      "long_contest_idle": "06:00:00",
+      "max_delay_after_end": "5 00:00:00",
+      "min_delay_after_end": null,
+      "modified": "2023-12-11T09:35:06.961Z",
+      "path": "ranking/management/modules/nerc_itmo",
+      "resource": 104,
+      "shortly_after": "00:30:00"
+    },
+    "model": "ranking.module",
+    "pk": 12
+  },
+  {
+    "fields": {
+      "aliases": [
+        "NEERC",
+        "NERC",
+        "Northern Eurasia Regional Contest",
+        "Northeastern Europe Regional Contest",
+        "nef"
+      ],
+      "created": "2025-12-18T06:54:01.311Z",
+      "modified": "2025-12-18T06:54:01.311Z",
+      "name": "Northern Eurasia Finals",
+      "short": "NEF",
+      "slug": "nef"
+    },
+    "model": "clist.contestseries",
+    "pk": 53
+  },
+  {
+    "fields": {
+      "allow_updating_statistics_for_participants": null,
+      "auto_updated": "2026-08-04T13:12:31Z",
+      "calculate_time": true,
+      "created": "2025-12-15T07:04:07.662Z",
+      "duration_in_secs": 18000,
+      "edit": null,
+      "elimination_tournament_info": {},
+      "end_time": "2025-12-17T12:20:00Z",
+      "finalists_info": {},
+      "has_fixed_rating_prediction_field": null,
+      "has_hidden_results": false,
+      "has_submissions": null,
+      "has_submissions_tests": null,
+      "has_unlimited_statistics": null,
+      "hide_unsolved_standings_problems": null,
+      "host": "nerc.itmo.ru",
+      "info": {
+        "custom_start_time": 1765956000,
+        "fields": [
+          "problems",
+          "name",
+          "penalty",
+          "university",
+          "_languages",
+          "_verdicts"
+        ],
+        "fields_types": {
+          "_languages": [
+            "list"
+          ],
+          "_verdicts": [
+            "list"
+          ],
+          "name": [
+            "str"
+          ],
+          "penalty": [
+            "int"
+          ],
+          "problems": [
+            "dict"
+          ],
+          "university": [
+            "str"
+          ]
+        },
+        "hidden_fields": [
+          "university"
+        ],
+        "languages": [
+          "cpp.visual",
+          "cpp23.gnu15",
+          "java25",
+          "kotlin",
+          "pypy3.11",
+          "python3.13"
+        ],
+        "problems": [
+          {
+            "n_accepted": 254,
+            "n_failed": 18,
+            "n_submissions": 529,
+            "n_teams": 272,
+            "n_total": 317,
+            "name": "Alphabet City",
+            "short": "A"
+          },
+          {
+            "n_accepted": 281,
+            "n_failed": 31,
+            "n_submissions": 752,
+            "n_teams": 312,
+            "n_total": 317,
+            "name": "Battle of Arrays",
+            "short": "B"
+          },
+          {
+            "n_accepted": 3,
+            "n_failed": 19,
+            "n_submissions": 67,
+            "n_teams": 22,
+            "n_total": 317,
+            "name": "Cacti Classification",
+            "short": "C"
+          },
+          {
+            "n_accepted": 154,
+            "n_failed": 34,
+            "n_submissions": 522,
+            "n_teams": 188,
+            "n_total": 317,
+            "name": "Doorway",
+            "short": "D"
+          },
+          {
+            "n_accepted": 1,
+            "n_failed": 34,
+            "n_submissions": 76,
+            "n_teams": 35,
+            "n_total": 317,
+            "name": "Elevator Against Humanity",
+            "short": "E"
+          },
+          {
+            "n_accepted": 236,
+            "n_failed": 26,
+            "n_submissions": 494,
+            "n_teams": 262,
+            "n_total": 317,
+            "name": "Fragmented Nim",
+            "short": "F"
+          },
+          {
+            "n_accepted": 62,
+            "n_failed": 73,
+            "n_submissions": 555,
+            "n_teams": 135,
+            "n_total": 317,
+            "name": "Greta's Game",
+            "short": "G"
+          },
+          {
+            "n_accepted": 293,
+            "n_failed": 20,
+            "n_submissions": 773,
+            "n_teams": 313,
+            "n_total": 317,
+            "name": "Honey Cake",
+            "short": "H"
+          },
+          {
+            "n_accepted": 2,
+            "n_failed": 9,
+            "n_submissions": 33,
+            "n_teams": 11,
+            "n_total": 317,
+            "name": "Irrigation Interlock",
+            "short": "I"
+          },
+          {
+            "n_accepted": 32,
+            "n_failed": 21,
+            "n_submissions": 154,
+            "n_teams": 53,
+            "n_total": 317,
+            "name": "Jinx or Jackpot",
+            "short": "J"
+          },
+          {
+            "n_failed": 4,
+            "n_submissions": 5,
+            "n_teams": 4,
+            "n_total": 317,
+            "name": "Knit the Grid",
+            "short": "K"
+          },
+          {
+            "n_accepted": 3,
+            "n_failed": 8,
+            "n_submissions": 34,
+            "n_teams": 11,
+            "n_total": 317,
+            "name": "LLM Training",
+            "short": "L"
+          },
+          {
+            "n_accepted": 225,
+            "n_failed": 61,
+            "n_submissions": 743,
+            "n_teams": 286,
+            "n_total": 317,
+            "name": "Medical Parity",
+            "short": "M"
+          }
+        ],
+        "series": "nef",
+        "standings": {
+          "1st_u": {
+            "regex": "^(?P<key>[A-Za-z. ]+)"
+          },
+          "external_urls": [
+            {
+              "name": "icpc.kimden.online",
+              "url": "https://icpc.kimden.online/nerc/2025/"
+            }
+          ],
+          "help_message": "Teams expected to qualify for World Finals ICPC",
+          "n_highlight": 16,
+          "per_page": null
+        },
+        "verdicts": [
+          "ILE",
+          "RE",
+          "TLE",
+          "WA"
+        ]
+      },
+      "invisible": false,
+      "is_auto_added": true,
+      "is_promoted": true,
+      "is_rated": null,
+      "key": "icpc-2025-2026-nerc-northern-eurasia-finals",
+      "kind": null,
+      "link_statistic_timing": null,
+      "merging_contests": [],
+      "modified": "2025-12-18T09:30:38.638Z",
+      "n_problems": 13,
+      "n_statistics": 317,
+      "notification_timing": "2025-12-15T07:05:59.905Z",
+      "parsed_percentage": null,
+      "parsed_time": "2025-12-21T17:01:08.173Z",
+      "problem_rating_hash": null,
+      "problem_rating_update_required": false,
+      "rating_prediction_fields": null,
+      "rating_prediction_hash": null,
+      "rating_prediction_timing": null,
+      "raw_info": {},
+      "registration_url": null,
+      "related": null,
+      "resource": 104,
+      "series": 53,
+      "set_matched_coders_to_members": null,
+      "slug": "icpc-2025-2026-nerc-northern-eurasia-finals",
+      "standings_kind": "icpc",
+      "standings_url": "https://nerc.itmo.ru/archive/2025/standings.html",
+      "start_time": "2025-12-17T07:20:00Z",
+      "statistic_timing": "2025-12-22T17:01:08.173Z",
+      "statistics_update_required": false,
+      "submissions_info": {},
+      "title": "ICPC 2025—2026, NERC — Northern Eurasia Finals",
+      "title_path": "icpc.2025.2026.nerc.northern.eurasia.finals",
+      "trial_standings_url": null,
+      "uid": "e64514fb6aaodk8e5hbllf4e60",
+      "updated": "2026-08-04T13:12:31.766Z",
+      "upload_solved_problems_solutions": null,
+      "upsolving_key": null,
+      "upsolving_url": null,
+      "url": "https://nerc.itmo.ru/archive/2025/standings.html",
+      "variables": {},
+      "wait_for_successful_update_timing": null,
+      "with_advance": false,
+      "with_medals": false
+    },
+    "model": "clist.contest",
+    "pk": 64031059
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2025-12-15T20:47:13.377Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "HSE: FFTilted (Babin, Kudriashov, Romashov) 2025-2026",
+      "last_activity": "2025-12-17T07:20:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-12-17T18:10:10.493Z",
+      "n_bronze": null,
+      "n_contests": 2,
+      "n_first_ac": 7,
+      "n_first_places": 2,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 2,
+      "n_second_places": 0,
+      "n_silver": null,
+      "n_solved": 19,
+      "n_subscribers": 0,
+      "n_third_places": 0,
+      "n_top_ten_places": 0,
+      "n_total_solved": 19,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "HSE: FFTilted (Babin, Kudriashov, Romashov)",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 104,
+      "resource_rank": null,
+      "solving": 31.0,
+      "submissions_info": {},
+      "total_solving": 31.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2025-12-15T20:47:13.378Z",
+      "upsolving": null,
+      "url": "/account/HSE:%20FFTilted%20(Babin,%20Kudriashov,%20Romashov)%202025-2026/resource/nerc.itmo.ru/"
+    },
+    "model": "ranking.account",
+    "pk": 9760197
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2025-12-15T20:47:13.439Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "HSE: BasketBobr (Mikhnenko, Stepanov, Vasilyev) 2025-2026",
+      "last_activity": "2025-12-17T07:20:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-12-17T18:10:10.659Z",
+      "n_bronze": null,
+      "n_contests": 2,
+      "n_first_ac": 2,
+      "n_first_places": -1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 2,
+      "n_second_places": 3,
+      "n_silver": null,
+      "n_solved": 16,
+      "n_subscribers": 0,
+      "n_third_places": 0,
+      "n_top_ten_places": 0,
+      "n_total_solved": 16,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "HSE: BasketBobr (Mikhnenko, Stepanov, Vasilyev)",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 104,
+      "resource_rank": null,
+      "solving": 26.0,
+      "submissions_info": {},
+      "total_solving": 26.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2025-12-15T20:47:13.439Z",
+      "upsolving": null,
+      "url": "/account/HSE:%20BasketBobr%20(Mikhnenko,%20Stepanov,%20Vasilyev)%202025-2026/resource/nerc.itmo.ru/"
+    },
+    "model": "ranking.account",
+    "pk": 9760198
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2025-12-15T20:47:17.923Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "HSE: Disagree (Losev, Ravnushkin, Semenyuk) 2025-2026",
+      "last_activity": "2025-12-17T07:20:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-12-17T18:10:10.713Z",
+      "n_bronze": null,
+      "n_contests": 2,
+      "n_first_ac": 2,
+      "n_first_places": -1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 2,
+      "n_second_places": 0,
+      "n_silver": null,
+      "n_solved": 15,
+      "n_subscribers": 0,
+      "n_third_places": 2,
+      "n_top_ten_places": 1,
+      "n_total_solved": 15,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "HSE: Disagree (Losev, Ravnushkin, Semenyuk)",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 104,
+      "resource_rank": null,
+      "solving": 24.0,
+      "submissions_info": {},
+      "total_solving": 24.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2025-12-15T20:47:17.923Z",
+      "upsolving": null,
+      "url": "/account/HSE:%20Disagree%20(Losev,%20Ravnushkin,%20Semenyuk)%202025-2026/resource/nerc.itmo.ru/"
+    },
+    "model": "ranking.account",
+    "pk": 9760362
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2025-12-15T20:47:14.761Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "SPb ITMO: HFTilted (Gainullin, Konovalov, Matveev) 2025-2026",
+      "last_activity": "2025-12-17T07:20:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-12-17T18:10:10.753Z",
+      "n_bronze": null,
+      "n_contests": 2,
+      "n_first_ac": 0,
+      "n_first_places": -1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 2,
+      "n_second_places": 0,
+      "n_silver": null,
+      "n_solved": 15,
+      "n_subscribers": 0,
+      "n_third_places": 1,
+      "n_top_ten_places": 2,
+      "n_total_solved": 15,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "SPb ITMO: HFTilted (Gainullin, Konovalov, Matveev)",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 104,
+      "resource_rank": null,
+      "solving": 24.0,
+      "submissions_info": {},
+      "total_solving": 24.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2025-12-15T20:47:14.761Z",
+      "upsolving": null,
+      "url": "/account/SPb%20ITMO:%20HFTilted%20(Gainullin,%20Konovalov,%20Matveev)%202025-2026/resource/nerc.itmo.ru/"
+    },
+    "model": "ranking.account",
+    "pk": 9760243
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2025-12-15T20:47:16.939Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "MIPT: MrZver (Belyaev, Ozhegov, Redko) 2025-2026",
+      "last_activity": "2025-12-17T07:20:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-12-17T18:10:10.793Z",
+      "n_bronze": null,
+      "n_contests": 2,
+      "n_first_ac": 1,
+      "n_first_places": -1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": 0,
+      "n_silver": null,
+      "n_solved": 13,
+      "n_subscribers": 0,
+      "n_third_places": 0,
+      "n_top_ten_places": 2,
+      "n_total_solved": 13,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "MIPT: MrZver (Belyaev, Ozhegov, Redko)",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 104,
+      "resource_rank": null,
+      "solving": 21.0,
+      "submissions_info": {},
+      "total_solving": 21.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2025-12-15T20:47:16.939Z",
+      "upsolving": null,
+      "url": "/account/MIPT:%20MrZver%20(Belyaev,%20Ozhegov,%20Redko)%202025-2026/resource/nerc.itmo.ru/"
+    },
+    "model": "ranking.account",
+    "pk": 9760325
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2025-12-15T20:47:21.637Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "MIPT: Ctrl+XD (Kostylev, Pervutinskiy, Ragulin) 2025-2026",
+      "last_activity": "2025-12-17T07:20:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-12-17T09:28:10.923Z",
+      "n_bronze": null,
+      "n_contests": 2,
+      "n_first_ac": 0,
+      "n_first_places": -1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 2,
+      "n_second_places": 0,
+      "n_silver": null,
+      "n_solved": 14,
+      "n_subscribers": 0,
+      "n_third_places": 0,
+      "n_top_ten_places": 3,
+      "n_total_solved": 14,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "MIPT: Ctrl+XD (Kostylev, Pervutinskiy, Ragulin)",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 104,
+      "resource_rank": null,
+      "solving": 22.0,
+      "submissions_info": {},
+      "total_solving": 22.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2025-12-15T20:47:21.637Z",
+      "upsolving": null,
+      "url": "/account/MIPT:%20Ctrl+XD%20(Kostylev,%20Pervutinskiy,%20Ragulin)%202025-2026/resource/nerc.itmo.ru/"
+    },
+    "model": "ranking.account",
+    "pk": 9760483
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2025-12-15T20:47:21.162Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "Novosibirsk SU: NSUtella (Boluts, Goncharov, Lylova) 2025-2026",
+      "last_activity": "2025-12-17T07:20:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-12-17T10:26:11.799Z",
+      "n_bronze": null,
+      "n_contests": 2,
+      "n_first_ac": 1,
+      "n_first_places": -1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": 0,
+      "n_silver": null,
+      "n_solved": 12,
+      "n_subscribers": 0,
+      "n_third_places": 0,
+      "n_top_ten_places": 2,
+      "n_total_solved": 12,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Novosibirsk SU: NSUtella (Boluts, Goncharov, Lylova)",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 104,
+      "resource_rank": null,
+      "solving": 20.0,
+      "submissions_info": {},
+      "total_solving": 20.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2025-12-15T20:47:21.162Z",
+      "upsolving": null,
+      "url": "/account/Novosibirsk%20SU:%20NSUtella%20(Boluts,%20Goncharov,%20Lylova)%202025-2026/resource/nerc.itmo.ru/"
+    },
+    "model": "ranking.account",
+    "pk": 9760461
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2025-12-15T20:47:17.683Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "St. Petersburg SU: X. (Ananev, Kuznetsov, Zgonnik) 2025-2026",
+      "last_activity": "2025-12-17T07:20:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-12-17T11:02:07.583Z",
+      "n_bronze": null,
+      "n_contests": 2,
+      "n_first_ac": 2,
+      "n_first_places": -1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": -1,
+      "n_second_places": 0,
+      "n_silver": null,
+      "n_solved": 12,
+      "n_subscribers": 0,
+      "n_third_places": 0,
+      "n_top_ten_places": 0,
+      "n_total_solved": 12,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "St. Petersburg SU: X. (Ananev, Kuznetsov, Zgonnik)",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 104,
+      "resource_rank": null,
+      "solving": 20.0,
+      "submissions_info": {},
+      "total_solving": 20.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2025-12-15T20:47:17.683Z",
+      "upsolving": null,
+      "url": "/account/St.%20Petersburg%20SU:%20X.%20(Ananev,%20Kuznetsov,%20Zgonnik)%202025-2026/resource/nerc.itmo.ru/"
+    },
+    "model": "ranking.account",
+    "pk": 9760353
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2025-12-15T20:47:16.380Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "SPb ITMO: Deprecated 25 (Khabarov, Trubnikov, Vasilev) 2025-2026",
+      "last_activity": "2025-12-17T07:20:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-12-17T11:08:04.918Z",
+      "n_bronze": null,
+      "n_contests": 2,
+      "n_first_ac": 2,
+      "n_first_places": -1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": -1,
+      "n_second_places": 0,
+      "n_silver": null,
+      "n_solved": 13,
+      "n_subscribers": 0,
+      "n_third_places": 0,
+      "n_top_ten_places": 0,
+      "n_total_solved": 13,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "SPb ITMO: Deprecated 25 (Khabarov, Trubnikov, Vasilev)",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 104,
+      "resource_rank": null,
+      "solving": 21.0,
+      "submissions_info": {},
+      "total_solving": 21.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2025-12-15T20:47:16.380Z",
+      "upsolving": null,
+      "url": "/account/SPb%20ITMO:%20Deprecated%2025%20(Khabarov,%20Trubnikov,%20Vasilev)%202025-2026/resource/nerc.itmo.ru/"
+    },
+    "model": "ranking.account",
+    "pk": 9760299
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2025-12-15T20:47:18.928Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "Yerevan SU: 6741426 (Andreasyan, Kocharyan, Petrosyan) 2025-2026",
+      "last_activity": "2025-12-17T07:20:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-12-17T10:15:30.041Z",
+      "n_bronze": null,
+      "n_contests": 2,
+      "n_first_ac": 0,
+      "n_first_places": -1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 0,
+      "n_second_places": 0,
+      "n_silver": null,
+      "n_solved": 12,
+      "n_subscribers": 0,
+      "n_third_places": 0,
+      "n_top_ten_places": 1,
+      "n_total_solved": 12,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Yerevan SU: 6741426 (Andreasyan, Kocharyan, Petrosyan)",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 104,
+      "resource_rank": null,
+      "solving": 19.0,
+      "submissions_info": {},
+      "total_solving": 19.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2025-12-15T20:47:18.929Z",
+      "upsolving": null,
+      "url": "/account/Yerevan%20SU:%206741426%20(Andreasyan,%20Kocharyan,%20Petrosyan)%202025-2026/resource/nerc.itmo.ru/"
+    },
+    "model": "ranking.account",
+    "pk": 9760400
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2025-12-14T21:04:18.642Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "Kazakh-British TU: One more line (Aspandiyarov, Beloussov, Merezhko) 2025-2026",
+      "last_activity": "2025-12-17T07:20:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-12-17T18:10:11.826Z",
+      "n_bronze": null,
+      "n_contests": 3,
+      "n_first_ac": 4,
+      "n_first_places": -1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 0,
+      "n_second_places": 0,
+      "n_silver": null,
+      "n_solved": 17,
+      "n_subscribers": 0,
+      "n_third_places": 0,
+      "n_top_ten_places": 1,
+      "n_total_solved": 17,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Kazakh-British TU: One more line (Aspandiyarov, Beloussov, Merezhko)",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 104,
+      "resource_rank": null,
+      "solving": 24.0,
+      "submissions_info": {},
+      "total_solving": 24.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2025-12-14T21:04:18.642Z",
+      "upsolving": null,
+      "url": "/account/Kazakh-British%20TU:%20One%20more%20line%20(Aspandiyarov,%20Beloussov,%20Merezhko)%202025-2026/resource/nerc.itmo.ru/"
+    },
+    "model": "ranking.account",
+    "pk": 9754413
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2025-12-15T20:47:14.310Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "CentralU: vpered telegi ne bezhim (Safronov, Shamaev, Verzakov) 2025-2026",
+      "last_activity": "2025-12-17T07:20:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-12-17T18:10:13.115Z",
+      "n_bronze": null,
+      "n_contests": 2,
+      "n_first_ac": 0,
+      "n_first_places": -1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": -1,
+      "n_second_places": 0,
+      "n_silver": null,
+      "n_solved": 8,
+      "n_subscribers": 0,
+      "n_third_places": 0,
+      "n_top_ten_places": 0,
+      "n_total_solved": 8,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "CentralU: vpered telegi ne bezhim (Safronov, Shamaev, Verzakov)",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 104,
+      "resource_rank": null,
+      "solving": 14.0,
+      "submissions_info": {},
+      "total_solving": 14.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2025-12-15T20:47:14.311Z",
+      "upsolving": null,
+      "url": "/account/CentralU:%20vpered%20telegi%20ne%20bezhim%20(Safronov,%20Shamaev,%20Verzakov)%202025-2026/resource/nerc.itmo.ru/"
+    },
+    "model": "ranking.account",
+    "pk": 9760225
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2025-12-15T20:47:15.470Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "Orenburg SU: krips (Eroshenko, Popov, Yakunin) 2025-2026",
+      "last_activity": "2025-12-17T07:20:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-12-17T09:05:36.473Z",
+      "n_bronze": null,
+      "n_contests": 2,
+      "n_first_ac": 0,
+      "n_first_places": -1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": -1,
+      "n_second_places": 0,
+      "n_silver": null,
+      "n_solved": 7,
+      "n_subscribers": 0,
+      "n_third_places": 0,
+      "n_top_ten_places": 0,
+      "n_total_solved": 7,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Orenburg SU: krips (Eroshenko, Popov, Yakunin)",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 104,
+      "resource_rank": null,
+      "solving": 12.0,
+      "submissions_info": {},
+      "total_solving": 12.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2025-12-15T20:47:15.470Z",
+      "upsolving": null,
+      "url": "/account/Orenburg%20SU:%20krips%20(Eroshenko,%20Popov,%20Yakunin)%202025-2026/resource/nerc.itmo.ru/"
+    },
+    "model": "ranking.account",
+    "pk": 9760268
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2025-12-15T20:47:16.727Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "RSATU: 1 (Bogdanov, Musinsky, Skvortsov) 2025-2026",
+      "last_activity": "2025-12-17T07:20:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-12-17T18:10:13.756Z",
+      "n_bronze": null,
+      "n_contests": 2,
+      "n_first_ac": 0,
+      "n_first_places": -1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": -1,
+      "n_second_places": 0,
+      "n_silver": null,
+      "n_solved": 7,
+      "n_subscribers": 0,
+      "n_third_places": 0,
+      "n_top_ten_places": 0,
+      "n_total_solved": 7,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "RSATU: 1 (Bogdanov, Musinsky, Skvortsov)",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 104,
+      "resource_rank": null,
+      "solving": 12.0,
+      "submissions_info": {},
+      "total_solving": 12.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2025-12-15T20:47:16.727Z",
+      "upsolving": null,
+      "url": "/account/RSATU:%201%20(Bogdanov,%20Musinsky,%20Skvortsov)%202025-2026/resource/nerc.itmo.ru/"
+    },
+    "model": "ranking.account",
+    "pk": 9760315
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2025-12-15T20:47:20.809Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "Kyrgyz-German InAI: SUN (Almazbekov, Ismanaliev, Satybaldiev) 2025-2026",
+      "last_activity": "2025-12-17T07:20:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-12-17T18:10:14.252Z",
+      "n_bronze": null,
+      "n_contests": 2,
+      "n_first_ac": 0,
+      "n_first_places": -1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": -1,
+      "n_second_places": 0,
+      "n_silver": null,
+      "n_solved": 6,
+      "n_subscribers": 0,
+      "n_third_places": 0,
+      "n_top_ten_places": 0,
+      "n_total_solved": 6,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Kyrgyz-German InAI: SUN (Almazbekov, Ismanaliev, Satybaldiev)",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 104,
+      "resource_rank": null,
+      "solving": 11.0,
+      "submissions_info": {},
+      "total_solving": 11.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2025-12-15T20:47:20.809Z",
+      "upsolving": null,
+      "url": "/account/Kyrgyz-German%20InAI:%20SUN%20(Almazbekov,%20Ismanaliev,%20Satybaldiev)%202025-2026/resource/nerc.itmo.ru/"
+    },
+    "model": "ranking.account",
+    "pk": 9760446
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2025-12-14T21:04:18.565Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "Nazarbayev U: Vserossiyskiy Geologicheskiy Institut (VSEGEI) (Abdildin, Baimurzin, Zhengissova) 2025-2026",
+      "last_activity": "2025-12-17T07:20:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-12-17T18:10:14.704Z",
+      "n_bronze": null,
+      "n_contests": 3,
+      "n_first_ac": 1,
+      "n_first_places": -1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 0,
+      "n_second_places": 0,
+      "n_silver": null,
+      "n_solved": 11,
+      "n_subscribers": 0,
+      "n_third_places": 0,
+      "n_top_ten_places": 1,
+      "n_total_solved": 11,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Nazarbayev U: Vserossiyskiy Geologicheskiy Institut (VSEGEI) (Abdildin, Baimurzin, Zhengissova)",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 104,
+      "resource_rank": null,
+      "solving": 15.0,
+      "submissions_info": {},
+      "total_solving": 15.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2025-12-14T21:04:18.565Z",
+      "upsolving": null,
+      "url": "/account/Nazarbayev%20U:%20Vserossiyskiy%20Geologicheskiy%20Institut%20(VSEGEI)%20(Abdildin,%20Baimurzin,%20Zhengissova)%202025-2026/resource/nerc.itmo.ru/"
+    },
+    "model": "ranking.account",
+    "pk": 9754410
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2025-12-15T20:47:20.334Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "KazNTU: SU1 (Andas, Baizakov, Metelnikov) 2025-2026",
+      "last_activity": "2025-12-17T07:20:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-12-17T18:10:15.356Z",
+      "n_bronze": null,
+      "n_contests": 2,
+      "n_first_ac": 0,
+      "n_first_places": -1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": -1,
+      "n_second_places": 0,
+      "n_silver": null,
+      "n_solved": 4,
+      "n_subscribers": 0,
+      "n_third_places": 0,
+      "n_top_ten_places": 0,
+      "n_total_solved": 4,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "KazNTU: SU1 (Andas, Baizakov, Metelnikov)",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 104,
+      "resource_rank": null,
+      "solving": 7.0,
+      "submissions_info": {},
+      "total_solving": 7.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2025-12-15T20:47:20.334Z",
+      "upsolving": null,
+      "url": "/account/KazNTU:%20SU1%20(Andas,%20Baizakov,%20Metelnikov)%202025-2026/resource/nerc.itmo.ru/"
+    },
+    "model": "ranking.account",
+    "pk": 9760434
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2025-12-15T20:47:17.283Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "BHOS: 3 (Abdullayeva, Aliyev, Bastanov) 2025-2026",
+      "last_activity": "2025-12-17T07:20:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-12-17T09:06:07.247Z",
+      "n_bronze": null,
+      "n_contests": 2,
+      "n_first_ac": 0,
+      "n_first_places": -1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": -1,
+      "n_second_places": 0,
+      "n_silver": null,
+      "n_solved": 3,
+      "n_subscribers": 0,
+      "n_third_places": 0,
+      "n_top_ten_places": 0,
+      "n_total_solved": 3,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "BHOS: 3 (Abdullayeva, Aliyev, Bastanov)",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 104,
+      "resource_rank": null,
+      "solving": 5.0,
+      "submissions_info": {},
+      "total_solving": 5.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2025-12-15T20:47:17.283Z",
+      "upsolving": null,
+      "url": "/account/BHOS:%203%20(Abdullayeva,%20Aliyev,%20Bastanov)%202025-2026/resource/nerc.itmo.ru/"
+    },
+    "model": "ranking.account",
+    "pk": 9760337
+  },
+  {
+    "fields": {
+      "account": 9760197,
+      "addition": {
+        "name": "HSE: FFTilted (Babin, Kudriashov, Romashov)",
+        "penalty": 1274,
+        "problems": {
+          "A": {
+            "result": "+",
+            "time": "29:09"
+          },
+          "B": {
+            "result": "+",
+            "time": "10:48"
+          },
+          "C": {
+            "result": "+1",
+            "time": "229:00"
+          },
+          "D": {
+            "result": "+",
+            "time": "45:08"
+          },
+          "E": {
+            "first_ac": true,
+            "result": "+1",
+            "time": "279:58"
+          },
+          "F": {
+            "result": "+",
+            "time": "24:05"
+          },
+          "G": {
+            "first_ac": true,
+            "result": "+",
+            "time": "35:41"
+          },
+          "H": {
+            "result": "+1",
+            "time": "4:59"
+          },
+          "I": {
+            "first_ac": true,
+            "result": "+2",
+            "time": "252:25"
+          },
+          "J": {
+            "result": "+",
+            "time": "138:03"
+          },
+          "L": {
+            "first_ac": true,
+            "result": "+",
+            "time": "122:09"
+          },
+          "M": {
+            "first_ac": true,
+            "result": "+",
+            "time": "7:57"
+          }
+        },
+        "university": "HSE"
+      },
+      "advanced": false,
+      "contest": 64031059,
+      "created": "2025-12-15T20:47:13.414Z",
+      "global_rating_change": null,
+      "last_activity": "2025-12-17T07:20:00Z",
+      "medal": null,
+      "modified": "2025-12-21T17:01:09.718Z",
+      "n_first_ac": 5,
+      "n_solved": 12,
+      "n_total_solved": 12,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 1274.0,
+      "place": "1",
+      "place_as_int": 1,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 104,
+      "skip_in_stats": false,
+      "solving": 12.0,
+      "total_solving": 12.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 83815650
+  },
+  {
+    "fields": {
+      "account": 9760198,
+      "addition": {
+        "_languages": [
+          "cpp23.gnu15"
+        ],
+        "_verdicts": [
+          "RE",
+          "TLE"
+        ],
+        "name": "HSE: BasketBobr (Mikhnenko, Stepanov, Vasilyev)",
+        "penalty": 909,
+        "problems": {
+          "A": {
+            "result": "+",
+            "time": "15:56"
+          },
+          "B": {
+            "result": "+",
+            "time": "25:56"
+          },
+          "C": {
+            "language": "cpp23.gnu15",
+            "result": "-7",
+            "time": "294:57",
+            "verdict": "RE"
+          },
+          "D": {
+            "first_ac": true,
+            "result": "+",
+            "time": "34:57"
+          },
+          "E": {
+            "language": "cpp23.gnu15",
+            "result": "-23",
+            "time": "299:51",
+            "verdict": "TLE"
+          },
+          "F": {
+            "result": "+",
+            "time": "38:51"
+          },
+          "G": {
+            "result": "+2",
+            "time": "97:49"
+          },
+          "H": {
+            "result": "+",
+            "time": "12:29"
+          },
+          "I": {
+            "result": "+4",
+            "time": "267:27"
+          },
+          "J": {
+            "result": "+",
+            "time": "153:41"
+          },
+          "L": {
+            "result": "+",
+            "time": "127:27"
+          },
+          "M": {
+            "result": "+",
+            "time": "21:20"
+          }
+        },
+        "university": "HSE"
+      },
+      "advanced": false,
+      "contest": 64031059,
+      "created": "2025-12-15T20:47:13.454Z",
+      "global_rating_change": null,
+      "last_activity": "2025-12-17T07:20:00Z",
+      "medal": null,
+      "modified": "2025-12-21T17:01:09.738Z",
+      "n_first_ac": 1,
+      "n_solved": 10,
+      "n_total_solved": 10,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 909.0,
+      "place": "2",
+      "place_as_int": 2,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 104,
+      "skip_in_stats": false,
+      "solving": 10.0,
+      "total_solving": 10.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 83815651
+  },
+  {
+    "fields": {
+      "account": 9760362,
+      "addition": {
+        "_languages": [
+          "cpp23.gnu15"
+        ],
+        "_verdicts": [
+          "WA"
+        ],
+        "name": "HSE: Disagree (Losev, Ravnushkin, Semenyuk)",
+        "penalty": 762,
+        "problems": {
+          "A": {
+            "result": "+",
+            "time": "32:35"
+          },
+          "B": {
+            "first_ac": true,
+            "result": "+",
+            "time": "7:58"
+          },
+          "C": {
+            "result": "+2",
+            "time": "264:34"
+          },
+          "D": {
+            "result": "+1",
+            "time": "48:39"
+          },
+          "E": {
+            "language": "cpp23.gnu15",
+            "result": "-2",
+            "time": "288:09",
+            "verdict": "WA"
+          },
+          "F": {
+            "result": "+",
+            "time": "34:44"
+          },
+          "G": {
+            "result": "+",
+            "time": "96:49"
+          },
+          "H": {
+            "result": "+",
+            "time": "14:41"
+          },
+          "J": {
+            "result": "+1",
+            "time": "167:45"
+          },
+          "M": {
+            "result": "+",
+            "time": "20:37"
+          }
+        },
+        "university": "HSE"
+      },
+      "advanced": false,
+      "contest": 64031059,
+      "created": "2025-12-15T20:47:17.936Z",
+      "global_rating_change": null,
+      "last_activity": "2025-12-17T07:20:00Z",
+      "medal": null,
+      "modified": "2025-12-21T17:01:09.760Z",
+      "n_first_ac": 1,
+      "n_solved": 9,
+      "n_total_solved": 9,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 762.0,
+      "place": "3",
+      "place_as_int": 3,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 104,
+      "skip_in_stats": false,
+      "solving": 9.0,
+      "total_solving": 9.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 83815825
+  },
+  {
+    "fields": {
+      "account": 9760243,
+      "addition": {
+        "_languages": [
+          "cpp23.gnu15"
+        ],
+        "_verdicts": [
+          "TLE"
+        ],
+        "name": "SPb ITMO: HFTilted (Gainullin, Konovalov, Matveev)",
+        "penalty": 859,
+        "problems": {
+          "A": {
+            "result": "+",
+            "time": "25:13"
+          },
+          "B": {
+            "result": "+",
+            "time": "19:46"
+          },
+          "D": {
+            "result": "+",
+            "time": "52:43"
+          },
+          "F": {
+            "result": "+",
+            "time": "37:51"
+          },
+          "G": {
+            "result": "+2",
+            "time": "118:21"
+          },
+          "H": {
+            "result": "+",
+            "time": "12:55"
+          },
+          "I": {
+            "language": "cpp23.gnu15",
+            "result": "-6",
+            "time": "291:49",
+            "verdict": "TLE"
+          },
+          "J": {
+            "result": "+3",
+            "time": "251:03"
+          },
+          "L": {
+            "result": "+",
+            "time": "237:39"
+          },
+          "M": {
+            "result": "+",
+            "time": "8:41"
+          }
+        },
+        "university": "SPb ITMO"
+      },
+      "advanced": false,
+      "contest": 64031059,
+      "created": "2025-12-15T20:47:14.774Z",
+      "global_rating_change": null,
+      "last_activity": "2025-12-17T07:20:00Z",
+      "medal": null,
+      "modified": "2025-12-21T17:01:09.784Z",
+      "n_first_ac": 0,
+      "n_solved": 9,
+      "n_total_solved": 9,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 859.0,
+      "place": "4",
+      "place_as_int": 4,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 104,
+      "skip_in_stats": false,
+      "solving": 9.0,
+      "total_solving": 9.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 83815700
+  },
+  {
+    "fields": {
+      "account": 9760325,
+      "addition": {
+        "_languages": [
+          "cpp23.gnu15"
+        ],
+        "_verdicts": [
+          "WA"
+        ],
+        "name": "MIPT: MrZver (Belyaev, Ozhegov, Redko)",
+        "penalty": 429,
+        "problems": {
+          "A": {
+            "result": "+",
+            "time": "14:43"
+          },
+          "B": {
+            "result": "+",
+            "time": "28:40"
+          },
+          "C": {
+            "first_ac": true,
+            "result": "+",
+            "time": "125:32"
+          },
+          "D": {
+            "result": "+",
+            "time": "60:40"
+          },
+          "F": {
+            "result": "+",
+            "time": "38:09"
+          },
+          "G": {
+            "result": "+",
+            "time": "105:25"
+          },
+          "H": {
+            "result": "+",
+            "time": "23:24"
+          },
+          "J": {
+            "language": "cpp23.gnu15",
+            "result": "-10",
+            "time": "296:06",
+            "verdict": "WA"
+          },
+          "M": {
+            "result": "+",
+            "time": "36:06"
+          }
+        },
+        "university": "MIPT"
+      },
+      "advanced": false,
+      "contest": 64031059,
+      "created": "2025-12-15T20:47:16.952Z",
+      "global_rating_change": null,
+      "last_activity": "2025-12-17T07:20:00Z",
+      "medal": null,
+      "modified": "2025-12-21T17:01:09.809Z",
+      "n_first_ac": 1,
+      "n_solved": 8,
+      "n_total_solved": 8,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 429.0,
+      "place": "5",
+      "place_as_int": 5,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 104,
+      "skip_in_stats": false,
+      "solving": 8.0,
+      "total_solving": 8.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 83815787
+  },
+  {
+    "fields": {
+      "account": 9760483,
+      "addition": {
+        "_languages": [
+          "cpp23.gnu15"
+        ],
+        "_verdicts": [
+          "TLE",
+          "WA"
+        ],
+        "name": "MIPT: Ctrl+XD (Kostylev, Pervutinskiy, Ragulin)",
+        "penalty": 439,
+        "problems": {
+          "A": {
+            "result": "+",
+            "time": "13:48"
+          },
+          "B": {
+            "result": "+",
+            "time": "20:21"
+          },
+          "D": {
+            "result": "+",
+            "time": "39:22"
+          },
+          "E": {
+            "language": "cpp23.gnu15",
+            "result": "-1",
+            "time": "157:13",
+            "verdict": "WA"
+          },
+          "F": {
+            "result": "+",
+            "time": "46:16"
+          },
+          "G": {
+            "result": "+2",
+            "time": "115:34"
+          },
+          "H": {
+            "result": "+",
+            "time": "16:11"
+          },
+          "J": {
+            "result": "+",
+            "time": "125:25"
+          },
+          "L": {
+            "language": "cpp23.gnu15",
+            "result": "-7",
+            "time": "299:47",
+            "verdict": "TLE"
+          },
+          "M": {
+            "result": "+",
+            "time": "25:59"
+          }
+        },
+        "university": "MIPT"
+      },
+      "advanced": false,
+      "contest": 64031059,
+      "created": "2025-12-15T20:47:21.650Z",
+      "global_rating_change": null,
+      "last_activity": "2025-12-17T07:20:00Z",
+      "medal": null,
+      "modified": "2025-12-21T17:01:09.835Z",
+      "n_first_ac": 0,
+      "n_solved": 8,
+      "n_total_solved": 8,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 439.0,
+      "place": "6",
+      "place_as_int": 6,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 104,
+      "skip_in_stats": false,
+      "solving": 8.0,
+      "total_solving": 8.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 83815987
+  },
+  {
+    "fields": {
+      "account": 9760461,
+      "addition": {
+        "_languages": [
+          "cpp23.gnu15"
+        ],
+        "_verdicts": [
+          "WA"
+        ],
+        "name": "Novosibirsk SU: NSUtella (Boluts, Goncharov, Lylova)",
+        "penalty": 560,
+        "problems": {
+          "A": {
+            "result": "+",
+            "time": "42:50"
+          },
+          "B": {
+            "result": "+",
+            "time": "24:20"
+          },
+          "D": {
+            "result": "+",
+            "time": "83:48"
+          },
+          "F": {
+            "result": "+",
+            "time": "60:54"
+          },
+          "G": {
+            "result": "+1",
+            "time": "185:21"
+          },
+          "H": {
+            "result": "+",
+            "time": "13:13"
+          },
+          "I": {
+            "language": "cpp23.gnu15",
+            "result": "-11",
+            "time": "298:01",
+            "verdict": "WA"
+          },
+          "J": {
+            "first_ac": true,
+            "result": "+",
+            "time": "103:42"
+          },
+          "M": {
+            "result": "+",
+            "time": "30:19"
+          }
+        },
+        "university": "Novosibirsk SU"
+      },
+      "advanced": false,
+      "contest": 64031059,
+      "created": "2025-12-15T20:47:21.174Z",
+      "global_rating_change": null,
+      "last_activity": "2025-12-17T07:20:00Z",
+      "medal": null,
+      "modified": "2025-12-21T17:01:09.883Z",
+      "n_first_ac": 1,
+      "n_solved": 8,
+      "n_total_solved": 8,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 560.0,
+      "place": "8",
+      "place_as_int": 8,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 104,
+      "skip_in_stats": false,
+      "solving": 8.0,
+      "total_solving": 8.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 83815964
+  },
+  {
+    "fields": {
+      "account": 9760353,
+      "addition": {
+        "name": "St. Petersburg SU: X. (Ananev, Kuznetsov, Zgonnik)",
+        "penalty": 726,
+        "problems": {
+          "A": {
+            "result": "+",
+            "time": "75:42"
+          },
+          "B": {
+            "result": "+",
+            "time": "23:28"
+          },
+          "D": {
+            "result": "+",
+            "time": "138:12"
+          },
+          "F": {
+            "first_ac": true,
+            "result": "+",
+            "time": "12:21"
+          },
+          "G": {
+            "result": "+2",
+            "time": "114:39"
+          },
+          "H": {
+            "result": "+",
+            "time": "10:11"
+          },
+          "J": {
+            "result": "+1",
+            "time": "221:29"
+          },
+          "M": {
+            "result": "+1",
+            "time": "53:58"
+          }
+        },
+        "university": "St. Petersburg SU"
+      },
+      "advanced": false,
+      "contest": 64031059,
+      "created": "2025-12-15T20:47:17.693Z",
+      "global_rating_change": null,
+      "last_activity": "2025-12-17T07:20:00Z",
+      "medal": null,
+      "modified": "2025-12-21T17:01:10.033Z",
+      "n_first_ac": 1,
+      "n_solved": 8,
+      "n_total_solved": 8,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 726.0,
+      "place": "15",
+      "place_as_int": 15,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 104,
+      "skip_in_stats": false,
+      "solving": 8.0,
+      "total_solving": 8.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 83815815
+  },
+  {
+    "fields": {
+      "account": 9760299,
+      "addition": {
+        "_languages": [
+          "cpp23.gnu15"
+        ],
+        "_verdicts": [
+          "WA"
+        ],
+        "name": "SPb ITMO: Deprecated 25 (Khabarov, Trubnikov, Vasilev)",
+        "penalty": 843,
+        "problems": {
+          "A": {
+            "result": "+",
+            "time": "40:42"
+          },
+          "B": {
+            "result": "+1",
+            "time": "22:47"
+          },
+          "C": {
+            "language": "cpp23.gnu15",
+            "result": "-2",
+            "time": "299:35",
+            "verdict": "WA"
+          },
+          "D": {
+            "result": "+1",
+            "time": "73:09"
+          },
+          "F": {
+            "result": "+1",
+            "time": "44:49"
+          },
+          "G": {
+            "result": "+2",
+            "time": "181:51"
+          },
+          "H": {
+            "first_ac": true,
+            "result": "+",
+            "time": "4:49"
+          },
+          "J": {
+            "result": "+6",
+            "time": "227:13"
+          },
+          "M": {
+            "result": "+",
+            "time": "32:21"
+          }
+        },
+        "university": "SPb ITMO"
+      },
+      "advanced": false,
+      "contest": 64031059,
+      "created": "2025-12-15T20:47:16.393Z",
+      "global_rating_change": null,
+      "last_activity": "2025-12-17T07:20:00Z",
+      "medal": null,
+      "modified": "2025-12-21T17:01:10.116Z",
+      "n_first_ac": 1,
+      "n_solved": 8,
+      "n_total_solved": 8,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 843.0,
+      "place": "19",
+      "place_as_int": 19,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 104,
+      "skip_in_stats": false,
+      "solving": 8.0,
+      "total_solving": 8.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 83815761
+  },
+  {
+    "fields": {
+      "account": 9760400,
+      "addition": {
+        "_languages": [
+          "cpp23.gnu15"
+        ],
+        "_verdicts": [
+          "WA"
+        ],
+        "name": "Yerevan SU: 6741426 (Andreasyan, Kocharyan, Petrosyan)",
+        "penalty": 436,
+        "problems": {
+          "A": {
+            "result": "+",
+            "time": "20:53"
+          },
+          "B": {
+            "result": "+",
+            "time": "23:51"
+          },
+          "D": {
+            "result": "+",
+            "time": "67:55"
+          },
+          "F": {
+            "result": "+",
+            "time": "28:41"
+          },
+          "G": {
+            "language": "cpp23.gnu15",
+            "result": "-12",
+            "time": "296:46",
+            "verdict": "WA"
+          },
+          "H": {
+            "result": "+",
+            "time": "6:48"
+          },
+          "J": {
+            "result": "+3",
+            "time": "174:28"
+          },
+          "M": {
+            "result": "+1",
+            "time": "38:10"
+          }
+        },
+        "university": "Yerevan SU"
+      },
+      "advanced": false,
+      "contest": 64031059,
+      "created": "2025-12-15T20:47:18.945Z",
+      "global_rating_change": null,
+      "last_activity": "2025-12-17T07:20:00Z",
+      "medal": null,
+      "modified": "2025-12-21T17:01:10.305Z",
+      "n_first_ac": 0,
+      "n_solved": 7,
+      "n_total_solved": 7,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 436.0,
+      "place": "31",
+      "place_as_int": 31,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 104,
+      "skip_in_stats": false,
+      "solving": 7.0,
+      "total_solving": 7.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 83815866
+  },
+  {
+    "fields": {
+      "account": 9754413,
+      "addition": {
+        "_languages": [
+          "cpp23.gnu15"
+        ],
+        "_verdicts": [
+          "WA"
+        ],
+        "name": "Kazakh-British TU: One more line (Aspandiyarov, Beloussov, Merezhko)",
+        "penalty": 782,
+        "problems": {
+          "A": {
+            "first_ac": true,
+            "result": "+1",
+            "time": "12:27"
+          },
+          "B": {
+            "result": "+",
+            "time": "34:44"
+          },
+          "D": {
+            "result": "+1",
+            "time": "78:27"
+          },
+          "F": {
+            "result": "+1",
+            "time": "89:06"
+          },
+          "G": {
+            "result": "+7",
+            "time": "283:43"
+          },
+          "H": {
+            "result": "+",
+            "time": "31:40"
+          },
+          "L": {
+            "language": "cpp23.gnu15",
+            "result": "-18",
+            "time": "299:44",
+            "verdict": "WA"
+          },
+          "M": {
+            "result": "+1",
+            "time": "35:58"
+          }
+        },
+        "university": "Kazakh"
+      },
+      "advanced": false,
+      "contest": 64031059,
+      "created": "2025-12-15T20:47:20.538Z",
+      "global_rating_change": null,
+      "last_activity": "2025-12-17T07:20:00Z",
+      "medal": null,
+      "modified": "2025-12-21T17:01:10.639Z",
+      "n_first_ac": 1,
+      "n_solved": 7,
+      "n_total_solved": 7,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 782.0,
+      "place": "56",
+      "place_as_int": 56,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 104,
+      "skip_in_stats": false,
+      "solving": 7.0,
+      "total_solving": 7.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 83815933
+  },
+  {
+    "fields": {
+      "account": 9760225,
+      "addition": {
+        "_languages": [
+          "cpp23.gnu15"
+        ],
+        "_verdicts": [
+          "ILE",
+          "WA"
+        ],
+        "name": "CentralU: vpered telegi ne bezhim (Safronov, Shamaev, Verzakov)",
+        "penalty": 744,
+        "problems": {
+          "A": {
+            "result": "+4",
+            "time": "80:27"
+          },
+          "B": {
+            "result": "+",
+            "time": "26:13"
+          },
+          "C": {
+            "language": "cpp23.gnu15",
+            "result": "-1",
+            "time": "292:01",
+            "verdict": "ILE"
+          },
+          "D": {
+            "result": "+3",
+            "time": "242:15"
+          },
+          "E": {
+            "language": "cpp23.gnu15",
+            "result": "-1",
+            "time": "294:29",
+            "verdict": "WA"
+          },
+          "F": {
+            "result": "+",
+            "time": "164:13"
+          },
+          "G": {
+            "language": "cpp23.gnu15",
+            "result": "-1",
+            "time": "293:45",
+            "verdict": "WA"
+          },
+          "H": {
+            "result": "+",
+            "time": "21:05"
+          },
+          "I": {
+            "language": "cpp23.gnu15",
+            "result": "-1",
+            "time": "293:02",
+            "verdict": "WA"
+          },
+          "J": {
+            "language": "cpp23.gnu15",
+            "result": "-1",
+            "time": "294:58",
+            "verdict": "WA"
+          },
+          "K": {
+            "language": "cpp23.gnu15",
+            "result": "-1",
+            "time": "289:32",
+            "verdict": "WA"
+          },
+          "L": {
+            "language": "cpp23.gnu15",
+            "result": "-1",
+            "time": "285:15",
+            "verdict": "WA"
+          },
+          "M": {
+            "result": "+",
+            "time": "71:24"
+          }
+        },
+        "university": "CentralU"
+      },
+      "advanced": false,
+      "contest": 64031059,
+      "created": "2025-12-15T20:47:14.329Z",
+      "global_rating_change": null,
+      "last_activity": "2025-12-17T07:20:00Z",
+      "medal": null,
+      "modified": "2025-12-21T17:01:11.645Z",
+      "n_first_ac": 0,
+      "n_solved": 6,
+      "n_total_solved": 6,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 744.0,
+      "place": "135",
+      "place_as_int": 135,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 104,
+      "skip_in_stats": false,
+      "solving": 6.0,
+      "total_solving": 6.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 83815682
+  },
+  {
+    "fields": {
+      "account": 9760268,
+      "addition": {
+        "_languages": [
+          "cpp23.gnu15"
+        ],
+        "_verdicts": [
+          "WA"
+        ],
+        "name": "Orenburg SU: krips (Eroshenko, Popov, Yakunin)",
+        "penalty": 287,
+        "problems": {
+          "A": {
+            "result": "+",
+            "time": "63:05"
+          },
+          "B": {
+            "result": "+",
+            "time": "33:37"
+          },
+          "D": {
+            "language": "cpp23.gnu15",
+            "result": "-3",
+            "time": "213:12",
+            "verdict": "WA"
+          },
+          "F": {
+            "result": "+",
+            "time": "102:00"
+          },
+          "G": {
+            "language": "cpp23.gnu15",
+            "result": "-1",
+            "time": "291:03",
+            "verdict": "WA"
+          },
+          "H": {
+            "result": "+",
+            "time": "18:38"
+          },
+          "M": {
+            "result": "+",
+            "time": "71:07"
+          }
+        },
+        "university": "Orenburg SU"
+      },
+      "advanced": false,
+      "contest": 64031059,
+      "created": "2025-12-15T20:47:15.491Z",
+      "global_rating_change": null,
+      "last_activity": "2025-12-17T07:20:00Z",
+      "medal": null,
+      "modified": "2025-12-21T17:01:11.874Z",
+      "n_first_ac": 0,
+      "n_solved": 5,
+      "n_total_solved": 5,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 287.0,
+      "place": "153",
+      "place_as_int": 153,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 104,
+      "skip_in_stats": false,
+      "solving": 5.0,
+      "total_solving": 5.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 83815726
+  },
+  {
+    "fields": {
+      "account": 9760315,
+      "addition": {
+        "_languages": [
+          "cpp.visual"
+        ],
+        "_verdicts": [
+          "WA"
+        ],
+        "name": "RSATU: 1 (Bogdanov, Musinsky, Skvortsov)",
+        "penalty": 765,
+        "problems": {
+          "A": {
+            "result": "+1",
+            "time": "75:58"
+          },
+          "B": {
+            "result": "+",
+            "time": "30:22"
+          },
+          "D": {
+            "result": "+1",
+            "time": "289:49"
+          },
+          "F": {
+            "language": "cpp.visual",
+            "result": "-1",
+            "time": "84:43",
+            "verdict": "WA"
+          },
+          "H": {
+            "result": "+1",
+            "time": "48:15"
+          },
+          "M": {
+            "result": "+3",
+            "time": "203:12"
+          }
+        },
+        "university": "RSATU"
+      },
+      "advanced": false,
+      "contest": 64031059,
+      "created": "2025-12-15T20:47:16.741Z",
+      "global_rating_change": null,
+      "last_activity": "2025-12-17T07:20:00Z",
+      "medal": null,
+      "modified": "2025-12-21T17:01:12.220Z",
+      "n_first_ac": 0,
+      "n_solved": 5,
+      "n_total_solved": 5,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 765.0,
+      "place": "177",
+      "place_as_int": 177,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 104,
+      "skip_in_stats": false,
+      "solving": 5.0,
+      "total_solving": 5.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 83815777
+  },
+  {
+    "fields": {
+      "account": 9760446,
+      "addition": {
+        "_languages": [
+          "cpp23.gnu15"
+        ],
+        "_verdicts": [
+          "WA"
+        ],
+        "name": "Kyrgyz-German InAI: SUN (Almazbekov, Ismanaliev, Satybaldiev)",
+        "penalty": 1076,
+        "problems": {
+          "A": {
+            "result": "+3",
+            "time": "197:24"
+          },
+          "B": {
+            "result": "+1",
+            "time": "53:13"
+          },
+          "D": {
+            "result": "+2",
+            "time": "294:03"
+          },
+          "E": {
+            "language": "cpp23.gnu15",
+            "result": "-1",
+            "time": "16:03",
+            "verdict": "WA"
+          },
+          "F": {
+            "result": "+3",
+            "time": "201:16"
+          },
+          "H": {
+            "result": "+3",
+            "time": "91:35"
+          },
+          "M": {
+            "language": "cpp23.gnu15",
+            "result": "-8",
+            "time": "299:59",
+            "verdict": "WA"
+          }
+        },
+        "university": "Kyrgyz"
+      },
+      "advanced": false,
+      "contest": 64031059,
+      "created": "2025-12-15T20:47:20.822Z",
+      "global_rating_change": null,
+      "last_activity": "2025-12-17T07:20:00Z",
+      "medal": null,
+      "modified": "2025-12-21T17:01:12.498Z",
+      "n_first_ac": 0,
+      "n_solved": 5,
+      "n_total_solved": 5,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 1076.0,
+      "place": "201",
+      "place_as_int": 201,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 104,
+      "skip_in_stats": false,
+      "solving": 5.0,
+      "total_solving": 5.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 83815948
+  },
+  {
+    "fields": {
+      "account": 9754410,
+      "addition": {
+        "_languages": [
+          "cpp23.gnu15"
+        ],
+        "_verdicts": [
+          "WA"
+        ],
+        "name": "Nazarbayev U: Vserossiyskiy Geologicheskiy Institut (VSEGEI) (Abdildin, Baimurzin, Zhengissova)",
+        "penalty": 711,
+        "problems": {
+          "A": {
+            "language": "cpp23.gnu15",
+            "result": "-7",
+            "time": "299:25",
+            "verdict": "WA"
+          },
+          "B": {
+            "result": "+",
+            "time": "158:46"
+          },
+          "F": {
+            "result": "+",
+            "time": "69:04"
+          },
+          "H": {
+            "result": "+",
+            "time": "16:03"
+          },
+          "M": {
+            "result": "+9",
+            "time": "288:40"
+          }
+        },
+        "university": "Nazarbayev U"
+      },
+      "advanced": false,
+      "contest": 64031059,
+      "created": "2025-12-15T20:47:19.729Z",
+      "global_rating_change": null,
+      "last_activity": "2025-12-17T07:20:00Z",
+      "medal": null,
+      "modified": "2025-12-21T17:01:12.764Z",
+      "n_first_ac": 0,
+      "n_solved": 4,
+      "n_total_solved": 4,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 711.0,
+      "place": "224",
+      "place_as_int": 224,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 104,
+      "skip_in_stats": false,
+      "solving": 4.0,
+      "total_solving": 4.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 83815895
+  },
+  {
+    "fields": {
+      "account": 9760434,
+      "addition": {
+        "_languages": [
+          "cpp23.gnu15"
+        ],
+        "_verdicts": [
+          "WA"
+        ],
+        "name": "KazNTU: SU1 (Andas, Baizakov, Metelnikov)",
+        "penalty": 619,
+        "problems": {
+          "A": {
+            "result": "+3",
+            "time": "295:26"
+          },
+          "B": {
+            "language": "cpp23.gnu15",
+            "result": "-1",
+            "time": "68:04",
+            "verdict": "WA"
+          },
+          "F": {
+            "result": "+",
+            "time": "229:19"
+          },
+          "H": {
+            "result": "+",
+            "time": "35:15"
+          },
+          "M": {
+            "language": "cpp23.gnu15",
+            "result": "-1",
+            "time": "85:38",
+            "verdict": "WA"
+          }
+        },
+        "university": "KazNTU"
+      },
+      "advanced": false,
+      "contest": 64031059,
+      "created": "2025-12-15T20:47:20.351Z",
+      "global_rating_change": null,
+      "last_activity": "2025-12-17T07:20:00Z",
+      "medal": null,
+      "modified": "2025-12-21T17:01:13.247Z",
+      "n_first_ac": 0,
+      "n_solved": 3,
+      "n_total_solved": 3,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 619.0,
+      "place": "258",
+      "place_as_int": 258,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 104,
+      "skip_in_stats": false,
+      "solving": 3.0,
+      "total_solving": 3.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 83815923
+  },
+  {
+    "fields": {
+      "account": 9760337,
+      "addition": {
+        "_languages": [
+          "python3.13"
+        ],
+        "_verdicts": [
+          "WA"
+        ],
+        "name": "BHOS: 3 (Abdullayeva, Aliyev, Bastanov)",
+        "penalty": 163,
+        "problems": {
+          "B": {
+            "result": "+",
+            "time": "104:25"
+          },
+          "H": {
+            "language": "python3.13",
+            "result": "-4",
+            "time": "122:33",
+            "verdict": "WA"
+          },
+          "M": {
+            "result": "+1",
+            "time": "39:54"
+          }
+        },
+        "university": "BHOS"
+      },
+      "advanced": false,
+      "contest": 64031059,
+      "created": "2025-12-15T20:47:17.295Z",
+      "global_rating_change": null,
+      "last_activity": "2025-12-17T07:20:00Z",
+      "medal": null,
+      "modified": "2025-12-21T17:01:13.356Z",
+      "n_first_ac": 0,
+      "n_solved": 2,
+      "n_total_solved": 2,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 163.0,
+      "place": "266",
+      "place_as_int": 266,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 104,
+      "skip_in_stats": false,
+      "solving": 2.0,
+      "total_solving": 2.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 83815799
+  }
+]

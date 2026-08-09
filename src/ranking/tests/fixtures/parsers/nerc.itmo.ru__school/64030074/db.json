@@ -1,0 +1,1686 @@
+[
+  {
+    "fields": {
+      "accounts_fields": {
+        "types": {},
+        "verification_fields": []
+      },
+      "allow_delete_archived_statistics": false,
+      "api_url": null,
+      "auto_remove_started": false,
+      "avatar_url": null,
+      "avg_rating": null,
+      "color": "#BECC66",
+      "contest_update_time": "2025-12-16T12:03:08.663Z",
+      "country_rank_update_time": "2025-12-19T12:40:05.848Z",
+      "created": "2013-02-03T00:00:00Z",
+      "default_account_type": 1,
+      "enable": true,
+      "has_account_last_submission": null,
+      "has_account_n_writers": null,
+      "has_account_verification": false,
+      "has_accounts_infos_update": false,
+      "has_country_medal": null,
+      "has_country_place": null,
+      "has_country_rating": false,
+      "has_inherit_medals_to_related": false,
+      "has_multi_account": true,
+      "has_problem_archive": false,
+      "has_problem_rating": false,
+      "has_problem_statistic": true,
+      "has_problem_update": false,
+      "has_rating_history": false,
+      "has_standings_renamed_account": false,
+      "has_statistic_medal": false,
+      "has_statistic_n_first_ac": true,
+      "has_statistic_n_total_solved": true,
+      "has_statistic_place": true,
+      "has_statistic_total_solving": true,
+      "has_submissions_statistics_log": false,
+      "has_upsolving": false,
+      "host": "nerc.itmo.ru/school",
+      "icon_file": "resources/nerc_itmo_ru_school.ico",
+      "icon_updated_at": "2025-12-15T20:45:46.303Z",
+      "icon_url": null,
+      "info": {
+        "get_events": {
+          "colors": {
+            "darken": "#3E4416",
+            "lighten": "#EBEFD1"
+          }
+        },
+        "standings": {
+          "skip_country": true,
+          "subname": "(?P<value>\\([^\\(]*\\))(?:\\s*[0-9]+-[0-9]+)?$",
+          "timeline": {
+            "time_factor": {
+              "1": [
+                60
+              ],
+              "2": [
+                60,
+                1
+              ],
+              "3": [
+                3600,
+                60,
+                1
+              ]
+            }
+          }
+        }
+      },
+      "modified": "2025-12-19T12:40:06.268Z",
+      "n_accounts": 25065,
+      "n_accounts_to_update": null,
+      "n_contests": 368,
+      "n_rating_accounts": null,
+      "n_statistics": 43262,
+      "n_team_accounts": 0,
+      "n_university_accounts": 0,
+      "parse_url": null,
+      "path": "./module/nerc.itmo.ru_school/index.php",
+      "problem_archive_update_time": null,
+      "problem_rating_predictor": {},
+      "problem_url": null,
+      "problems_fields": {
+        "types": {
+          "first_ac__accounts": [
+            "list"
+          ],
+          "first_ac__in_seconds": [
+            "int"
+          ],
+          "first_ac__time": [
+            "str"
+          ]
+        }
+      },
+      "profile_url": null,
+      "rank_update_time": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "ratings": [],
+      "regexp": null,
+      "short_host": "nercs",
+      "skip_for_contests_chart": false,
+      "statistics_fields": {
+        "types": {
+          "certificate": [
+            "str"
+          ],
+          "city": [
+            "str"
+          ],
+          "country": [
+            "str"
+          ],
+          "degree": [
+            "int"
+          ],
+          "id": [
+            "str"
+          ],
+          "medal": [
+            "str"
+          ],
+          "name": [
+            "str"
+          ],
+          "penalty": [
+            "str",
+            "int"
+          ]
+        }
+      },
+      "timezone": "Europe/Moscow",
+      "uid": "mi9f7vi3pnq1g5jr3sd2ntgtlo@group.calendar.google.com",
+      "url": "https://nerc.itmo.ru/school/io/"
+    },
+    "model": "clist.resource",
+    "pk": 11
+  },
+  {
+    "fields": {
+      "created": "2016-02-23T18:56:42.180Z",
+      "delay_on_error": "1 00:00:00",
+      "delay_on_success": "3 00:00:00",
+      "delay_shortly_after": "00:05:00",
+      "enable": true,
+      "long_contest_divider": 100,
+      "long_contest_idle": "06:00:00",
+      "max_delay_after_end": "10 00:00:00",
+      "min_delay_after_end": null,
+      "modified": "2023-12-11T09:35:12.137Z",
+      "path": "ranking/management/modules/nerc_itmo_school",
+      "resource": 11,
+      "shortly_after": "00:30:00"
+    },
+    "model": "ranking.module",
+    "pk": 5
+  },
+  {
+    "fields": {
+      "aliases": [
+        "ВКОШП",
+        "vkoshp"
+      ],
+      "created": "2025-12-18T15:08:42.806Z",
+      "modified": "2025-12-18T15:08:42.806Z",
+      "name": "Всероссийская командная олимпиада школьников по программированию",
+      "short": "ВКОШП",
+      "slug": "vkoshp"
+    },
+    "model": "clist.contestseries",
+    "pk": 54
+  },
+  {
+    "fields": {
+      "allow_updating_statistics_for_participants": null,
+      "auto_updated": "2026-01-16T11:46:22Z",
+      "calculate_time": true,
+      "created": "2025-12-15T06:09:03.246Z",
+      "duration_in_secs": 18000,
+      "edit": null,
+      "elimination_tournament_info": {},
+      "end_time": "2025-12-16T12:00:00Z",
+      "finalists_info": {},
+      "has_fixed_rating_prediction_field": null,
+      "has_hidden_results": false,
+      "has_submissions": null,
+      "has_submissions_tests": null,
+      "has_unlimited_statistics": null,
+      "hide_unsolved_standings_problems": null,
+      "host": "nerc.itmo.ru/school",
+      "info": {
+        "fields": [
+          "problems",
+          "name",
+          "penalty",
+          "_languages",
+          "_verdicts"
+        ],
+        "fields_types": {
+          "_languages": [
+            "list"
+          ],
+          "_verdicts": [
+            "list"
+          ],
+          "name": [
+            "str"
+          ],
+          "penalty": [
+            "int"
+          ],
+          "problems": [
+            "dict"
+          ]
+        },
+        "hidden_fields": [],
+        "languages": [
+          "cpp.visual",
+          "cpp23.gnu15",
+          "csharp.visual",
+          "kotlin",
+          "pypy3.11",
+          "python3.13"
+        ],
+        "problems": [
+          {
+            "n_accepted": 244,
+            "n_failed": 5,
+            "n_submissions": 518,
+            "n_teams": 249,
+            "n_total": 250,
+            "name": "Цвет глаз",
+            "short": "A"
+          },
+          {
+            "n_accepted": 6,
+            "n_failed": 15,
+            "n_submissions": 122,
+            "n_teams": 21,
+            "n_total": 250,
+            "name": "Большая мировая политика",
+            "short": "B"
+          },
+          {
+            "n_accepted": 244,
+            "n_failed": 3,
+            "n_submissions": 434,
+            "n_teams": 247,
+            "n_total": 250,
+            "name": "Головоломка",
+            "short": "C"
+          },
+          {
+            "n_accepted": 89,
+            "n_failed": 72,
+            "n_submissions": 523,
+            "n_teams": 161,
+            "n_total": 250,
+            "name": "Новые шарики",
+            "short": "D"
+          },
+          {
+            "n_accepted": 241,
+            "n_failed": 6,
+            "n_submissions": 386,
+            "n_teams": 247,
+            "n_total": 250,
+            "name": "Опустошение массива",
+            "short": "E"
+          },
+          {
+            "n_failed": 9,
+            "n_submissions": 10,
+            "n_teams": 9,
+            "n_total": 250,
+            "name": "Шоколадки Фибоначчи",
+            "short": "F"
+          },
+          {
+            "n_accepted": 221,
+            "n_failed": 20,
+            "n_submissions": 619,
+            "n_teams": 241,
+            "n_total": 250,
+            "name": "Магический ритуал",
+            "short": "G"
+          },
+          {
+            "n_accepted": 90,
+            "n_failed": 39,
+            "n_submissions": 433,
+            "n_teams": 129,
+            "n_total": 250,
+            "name": "Плотина бобров",
+            "short": "H"
+          },
+          {
+            "n_accepted": 7,
+            "n_failed": 24,
+            "n_submissions": 153,
+            "n_teams": 31,
+            "n_total": 250,
+            "name": "Предсказывание позиции",
+            "short": "I"
+          },
+          {
+            "n_failed": 12,
+            "n_submissions": 25,
+            "n_teams": 12,
+            "n_total": 250,
+            "name": "Странная сумма",
+            "short": "J"
+          },
+          {
+            "n_accepted": 91,
+            "n_failed": 129,
+            "n_submissions": 2344,
+            "n_teams": 220,
+            "n_total": 250,
+            "name": "Две косые дороги",
+            "short": "K"
+          },
+          {
+            "n_accepted": 13,
+            "n_failed": 60,
+            "n_submissions": 370,
+            "n_teams": 73,
+            "n_total": 250,
+            "name": "Система уравнений с xor",
+            "short": "L"
+          },
+          {
+            "n_accepted": 244,
+            "n_failed": 2,
+            "n_submissions": 430,
+            "n_teams": 246,
+            "n_total": 250,
+            "name": "Математический календарь",
+            "short": "M"
+          }
+        ],
+        "series": "vkoshp",
+        "verdicts": [
+          "AC",
+          "ILE",
+          "RE",
+          "TLE",
+          "WA"
+        ]
+      },
+      "invisible": false,
+      "is_auto_added": true,
+      "is_promoted": true,
+      "is_rated": null,
+      "key": "2025-2026-vkoshp",
+      "kind": null,
+      "link_statistic_timing": null,
+      "merging_contests": [],
+      "modified": "2025-12-15T06:58:01.232Z",
+      "n_problems": 13,
+      "n_statistics": 250,
+      "notification_timing": "2025-12-15T06:59:00.691Z",
+      "parsed_percentage": null,
+      "parsed_time": "2026-07-07T09:23:51.134Z",
+      "problem_rating_hash": null,
+      "problem_rating_update_required": false,
+      "rating_prediction_fields": null,
+      "rating_prediction_hash": null,
+      "rating_prediction_timing": null,
+      "raw_info": {},
+      "registration_url": null,
+      "related": null,
+      "resource": 11,
+      "series": 54,
+      "set_matched_coders_to_members": null,
+      "slug": "dvadtsat-shestaia-otkrytaia-vserossiiskaia-komandnaia-olimpiada-shkolnikov-po-programmirovaniiu",
+      "standings_kind": "icpc",
+      "standings_url": "https://nerc.itmo.ru/school/archive/2025-2026/ru-olymp-team-russia-2025-standings.html",
+      "start_time": "2025-12-16T07:00:00Z",
+      "statistic_timing": "2026-07-10T09:23:51.134Z",
+      "statistics_update_required": false,
+      "submissions_info": {},
+      "title": "Двадцать шестая открытая всероссийская командная олимпиада школьников по программированию",
+      "title_path": "dvadtsat.shestaia.otkrytaia.vserossiiskaia.komandnaia.olimpiada.shkolnikov.po.programmirovaniiu",
+      "trial_standings_url": null,
+      "uid": "spr7s4o5a1is2q2fc2j6vd6f8s",
+      "updated": "2026-07-07T09:23:57.824Z",
+      "upload_solved_problems_solutions": null,
+      "upsolving_key": null,
+      "upsolving_url": null,
+      "url": "https://nerc.itmo.ru/school/russia-team/index.html",
+      "variables": {},
+      "wait_for_successful_update_timing": null,
+      "with_advance": false,
+      "with_medals": false
+    },
+    "model": "clist.contest",
+    "pk": 64030074
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2025-12-15T20:45:46.531Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "СПб, ФМЛ 239: ZWINI (Алексеев, Звездин, Кузнецов) 2025-2026",
+      "last_activity": "2025-12-16T07:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-12-16T17:50:11.517Z",
+      "n_bronze": null,
+      "n_contests": 1,
+      "n_first_ac": 4,
+      "n_first_places": 1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": 0,
+      "n_silver": null,
+      "n_solved": 11,
+      "n_subscribers": 0,
+      "n_third_places": 0,
+      "n_top_ten_places": 0,
+      "n_total_solved": 11,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "СПб, ФМЛ 239: ZWINI (Алексеев, Звездин, Кузнецов)",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 11,
+      "resource_rank": null,
+      "solving": 22.0,
+      "submissions_info": {},
+      "total_solving": 22.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2025-12-15T20:45:46.531Z",
+      "upsolving": null,
+      "url": "/account/%D0%A1%D0%9F%D0%B1,%20%D0%A4%D0%9C%D0%9B%20239:%20ZWINI%20(%D0%90%D0%BB%D0%B5%D0%BA%D1%81%D0%B5%D0%B5%D0%B2,%20%D0%97%D0%B2%D0%B5%D0%B7%D0%B4%D0%B8%D0%BD,%20%D0%9A%D1%83%D0%B7%D0%BD%D0%B5%D1%86%D0%BE%D0%B2)%202025-2026/resource/nerc.itmo.ru/school/"
+    },
+    "model": "ranking.account",
+    "pk": 9759941
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2025-12-15T20:45:46.918Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "МСК, 2007: 1 Форд-Беллман Моторс (Володин, Ларионов, Шубин) 2025-2026",
+      "last_activity": "2025-12-16T07:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-12-16T17:50:11.897Z",
+      "n_bronze": null,
+      "n_contests": 1,
+      "n_first_ac": 1,
+      "n_first_places": -1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": 2,
+      "n_silver": null,
+      "n_solved": 10,
+      "n_subscribers": 0,
+      "n_third_places": 0,
+      "n_top_ten_places": 0,
+      "n_total_solved": 10,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "МСК, 2007: 1 Форд-Беллман Моторс (Володин, Ларионов, Шубин)",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 11,
+      "resource_rank": null,
+      "solving": 20.0,
+      "submissions_info": {},
+      "total_solving": 20.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2025-12-15T20:45:46.918Z",
+      "upsolving": null,
+      "url": "/account/%D0%9C%D0%A1%D0%9A,%202007:%201%20%D0%A4%D0%BE%D1%80%D0%B4-%D0%91%D0%B5%D0%BB%D0%BB%D0%BC%D0%B0%D0%BD%20%D0%9C%D0%BE%D1%82%D0%BE%D1%80%D1%81%20(%D0%92%D0%BE%D0%BB%D0%BE%D0%B4%D0%B8%D0%BD,%20%D0%9B%D0%B0%D1%80%D0%B8%D0%BE%D0%BD%D0%BE%D0%B2,%20%D0%A8%D1%83%D0%B1%D0%B8%D0%BD)%202025-2026/resource/nerc.itmo.ru/school/"
+    },
+    "model": "ranking.account",
+    "pk": 9759954
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2025-12-15T20:45:46.351Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "СПб + Липецк, Л 64 + ФМЛ 239 + 33: sixty eight (Игумнов, Кузнецов, Мартынов) 2025-2026",
+      "last_activity": "2025-12-16T07:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-12-16T17:50:11.944Z",
+      "n_bronze": null,
+      "n_contests": 1,
+      "n_first_ac": 2,
+      "n_first_places": -1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": 0,
+      "n_silver": null,
+      "n_solved": 10,
+      "n_subscribers": 0,
+      "n_third_places": 2,
+      "n_top_ten_places": 0,
+      "n_total_solved": 10,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "СПб + Липецк, Л 64 + ФМЛ 239 + 33: sixty eight (Игумнов, Кузнецов, Мартынов)",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 11,
+      "resource_rank": null,
+      "solving": 20.0,
+      "submissions_info": {},
+      "total_solving": 20.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2025-12-15T20:45:46.351Z",
+      "upsolving": null,
+      "url": "/account/%D0%A1%D0%9F%D0%B1%20+%20%D0%9B%D0%B8%D0%BF%D0%B5%D1%86%D0%BA,%20%D0%9B%2064%20+%20%D0%A4%D0%9C%D0%9B%20239%20+%2033:%20sixty%20eight%20(%D0%98%D0%B3%D1%83%D0%BC%D0%BD%D0%BE%D0%B2,%20%D0%9A%D1%83%D0%B7%D0%BD%D0%B5%D1%86%D0%BE%D0%B2,%20%D0%9C%D0%B0%D1%80%D1%82%D1%8B%D0%BD%D0%BE%D0%B2)%202025-2026/resource/nerc.itmo.ru/school/"
+    },
+    "model": "ranking.account",
+    "pk": 9759935
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2025-12-15T20:45:46.401Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "МСК, 57: 9 meowgoyda (Антонов, Бабинцев, Мамонов) 2025-2026",
+      "last_activity": "2025-12-16T07:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-12-16T10:31:25.180Z",
+      "n_bronze": null,
+      "n_contests": 1,
+      "n_first_ac": 1,
+      "n_first_places": -1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": 0,
+      "n_silver": null,
+      "n_solved": 9,
+      "n_subscribers": 0,
+      "n_third_places": 0,
+      "n_top_ten_places": 2,
+      "n_total_solved": 9,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "МСК, 57: 9 meowgoyda (Антонов, Бабинцев, Мамонов)",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 11,
+      "resource_rank": null,
+      "solving": 18.0,
+      "submissions_info": {},
+      "total_solving": 18.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2025-12-15T20:45:46.401Z",
+      "upsolving": null,
+      "url": "/account/%D0%9C%D0%A1%D0%9A,%2057:%209%20meowgoyda%20(%D0%90%D0%BD%D1%82%D0%BE%D0%BD%D0%BE%D0%B2,%20%D0%91%D0%B0%D0%B1%D0%B8%D0%BD%D1%86%D0%B5%D0%B2,%20%D0%9C%D0%B0%D0%BC%D0%BE%D0%BD%D0%BE%D0%B2)%202025-2026/resource/nerc.itmo.ru/school/"
+    },
+    "model": "ranking.account",
+    "pk": 9759937
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2025-12-15T20:45:49.829Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "МСК, Воробьевы Горы: 2 A few good men (Ильясов, Марченко, Марченко) 2025-2026",
+      "last_activity": "2025-12-16T07:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-12-16T17:50:12.400Z",
+      "n_bronze": null,
+      "n_contests": 1,
+      "n_first_ac": 0,
+      "n_first_places": -1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": -1,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 9,
+      "n_subscribers": 0,
+      "n_third_places": 0,
+      "n_top_ten_places": 0,
+      "n_total_solved": 9,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "МСК, Воробьевы Горы: 2 A few good men (Ильясов, Марченко, Марченко)",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 11,
+      "resource_rank": null,
+      "solving": 18.0,
+      "submissions_info": {},
+      "total_solving": 18.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2025-12-15T20:45:49.830Z",
+      "upsolving": null,
+      "url": "/account/%D0%9C%D0%A1%D0%9A,%20%D0%92%D0%BE%D1%80%D0%BE%D0%B1%D1%8C%D0%B5%D0%B2%D1%8B%20%D0%93%D0%BE%D1%80%D1%8B:%202%20A%20few%20good%20men%20(%D0%98%D0%BB%D1%8C%D1%8F%D1%81%D0%BE%D0%B2,%20%D0%9C%D0%B0%D1%80%D1%87%D0%B5%D0%BD%D0%BA%D0%BE,%20%D0%9C%D0%B0%D1%80%D1%87%D0%B5%D0%BD%D0%BA%D0%BE)%202025-2026/resource/nerc.itmo.ru/school/"
+    },
+    "model": "ranking.account",
+    "pk": 9760043
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2025-12-15T20:45:51.008Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "НСК + Бишкек, СУНЦ НГУ + Газпром: Aгонь V X-eyes (AVX) (Бобрус, Верещагин, Шакин) 2025-2026",
+      "last_activity": "2025-12-16T07:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-12-16T11:00:12.498Z",
+      "n_bronze": null,
+      "n_contests": 1,
+      "n_first_ac": 1,
+      "n_first_places": -1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": -1,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 8,
+      "n_subscribers": 0,
+      "n_third_places": 0,
+      "n_top_ten_places": 0,
+      "n_total_solved": 8,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "НСК + Бишкек, СУНЦ НГУ + Газпром: Aгонь V X-eyes (AVX) (Бобрус, Верещагин, Шакин)",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 11,
+      "resource_rank": null,
+      "solving": 16.0,
+      "submissions_info": {},
+      "total_solving": 16.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2025-12-15T20:45:51.008Z",
+      "upsolving": null,
+      "url": "/account/%D0%9D%D0%A1%D0%9A%20+%20%D0%91%D0%B8%D1%88%D0%BA%D0%B5%D0%BA,%20%D0%A1%D0%A3%D0%9D%D0%A6%20%D0%9D%D0%93%D0%A3%20+%20%D0%93%D0%B0%D0%B7%D0%BF%D1%80%D0%BE%D0%BC:%20A%D0%B3%D0%BE%D0%BD%D1%8C%20V%20X-eyes%20(AVX)%20(%D0%91%D0%BE%D0%B1%D1%80%D1%83%D1%81,%20%D0%92%D0%B5%D1%80%D0%B5%D1%89%D0%B0%D0%B3%D0%B8%D0%BD,%20%D0%A8%D0%B0%D0%BA%D0%B8%D0%BD)%202025-2026/resource/nerc.itmo.ru/school/"
+    },
+    "model": "ranking.account",
+    "pk": 9760090
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2025-12-15T20:45:50.679Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "МСК, 179: 7 КуПиВа (Вакарюк, Кулаев, Пискунов) 2025-2026",
+      "last_activity": "2025-12-16T07:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-12-16T10:24:02.232Z",
+      "n_bronze": null,
+      "n_contests": 1,
+      "n_first_ac": 1,
+      "n_first_places": -1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": -1,
+      "n_second_places": 0,
+      "n_silver": null,
+      "n_solved": 8,
+      "n_subscribers": 0,
+      "n_third_places": 0,
+      "n_top_ten_places": 0,
+      "n_total_solved": 8,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "МСК, 179: 7 КуПиВа (Вакарюк, Кулаев, Пискунов)",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 11,
+      "resource_rank": null,
+      "solving": 16.0,
+      "submissions_info": {},
+      "total_solving": 16.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2025-12-15T20:45:50.679Z",
+      "upsolving": null,
+      "url": "/account/%D0%9C%D0%A1%D0%9A,%20179:%207%20%D0%9A%D1%83%D0%9F%D0%B8%D0%92%D0%B0%20(%D0%92%D0%B0%D0%BA%D0%B0%D1%80%D1%8E%D0%BA,%20%D0%9A%D1%83%D0%BB%D0%B0%D0%B5%D0%B2,%20%D0%9F%D0%B8%D1%81%D0%BA%D1%83%D0%BD%D0%BE%D0%B2)%202025-2026/resource/nerc.itmo.ru/school/"
+    },
+    "model": "ranking.account",
+    "pk": 9760076
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2025-12-15T20:45:46.157Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "СПб, ЮМШ: Life Enjoyers (Коншин, Кустов, Лагерной) 2025-2026",
+      "last_activity": "2025-12-16T07:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-12-16T09:33:07.071Z",
+      "n_bronze": null,
+      "n_contests": 1,
+      "n_first_ac": 1,
+      "n_first_places": -1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": -1,
+      "n_second_places": 0,
+      "n_silver": null,
+      "n_solved": 7,
+      "n_subscribers": 0,
+      "n_third_places": 0,
+      "n_top_ten_places": 0,
+      "n_total_solved": 7,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "СПб, ЮМШ: Life Enjoyers (Коншин, Кустов, Лагерной)",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 11,
+      "resource_rank": null,
+      "solving": 14.0,
+      "submissions_info": {},
+      "total_solving": 14.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2025-12-15T20:45:46.157Z",
+      "upsolving": null,
+      "url": "/account/%D0%A1%D0%9F%D0%B1,%20%D0%AE%D0%9C%D0%A8:%20Life%20Enjoyers%20(%D0%9A%D0%BE%D0%BD%D1%88%D0%B8%D0%BD,%20%D0%9A%D1%83%D1%81%D1%82%D0%BE%D0%B2,%20%D0%9B%D0%B0%D0%B3%D0%B5%D1%80%D0%BD%D0%BE%D0%B9)%202025-2026/resource/nerc.itmo.ru/school/"
+    },
+    "model": "ranking.account",
+    "pk": 9759934
+  },
+  {
+    "fields": {
+      "account": 9759941,
+      "addition": {
+        "_languages": [
+          "cpp23.gnu15"
+        ],
+        "_verdicts": [
+          "WA",
+          "AC"
+        ],
+        "name": "СПб, ФМЛ 239: ZWINI (Алексеев, Звездин, Кузнецов)",
+        "penalty": 1266,
+        "problems": {
+          "A": {
+            "first_ac": true,
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "5:50",
+            "verdict": "AC"
+          },
+          "B": {
+            "language": "cpp23.gnu15",
+            "result": "+4",
+            "time": "228:17",
+            "verdict": "AC"
+          },
+          "C": {
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "14:53",
+            "verdict": "AC"
+          },
+          "D": {
+            "first_ac": true,
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "35:04",
+            "verdict": "AC"
+          },
+          "E": {
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "7:59",
+            "verdict": "AC"
+          },
+          "G": {
+            "first_ac": true,
+            "language": "cpp23.gnu15",
+            "result": "+1",
+            "time": "13:25",
+            "verdict": "AC"
+          },
+          "H": {
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "113:33",
+            "verdict": "AC"
+          },
+          "I": {
+            "first_ac": true,
+            "language": "cpp23.gnu15",
+            "result": "+6",
+            "time": "164:30",
+            "verdict": "AC"
+          },
+          "J": {
+            "language": "cpp23.gnu15",
+            "result": "-1",
+            "time": "299:53",
+            "verdict": "WA"
+          },
+          "K": {
+            "language": "cpp23.gnu15",
+            "result": "+4",
+            "time": "58:48",
+            "verdict": "AC"
+          },
+          "L": {
+            "language": "cpp23.gnu15",
+            "result": "+3",
+            "time": "251:05",
+            "verdict": "AC"
+          },
+          "M": {
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "18:32",
+            "verdict": "AC"
+          }
+        }
+      },
+      "advanced": false,
+      "contest": 64030074,
+      "created": "2025-12-15T20:45:46.564Z",
+      "global_rating_change": null,
+      "last_activity": "2025-12-16T07:00:00Z",
+      "medal": null,
+      "modified": "2026-07-07T09:23:53.715Z",
+      "n_first_ac": 4,
+      "n_solved": 11,
+      "n_total_solved": 11,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 1266.0,
+      "place": "1",
+      "place_as_int": 1,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 11,
+      "skip_in_stats": false,
+      "solving": 11.0,
+      "total_solving": 11.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 83815394
+  },
+  {
+    "fields": {
+      "account": 9759954,
+      "addition": {
+        "_languages": [
+          "cpp23.gnu15"
+        ],
+        "_verdicts": [
+          "AC"
+        ],
+        "name": "МСК, 2007: 1 Форд-Беллман Моторс (Володин, Ларионов, Шубин)",
+        "penalty": 800,
+        "problems": {
+          "A": {
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "8:19",
+            "verdict": "AC"
+          },
+          "C": {
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "10:49",
+            "verdict": "AC"
+          },
+          "D": {
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "69:13",
+            "verdict": "AC"
+          },
+          "E": {
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "14:56",
+            "verdict": "AC"
+          },
+          "G": {
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "28:29",
+            "verdict": "AC"
+          },
+          "H": {
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "139:13",
+            "verdict": "AC"
+          },
+          "I": {
+            "language": "cpp23.gnu15",
+            "result": "+3",
+            "time": "265:17",
+            "verdict": "AC"
+          },
+          "K": {
+            "first_ac": true,
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "46:59",
+            "verdict": "AC"
+          },
+          "L": {
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "130:45",
+            "verdict": "AC"
+          },
+          "M": {
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "31:18",
+            "verdict": "AC"
+          }
+        }
+      },
+      "advanced": false,
+      "contest": 64030074,
+      "created": "2025-12-15T20:45:46.932Z",
+      "global_rating_change": null,
+      "last_activity": "2025-12-16T07:00:00Z",
+      "medal": null,
+      "modified": "2026-07-07T09:23:53.732Z",
+      "n_first_ac": 1,
+      "n_solved": 10,
+      "n_total_solved": 10,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 800.0,
+      "place": "2",
+      "place_as_int": 2,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 11,
+      "skip_in_stats": false,
+      "solving": 10.0,
+      "total_solving": 10.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 83815407
+  },
+  {
+    "fields": {
+      "account": 9759935,
+      "addition": {
+        "_languages": [
+          "cpp23.gnu15"
+        ],
+        "_verdicts": [
+          "WA",
+          "AC"
+        ],
+        "name": "СПб + Липецк, Л 64 + ФМЛ 239 + 33: sixty eight (Игумнов, Кузнецов, Мартынов)",
+        "penalty": 994,
+        "problems": {
+          "A": {
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "9:09",
+            "verdict": "AC"
+          },
+          "B": {
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "200:46",
+            "verdict": "AC"
+          },
+          "C": {
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "12:35",
+            "verdict": "AC"
+          },
+          "D": {
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "77:28",
+            "verdict": "AC"
+          },
+          "E": {
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "23:34",
+            "verdict": "AC"
+          },
+          "G": {
+            "language": "cpp23.gnu15",
+            "result": "+1",
+            "time": "31:05",
+            "verdict": "AC"
+          },
+          "H": {
+            "first_ac": true,
+            "language": "cpp23.gnu15",
+            "result": "+1",
+            "time": "66:02",
+            "verdict": "AC"
+          },
+          "I": {
+            "language": "cpp23.gnu15",
+            "result": "-11",
+            "time": "299:40",
+            "verdict": "WA"
+          },
+          "J": {
+            "language": "cpp23.gnu15",
+            "result": "-7",
+            "time": "299:08",
+            "verdict": "WA"
+          },
+          "K": {
+            "language": "cpp23.gnu15",
+            "result": "+6",
+            "time": "258:26",
+            "verdict": "AC"
+          },
+          "L": {
+            "first_ac": true,
+            "language": "cpp23.gnu15",
+            "result": "+1",
+            "time": "103:43",
+            "verdict": "AC"
+          },
+          "M": {
+            "language": "cpp23.gnu15",
+            "result": "+1",
+            "time": "15:29",
+            "verdict": "AC"
+          }
+        }
+      },
+      "advanced": false,
+      "contest": 64030074,
+      "created": "2025-12-15T20:45:46.367Z",
+      "global_rating_change": null,
+      "last_activity": "2025-12-16T07:00:00Z",
+      "medal": null,
+      "modified": "2026-07-07T09:23:53.745Z",
+      "n_first_ac": 2,
+      "n_solved": 10,
+      "n_total_solved": 10,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 994.0,
+      "place": "3",
+      "place_as_int": 3,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 11,
+      "skip_in_stats": false,
+      "solving": 10.0,
+      "total_solving": 10.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 83815388
+  },
+  {
+    "fields": {
+      "account": 9759937,
+      "addition": {
+        "_languages": [
+          "cpp23.gnu15"
+        ],
+        "_verdicts": [
+          "AC",
+          "TLE"
+        ],
+        "name": "МСК, 57: 9 meowgoyda (Антонов, Бабинцев, Мамонов)",
+        "penalty": 932,
+        "problems": {
+          "A": {
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "12:40",
+            "verdict": "AC"
+          },
+          "B": {
+            "first_ac": true,
+            "language": "cpp23.gnu15",
+            "result": "+6",
+            "time": "160:55",
+            "verdict": "AC"
+          },
+          "C": {
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "4:21",
+            "verdict": "AC"
+          },
+          "D": {
+            "language": "cpp23.gnu15",
+            "result": "+1",
+            "time": "164:31",
+            "verdict": "AC"
+          },
+          "E": {
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "15:41",
+            "verdict": "AC"
+          },
+          "G": {
+            "language": "cpp23.gnu15",
+            "result": "+2",
+            "time": "33:27",
+            "verdict": "AC"
+          },
+          "H": {
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "192:47",
+            "verdict": "AC"
+          },
+          "K": {
+            "language": "cpp23.gnu15",
+            "result": "+4",
+            "time": "66:16",
+            "verdict": "AC"
+          },
+          "L": {
+            "language": "cpp23.gnu15",
+            "result": "-1",
+            "time": "260:25",
+            "verdict": "TLE"
+          },
+          "M": {
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "26:21",
+            "verdict": "AC"
+          }
+        }
+      },
+      "advanced": false,
+      "contest": 64030074,
+      "created": "2025-12-15T20:45:46.419Z",
+      "global_rating_change": null,
+      "last_activity": "2025-12-16T07:00:00Z",
+      "medal": null,
+      "modified": "2026-07-07T09:23:53.833Z",
+      "n_first_ac": 1,
+      "n_solved": 9,
+      "n_total_solved": 9,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 932.0,
+      "place": "8",
+      "place_as_int": 8,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 11,
+      "skip_in_stats": false,
+      "solving": 9.0,
+      "total_solving": 9.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 83815390
+  },
+  {
+    "fields": {
+      "account": 9760043,
+      "addition": {
+        "_languages": [
+          "cpp23.gnu15"
+        ],
+        "_verdicts": [
+          "WA",
+          "AC"
+        ],
+        "name": "МСК, Воробьевы Горы: 2 A few good men (Ильясов, Марченко, Марченко)",
+        "penalty": 1838,
+        "problems": {
+          "A": {
+            "language": "cpp23.gnu15",
+            "result": "+1",
+            "time": "27:58",
+            "verdict": "AC"
+          },
+          "B": {
+            "language": "cpp23.gnu15",
+            "result": "+26",
+            "time": "287:51",
+            "verdict": "AC"
+          },
+          "C": {
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "18:09",
+            "verdict": "AC"
+          },
+          "D": {
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "181:01",
+            "verdict": "AC"
+          },
+          "E": {
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "16:08",
+            "verdict": "AC"
+          },
+          "F": {
+            "language": "cpp23.gnu15",
+            "result": "-1",
+            "time": "50:38",
+            "verdict": "WA"
+          },
+          "G": {
+            "language": "cpp23.gnu15",
+            "result": "+2",
+            "time": "51:33",
+            "verdict": "AC"
+          },
+          "H": {
+            "language": "cpp23.gnu15",
+            "result": "+1",
+            "time": "293:50",
+            "verdict": "AC"
+          },
+          "K": {
+            "language": "cpp23.gnu15",
+            "result": "+8",
+            "time": "160:35",
+            "verdict": "AC"
+          },
+          "M": {
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "45:18",
+            "verdict": "AC"
+          }
+        }
+      },
+      "advanced": false,
+      "contest": 64030074,
+      "created": "2025-12-15T20:45:49.842Z",
+      "global_rating_change": null,
+      "last_activity": "2025-12-16T07:00:00Z",
+      "medal": null,
+      "modified": "2026-07-07T09:23:54.004Z",
+      "n_first_ac": 0,
+      "n_solved": 9,
+      "n_total_solved": 9,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 1838.0,
+      "place": "17",
+      "place_as_int": 17,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 11,
+      "skip_in_stats": false,
+      "solving": 9.0,
+      "total_solving": 9.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 83815496
+  },
+  {
+    "fields": {
+      "account": 9760090,
+      "addition": {
+        "_languages": [
+          "cpp23.gnu15"
+        ],
+        "_verdicts": [
+          "WA",
+          "AC",
+          "TLE"
+        ],
+        "name": "НСК + Бишкек, СУНЦ НГУ + Газпром: Aгонь V X-eyes (AVX) (Бобрус, Верещагин, Шакин)",
+        "penalty": 439,
+        "problems": {
+          "A": {
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "31:17",
+            "verdict": "AC"
+          },
+          "C": {
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "11:20",
+            "verdict": "AC"
+          },
+          "D": {
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "58:03",
+            "verdict": "AC"
+          },
+          "E": {
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "14:12",
+            "verdict": "AC"
+          },
+          "G": {
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "39:18",
+            "verdict": "AC"
+          },
+          "H": {
+            "language": "cpp23.gnu15",
+            "result": "+1",
+            "time": "129:33",
+            "verdict": "AC"
+          },
+          "J": {
+            "language": "cpp23.gnu15",
+            "result": "-3",
+            "time": "290:44",
+            "verdict": "WA"
+          },
+          "K": {
+            "language": "cpp23.gnu15",
+            "result": "+2",
+            "time": "89:32",
+            "verdict": "AC"
+          },
+          "L": {
+            "language": "cpp23.gnu15",
+            "result": "-2",
+            "time": "256:55",
+            "verdict": "TLE"
+          },
+          "M": {
+            "first_ac": true,
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "8:16",
+            "verdict": "AC"
+          }
+        }
+      },
+      "advanced": false,
+      "contest": 64030074,
+      "created": "2025-12-15T20:45:51.035Z",
+      "global_rating_change": null,
+      "last_activity": "2025-12-16T07:00:00Z",
+      "medal": null,
+      "modified": "2026-07-07T09:23:54.056Z",
+      "n_first_ac": 1,
+      "n_solved": 8,
+      "n_total_solved": 8,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 439.0,
+      "place": "19",
+      "place_as_int": 19,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 11,
+      "skip_in_stats": false,
+      "solving": 8.0,
+      "total_solving": 8.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 83815543
+  },
+  {
+    "fields": {
+      "account": 9760076,
+      "addition": {
+        "_languages": [
+          "python3.13",
+          "cpp23.gnu15"
+        ],
+        "_verdicts": [
+          "AC",
+          "TLE"
+        ],
+        "name": "МСК, 179: 7 КуПиВа (Вакарюк, Кулаев, Пискунов)",
+        "penalty": 789,
+        "problems": {
+          "A": {
+            "language": "cpp23.gnu15",
+            "result": "+1",
+            "time": "21:19",
+            "verdict": "AC"
+          },
+          "C": {
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "7:53",
+            "verdict": "AC"
+          },
+          "D": {
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "120:09",
+            "verdict": "AC"
+          },
+          "E": {
+            "first_ac": true,
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "3:55",
+            "verdict": "AC"
+          },
+          "G": {
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "38:08",
+            "verdict": "AC"
+          },
+          "H": {
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "181:50",
+            "verdict": "AC"
+          },
+          "K": {
+            "language": "python3.13",
+            "result": "+9",
+            "time": "193:09",
+            "verdict": "AC"
+          },
+          "L": {
+            "language": "cpp23.gnu15",
+            "result": "-16",
+            "time": "299:39",
+            "verdict": "TLE"
+          },
+          "M": {
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "26:06",
+            "verdict": "AC"
+          }
+        }
+      },
+      "advanced": false,
+      "contest": 64030074,
+      "created": "2025-12-15T20:45:50.690Z",
+      "global_rating_change": null,
+      "last_activity": "2025-12-16T07:00:00Z",
+      "medal": null,
+      "modified": "2026-07-07T09:23:54.330Z",
+      "n_first_ac": 1,
+      "n_solved": 8,
+      "n_total_solved": 8,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 789.0,
+      "place": "34",
+      "place_as_int": 34,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 11,
+      "skip_in_stats": false,
+      "solving": 8.0,
+      "total_solving": 8.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 83815529
+  },
+  {
+    "fields": {
+      "account": 9759934,
+      "addition": {
+        "_languages": [
+          "cpp23.gnu15",
+          "pypy3.11"
+        ],
+        "_verdicts": [
+          "RE",
+          "WA",
+          "AC"
+        ],
+        "name": "СПб, ЮМШ: Life Enjoyers (Коншин, Кустов, Лагерной)",
+        "penalty": 352,
+        "problems": {
+          "A": {
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "13:12",
+            "verdict": "AC"
+          },
+          "C": {
+            "first_ac": true,
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "4:04",
+            "verdict": "AC"
+          },
+          "D": {
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "142:13",
+            "verdict": "AC"
+          },
+          "E": {
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "21:53",
+            "verdict": "AC"
+          },
+          "G": {
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "18:18",
+            "verdict": "AC"
+          },
+          "H": {
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "128:07",
+            "verdict": "AC"
+          },
+          "K": {
+            "language": "pypy3.11",
+            "result": "-7",
+            "time": "299:01",
+            "verdict": "WA"
+          },
+          "L": {
+            "language": "cpp23.gnu15",
+            "result": "-12",
+            "time": "296:59",
+            "verdict": "RE"
+          },
+          "M": {
+            "language": "cpp23.gnu15",
+            "result": "+",
+            "time": "26:45",
+            "verdict": "AC"
+          }
+        }
+      },
+      "advanced": false,
+      "contest": 64030074,
+      "created": "2025-12-15T20:45:46.321Z",
+      "global_rating_change": null,
+      "last_activity": "2025-12-16T07:00:00Z",
+      "medal": null,
+      "modified": "2026-07-07T09:23:54.587Z",
+      "n_first_ac": 1,
+      "n_solved": 7,
+      "n_total_solved": 7,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 352.0,
+      "place": "50",
+      "place_as_int": 50,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 11,
+      "skip_in_stats": false,
+      "solving": 7.0,
+      "total_solving": 7.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 83815387
+  }
+]

@@ -1,0 +1,152 @@
+{
+    "host": "atcoder.jp",
+    "rid": 93,
+    "path": "./module/atcoder.jp/index.php",
+    "url": "https://atcoder.jp/contests/",
+    "parse_url": "https://atcoder.jp/contests/",
+    "timezone": "JST",
+    "api_url": null,
+    "info": {
+        "ratings": {
+            "adjustment": {
+                "deltas": [
+                    1200,
+                    745,
+                    545,
+                    427,
+                    347,
+                    289,
+                    244,
+                    209,
+                    180,
+                    157,
+                    137,
+                    120,
+                    106,
+                    94,
+                    83,
+                    74,
+                    66,
+                    58,
+                    52,
+                    46,
+                    41,
+                    37,
+                    33,
+                    30,
+                    27,
+                    24,
+                    21,
+                    19,
+                    17,
+                    15,
+                    14,
+                    12,
+                    11,
+                    10,
+                    9,
+                    8,
+                    7,
+                    7,
+                    6,
+                    5,
+                    5,
+                    4,
+                    4,
+                    3,
+                    3,
+                    3,
+                    3,
+                    2,
+                    2,
+                    2,
+                    2,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                ]
+            }
+        },
+        "standings": {
+            "timeline": {
+                "time_factor": {
+                    "1": [
+                        1
+                    ],
+                    "2": [
+                        60,
+                        1
+                    ],
+                    "3": [
+                        3600,
+                        60,
+                        1
+                    ]
+                },
+                "penalty_more": 300,
+                "penalty_format": 2,
+                "penalty_rounding": "none",
+                "penalty_aggregate": "max"
+            }
+        },
+        "get_events": {
+            "colors": {
+                "darken": "#442D16",
+                "lighten": "#EFDFD1"
+            }
+        },
+        "major_kinds": [
+            "algorithm"
+        ],
+        "default_variables": {
+            "min_n_participations": "10"
+        }
+    },
+    "parse_full_list": false,
+    "recorded_at": "2026-08-06 17:54:25"
+}

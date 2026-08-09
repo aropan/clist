@@ -1,0 +1,799 @@
+[
+  {
+    "fields": {
+      "accounts_fields": {
+        "types": {},
+        "verification_fields": []
+      },
+      "allow_delete_archived_statistics": false,
+      "api_url": null,
+      "auto_remove_started": false,
+      "avatar_url": null,
+      "avg_rating": null,
+      "color": "#65CC69",
+      "contest_update_time": "2026-04-05T06:03:38.678Z",
+      "country_rank_update_time": "2026-04-08T07:00:05.636Z",
+      "created": "2021-12-07T19:43:53.456Z",
+      "default_account_type": 1,
+      "enable": true,
+      "has_account_last_submission": null,
+      "has_account_n_writers": null,
+      "has_account_verification": false,
+      "has_accounts_infos_update": false,
+      "has_country_medal": null,
+      "has_country_place": null,
+      "has_country_rating": false,
+      "has_inherit_medals_to_related": false,
+      "has_multi_account": false,
+      "has_problem_archive": false,
+      "has_problem_rating": false,
+      "has_problem_statistic": true,
+      "has_problem_update": false,
+      "has_rating_history": false,
+      "has_standings_renamed_account": false,
+      "has_statistic_medal": true,
+      "has_statistic_n_first_ac": null,
+      "has_statistic_n_total_solved": true,
+      "has_statistic_place": true,
+      "has_statistic_total_solving": true,
+      "has_submissions_statistics_log": false,
+      "has_upsolving": false,
+      "host": "potyczki.mimuw.edu.pl",
+      "icon_file": "resources/potyczki_mimuw_edu_pl.png",
+      "icon_updated_at": "2026-03-25T11:40:09.535Z",
+      "icon_url": null,
+      "info": {
+        "get_events": {
+          "colors": {
+            "darken": "#164418",
+            "lighten": "#D0EFD2"
+          }
+        },
+        "standings": {
+          "name_instead_key": true
+        }
+      },
+      "modified": "2026-04-08T07:00:05.767Z",
+      "n_accounts": 5367,
+      "n_accounts_to_update": null,
+      "n_contests": 72,
+      "n_rating_accounts": null,
+      "n_statistics": 36419,
+      "n_team_accounts": 0,
+      "n_university_accounts": 0,
+      "parse_url": "https://sio2.mimuw.edu.pl/c/pa-${YEAR}-1/p/",
+      "path": "./module/potyczki.mimuw.edu.pl/index.php",
+      "problem_archive_update_time": null,
+      "problem_rating_predictor": {},
+      "problem_url": null,
+      "problems_fields": {
+        "types": {
+          "full_score": [
+            "int"
+          ]
+        }
+      },
+      "profile_url": null,
+      "rank_update_time": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "ratings": [],
+      "regexp": null,
+      "short_host": "potyczki",
+      "skip_for_contests_chart": false,
+      "statistics_fields": {
+        "types": {
+          "name": [
+            "str"
+          ]
+        }
+      },
+      "timezone": "Europe/Warsaw",
+      "uid": "lbs9srf6sqqlgeqpjpld0mmtac@group.calendar.google.com",
+      "url": "https://potyczki.mimuw.edu.pl/harmonogram/"
+    },
+    "model": "clist.resource",
+    "pk": 131
+  },
+  {
+    "fields": {
+      "created": "2021-12-13T17:19:28.853Z",
+      "delay_on_error": "01:00:00",
+      "delay_on_success": "08:00:00",
+      "delay_shortly_after": "00:05:00",
+      "enable": true,
+      "long_contest_divider": 15,
+      "long_contest_idle": "06:00:00",
+      "max_delay_after_end": "3 00:00:00",
+      "min_delay_after_end": "00:30:00",
+      "modified": "2025-03-14T00:59:08.970Z",
+      "path": "ranking/management/modules/sio2_mimuw_edu",
+      "resource": 131,
+      "shortly_after": "00:30:00"
+    },
+    "model": "ranking.module",
+    "pk": 64
+  },
+  {
+    "fields": {
+      "allow_updating_statistics_for_participants": null,
+      "auto_updated": "2026-04-29T21:45:43Z",
+      "calculate_time": false,
+      "created": "2026-03-27T11:11:20.592Z",
+      "duration_in_secs": 212340,
+      "edit": null,
+      "elimination_tournament_info": {},
+      "end_time": "2026-03-29T21:59:00Z",
+      "finalists_info": {},
+      "has_fixed_rating_prediction_field": null,
+      "has_hidden_results": false,
+      "has_submissions": null,
+      "has_submissions_tests": null,
+      "has_unlimited_statistics": null,
+      "hide_unsolved_standings_problems": null,
+      "host": "potyczki.mimuw.edu.pl",
+      "info": {
+        "default_problem_full_score": 10,
+        "fields": [
+          "problems",
+          "name",
+          "solved"
+        ],
+        "fields_types": {
+          "name": [
+            "str"
+          ],
+          "problems": [
+            "dict"
+          ],
+          "solved": [
+            "dict"
+          ]
+        },
+        "hidden_fields": [],
+        "problems": [
+          {
+            "full_score": 10,
+            "n_failed": 18,
+            "n_partial": 10,
+            "n_teams": 28,
+            "n_total": 324,
+            "name": "Kod Prüfera [A]",
+            "short": "pru",
+            "url": "https://sio2.mimuw.edu.pl/c/pa-2026-1/p/pru/"
+          },
+          {
+            "full_score": 10,
+            "n_failed": 6,
+            "n_partial": 21,
+            "n_teams": 27,
+            "n_total": 324,
+            "name": "Splatanie nawiasów [A]",
+            "short": "spl",
+            "url": "https://sio2.mimuw.edu.pl/c/pa-2026-1/p/spl/"
+          },
+          {
+            "full_score": 10,
+            "n_accepted": 3,
+            "n_failed": 27,
+            "n_partial": 45,
+            "n_teams": 75,
+            "n_total": 324,
+            "name": "Kodowanie macierzami [B]",
+            "short": "kod",
+            "url": "https://sio2.mimuw.edu.pl/c/pa-2026-1/p/kod/"
+          },
+          {
+            "full_score": 10,
+            "n_accepted": 21,
+            "n_failed": 36,
+            "n_partial": 106,
+            "n_teams": 163,
+            "n_total": 324,
+            "name": "Wersja dla profesjonalistów 2 [B]",
+            "short": "wdp",
+            "url": "https://sio2.mimuw.edu.pl/c/pa-2026-1/p/wdp/"
+          },
+          {
+            "full_score": 10,
+            "n_accepted": 264,
+            "n_failed": 12,
+            "n_partial": 32,
+            "n_teams": 308,
+            "n_total": 324,
+            "name": "Bursztyny [C]",
+            "short": "bur",
+            "url": "https://sio2.mimuw.edu.pl/c/pa-2026-1/p/bur/"
+          },
+          {
+            "full_score": 10,
+            "n_accepted": 263,
+            "n_failed": 25,
+            "n_partial": 13,
+            "n_teams": 301,
+            "n_total": 324,
+            "name": "Palindromy [C]",
+            "short": "pal",
+            "url": "https://sio2.mimuw.edu.pl/c/pa-2026-1/p/pal/"
+          }
+        ]
+      },
+      "invisible": false,
+      "is_auto_added": true,
+      "is_promoted": null,
+      "is_rated": null,
+      "key": "Potyczki Algorytmiczne 2026. Runda 5",
+      "kind": null,
+      "link_statistic_timing": null,
+      "merging_contests": [],
+      "modified": "2026-03-27T11:11:20.592Z",
+      "n_problems": 6,
+      "n_statistics": 324,
+      "notification_timing": null,
+      "parsed_percentage": null,
+      "parsed_time": "2026-04-05T06:03:38.678Z",
+      "problem_rating_hash": null,
+      "problem_rating_update_required": false,
+      "rating_prediction_fields": null,
+      "rating_prediction_hash": null,
+      "rating_prediction_timing": null,
+      "raw_info": {},
+      "registration_url": null,
+      "related": null,
+      "resource": 131,
+      "series": null,
+      "set_matched_coders_to_members": null,
+      "slug": "potyczki-algorytmiczne-2026-runda-5",
+      "standings_kind": "scoring",
+      "standings_url": "https://sio2.mimuw.edu.pl/c/pa-2026-1/ranking/",
+      "start_time": "2026-03-27T11:00:00Z",
+      "statistic_timing": "2026-04-05T14:03:38.678Z",
+      "statistics_update_required": false,
+      "submissions_info": {},
+      "title": "Potyczki Algorytmiczne 2026. Runda 5",
+      "title_path": "potyczki.algorytmiczne.2026.runda.5",
+      "trial_standings_url": null,
+      "uid": "ed2apbhaundmghe31ump4egbs0",
+      "updated": "2026-04-29T21:45:43.938Z",
+      "upload_solved_problems_solutions": null,
+      "upsolving_key": null,
+      "upsolving_url": null,
+      "url": "https://sio2.mimuw.edu.pl/c/pa-2026-1/p/",
+      "variables": {},
+      "wait_for_successful_update_timing": null,
+      "with_advance": false,
+      "with_medals": false
+    },
+    "model": "clist.contest",
+    "pk": 66503081
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2024-03-14T07:54:41.089Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "53286",
+      "last_activity": "2026-03-27T11:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-04-05T06:05:01.943Z",
+      "n_bronze": null,
+      "n_contests": 15,
+      "n_first_ac": 0,
+      "n_first_places": 12,
+      "n_gold": 1,
+      "n_listvalues": 0,
+      "n_medals": 1,
+      "n_other_medals": null,
+      "n_places": 14,
+      "n_second_places": 1,
+      "n_silver": null,
+      "n_solved": 48,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 1,
+      "n_total_solved": 48,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Yahor Dubovik",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 131,
+      "resource_rank": null,
+      "solving": 501.0,
+      "submissions_info": {},
+      "total_solving": 501.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2024-03-14T07:54:41.089Z",
+      "upsolving": 0.0,
+      "url": "/coder/progmatic/?resource=131"
+    },
+    "model": "ranking.account",
+    "pk": 6743575
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2022-12-21T00:46:07.263Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "761",
+      "last_activity": "2026-03-27T11:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-04-05T06:05:02.102Z",
+      "n_bronze": 2,
+      "n_contests": 35,
+      "n_first_ac": 0,
+      "n_first_places": 20,
+      "n_gold": 1,
+      "n_listvalues": 0,
+      "n_medals": 3,
+      "n_other_medals": null,
+      "n_places": 26,
+      "n_second_places": 3,
+      "n_silver": null,
+      "n_solved": 73,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 3,
+      "n_total_solved": 73,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Mateusz Radecki",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 131,
+      "resource_rank": null,
+      "solving": 813.0,
+      "submissions_info": {},
+      "total_solving": 813.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2022-12-21T00:46:07.263Z",
+      "upsolving": 0.0,
+      "url": "/account/761/resource/potyczki.mimuw.edu.pl/"
+    },
+    "model": "ranking.account",
+    "pk": 5192460
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2021-12-13T18:08:15.219Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "13884",
+      "last_activity": "2026-03-27T11:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-04-05T06:05:02.576Z",
+      "n_bronze": null,
+      "n_contests": 38,
+      "n_first_ac": 0,
+      "n_first_places": 11,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 12,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 73,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 1,
+      "n_total_solved": 73,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Oskar Fiuk",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 131,
+      "resource_rank": null,
+      "solving": 853.0,
+      "submissions_info": {},
+      "total_solving": 853.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2021-12-14T18:08:11.410Z",
+      "upsolving": 0.0,
+      "url": "/account/13884/resource/potyczki.mimuw.edu.pl/"
+    },
+    "model": "ranking.account",
+    "pk": 3877731
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2025-03-14T00:23:21.405Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "114203",
+      "last_activity": "2026-03-27T11:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-04-05T06:05:08.054Z",
+      "n_bronze": null,
+      "n_contests": 6,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 6,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 6,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Aleksander Ścisło",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 131,
+      "resource_rank": null,
+      "solving": 74.0,
+      "submissions_info": {},
+      "total_solving": 74.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2025-03-14T00:23:21.405Z",
+      "upsolving": 0.0,
+      "url": "/account/114203/resource/potyczki.mimuw.edu.pl/"
+    },
+    "model": "ranking.account",
+    "pk": 8240628
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2025-03-14T00:23:21.100Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "114253",
+      "last_activity": "2026-03-27T11:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-04-05T06:05:07.974Z",
+      "n_bronze": null,
+      "n_contests": 7,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 7,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 7,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Maksymilian Polikowski",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 131,
+      "resource_rank": null,
+      "solving": 78.0,
+      "submissions_info": {},
+      "total_solving": 78.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2025-03-14T00:23:21.100Z",
+      "upsolving": 0.0,
+      "url": "/account/114253/resource/potyczki.mimuw.edu.pl/"
+    },
+    "model": "ranking.account",
+    "pk": 8240621
+  },
+  {
+    "fields": {
+      "account": 6743575,
+      "addition": {
+        "name": "Yahor Dubovik",
+        "problems": {
+          "bur": {
+            "result": "10"
+          },
+          "kod": {
+            "partial": true,
+            "result": "9"
+          },
+          "pal": {
+            "result": "10"
+          },
+          "spl": {
+            "partial": true,
+            "result": "5"
+          },
+          "wdp": {
+            "result": "10"
+          }
+        },
+        "solved": {
+          "solving": 3
+        }
+      },
+      "advanced": false,
+      "contest": 66503081,
+      "created": "2026-04-05T06:05:01.885Z",
+      "global_rating_change": null,
+      "last_activity": "2026-03-27T11:00:00Z",
+      "medal": null,
+      "modified": "2026-04-05T06:05:01.885Z",
+      "n_first_ac": 0,
+      "n_solved": 3,
+      "n_total_solved": 3,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "1",
+      "place_as_int": 1,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 131,
+      "skip_in_stats": false,
+      "solving": 44.0,
+      "total_solving": 44.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 87271593
+  },
+  {
+    "fields": {
+      "account": 5192460,
+      "addition": {
+        "name": "Mateusz Radecki",
+        "problems": {
+          "bur": {
+            "result": "10"
+          },
+          "kod": {
+            "result": "10"
+          },
+          "pal": {
+            "result": "10"
+          },
+          "pru": {
+            "partial": true,
+            "result": "2"
+          },
+          "spl": {
+            "partial": true,
+            "result": "1"
+          },
+          "wdp": {
+            "result": "10"
+          }
+        },
+        "solved": {
+          "solving": 4
+        }
+      },
+      "advanced": false,
+      "contest": 66503081,
+      "created": "2026-04-05T06:05:02.083Z",
+      "global_rating_change": null,
+      "last_activity": "2026-03-27T11:00:00Z",
+      "medal": null,
+      "modified": "2026-04-05T06:05:02.083Z",
+      "n_first_ac": 0,
+      "n_solved": 4,
+      "n_total_solved": 4,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "2",
+      "place_as_int": 2,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 131,
+      "skip_in_stats": false,
+      "solving": 43.0,
+      "total_solving": 43.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 87271594
+  },
+  {
+    "fields": {
+      "account": 3877731,
+      "addition": {
+        "name": "Oskar Fiuk",
+        "problems": {
+          "bur": {
+            "result": "10"
+          },
+          "kod": {
+            "partial": true,
+            "result": "7"
+          },
+          "pal": {
+            "result": "10"
+          },
+          "wdp": {
+            "partial": true,
+            "result": "8"
+          }
+        },
+        "solved": {
+          "solving": 2
+        }
+      },
+      "advanced": false,
+      "contest": 66503081,
+      "created": "2026-04-05T06:05:02.560Z",
+      "global_rating_change": null,
+      "last_activity": "2026-03-27T11:00:00Z",
+      "medal": null,
+      "modified": "2026-04-05T06:05:02.560Z",
+      "n_first_ac": 0,
+      "n_solved": 2,
+      "n_total_solved": 2,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "7",
+      "place_as_int": 7,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 131,
+      "skip_in_stats": false,
+      "solving": 35.0,
+      "total_solving": 35.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 87271604
+  },
+  {
+    "fields": {
+      "account": 8240628,
+      "addition": {
+        "name": "Aleksander Ścisło",
+        "problems": {
+          "bur": {
+            "partial": true,
+            "result": "9"
+          },
+          "pal": {
+            "result": "10"
+          }
+        },
+        "solved": {
+          "solving": 1
+        }
+      },
+      "advanced": false,
+      "contest": 66503081,
+      "created": "2026-04-05T06:05:08.041Z",
+      "global_rating_change": null,
+      "last_activity": "2026-03-27T11:00:00Z",
+      "medal": null,
+      "modified": "2026-04-05T06:05:08.042Z",
+      "n_first_ac": 0,
+      "n_solved": 1,
+      "n_total_solved": 1,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "242",
+      "place_as_int": 242,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 131,
+      "skip_in_stats": false,
+      "solving": 19.0,
+      "total_solving": 19.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 87271838
+  },
+  {
+    "fields": {
+      "account": 8240621,
+      "addition": {
+        "name": "Maksymilian Polikowski",
+        "problems": {
+          "bur": {
+            "result": "10"
+          },
+          "pal": {
+            "partial": true,
+            "result": "1"
+          },
+          "wdp": {
+            "partial": true,
+            "result": "1"
+          }
+        },
+        "solved": {
+          "solving": 1
+        }
+      },
+      "advanced": false,
+      "contest": 66503081,
+      "created": "2026-04-05T06:05:07.965Z",
+      "global_rating_change": null,
+      "last_activity": "2026-03-27T11:00:00Z",
+      "medal": null,
+      "modified": "2026-04-05T06:05:07.965Z",
+      "n_first_ac": 0,
+      "n_solved": 1,
+      "n_total_solved": 1,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "254",
+      "place_as_int": 254,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 131,
+      "skip_in_stats": false,
+      "solving": 12.0,
+      "total_solving": 12.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 87271834
+  }
+]

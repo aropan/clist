@@ -1,0 +1,1220 @@
+[
+  {
+    "fields": {
+      "accounts_fields": {
+        "types": {
+          "achievementCount": [
+            "int"
+          ],
+          "avatar": [
+            "int"
+          ],
+          "biography": [
+            "str"
+          ],
+          "category": [
+            "str"
+          ],
+          "city": [
+            "str"
+          ],
+          "codingamerPoints": [
+            "int"
+          ],
+          "company": [
+            "str"
+          ],
+          "companyId": [
+            "int"
+          ],
+          "countryId": [
+            "str"
+          ],
+          "cover": [
+            "int"
+          ],
+          "enable": [
+            "bool"
+          ],
+          "formValues__city": [
+            "str"
+          ],
+          "formValues__school": [
+            "str"
+          ],
+          "level": [
+            "int"
+          ],
+          "onlineSince": [
+            "int"
+          ],
+          "points__codingamePointsAchievements": [
+            "int"
+          ],
+          "points__codingamePointsClash": [
+            "int"
+          ],
+          "points__codingamePointsCodegolf": [
+            "int"
+          ],
+          "points__codingamePointsContests": [
+            "int"
+          ],
+          "points__codingamePointsMultiTraining": [
+            "int"
+          ],
+          "points__codingamePointsOptim": [
+            "int"
+          ],
+          "points__codingamePointsRank": [
+            "int"
+          ],
+          "points__codingamePointsTotal": [
+            "int"
+          ],
+          "points__codingamePointsXp": [
+            "int"
+          ],
+          "points__numberCodingamers": [
+            "int"
+          ],
+          "points__numberCodingamersGlobal": [
+            "int"
+          ],
+          "profile_url__name": [
+            "str"
+          ],
+          "profile_url__public_handle": [
+            "str"
+          ],
+          "pseudo": [
+            "str"
+          ],
+          "publicHandle": [
+            "str"
+          ],
+          "rank": [
+            "int"
+          ],
+          "rank_rating": [
+            "int"
+          ],
+          "schoolId": [
+            "int"
+          ],
+          "tagline": [
+            "str"
+          ],
+          "userId": [
+            "int"
+          ],
+          "xp": [
+            "int"
+          ]
+        },
+        "verification_fields": [
+          "biography",
+          "tagline"
+        ]
+      },
+      "allow_delete_archived_statistics": false,
+      "api_url": null,
+      "auto_remove_started": false,
+      "avatar_url": "https://static.codingame.com/servlet/fileservlet?id={info[avatar]}&format=navigation_avatar",
+      "avg_rating": 3488.1489809837117,
+      "color": "#7E66CC",
+      "contest_update_time": "2026-05-25T08:21:05Z",
+      "country_rank_update_time": "2026-08-01T00:20:06Z",
+      "created": "2015-02-20T21:06:40Z",
+      "default_account_type": 1,
+      "enable": true,
+      "has_account_last_submission": null,
+      "has_account_n_writers": null,
+      "has_account_verification": true,
+      "has_accounts_infos_update": true,
+      "has_country_medal": null,
+      "has_country_place": null,
+      "has_country_rating": false,
+      "has_inherit_medals_to_related": false,
+      "has_multi_account": false,
+      "has_problem_archive": false,
+      "has_problem_rating": false,
+      "has_problem_statistic": false,
+      "has_problem_update": false,
+      "has_rating_history": true,
+      "has_standings_renamed_account": false,
+      "has_statistic_medal": true,
+      "has_statistic_n_first_ac": null,
+      "has_statistic_n_total_solved": null,
+      "has_statistic_place": false,
+      "has_statistic_total_solving": true,
+      "has_submissions_statistics_log": false,
+      "has_upsolving": false,
+      "host": "codingame.com",
+      "icon_file": "resources/codingame_com.png",
+      "icon_updated_at": "2025-12-14T00:01:49Z",
+      "icon_url": null,
+      "info": {
+        "get_events": {
+          "colors": {
+            "darken": "#211644",
+            "lighten": "#D8D1EF"
+          }
+        },
+        "ratings": {
+          "chartjs": {
+            "coloring_field": "rank_rating",
+            "n_bins": 50,
+            "without_before_draw": true,
+            "without_highest": true,
+            "without_url": true,
+            "y_scale": "logarithmic"
+          },
+          "external": true,
+          "reverse_circle_percent": true,
+          "score_history": {
+            "charts": [
+              {
+                "field": "score"
+              },
+              {
+                "field": "rank",
+                "y_reverse": true
+              }
+            ],
+            "stages": {
+              "colors": {
+                "Bronze": "#B6A28B",
+                "Gold": "#F4AE3D",
+                "Legend": "#F96249",
+                "Silver": "#849AA4",
+                "Wood 1": "#7DC576",
+                "Wood 2": "#7DC576",
+                "Wood 3": "#7DC576",
+                "Wood 4": "#7DC576"
+              },
+              "field": "league"
+            }
+          }
+        },
+        "standings": {
+          "name_instead_key": true,
+          "provisional_rank": true,
+          "versus_data": {
+            "addition_account": {
+              "key": "0",
+              "name": "BOSS"
+            }
+          }
+        }
+      },
+      "modified": "2026-08-04T00:15:30.251Z",
+      "n_accounts": 64384,
+      "n_accounts_to_update": 0,
+      "n_contests": 74,
+      "n_rating_accounts": 64371,
+      "n_statistics": 141550,
+      "n_team_accounts": 0,
+      "n_university_accounts": 0,
+      "parse_url": "https://www.codingame.com/html/challenges/challenges.json",
+      "path": "./module/codingame.com/index.php",
+      "problem_archive_update_time": null,
+      "problem_rating_predictor": {},
+      "problem_url": null,
+      "problems_fields": {
+        "types": {}
+      },
+      "profile_url": "https://www.codingame.com/profile/{public_handle}",
+      "rank_update_time": "2026-08-04T00:15:08.941Z",
+      "rating_prediction": null,
+      "rating_update_time": "2026-08-03T00:04:57Z",
+      "ratings": [
+        {
+          "color": "legendary",
+          "hex_rgb": "#FF0000",
+          "high": 11,
+          "hsl": [
+            0,
+            1,
+            0.5
+          ],
+          "low": 1,
+          "min_rating": 237850,
+          "name": "Guru",
+          "next": 101
+        },
+        {
+          "color": "red",
+          "hex_rgb": "#FF0000",
+          "high": 101,
+          "hsl": [
+            0.0,
+            1.0,
+            0.375
+          ],
+          "low": 11,
+          "min_rating": 103137,
+          "name": "Guru",
+          "next": 101,
+          "prev": 11
+        },
+        {
+          "color": "gold",
+          "hex_rgb": "#ff8c00",
+          "high": 501,
+          "hsl": [
+            0.09,
+            1.0,
+            0.5
+          ],
+          "low": 101,
+          "min_rating": 46607,
+          "name": "Grand master",
+          "next": 501,
+          "prev": 101
+        },
+        {
+          "color": "silver",
+          "hex_rgb": "#627984",
+          "high": 2501,
+          "hsl": [
+            0.55,
+            0.15,
+            0.45
+          ],
+          "low": 501,
+          "min_rating": 16510,
+          "name": "Master",
+          "next": 2501,
+          "prev": 501
+        },
+        {
+          "color": "bronze",
+          "hex_rgb": "#a8763e",
+          "high": 5001,
+          "hsl": [
+            0.09,
+            0.46,
+            0.45
+          ],
+          "low": 2501,
+          "min_rating": 9568,
+          "name": "Mentor",
+          "next": 5001,
+          "prev": 2501
+        },
+        {
+          "color": "green",
+          "hex_rgb": "#008000",
+          "high": 10001,
+          "hsl": [
+            0.33,
+            1,
+            0.25
+          ],
+          "low": 5001,
+          "min_rating": 6505,
+          "name": "Disciple",
+          "next": 20001,
+          "prev": 5001
+        },
+        {
+          "color": "green",
+          "hex_rgb": "#008000",
+          "high": 20001,
+          "hsl": [
+            0.33,
+            1,
+            0.1875
+          ],
+          "low": 10001,
+          "min_rating": 4784,
+          "name": "Crafter",
+          "next": 20001,
+          "prev": 5001
+        },
+        {
+          "color": "green",
+          "hex_rgb": "#008000",
+          "high": 1005001000,
+          "hsl": [
+            0.33,
+            1,
+            0.140625
+          ],
+          "low": 20001,
+          "min_rating": 0,
+          "name": "Rookie",
+          "prev": 5001
+        }
+      ],
+      "regexp": null,
+      "short_host": "cg",
+      "skip_for_contests_chart": false,
+      "statistics_fields": {
+        "types": {
+          "agent_id": [
+            "int"
+          ],
+          "category": [
+            "str"
+          ],
+          "challenger_teams_company_id": [
+            "int"
+          ],
+          "challenger_teams_school_id": [
+            "int"
+          ],
+          "checkpoints": [
+            "list"
+          ],
+          "clashes_count": [
+            "int"
+          ],
+          "codinpoints": [
+            "int"
+          ],
+          "company": [
+            "str"
+          ],
+          "company_id": [
+            "int"
+          ],
+          "country": [
+            "str"
+          ],
+          "created": [
+            "timestamp",
+            "float"
+          ],
+          "criteria": [
+            "str"
+          ],
+          "criteria_score": [
+            "float"
+          ],
+          "duration": [
+            "str",
+            "int"
+          ],
+          "eligible_for_promotion": [
+            "bool"
+          ],
+          "form_values": [
+            "dict"
+          ],
+          "global_rank": [
+            "int"
+          ],
+          "group": [
+            "dict"
+          ],
+          "hints": [
+            "list"
+          ],
+          "in_progress": [
+            "bool"
+          ],
+          "language": [
+            "str"
+          ],
+          "league": [
+            "str"
+          ],
+          "league_index": [
+            "int"
+          ],
+          "league_rank": [
+            "int"
+          ],
+          "level": [
+            "int"
+          ],
+          "local_rank": [
+            "int"
+          ],
+          "medal": [
+            "str"
+          ],
+          "name": [
+            "str"
+          ],
+          "online_since": [
+            "int"
+          ],
+          "percentage": [
+            "int"
+          ],
+          "previous_elapsed_time": [
+            "int"
+          ],
+          "progress": [
+            "str"
+          ],
+          "public_handle": [
+            "str"
+          ],
+          "school": [
+            "str"
+          ],
+          "school_id": [
+            "int"
+          ],
+          "status": [
+            "str"
+          ],
+          "submit_time": [
+            "timestamp",
+            "float"
+          ],
+          "team_id": [
+            "int"
+          ],
+          "time": [
+            "str"
+          ],
+          "time_penalty": [
+            "int"
+          ],
+          "total": [
+            "int"
+          ],
+          "update_time": [
+            "timestamp",
+            "float"
+          ],
+          "updated": [
+            "timestamp",
+            "float"
+          ],
+          "user_id": [
+            "int"
+          ]
+        }
+      },
+      "timezone": "UTC",
+      "uid": "rdm0u6gn6jqh9io86c60i028ss@group.calendar.google.com",
+      "url": "https://www.codingame.com/servlet/urlinvite?u=837436"
+    },
+    "model": "clist.resource",
+    "pk": 81
+  },
+  {
+    "fields": {
+      "created": "2020-05-01T16:55:06.774Z",
+      "delay_on_error": "01:00:00",
+      "delay_on_success": "04:00:00",
+      "delay_shortly_after": "00:05:00",
+      "enable": true,
+      "long_contest_divider": 800,
+      "long_contest_idle": "2 00:00:00",
+      "max_delay_after_end": "1 00:00:00",
+      "min_delay_after_end": "03:00:00",
+      "modified": "2024-06-13T01:31:25.525Z",
+      "path": "ranking/management/modules/codingame",
+      "resource": 81,
+      "shortly_after": "00:30:00"
+    },
+    "model": "ranking.module",
+    "pk": 33
+  },
+  {
+    "fields": {
+      "allow_updating_statistics_for_participants": null,
+      "auto_updated": "2025-05-15T08:46:13Z",
+      "calculate_time": false,
+      "created": "2025-03-14T13:28:29.816Z",
+      "duration_in_secs": 934200,
+      "edit": null,
+      "elimination_tournament_info": {},
+      "end_time": "2025-04-14T09:00:00Z",
+      "finalists_info": {},
+      "has_fixed_rating_prediction_field": null,
+      "has_hidden_results": false,
+      "has_submissions": null,
+      "has_submissions_tests": null,
+      "has_unlimited_statistics": null,
+      "hide_unsolved_standings_problems": null,
+      "host": "codingame.com",
+      "info": {
+        "_challenge": {
+          "applicantContactEndDate": 0,
+          "applicationEndDate": 0,
+          "applicationsClosed": true,
+          "authors": [],
+          "challengeForm": {},
+          "challengeId": 1625,
+          "challengerSubscriptionSeq": 16365,
+          "clashHubs": [],
+          "closed": false,
+          "cover1Id": 138219604071894,
+          "coverMetaId": 138434283011444,
+          "customFormId": 2742,
+          "date": 1743687000000,
+          "defaultAi": false,
+          "delayRedirectRankingWhenFinished": 0,
+          "descriptionJson": "{\"showWorkIncentive\":true,\"noCountDown\":false,\"challengeInfo\":\"Major Community Event\",\"challengeTitle\":\" CodinGame Spring Challenge 2025\",\"contestDescription\":\"Spring Challenge 2025\",\"communityBanner\":{\"text\":\"Enjoy the sheer fun of coding in a game environment along with peers, friends and colleagues\",\"title\":\"A Community Event to Learn and Code while Having Fun\"},\"challengeOptions\":[{\"iconId\":1,\"valid\":true,\"title\":\"<strong>Open for 11 days</strong>\",\"fillColor\":\"#f2bb13\"},{\"iconId\":2,\"valid\":true,\"title\":\"<strong>Optimization puzzle</strong>\",\"fillColor\":\"#f2bb13\"},{\"iconId\":3,\"valid\":true,\"title\":\"<strong>Open to all</strong>\",\"fillColor\":\"#f2bb13\"},{\"iconId\":4,\"valid\":true,\"title\":\"<strong>3 leaderboards<br>Solo/Company/School</strong>\",\"fillColor\":\"#f2bb13\"},{\"iconId\":5,\"valid\":false,\"title\":\"25+ Programming Languages\",\"fillColor\":\"#f2bb13\"},{\"iconId\":6,\"valid\":true,\"title\":\"<strong>Crafted with ❤️</br>by CodinGame</strong>\",\"fillColor\":\"#f2bb13\"},{\"iconId\":7,\"title\":\"Fundraising for <strong>CoderDojo</strong>\",\"fillColor\":\"#f2bb13\"},{\"iconId\":8,\"valid\":false,\"title\":\"April 23rd at 18:00\",\"fillColor\":\"#f2bb13\"}],\"challengeDescription\":\"\",\"challengeTagLine\":{\"title\":\"Spring Challenge 2025\",\"description\":\"Join a fun & thrilling community event\"},\"howItWorksBlock\":\"Note: The use of workarounds to submit code compiled in a different language than the one selected is ground for disqualification from the final results. <br><br>The contest is over, but <a href='https://www.codingame.com/direct-puzzle/10438b4185abe3c3cf4df8fc899985a5a89ec'>you can keep playing here</a>!\",\"codinghub\":null,\"noSponsors\":null,\"showContestLogo\":true,\"charity\":null,\"hideTopRegisterButton\":null,\"customBlock\":null,\"videoCover\":null,\"videoTagline\":null,\"videoEmbedded\":null,\"startedDescription\":null,\"noStartDate\":null,\"style\":\"#contest .contest-info-video-tagline {\\n  color: #f2bb13;\\n  font-size: 42px;\\n  font-weight: 700;\\n  text-align: center;\\n  text-transform: uppercase;\\n}\\n#contest .contest-option-icon {\\n  fill-rule: evenodd;\\n  fill: #f2bb13;\\n}\\n\\n#contest .contest-content .contest-header {\\n  flex-direction: row;\\n}\\n\\n.contest-how-it-works-image-container {\\n  display: none;\\n}\\n\\n.contest-how-it-works {\\n  min-height: 0 !important;\\n}\\n\",\"challengeDate\":\"\",\"howTo\":{\"items\":[{\"text\":\"Participating in the event is free.\",\"title\":\"How much does it cost?\"},{\"text\":\"The event starts on October 3rd at 10am UTC and ends on October 10th at 10am UTC. It starts at the same time for all players in the world, whatever the time zone.\",\"title\":\"When does it start and end?\"},{\"text\":\"Yes, you need to create a CodinGame account before being able to register for the challenge. We also suggest having a look at easy puzzles to get used to the platform.\",\"title\":\"Do I need a CodinGame account to compete?\"},{\"text\":\"By default, if you've added your company to your profile, depending on your rank, you'll contribute to your company for the company leaderboard. In the same way, if you've added your school to your profile, depending on your rank, you'll contribute points to your school for the school leaderboard.  You can complete your <a href=\\\"/profile/\\\" target=\\\"_blank\\\" style=\\\"color:#f2bb13\\\">profile here</a>.\",\"title\":\"How can I compete for my school/company?\"},{\"text\":\"Only the top 100 schools and top 100 companies will be visible. Furthermore, it's possible to play the solo competition only.\",\"title\":\"I'm afraid of projecting a negative image of my school/company if I rank poorly. What can I do?\"},{\"text\":\"This is a optimization challenge. New in optimization? No worries, <a href=\\\"/multiplayer/optimization/code-vs-zombies\\\" target=\\\"_blank\\\" style=\\\"color:#f2bb13\\\">here's a guide for beginners</a>.\",\"title\":\"What type of coding exercise should I expect?\"},{\"text\":\"We take the sum of points of the top 5 players in each company/school with at least 3 players. More info in this <a href=\\\"/forum/t/codingame-spring-challenge-2020/152927/\\\" target=\\\"_blank\\\" style=\\\"color:#f2bb13\\\">forum's thread</a>.\",\"title\":\"How are the school/company leaderboards computed?\"},{\"text\":\"Copying code between players is forbidden during contests. We'll thoroughly monitor players' submissions and we reserve ourselves the right to ban any player in case of abuse.\",\"title\":\"What if people try to cheat the system or disturb the school/company leaderboards?\"}],\"title\":\"F.A.Q\"},\"prizes\":null,\"showUpdateButton\":null,\"endCta\":null,\"endCtaUrl\":null}",
+          "disableReplays": false,
+          "enable": false,
+          "enableIcal": true,
+          "enableLeaderboard": true,
+          "enableSchoolCompanyLeaderboard": true,
+          "enableScoreGlobal": false,
+          "enableSelectCompany": false,
+          "enableSocialLogin": true,
+          "endApplicationsDate": 1744621200000,
+          "finished": true,
+          "formFieldsShownInLeaderboard": [],
+          "isolated": false,
+          "jobScoreGlobal": false,
+          "lateTimeMax": 934200,
+          "logoId": 141034068248554,
+          "mailGroupId": 1528,
+          "mailinglist": false,
+          "needLogin": true,
+          "needPreRegistration": false,
+          "placesOnSiteAvailable": -16365,
+          "placesOnSiteMax": 0,
+          "placesOnlineAvailable": 1000000,
+          "placesOnlineMax": 1000000,
+          "privateEvent": false,
+          "publicId": "spring-challenge-2025",
+          "rankingCompleted": true,
+          "registeredChallengerCount": 16365,
+          "registrationEnable": true,
+          "reportEnabled": true,
+          "shareable": true,
+          "startInMillis": -42079695905,
+          "started": true,
+          "subscribedLabelId": 5887037,
+          "subscriptionOpened": false,
+          "testId": 1211109,
+          "title": "Spring Challenge 2025",
+          "training": false,
+          "type": "WORLDCUP",
+          "utc": 0,
+          "vip": false,
+          "visible": true
+        },
+        "_external_fields": [
+          "codinpoints"
+        ],
+        "_opening": [],
+        "fields": [
+          "language",
+          "name",
+          "country",
+          "global_rank",
+          "local_rank",
+          "in_progress",
+          "school",
+          "company",
+          "challenger_teams_company_id",
+          "challenger_teams_school_id",
+          "user_id",
+          "school_id",
+          "company_id",
+          "level",
+          "category",
+          "online_since",
+          "submit_time",
+          "codinpoints",
+          "medal"
+        ],
+        "fields_types": {
+          "category": [
+            "str"
+          ],
+          "challenger_teams_company_id": [
+            "int"
+          ],
+          "challenger_teams_school_id": [
+            "int"
+          ],
+          "codinpoints": [
+            "int"
+          ],
+          "company": [
+            "str"
+          ],
+          "company_id": [
+            "int"
+          ],
+          "country": [
+            "str"
+          ],
+          "global_rank": [
+            "int"
+          ],
+          "in_progress": [
+            "bool"
+          ],
+          "language": [
+            "str"
+          ],
+          "level": [
+            "int"
+          ],
+          "local_rank": [
+            "int"
+          ],
+          "medal": [
+            "str"
+          ],
+          "name": [
+            "str"
+          ],
+          "online_since": [
+            "int"
+          ],
+          "school": [
+            "str"
+          ],
+          "school_id": [
+            "int"
+          ],
+          "submit_time": [
+            "float",
+            "timestamp"
+          ],
+          "update_time": [
+            "timestamp"
+          ],
+          "user_id": [
+            "int"
+          ]
+        },
+        "fields_values": {},
+        "grouped_team": false,
+        "hidden_fields": [
+          "in_progress",
+          "company",
+          "category",
+          "school_id",
+          "online_since",
+          "global_rank",
+          "challenger_teams_company_id",
+          "school",
+          "user_id",
+          "company_id",
+          "challenger_teams_school_id",
+          "codinpoints",
+          "level",
+          "local_rank",
+          "submit_time"
+        ],
+        "leagues": {},
+        "standings": {
+          "fixed_fields": [
+            [
+              "league",
+              "league"
+            ],
+            [
+              "league_rank",
+              "league_rank"
+            ],
+            [
+              "language",
+              "language"
+            ],
+            [
+              "clashes_count",
+              "clashes_count"
+            ],
+            [
+              "duration",
+              "duration"
+            ],
+            [
+              "submit_time",
+              "submit_time"
+            ]
+          ],
+          "medals": [
+            {
+              "count": 1,
+              "name": "gold"
+            },
+            {
+              "count": 1,
+              "name": "silver"
+            },
+            {
+              "count": 1,
+              "name": "bronze"
+            }
+          ]
+        }
+      },
+      "invisible": false,
+      "is_auto_added": true,
+      "is_promoted": null,
+      "is_rated": false,
+      "key": "spring-challenge-2025",
+      "kind": "worldcup",
+      "link_statistic_timing": null,
+      "merging_contests": [],
+      "modified": "2025-03-14T13:28:29.816Z",
+      "n_problems": null,
+      "n_statistics": 2864,
+      "notification_timing": "2025-03-14T13:30:38.422Z",
+      "parsed_percentage": null,
+      "parsed_time": "2026-08-03T14:18:14.689Z",
+      "problem_rating_hash": null,
+      "problem_rating_update_required": false,
+      "rating_prediction_fields": null,
+      "rating_prediction_hash": null,
+      "rating_prediction_timing": null,
+      "raw_info": {},
+      "registration_url": null,
+      "related": null,
+      "resource": 81,
+      "series": null,
+      "set_matched_coders_to_members": null,
+      "slug": "spring-challenge-2025",
+      "standings_kind": null,
+      "standings_url": "https://www.codingame.com/contests/spring-challenge-2025/leaderboard",
+      "start_time": "2025-04-03T13:30:00Z",
+      "statistic_timing": "2026-08-03T18:18:14.689Z",
+      "statistics_update_required": false,
+      "submissions_info": {},
+      "title": "Spring Challenge 2025",
+      "title_path": "spring.challenge.2025",
+      "trial_standings_url": null,
+      "uid": "duq83tpa2ilr222n2d3ire4ook",
+      "updated": "2026-08-03T14:19:41.357Z",
+      "upload_solved_problems_solutions": null,
+      "upsolving_key": null,
+      "upsolving_url": null,
+      "url": "https://www.codingame.com/contests/spring-challenge-2025",
+      "variables": {},
+      "wait_for_successful_update_timing": "2025-04-18T00:42:17.748Z",
+      "with_advance": false,
+      "with_medals": true
+    },
+    "model": "clist.contest",
+    "pk": 58215985
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "US",
+      "created": "2024-06-13T23:19:12.737Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "achievementCount": 27,
+        "avatar": 147994707933557,
+        "category": "PROFESSIONAL",
+        "codingamerPoints": 620,
+        "countryId": "US",
+        "formValues": {},
+        "level": 17,
+        "name": "frictionless",
+        "onlineSince": 1779696003749,
+        "points": {
+          "codingamePointsAchievements": 620,
+          "codingamePointsClash": 0,
+          "codingamePointsCodegolf": 0,
+          "codingamePointsContests": 28410,
+          "codingamePointsMultiTraining": 19719,
+          "codingamePointsOptim": 2472,
+          "codingamePointsRank": 500,
+          "codingamePointsTotal": 50601,
+          "codingamePointsXp": 5285,
+          "numberCodingamers": 4916087,
+          "numberCodingamersGlobal": 1068729
+        },
+        "profile_url": {
+          "public_handle": "05442727a91aac391d7ddd2748e63ad75322316"
+        },
+        "pseudo": "frictionless",
+        "publicHandle": "05442727a91aac391d7ddd2748e63ad75322316",
+        "rank": 500,
+        "rank_rating": 500,
+        "rating": 50601,
+        "userId": 6132235,
+        "xp": 5285
+      },
+      "key": "6132235",
+      "last_activity": "2026-05-12T20:55:12.018Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-08-03T14:18:53.361Z",
+      "n_bronze": 1,
+      "n_contests": 7,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": 1,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 0,
+      "n_subscribers": 0,
+      "n_third_places": 1,
+      "n_top_ten_places": null,
+      "n_total_solved": 0,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "frictionless",
+      "need_verification": false,
+      "rating": 50601,
+      "rating50": 1012,
+      "rating_prediction": null,
+      "rating_update_time": "2024-10-11T06:09:04Z",
+      "related": null,
+      "resource": 81,
+      "resource_rank": 494,
+      "solving": 0.0,
+      "submissions_info": {},
+      "total_solving": 0.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-05-25T23:59:59.999Z",
+      "upsolving": 0.0,
+      "url": "/account/6132235/resource/codingame.com/"
+    },
+    "model": "ranking.account",
+    "pk": 7064329
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "PL",
+      "created": "2020-11-18T20:34:18.365Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "achievementCount": 30,
+        "avatar": 95180546328327,
+        "category": "PROFESSIONAL",
+        "city": "Wrocław",
+        "codingamerPoints": 700,
+        "company": "University of Wrocław",
+        "companyId": 31344,
+        "countryId": "PL",
+        "cover": 147538269105518,
+        "formValues": {
+          "city": "Wrocław",
+          "school": "University of Wrocław"
+        },
+        "level": 26,
+        "name": "MSz",
+        "points": {
+          "codingamePointsAchievements": 700,
+          "codingamePointsClash": 0,
+          "codingamePointsCodegolf": 0,
+          "codingamePointsContests": 27929,
+          "codingamePointsMultiTraining": 57262,
+          "codingamePointsOptim": 2500,
+          "codingamePointsRank": 163,
+          "codingamePointsTotal": 87691,
+          "codingamePointsXp": 14475,
+          "numberCodingamers": 4916097,
+          "numberCodingamersGlobal": 1068729
+        },
+        "profile_url": {
+          "public_handle": "6674aa6bf63260e13f567033f1b528c39579261"
+        },
+        "pseudo": "MSz",
+        "publicHandle": "6674aa6bf63260e13f567033f1b528c39579261",
+        "rank": 163,
+        "rank_rating": 163,
+        "rating": 87691,
+        "schoolId": 4987,
+        "userId": 1629759,
+        "xp": 14475
+      },
+      "key": "1629759",
+      "last_activity": "2026-05-22T12:08:47.503Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-08-03T14:18:53.420Z",
+      "n_bronze": null,
+      "n_contests": 17,
+      "n_first_ac": 0,
+      "n_first_places": 4,
+      "n_gold": 4,
+      "n_listvalues": 0,
+      "n_medals": 6,
+      "n_other_medals": null,
+      "n_places": 8,
+      "n_second_places": 2,
+      "n_silver": 2,
+      "n_solved": 0,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 2,
+      "n_total_solved": 0,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "MSz",
+      "need_verification": false,
+      "rating": 87691,
+      "rating50": 1753,
+      "rating_prediction": null,
+      "rating_update_time": "2024-10-11T07:18:05Z",
+      "related": null,
+      "resource": 81,
+      "resource_rank": 161,
+      "solving": 0.0,
+      "submissions_info": {},
+      "total_solving": 0.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-05-25T23:59:59.999Z",
+      "upsolving": 0.0,
+      "url": "/account/1629759/resource/codingame.com/"
+    },
+    "model": "ranking.account",
+    "pk": 2421232
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "FR",
+      "created": "2020-11-18T18:57:49.743Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "achievementCount": 181,
+        "avatar": 48134583112917,
+        "category": "PROFESSIONAL",
+        "city": "Toulouse",
+        "codingamerPoints": 13005,
+        "company": "Amadeus",
+        "companyId": 728,
+        "countryId": "FR",
+        "cover": 100749562205561,
+        "formValues": {
+          "city": "Toulouse",
+          "school": "Polytech Nice Sophia"
+        },
+        "level": 45,
+        "name": "mikmak",
+        "onlineSince": 1785758362399,
+        "points": {
+          "codingamePointsAchievements": 13005,
+          "codingamePointsClash": 3068,
+          "codingamePointsCodegolf": 23406,
+          "codingamePointsContests": 25559,
+          "codingamePointsMultiTraining": 216208,
+          "codingamePointsOptim": 36035,
+          "codingamePointsRank": 3,
+          "codingamePointsTotal": 304276,
+          "codingamePointsXp": 57682,
+          "numberCodingamers": 4916090,
+          "numberCodingamersGlobal": 1068729
+        },
+        "profile_url": {
+          "public_handle": "f9bbfea0c4a031ce1857249bb7a5245c3858193"
+        },
+        "pseudo": "mikmak",
+        "publicHandle": "f9bbfea0c4a031ce1857249bb7a5245c3858193",
+        "rank": 3,
+        "rank_rating": 3,
+        "rating": 304276,
+        "schoolId": 189,
+        "tagline": "Software engineer",
+        "userId": 3918583,
+        "xp": 57682
+      },
+      "key": "3918583",
+      "last_activity": "2026-05-18T14:57:35.208Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-08-03T14:18:53.722Z",
+      "n_bronze": null,
+      "n_contests": 17,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 0,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 0,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "mikmak",
+      "need_verification": false,
+      "rating": 304276,
+      "rating50": 6085,
+      "rating_prediction": null,
+      "rating_update_time": "2024-10-11T06:09:04Z",
+      "related": null,
+      "resource": 81,
+      "resource_rank": 3,
+      "solving": 0.0,
+      "submissions_info": {},
+      "total_solving": 0.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-05-25T23:59:59.999Z",
+      "upsolving": 0.0,
+      "url": "/account/3918583/resource/codingame.com/"
+    },
+    "model": "ranking.account",
+    "pk": 2401283
+  },
+  {
+    "fields": {
+      "account": 7064329,
+      "addition": {
+        "category": "PROFESSIONAL",
+        "codinpoints": 9000,
+        "country": "US",
+        "global_rank": 1,
+        "in_progress": false,
+        "language": "C++",
+        "level": 17,
+        "local_rank": 1,
+        "medal": "gold",
+        "name": "frictionless",
+        "submit_time": 1744809330.012,
+        "user_id": 6132235
+      },
+      "advanced": false,
+      "contest": 58215985,
+      "created": "2025-04-05T13:30:14.047Z",
+      "global_rating_change": null,
+      "last_activity": "2025-04-16T13:15:30.012Z",
+      "medal": "gold",
+      "modified": "2026-08-03T14:18:53.385Z",
+      "n_first_ac": 0,
+      "n_solved": 0,
+      "n_total_solved": 0,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "1",
+      "place_as_int": 1,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 81,
+      "skip_in_stats": false,
+      "solving": 9.0,
+      "total_solving": 9.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 76297933
+  },
+  {
+    "fields": {
+      "account": 2421232,
+      "addition": {
+        "category": "PROFESSIONAL",
+        "challenger_teams_company_id": 31344,
+        "challenger_teams_school_id": 4987,
+        "codinpoints": 8943,
+        "company": "University of Wrocław",
+        "company_id": 31344,
+        "country": "PL",
+        "global_rank": 3,
+        "in_progress": false,
+        "language": "C++",
+        "level": 26,
+        "local_rank": 3,
+        "medal": "bronze",
+        "name": "MSz",
+        "school": "University of Wrocław",
+        "school_id": 4987,
+        "submit_time": 1744605559.986,
+        "user_id": 1629759
+      },
+      "advanced": false,
+      "contest": 58215985,
+      "created": "2025-04-05T13:30:45.205Z",
+      "global_rating_change": null,
+      "last_activity": "2025-04-14T04:39:19.986Z",
+      "medal": "bronze",
+      "modified": "2026-08-03T14:18:53.435Z",
+      "n_first_ac": 0,
+      "n_solved": 0,
+      "n_total_solved": 0,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "3",
+      "place_as_int": 3,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 81,
+      "skip_in_stats": false,
+      "solving": 48.0,
+      "total_solving": 48.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 76298628
+  },
+  {
+    "fields": {
+      "account": 2401283,
+      "addition": {
+        "category": "PROFESSIONAL",
+        "challenger_teams_company_id": 728,
+        "challenger_teams_school_id": 189,
+        "codinpoints": 8473,
+        "company": "Amadeus",
+        "company_id": 728,
+        "country": "FR",
+        "global_rank": 20,
+        "in_progress": false,
+        "language": "Rust",
+        "level": 45,
+        "local_rank": 20,
+        "name": "mikmak",
+        "online_since": 1785758362399,
+        "school": "Polytech Nice Sophia",
+        "school_id": 189,
+        "submit_time": 1744616668.115,
+        "user_id": 3918583
+      },
+      "advanced": false,
+      "contest": 58215985,
+      "created": "2025-04-05T13:30:15.501Z",
+      "global_rating_change": null,
+      "last_activity": "2025-04-14T07:44:28.115Z",
+      "medal": null,
+      "modified": "2026-08-03T14:18:53.731Z",
+      "n_first_ac": 0,
+      "n_solved": 0,
+      "n_total_solved": 0,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "20",
+      "place_as_int": 20,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 81,
+      "skip_in_stats": false,
+      "solving": 141.0,
+      "total_solving": 141.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 76297962
+  }
+]

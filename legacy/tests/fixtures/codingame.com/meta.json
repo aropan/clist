@@ -1,0 +1,65 @@
+{
+    "host": "codingame.com",
+    "rid": 81,
+    "path": "./module/codingame.com/index.php",
+    "url": "https://www.codingame.com/servlet/urlinvite?u=837436",
+    "parse_url": "https://www.codingame.com/html/challenges/challenges.json",
+    "timezone": "UTC",
+    "api_url": null,
+    "info": {
+        "ratings": {
+            "chartjs": {
+                "n_bins": 50,
+                "y_scale": "logarithmic",
+                "without_url": true,
+                "coloring_field": "rank_rating",
+                "without_highest": true,
+                "without_before_draw": true
+            },
+            "external": true,
+            "score_history": {
+                "charts": [
+                    {
+                        "field": "score"
+                    },
+                    {
+                        "field": "rank",
+                        "y_reverse": true
+                    }
+                ],
+                "stages": {
+                    "field": "league",
+                    "colors": {
+                        "Gold": "#F4AE3D",
+                        "Bronze": "#B6A28B",
+                        "Legend": "#F96249",
+                        "Silver": "#849AA4",
+                        "Wood 1": "#7DC576",
+                        "Wood 2": "#7DC576",
+                        "Wood 3": "#7DC576",
+                        "Wood 4": "#7DC576"
+                    }
+                }
+            },
+            "reverse_circle_percent": true
+        },
+        "standings": {
+            "versus_data": {
+                "addition_account": {
+                    "key": "0",
+                    "name": "BOSS"
+                }
+            },
+            "name_instead_key": true,
+            "provisional_rank": true
+        },
+        "get_events": {
+            "colors": {
+                "darken": "#211644",
+                "lighten": "#D8D1EF"
+            }
+        }
+    },
+    "parse_full_list": false,
+    "recorded_at": "2026-08-06 17:55:41"
+}

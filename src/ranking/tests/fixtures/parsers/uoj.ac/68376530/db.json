@@ -1,0 +1,1005 @@
+[
+  {
+    "fields": {
+      "accounts_fields": {
+        "types": {
+          "avatar_url": [
+            "str"
+          ],
+          "motto": [
+            "str"
+          ],
+          "qq": [
+            "str"
+          ]
+        },
+        "verification_fields": [
+          "qq",
+          "motto"
+        ]
+      },
+      "allow_delete_archived_statistics": false,
+      "api_url": null,
+      "auto_remove_started": false,
+      "avatar_url": null,
+      "avg_rating": 1586.9842331581463,
+      "color": "#CC6B65",
+      "contest_update_time": "2026-07-19T21:32:07.011Z",
+      "country_rank_update_time": "2026-07-23T01:00:11.690Z",
+      "created": "2025-02-26T14:23:01.203Z",
+      "default_account_type": 1,
+      "enable": true,
+      "has_account_last_submission": null,
+      "has_account_n_writers": null,
+      "has_account_verification": true,
+      "has_accounts_infos_update": true,
+      "has_country_medal": null,
+      "has_country_place": null,
+      "has_country_rating": false,
+      "has_inherit_medals_to_related": false,
+      "has_multi_account": false,
+      "has_problem_archive": false,
+      "has_problem_rating": true,
+      "has_problem_statistic": true,
+      "has_problem_update": false,
+      "has_rating_history": true,
+      "has_standings_renamed_account": false,
+      "has_statistic_medal": null,
+      "has_statistic_n_first_ac": true,
+      "has_statistic_n_total_solved": true,
+      "has_statistic_place": true,
+      "has_statistic_total_solving": true,
+      "has_submissions_statistics_log": false,
+      "has_upsolving": false,
+      "host": "uoj.ac",
+      "icon_file": "resources/uoj_ac.ico",
+      "icon_updated_at": "2025-12-14T04:49:37.929Z",
+      "icon_url": null,
+      "info": {
+        "get_events": {
+          "colors": {
+            "darken": "#441916",
+            "lighten": "#EFD2D0"
+          }
+        },
+        "standings": {
+          "keep_rating_fields": true,
+          "name_instead_key": true,
+          "timeline": {
+            "penalty_format": 3,
+            "penalty_more": 1200,
+            "penalty_rounding": "none",
+            "time_factor": {
+              "1": [
+                60
+              ],
+              "2": [
+                60,
+                1
+              ],
+              "3": [
+                3600,
+                60,
+                1
+              ]
+            }
+          }
+        },
+        "statistics": {
+          "default_problem_full_score": 100
+        }
+      },
+      "modified": "2026-07-23T01:00:11.938Z",
+      "n_accounts": 5520,
+      "n_accounts_to_update": 0,
+      "n_contests": 112,
+      "n_rating_accounts": 6106,
+      "n_statistics": 15838,
+      "n_team_accounts": 0,
+      "n_university_accounts": 0,
+      "parse_url": null,
+      "path": "./module/uoj.ac/index.php",
+      "problem_archive_update_time": null,
+      "problem_rating_predictor": {},
+      "problem_url": null,
+      "problems_fields": {
+        "types": {
+          "first_ac__accounts": [
+            "list"
+          ],
+          "first_ac__in_seconds": [
+            "int"
+          ],
+          "first_ac__time": [
+            "str"
+          ],
+          "full_score": [
+            "int"
+          ]
+        }
+      },
+      "profile_url": "https://uoj.ac/user/profile/{account}",
+      "rank_update_time": "2026-07-21T09:45:12.966Z",
+      "rating_prediction": null,
+      "rating_update_time": "2026-07-20T09:36:21.561Z",
+      "ratings": [
+        {
+          "color": "purple",
+          "hex_rgb": "#7030a0",
+          "high": 1000,
+          "hsl": [
+            0.76,
+            0.54,
+            0.41
+          ],
+          "low": -100500,
+          "next": 1000
+        },
+        {
+          "color": "violet",
+          "hex_rgb": "#AA00AA",
+          "high": 1500,
+          "hsl": [
+            0.83,
+            1,
+            0.33
+          ],
+          "low": 1000,
+          "next": 1500,
+          "prev": 1000
+        },
+        {
+          "color": "cyan",
+          "hex_rgb": "#03A89E",
+          "high": 1700,
+          "hsl": [
+            0.49,
+            0.96,
+            0.34
+          ],
+          "low": 1500,
+          "next": 1700,
+          "prev": 1500
+        },
+        {
+          "color": "green",
+          "hex_rgb": "#008000",
+          "high": 2000,
+          "hsl": [
+            0.33,
+            1,
+            0.25
+          ],
+          "low": 1700,
+          "next": 2000,
+          "prev": 1700
+        },
+        {
+          "color": "lime",
+          "hex_rgb": "#74C229",
+          "high": 2200,
+          "hsl": [
+            0.25,
+            0.65,
+            0.46
+          ],
+          "low": 2000,
+          "next": 2200,
+          "prev": 2000
+        },
+        {
+          "color": "yellow",
+          "hex_rgb": "#BBBB00",
+          "high": 2300,
+          "hsl": [
+            0.17,
+            1,
+            0.37
+          ],
+          "low": 2200,
+          "next": 2300,
+          "prev": 2200
+        },
+        {
+          "color": "orange",
+          "hex_rgb": "#FF8C00",
+          "high": 2500,
+          "hsl": [
+            0.09,
+            1,
+            0.5
+          ],
+          "low": 2300,
+          "next": 2500,
+          "prev": 2300
+        },
+        {
+          "color": "red",
+          "hex_rgb": "#FF0000",
+          "high": 2700,
+          "hsl": [
+            0,
+            1,
+            0.5
+          ],
+          "low": 2500,
+          "next": 2700,
+          "prev": 2500
+        },
+        {
+          "color": "legendary",
+          "hex_rgb": "#FF0000",
+          "high": 100500,
+          "hsl": [
+            0,
+            1,
+            0.375
+          ],
+          "low": 2700,
+          "prev": 2500
+        }
+      ],
+      "regexp": null,
+      "short_host": "uoj",
+      "skip_for_contests_chart": false,
+      "statistics_fields": {
+        "types": {
+          "name": [
+            "str"
+          ],
+          "new_rating": [
+            "int"
+          ],
+          "penalty": [
+            "str"
+          ],
+          "rating": [
+            "int"
+          ],
+          "rating_change": [
+            "int"
+          ]
+        }
+      },
+      "timezone": "Asia/Shanghai",
+      "uid": "f38de2c280f996aee21226409285cfbca29914e69df163b123ea15242433cf75@group.calendar.google.com",
+      "url": "https://uoj.ac/contests"
+    },
+    "model": "clist.resource",
+    "pk": 172
+  },
+  {
+    "fields": {
+      "created": "2025-02-26T15:38:16.746Z",
+      "delay_on_error": "00:30:00",
+      "delay_on_success": "12:00:00",
+      "delay_shortly_after": "00:05:00",
+      "enable": true,
+      "long_contest_divider": 20,
+      "long_contest_idle": "06:00:00",
+      "max_delay_after_end": "7 00:00:00",
+      "min_delay_after_end": null,
+      "modified": "2025-02-27T14:09:23.685Z",
+      "path": "ranking/management/modules/uoj",
+      "resource": 172,
+      "shortly_after": "00:30:00"
+    },
+    "model": "ranking.module",
+    "pk": 90
+  },
+  {
+    "fields": {
+      "allow_updating_statistics_for_participants": null,
+      "auto_updated": "2026-08-04T13:12:32Z",
+      "calculate_time": false,
+      "created": "2026-06-19T07:47:47.806Z",
+      "duration_in_secs": 18000,
+      "edit": null,
+      "elimination_tournament_info": {},
+      "end_time": "2026-07-12T05:30:00Z",
+      "finalists_info": {},
+      "has_fixed_rating_prediction_field": null,
+      "has_hidden_results": false,
+      "has_submissions": null,
+      "has_submissions_tests": null,
+      "has_unlimited_statistics": null,
+      "hide_unsolved_standings_problems": null,
+      "host": "uoj.ac",
+      "info": {
+        "_external_fields": [
+          "new_rating",
+          "rating_change"
+        ],
+        "fields": [
+          "penalty",
+          "rating",
+          "problems",
+          "rating_change",
+          "new_rating"
+        ],
+        "fields_types": {
+          "penalty": [
+            "str"
+          ],
+          "problems": [
+            "dict"
+          ],
+          "rating": [
+            "int"
+          ]
+        },
+        "hidden_fields": [
+          "rating",
+          "rating_change"
+        ],
+        "problems": [
+          {
+            "code": "1097",
+            "first_ac": {
+              "accounts": [
+                "maroonrk"
+              ],
+              "in_seconds": 1540,
+              "time": "0:25:40"
+            },
+            "full_score": 100,
+            "n_accepted": 301,
+            "n_failed": 51,
+            "n_partial": 122,
+            "n_teams": 474,
+            "n_total": 485,
+            "name": "黑幕",
+            "rating": 1441,
+            "short": "A",
+            "url": "https://uoj.ac/contest/111/problem/1097"
+          },
+          {
+            "code": "1098",
+            "first_ac": {
+              "accounts": [
+                "mygo"
+              ],
+              "in_seconds": 7353,
+              "time": "2:02:33"
+            },
+            "full_score": 100,
+            "n_accepted": 12,
+            "n_failed": 44,
+            "n_partial": 269,
+            "n_teams": 325,
+            "n_total": 485,
+            "name": "深搜 2",
+            "rating": 2328,
+            "short": "B",
+            "url": "https://uoj.ac/contest/111/problem/1098"
+          },
+          {
+            "code": "1099",
+            "full_score": 100,
+            "n_failed": 9,
+            "n_partial": 361,
+            "n_teams": 370,
+            "n_total": 485,
+            "name": "破译",
+            "rating": 3304,
+            "short": "C",
+            "url": "https://uoj.ac/contest/111/problem/1099"
+          }
+        ],
+        "standings": {
+          "data": {
+            "bonus": [],
+            "contest_rule": "UOJ-OI",
+            "standings_version": 2
+          }
+        }
+      },
+      "invisible": false,
+      "is_auto_added": true,
+      "is_promoted": null,
+      "is_rated": true,
+      "key": "111",
+      "kind": null,
+      "link_statistic_timing": null,
+      "merging_contests": [],
+      "modified": "2026-06-19T07:47:47.806Z",
+      "n_problems": 3,
+      "n_statistics": 535,
+      "notification_timing": "2026-06-19T07:49:00.887Z",
+      "parsed_percentage": null,
+      "parsed_time": "2026-07-19T21:34:42.787Z",
+      "problem_rating_hash": "a01f6ae06348d8b9df65b641800c454fd69d1157a3a6ecf140050fdfa13051c4",
+      "problem_rating_update_required": false,
+      "rating_prediction_fields": null,
+      "rating_prediction_hash": null,
+      "rating_prediction_timing": null,
+      "raw_info": {},
+      "registration_url": null,
+      "related": null,
+      "resource": 172,
+      "series": null,
+      "set_matched_coders_to_members": null,
+      "slug": "uoj-noi-round-10-day2",
+      "standings_kind": "scoring",
+      "standings_url": "https://uoj.ac/contest/111/standings",
+      "start_time": "2026-07-12T00:30:00Z",
+      "statistic_timing": "2026-07-20T09:34:42.787Z",
+      "statistics_update_required": false,
+      "submissions_info": {},
+      "title": "UOJ NOI Round #10 Day2",
+      "title_path": "uoj.noi.round.10.day2",
+      "trial_standings_url": null,
+      "uid": "ufl8e92r22f15uhe5a1abri1p8",
+      "updated": "2026-08-04T13:12:32.397Z",
+      "upload_solved_problems_solutions": null,
+      "upsolving_key": null,
+      "upsolving_url": null,
+      "url": "https://uoj.ac/contest/111",
+      "variables": {},
+      "wait_for_successful_update_timing": "2026-07-13T11:42:11.153Z",
+      "with_advance": false,
+      "with_medals": false
+    },
+    "model": "clist.contest",
+    "pk": 68376530
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2025-06-29T14:04:53.156Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar_url": "https://cravatar.cn/avatar/d68f49c03a2509a7b6d2599733d39117?d=mp&amp;s=256&amp;qt=20654",
+        "motto": "あぁなんて美しいんだろう",
+        "qq": "2839345800",
+        "rating": 2031
+      },
+      "key": "mygo",
+      "last_activity": "2026-07-12T02:32:33Z",
+      "last_rating_activity": "2026-07-12T02:32:33Z",
+      "last_submission": null,
+      "modified": "2026-07-20T09:33:52.817Z",
+      "n_bronze": null,
+      "n_contests": 14,
+      "n_first_ac": 2,
+      "n_first_places": 1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 2,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 18,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 1,
+      "n_total_solved": 18,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": null,
+      "need_verification": false,
+      "rating": 2031,
+      "rating50": 40,
+      "rating_prediction": null,
+      "rating_update_time": "2025-07-07T05:30:00Z",
+      "related": null,
+      "resource": 172,
+      "resource_rank": 74,
+      "solving": 2123.83,
+      "submissions_info": {},
+      "total_solving": 2123.83,
+      "try_fill_missed_ranks_time": "2026-07-08T00:11:18.545Z",
+      "try_renaming_check_time": "2026-07-08T00:11:18.244Z",
+      "updated": "2027-07-20T23:59:59.999Z",
+      "upsolving": null,
+      "url": "/account/mygo/resource/uoj.ac/"
+    },
+    "model": "ranking.account",
+    "pk": 8447639
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2025-02-26T16:14:48.318Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar_url": "https://cravatar.cn/avatar/1788b7db4306d24f66ea6258e76ad30d?d=mp&amp;s=256&amp;qt=20654",
+        "motto": "",
+        "qq": "3867285661",
+        "rating": 1881
+      },
+      "key": "zdczdc",
+      "last_activity": "2026-07-12T01:16:16Z",
+      "last_rating_activity": "2026-07-12T01:16:16Z",
+      "last_submission": null,
+      "modified": "2026-07-20T09:25:05.704Z",
+      "n_bronze": null,
+      "n_contests": 18,
+      "n_first_ac": 1,
+      "n_first_places": 0,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 2,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 15,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 2,
+      "n_total_solved": 15,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": null,
+      "need_verification": false,
+      "rating": 1881,
+      "rating50": 37,
+      "rating_prediction": null,
+      "rating_update_time": "2025-07-08T05:30:00Z",
+      "related": null,
+      "resource": 172,
+      "resource_rank": 262,
+      "solving": 2569.3,
+      "submissions_info": {},
+      "total_solving": 2569.3,
+      "try_fill_missed_ranks_time": "2026-07-20T09:25:05.661Z",
+      "try_renaming_check_time": null,
+      "updated": "2027-07-20T23:59:59.999Z",
+      "upsolving": 0.0,
+      "url": "/account/zdczdc/resource/uoj.ac/"
+    },
+    "model": "ranking.account",
+    "pk": 8204491
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2025-02-26T17:07:22.967Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar_url": "https://cravatar.cn/avatar/489909ac49be7e2354155907f025bd27?d=mp&amp;s=256&amp;qt=20654",
+        "motto": "",
+        "qq": "Unfilled",
+        "rating": 2115
+      },
+      "key": "maroonrk",
+      "last_activity": "2026-07-12T03:38:42Z",
+      "last_rating_activity": "2026-07-12T03:38:42Z",
+      "last_submission": null,
+      "modified": "2026-07-20T09:34:30.676Z",
+      "n_bronze": null,
+      "n_contests": 14,
+      "n_first_ac": 3,
+      "n_first_places": 1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 4,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 22,
+      "n_subscribers": 0,
+      "n_third_places": 1,
+      "n_top_ten_places": 2,
+      "n_total_solved": 22,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": null,
+      "need_verification": false,
+      "rating": 2115,
+      "rating50": 42,
+      "rating_prediction": null,
+      "rating_update_time": "2025-06-29T14:00:00Z",
+      "related": null,
+      "resource": 172,
+      "resource_rank": 34,
+      "solving": 2421.8,
+      "submissions_info": {},
+      "total_solving": 2421.8,
+      "try_fill_missed_ranks_time": "2026-07-01T00:00:25.250Z",
+      "try_renaming_check_time": null,
+      "updated": "2027-07-20T23:59:59.999Z",
+      "upsolving": 0.0,
+      "url": "/account/maroonrk/resource/uoj.ac/"
+    },
+    "model": "ranking.account",
+    "pk": 8205339
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2026-07-19T21:31:57.010Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar_url": "https://cravatar.cn/avatar/7c3cf47c6b456f6e87dc1c61ccafc970?d=mp&amp;s=256&amp;qt=20653",
+        "motto": "",
+        "qq": "Unfilled",
+        "rating": 1647
+      },
+      "key": "Acheronl",
+      "last_activity": "2026-07-12T00:30:00Z",
+      "last_rating_activity": "2026-07-12T00:30:00Z",
+      "last_submission": null,
+      "modified": "2026-07-19T21:43:25.189Z",
+      "n_bronze": null,
+      "n_contests": 2,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 1,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 1,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": null,
+      "need_verification": false,
+      "rating": 1647,
+      "rating50": 32,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 172,
+      "resource_rank": 1279,
+      "solving": 252.0,
+      "submissions_info": {},
+      "total_solving": 252.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-07-19T23:59:59.999Z",
+      "upsolving": null,
+      "url": "/account/Acheronl/resource/uoj.ac/"
+    },
+    "model": "ranking.account",
+    "pk": 11536122
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2026-07-19T21:30:57.177Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar_url": "https://cravatar.cn/avatar/c612da2dba8fc89a6577324e21f71676?d=mp&amp;s=256&amp;qt=20653",
+        "motto": "",
+        "qq": "Unfilled",
+        "rating": 1128
+      },
+      "key": "KaTeX",
+      "last_activity": "2025-11-21T02:00:00Z",
+      "last_rating_activity": "2025-11-21T02:00:00Z",
+      "last_submission": null,
+      "modified": "2026-07-19T21:37:18.213Z",
+      "n_bronze": null,
+      "n_contests": 8,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 0,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 0,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": null,
+      "need_verification": false,
+      "rating": 1128,
+      "rating50": 22,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 172,
+      "resource_rank": 6097,
+      "solving": 65.0,
+      "submissions_info": {},
+      "total_solving": 65.0,
+      "try_fill_missed_ranks_time": "2026-07-19T21:37:18.157Z",
+      "try_renaming_check_time": "2026-07-19T21:37:17.952Z",
+      "updated": "2027-07-19T23:59:59.999Z",
+      "upsolving": null,
+      "url": "/account/KaTeX/resource/uoj.ac/"
+    },
+    "model": "ranking.account",
+    "pk": 11535639
+  },
+  {
+    "fields": {
+      "account": 8447639,
+      "addition": {
+        "new_rating": 2031,
+        "penalty": "6:51:57",
+        "problems": {
+          "A": {
+            "result": 100,
+            "submission_id": 853429,
+            "time": "0:29:44",
+            "time_in_seconds": 1784,
+            "url": "https://uoj.ac/submission/853429"
+          },
+          "B": {
+            "first_ac": true,
+            "result": 100,
+            "submission_id": 854275,
+            "time": "2:02:33",
+            "time_in_seconds": 7353,
+            "url": "https://uoj.ac/submission/854275"
+          },
+          "C": {
+            "partial": true,
+            "result": 20,
+            "submission_id": 856616,
+            "time": "4:19:40",
+            "time_in_seconds": 15580,
+            "url": "https://uoj.ac/submission/856616"
+          }
+        },
+        "rating": 1950,
+        "rating_change": 81
+      },
+      "advanced": false,
+      "contest": 68376530,
+      "created": "2026-07-19T21:32:09.929Z",
+      "global_rating_change": null,
+      "last_activity": "2026-07-12T02:32:33Z",
+      "medal": null,
+      "modified": "2026-07-20T09:33:52.796Z",
+      "n_first_ac": 1,
+      "n_solved": 2,
+      "n_total_solved": 2,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "1",
+      "place_as_int": 1,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 172,
+      "skip_in_stats": false,
+      "solving": 220.0,
+      "total_solving": 220.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91001200
+  },
+  {
+    "fields": {
+      "account": 8204491,
+      "addition": {
+        "new_rating": 1881,
+        "penalty": "6:30:38",
+        "problems": {
+          "A": {
+            "result": 100,
+            "submission_id": 853533,
+            "time": "0:46:16",
+            "time_in_seconds": 2776,
+            "url": "https://uoj.ac/submission/853533"
+          },
+          "B": {
+            "partial": true,
+            "result": 82,
+            "submission_id": 855585,
+            "time": "3:32:23",
+            "time_in_seconds": 12743,
+            "url": "https://uoj.ac/submission/855585"
+          },
+          "C": {
+            "partial": true,
+            "result": 20,
+            "submission_id": 854384,
+            "time": "2:11:59",
+            "time_in_seconds": 7919,
+            "url": "https://uoj.ac/submission/854384"
+          }
+        },
+        "rating": 1753,
+        "rating_change": 128
+      },
+      "advanced": false,
+      "contest": 68376530,
+      "created": "2026-07-19T21:32:10.171Z",
+      "global_rating_change": null,
+      "last_activity": "2026-07-12T01:16:16Z",
+      "medal": null,
+      "modified": "2026-07-20T09:25:05.604Z",
+      "n_first_ac": 0,
+      "n_solved": 1,
+      "n_total_solved": 1,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "10",
+      "place_as_int": 10,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 172,
+      "skip_in_stats": false,
+      "solving": 202.0,
+      "total_solving": 202.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91001209
+  },
+  {
+    "fields": {
+      "account": 8205339,
+      "addition": {
+        "new_rating": 2115,
+        "penalty": "3:34:22",
+        "problems": {
+          "A": {
+            "first_ac": true,
+            "result": 100,
+            "submission_id": 853410,
+            "time": "0:25:40",
+            "time_in_seconds": 1540,
+            "url": "https://uoj.ac/submission/853410"
+          },
+          "B": {
+            "result": 100,
+            "submission_id": 855176,
+            "time": "3:08:42",
+            "time_in_seconds": 11322,
+            "url": "https://uoj.ac/submission/855176"
+          }
+        },
+        "rating": 2073,
+        "rating_change": 42
+      },
+      "advanced": false,
+      "contest": 68376530,
+      "created": "2026-07-19T21:32:10.406Z",
+      "global_rating_change": null,
+      "last_activity": "2026-07-12T03:38:42Z",
+      "medal": null,
+      "modified": "2026-07-20T09:34:30.655Z",
+      "n_first_ac": 1,
+      "n_solved": 2,
+      "n_total_solved": 2,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "21",
+      "place_as_int": 21,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 172,
+      "skip_in_stats": false,
+      "solving": 200.0,
+      "total_solving": 200.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91001220
+  },
+  {
+    "fields": {
+      "account": 11536122,
+      "addition": {
+        "new_rating": 1647,
+        "penalty": "9:19:35",
+        "problems": {
+          "A": {
+            "partial": true,
+            "result": 80,
+            "submission_id": 857408,
+            "time": "4:48:31",
+            "time_in_seconds": 17311,
+            "url": "https://uoj.ac/submission/857408"
+          },
+          "B": {
+            "partial": true,
+            "result": 72,
+            "submission_id": 856921,
+            "time": "4:31:04",
+            "time_in_seconds": 16264,
+            "url": "https://uoj.ac/submission/856921"
+          }
+        },
+        "rating": 1457,
+        "rating_change": 190
+      },
+      "advanced": false,
+      "contest": 68376530,
+      "created": "2026-07-19T21:32:11.273Z",
+      "global_rating_change": null,
+      "last_activity": "2026-07-12T00:30:00Z",
+      "medal": null,
+      "modified": "2026-07-19T21:43:25.172Z",
+      "n_first_ac": 0,
+      "n_solved": 0,
+      "n_total_solved": 0,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "66",
+      "place_as_int": 66,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 172,
+      "skip_in_stats": false,
+      "solving": 152.0,
+      "total_solving": 152.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91001263
+  },
+  {
+    "fields": {
+      "account": 11535639,
+      "addition": {
+        "_skip_on_update": true,
+        "new_rating": 1128,
+        "rating_change": -34
+      },
+      "advanced": false,
+      "contest": 68376530,
+      "created": "2026-07-19T21:37:18.027Z",
+      "global_rating_change": null,
+      "last_activity": null,
+      "medal": null,
+      "modified": "2026-07-19T21:37:18.186Z",
+      "n_first_ac": 0,
+      "n_solved": 0,
+      "n_total_solved": 0,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "448",
+      "place_as_int": 448,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 172,
+      "skip_in_stats": false,
+      "solving": 0.0,
+      "total_solving": 0.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91001721
+  }
+]

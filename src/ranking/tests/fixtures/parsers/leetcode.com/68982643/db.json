@@ -1,0 +1,2768 @@
+[
+  {
+    "fields": {
+      "accounts_fields": {
+        "types": {
+          "aboutMe": [
+            "str"
+          ],
+          "asciiCode": [
+            "str"
+          ],
+          "attendedContestsCount": [
+            "int"
+          ],
+          "categoryDiscussCount": [
+            "int"
+          ],
+          "categoryDiscussCountDiff": [
+            "int"
+          ],
+          "company": [
+            "NoneType",
+            "str"
+          ],
+          "company__id": [
+            "str"
+          ],
+          "company__logo": [
+            "str"
+          ],
+          "company__name": [
+            "str"
+          ],
+          "contestCount": [
+            "int"
+          ],
+          "countryName": [
+            "NoneType",
+            "str"
+          ],
+          "currentGlobalRanking": [
+            "int"
+          ],
+          "currentLocalRanking": [
+            "int"
+          ],
+          "currentRating": [
+            "str"
+          ],
+          "gender": [
+            "str"
+          ],
+          "github": [
+            "NoneType"
+          ],
+          "globalLocation__city": [
+            "str"
+          ],
+          "globalLocation__country": [
+            "str"
+          ],
+          "globalLocation__overseasCity": [
+            "bool"
+          ],
+          "globalLocation__province": [
+            "str"
+          ],
+          "globalRanking": [
+            "int"
+          ],
+          "globalTotalParticipants": [
+            "int"
+          ],
+          "global_ranking": [
+            "int"
+          ],
+          "global_ranking_page": [
+            "int"
+          ],
+          "ipRegion": [
+            "str"
+          ],
+          "job": [
+            "NoneType",
+            "str"
+          ],
+          "jobTitle": [
+            "NoneType",
+            "str"
+          ],
+          "localRanking": [
+            "int"
+          ],
+          "localTotalParticipants": [
+            "int"
+          ],
+          "location": [
+            "str"
+          ],
+          "postViewCount": [
+            "int"
+          ],
+          "postViewCountDiff": [
+            "int"
+          ],
+          "ranking": [
+            "int"
+          ],
+          "rating_prediction__change_diff": [
+            "int"
+          ],
+          "rating_prediction__contest": [
+            "int"
+          ],
+          "rating_prediction__n_contests": [
+            "int"
+          ],
+          "rating_prediction__new_rating": [
+            "int"
+          ],
+          "rating_prediction__old_rating": [
+            "float",
+            "int"
+          ],
+          "rating_prediction__rank": [
+            "int"
+          ],
+          "rating_prediction__rating_change": [
+            "int"
+          ],
+          "rating_prediction__rating_perf": [
+            "int"
+          ],
+          "rating_prediction__raw_rating": [
+            "float"
+          ],
+          "rating_prediction__time": [
+            "int"
+          ],
+          "realName": [
+            "str"
+          ],
+          "reputation": [
+            "int"
+          ],
+          "reputationDiff": [
+            "int"
+          ],
+          "school": [
+            "NoneType",
+            "str"
+          ],
+          "school__logo": [
+            "str"
+          ],
+          "school__name": [
+            "str"
+          ],
+          "school__schoolId": [
+            "str"
+          ],
+          "skillSet__langLevels": [
+            "list"
+          ],
+          "skillSet__topicAreaScores": [
+            "list"
+          ],
+          "skillTags": [
+            "list"
+          ],
+          "slug": [
+            "str"
+          ],
+          "socialAccounts": [
+            "list"
+          ],
+          "solutionCount": [
+            "int"
+          ],
+          "solutionCountDiff": [
+            "int"
+          ],
+          "topPercentage": [
+            "float",
+            "int"
+          ],
+          "totalGlobalUsers": [
+            "int"
+          ],
+          "totalLocalUsers": [
+            "int"
+          ],
+          "useDefaultAvatar": [
+            "bool"
+          ],
+          "userAvatar": [
+            "str"
+          ],
+          "username": [
+            "str"
+          ],
+          "websites": [
+            "list"
+          ]
+        },
+        "verification_fields": [
+          "realName"
+        ]
+      },
+      "allow_delete_archived_statistics": false,
+      "api_url": null,
+      "auto_remove_started": false,
+      "avatar_url": "{info[userAvatar]}",
+      "avg_rating": 1699.4307478815435,
+      "color": "#66CC9E",
+      "contest_update_time": "2026-08-02T04:04:08.838Z",
+      "country_rank_update_time": "2026-08-02T18:20:06.194Z",
+      "created": "2018-07-21T19:26:32.764Z",
+      "default_account_type": 1,
+      "enable": true,
+      "has_account_last_submission": true,
+      "has_account_n_writers": null,
+      "has_account_verification": true,
+      "has_accounts_infos_update": true,
+      "has_country_medal": null,
+      "has_country_place": null,
+      "has_country_rating": true,
+      "has_inherit_medals_to_related": false,
+      "has_multi_account": false,
+      "has_problem_archive": true,
+      "has_problem_rating": true,
+      "has_problem_statistic": true,
+      "has_problem_update": true,
+      "has_rating_history": true,
+      "has_standings_renamed_account": true,
+      "has_statistic_medal": null,
+      "has_statistic_n_first_ac": null,
+      "has_statistic_n_total_solved": null,
+      "has_statistic_place": null,
+      "has_statistic_total_solving": null,
+      "has_submissions_statistics_log": false,
+      "has_upsolving": true,
+      "host": "leetcode.com",
+      "icon_file": "resources/leetcode_com.png",
+      "icon_updated_at": "2025-12-14T00:16:24.568Z",
+      "icon_url": null,
+      "info": {
+        "accounts": {
+          "limit": 100
+        },
+        "default_variables": {
+          "min_n_participations": "10"
+        },
+        "get_events": {
+          "colors": {
+            "darken": "#164430",
+            "lighten": "#D1EFE1"
+          }
+        },
+        "problems": {
+          "rating": {
+            "old_rating_only": true
+          },
+          "upsolving": {
+            "help_message": "Only the most recent successful solutions."
+          }
+        },
+        "standings": {
+          "name_instead_key": true,
+          "timeline": {
+            "penalty_aggregate": "max",
+            "penalty_format": 3,
+            "penalty_more": 300,
+            "penalty_rounding": "none",
+            "time_factor": {
+              "1": [
+                1
+              ],
+              "2": [
+                60,
+                1
+              ],
+              "3": [
+                3600,
+                60,
+                1
+              ]
+            }
+          }
+        },
+        "statistics": {
+          "n_top_download_submissions": 1000,
+          "wait_rating": {
+            "days": 15,
+            "has_coder": true,
+            "top_rank_percent": 0.3
+          }
+        }
+      },
+      "modified": "2026-08-02T18:40:24.747Z",
+      "n_accounts": 926309,
+      "n_accounts_to_update": 0,
+      "n_contests": 710,
+      "n_rating_accounts": 724239,
+      "n_statistics": 6225884,
+      "n_team_accounts": 0,
+      "n_university_accounts": 0,
+      "parse_url": null,
+      "path": "./module/leetcode.com/index.php",
+      "problem_archive_update_time": "2026-08-02T18:30:08.263Z",
+      "problem_rating_predictor": {
+        "fields": [
+          {
+            "field": "id"
+          },
+          {
+            "field": "n_accepted_submissions"
+          },
+          {
+            "field": "n_total_submissions"
+          },
+          {
+            "field": "accepted_rate"
+          },
+          {
+            "field": "likes"
+          },
+          {
+            "field": "dislikes"
+          },
+          {
+            "field": "likes_percent"
+          },
+          {
+            "field": "dislikes_percent"
+          },
+          {
+            "field": "difficulty",
+            "mapping": {
+              "easy": 0,
+              "hard": 2,
+              "medium": 1
+            }
+          },
+          {
+            "field": "premium"
+          }
+        ],
+        "filter": {
+          "is_archive": true
+        },
+        "path": "leetcode/problem_rating_predictor.json"
+      },
+      "problem_url": "https://leetcode.com/problems/{slug}/",
+      "problems_fields": {
+        "fixed_fields": [
+          "id"
+        ],
+        "locking": {
+          "field": "premium",
+          "title": "premium"
+        },
+        "types": {
+          "accepted_rate": [
+            "float"
+          ],
+          "difficulty": [
+            "str"
+          ],
+          "dislikes": [
+            "int"
+          ],
+          "dislikes_percent": [
+            "float"
+          ],
+          "first_ac__accounts": [
+            "list"
+          ],
+          "first_ac__in_seconds": [
+            "float",
+            "int"
+          ],
+          "first_ac__time": [
+            "str"
+          ],
+          "full_score": [
+            "int"
+          ],
+          "has_editorial": [
+            "bool"
+          ],
+          "has_text_editorial": [
+            "bool"
+          ],
+          "has_video_editorial": [
+            "bool"
+          ],
+          "hints": [
+            "list"
+          ],
+          "id": [
+            "int"
+          ],
+          "likes": [
+            "int"
+          ],
+          "likes_percent": [
+            "float"
+          ],
+          "premium": [
+            "bool"
+          ],
+          "writers": [
+            "list"
+          ]
+        }
+      },
+      "profile_url": "https://leetcode{_domain}/u/{_handle}/",
+      "rank_update_time": "2026-08-02T18:15:07.188Z",
+      "rating_prediction": {
+        "initial_rating": 1500,
+        "rating_field": "raw_rating",
+        "rating_round": 3,
+        "timespan": "20 days"
+      },
+      "rating_update_time": "2026-08-02T16:18:24.752Z",
+      "ratings": [
+        {
+          "color": "gray",
+          "hex_rgb": "#808080",
+          "high": 1200,
+          "hsl": [
+            0,
+            0,
+            0.5
+          ],
+          "low": -100500,
+          "next": 1200,
+          "prev": -100500
+        },
+        {
+          "color": "green",
+          "hex_rgb": "#008000",
+          "high": 1400,
+          "hsl": [
+            0.33,
+            1,
+            0.25
+          ],
+          "low": 1200,
+          "next": 1400,
+          "prev": 1200
+        },
+        {
+          "color": "cyan",
+          "hex_rgb": "#03A89E",
+          "high": 1600,
+          "hsl": [
+            0.49,
+            0.96,
+            0.34
+          ],
+          "low": 1400,
+          "next": 1600,
+          "prev": 1400
+        },
+        {
+          "color": "blue",
+          "hex_rgb": "#0000FF",
+          "high": 1900,
+          "hsl": [
+            0.67,
+            1,
+            0.5
+          ],
+          "low": 1600,
+          "next": 1900,
+          "prev": 1600
+        },
+        {
+          "color": "violet",
+          "hex_rgb": "#AA00AA",
+          "high": 2100,
+          "hsl": [
+            0.83,
+            1,
+            0.33
+          ],
+          "low": 1900,
+          "next": 2100,
+          "prev": 1900
+        },
+        {
+          "color": "orange",
+          "hex_rgb": "#FF8C00",
+          "high": 2400,
+          "hsl": [
+            0.09,
+            1,
+            0.5
+          ],
+          "low": 2100,
+          "next": 2400,
+          "prev": 2100
+        },
+        {
+          "color": "red",
+          "hex_rgb": "#FF0000",
+          "high": 3000,
+          "hsl": [
+            0,
+            1,
+            0.5
+          ],
+          "low": 2400,
+          "next": 3000,
+          "prev": 2400
+        },
+        {
+          "color": "legendary",
+          "hex_rgb": "#FF0000",
+          "high": 100500,
+          "hsl": [
+            0.0,
+            1.0,
+            0.375
+          ],
+          "low": 3000,
+          "prev": 2400
+        }
+      ],
+      "regexp": null,
+      "short_host": "lc",
+      "skip_for_contests_chart": false,
+      "statistics_fields": {
+        "types": {
+          "avatar_url": [
+            "str"
+          ],
+          "badge": [
+            "dict"
+          ],
+          "country": [
+            "str"
+          ],
+          "country_name": [
+            "str"
+          ],
+          "name": [
+            "str"
+          ],
+          "new_rating": [
+            "int"
+          ],
+          "penalty": [
+            "str"
+          ],
+          "rank_v2": [
+            "int"
+          ],
+          "rating_change": [
+            "int"
+          ],
+          "rating_prediction_change_diff": [
+            "int"
+          ],
+          "rating_prediction_n_contests": [
+            "int"
+          ],
+          "rating_prediction_new_rating": [
+            "int"
+          ],
+          "rating_prediction_old_rating": [
+            "float",
+            "int"
+          ],
+          "rating_prediction_rank": [
+            "int"
+          ],
+          "rating_prediction_rating_change": [
+            "int"
+          ],
+          "rating_prediction_rating_perf": [
+            "int"
+          ],
+          "rating_prediction_raw_rating": [
+            "float64"
+          ],
+          "raw_rating": [
+            "float",
+            "int"
+          ],
+          "real_name": [
+            "str"
+          ],
+          "user_badge": [
+            "dict",
+            "NoneType"
+          ],
+          "user_badges": [
+            "list"
+          ],
+          "username_color": [
+            "NoneType",
+            "str"
+          ]
+        }
+      },
+      "timezone": "UTC",
+      "uid": "tlvovsip3t3045rnkq0rt7d77c@group.calendar.google.com",
+      "url": "https://leetcode.com/contest/"
+    },
+    "model": "clist.resource",
+    "pk": 102
+  },
+  {
+    "fields": {
+      "created": "2020-07-18T21:42:12.346Z",
+      "delay_on_error": "03:00:00",
+      "delay_on_success": "20:00:00",
+      "delay_shortly_after": "00:05:00",
+      "enable": true,
+      "long_contest_divider": 5,
+      "long_contest_idle": "06:00:00",
+      "max_delay_after_end": "6 00:00:00",
+      "min_delay_after_end": null,
+      "modified": "2024-08-22T23:29:29.085Z",
+      "path": "ranking/management/modules/leetcode",
+      "resource": 102,
+      "shortly_after": "01:30:00"
+    },
+    "model": "ranking.module",
+    "pk": 38
+  },
+  {
+    "fields": {
+      "allow_updating_statistics_for_participants": null,
+      "auto_updated": "2026-08-02T19:30:25Z",
+      "calculate_time": false,
+      "created": "2026-07-20T08:29:09.391Z",
+      "duration_in_secs": 5400,
+      "edit": null,
+      "elimination_tournament_info": {},
+      "end_time": "2026-08-02T04:00:00Z",
+      "finalists_info": {},
+      "has_fixed_rating_prediction_field": true,
+      "has_hidden_results": false,
+      "has_submissions": null,
+      "has_submissions_tests": null,
+      "has_unlimited_statistics": null,
+      "hide_unsolved_standings_problems": null,
+      "host": "leetcode.com",
+      "info": {
+        "badges": [],
+        "fields": [
+          "problems",
+          "_ranking_domain",
+          "name",
+          "url",
+          "country",
+          "solved",
+          "penalty",
+          "_old_key",
+          "_languages"
+        ],
+        "fields_types": {
+          "_languages": [
+            "list"
+          ],
+          "_old_key": [
+            "str"
+          ],
+          "_ranking_domain": [
+            "str"
+          ],
+          "country": [
+            "str"
+          ],
+          "name": [
+            "str"
+          ],
+          "penalty": [
+            "str"
+          ],
+          "problems": [
+            "dict"
+          ],
+          "solved": [
+            "dict"
+          ],
+          "url": [
+            "str"
+          ]
+        },
+        "hidden_fields": [],
+        "languages": [
+          "c",
+          "cpp",
+          "csharp",
+          "dart",
+          "golang",
+          "java",
+          "javascript",
+          "kotlin",
+          "python",
+          "python3",
+          "ruby",
+          "rust",
+          "swift",
+          "typescript"
+        ],
+        "problems": [
+          {
+            "accepted_rate": 48.7,
+            "code": 4371,
+            "difficulty": "easy",
+            "dislikes": 0,
+            "dislikes_percent": 0.0,
+            "first_ac": {
+              "accounts": [
+                "urverymean@.com"
+              ],
+              "in_seconds": 42.0,
+              "time": "0:00:42"
+            },
+            "full_score": 3,
+            "has_editorial": false,
+            "has_text_editorial": false,
+            "has_video_editorial": false,
+            "hints": [],
+            "id": 4010,
+            "likes": 3,
+            "likes_percent": 100.0,
+            "n_accepted": 27245,
+            "n_accepted_submissions": 31222,
+            "n_submissions": 51452,
+            "n_teams": 27245,
+            "n_total": 27805,
+            "n_total_submissions": 64081,
+            "name": "Maximize Pair Strength Using GCD",
+            "premium": false,
+            "rating": 749,
+            "short": "Q1",
+            "slug": "maximize-pair-strength-using-gcd",
+            "tags": [],
+            "url": "https://leetcode.com/contest/weekly-contest-513/problems/maximize-pair-strength-using-gcd"
+          },
+          {
+            "accepted_rate": 59.2,
+            "code": 4323,
+            "difficulty": "medium",
+            "dislikes": 1,
+            "dislikes_percent": 33.33,
+            "first_ac": {
+              "accounts": [
+                "riyatrivedi_07@.com"
+              ],
+              "in_seconds": 76.0,
+              "time": "0:01:16"
+            },
+            "full_score": 4,
+            "has_editorial": false,
+            "has_text_editorial": false,
+            "has_video_editorial": false,
+            "hints": [],
+            "id": 4011,
+            "likes": 2,
+            "likes_percent": 66.67,
+            "n_accepted": 21264,
+            "n_accepted_submissions": 24015,
+            "n_submissions": 32543,
+            "n_teams": 21264,
+            "n_total": 27805,
+            "n_total_submissions": 40574,
+            "name": "Count Subarrays With Even Odd Ratio I",
+            "premium": false,
+            "rating": 1289,
+            "short": "Q2",
+            "slug": "count-subarrays-with-even-odd-ratio-i",
+            "tags": [],
+            "url": "https://leetcode.com/contest/weekly-contest-513/problems/count-subarrays-with-even-odd-ratio-i"
+          },
+          {
+            "accepted_rate": 38.8,
+            "code": 4203,
+            "difficulty": "medium",
+            "dislikes": 1,
+            "dislikes_percent": 12.5,
+            "first_ac": {
+              "accounts": [
+                "saigogineni@.com"
+              ],
+              "in_seconds": 121.0,
+              "time": "0:02:01"
+            },
+            "full_score": 5,
+            "has_editorial": false,
+            "has_text_editorial": false,
+            "has_video_editorial": false,
+            "hints": [],
+            "id": 4012,
+            "likes": 7,
+            "likes_percent": 87.5,
+            "n_accepted": 9213,
+            "n_accepted_submissions": 10722,
+            "n_submissions": 16237,
+            "n_teams": 9213,
+            "n_total": 27805,
+            "n_total_submissions": 27703,
+            "name": "Count of Unfinished Tasks After Each Shift",
+            "premium": false,
+            "rating": 1722,
+            "short": "Q3",
+            "slug": "count-of-unfinished-tasks-after-each-shift",
+            "tags": [],
+            "url": "https://leetcode.com/contest/weekly-contest-513/problems/count-of-unfinished-tasks-after-each-shift"
+          },
+          {
+            "accepted_rate": 33.0,
+            "code": 4324,
+            "difficulty": "hard",
+            "dislikes": 3,
+            "dislikes_percent": 37.5,
+            "first_ac": {
+              "accounts": [
+                "ama2ing-kilbyvyl@.cn"
+              ],
+              "in_seconds": 127.0,
+              "time": "0:02:07"
+            },
+            "full_score": 6,
+            "has_editorial": false,
+            "has_text_editorial": false,
+            "has_video_editorial": false,
+            "hints": [],
+            "id": 4013,
+            "likes": 5,
+            "likes_percent": 62.5,
+            "n_accepted": 2351,
+            "n_accepted_submissions": 3097,
+            "n_submissions": 3191,
+            "n_teams": 2351,
+            "n_total": 27805,
+            "n_total_submissions": 9464,
+            "name": "Count Subarrays With Even Odd Ratio II",
+            "premium": false,
+            "rating": 2156,
+            "short": "Q4",
+            "slug": "count-subarrays-with-even-odd-ratio-ii",
+            "tags": [],
+            "url": "https://leetcode.com/contest/weekly-contest-513/problems/count-subarrays-with-even-odd-ratio-ii"
+          }
+        ]
+      },
+      "invisible": false,
+      "is_auto_added": true,
+      "is_promoted": null,
+      "is_rated": null,
+      "key": "weekly-contest-513",
+      "kind": null,
+      "link_statistic_timing": null,
+      "merging_contests": [],
+      "modified": "2026-07-20T08:29:09.391Z",
+      "n_problems": 4,
+      "n_statistics": 27805,
+      "notification_timing": "2026-07-20T08:31:08.499Z",
+      "parsed_percentage": null,
+      "parsed_time": "2026-08-02T05:18:10.108Z",
+      "problem_rating_hash": "758e9c2c2260e159d68026c2de1fb62d9b198fd141881fdb164b3c7972d32900",
+      "problem_rating_update_required": false,
+      "rating_prediction_fields": {
+        "types": {
+          "change_diff": [
+            "int"
+          ],
+          "n_contests": [
+            "int"
+          ],
+          "new_rating": [
+            "int"
+          ],
+          "old_rating": [
+            "int",
+            "float"
+          ],
+          "rank": [
+            "int"
+          ],
+          "rating_change": [
+            "int"
+          ],
+          "rating_perf": [
+            "int"
+          ],
+          "raw_rating": [
+            "float64"
+          ]
+        }
+      },
+      "rating_prediction_hash": "fd007b5fe4184407392b052d74d36d4b4c860e5aee68c261ff5bcecc93ac819b",
+      "rating_prediction_timing": "2026-08-02T05:31:30.543Z",
+      "raw_info": {},
+      "registration_url": null,
+      "related": null,
+      "resource": 102,
+      "series": null,
+      "set_matched_coders_to_members": null,
+      "slug": "weekly-contest-513",
+      "standings_kind": "icpc",
+      "standings_url": "https://leetcode.com/contest/weekly-contest-513/ranking",
+      "start_time": "2026-08-02T02:30:00Z",
+      "statistic_timing": "2026-08-03T01:18:10.108Z",
+      "statistics_update_required": false,
+      "submissions_info": {},
+      "title": "Weekly Contest 513",
+      "title_path": "weekly.contest.513",
+      "trial_standings_url": null,
+      "uid": "km0mgi4o8qfbbce70u3trigqe8",
+      "updated": "2026-08-02T19:30:25.992Z",
+      "upload_solved_problems_solutions": null,
+      "upsolving_key": null,
+      "upsolving_url": null,
+      "url": "https://leetcode.com/contest/weekly-contest-513",
+      "variables": {},
+      "wait_for_successful_update_timing": null,
+      "with_advance": false,
+      "with_medals": false
+    },
+    "model": "clist.contest",
+    "pk": 68982643
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2024-09-14T16:39:29.426Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "aboutMe": "",
+        "attendedContestsCount": 9,
+        "categoryDiscussCount": 0,
+        "categoryDiscussCountDiff": 0,
+        "company": null,
+        "countryName": null,
+        "globalRanking": 19915,
+        "global_ranking": 19915,
+        "global_ranking_page": 797,
+        "jobTitle": null,
+        "name": "saigogineni",
+        "postViewCount": 0.0,
+        "postViewCountDiff": 0,
+        "profile_url": {},
+        "ranking": 958822,
+        "rating": 2018,
+        "realName": "saigogineni",
+        "reputation": 0,
+        "reputationDiff": 0,
+        "school": null,
+        "skillTags": [],
+        "slug": "saigogineni",
+        "solutionCount": 0,
+        "solutionCountDiff": 0,
+        "userAvatar": "https://assets.leetcode.com/users/default_avatar.jpg",
+        "websites": []
+      },
+      "key": "saigogineni@.com",
+      "last_activity": "2026-08-02T02:32:11Z",
+      "last_rating_activity": "2026-07-26T02:38:53Z",
+      "last_submission": null,
+      "modified": "2026-08-02T12:06:09.188Z",
+      "n_bronze": null,
+      "n_contests": 10,
+      "n_first_ac": 1,
+      "n_first_places": 1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 4,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 21,
+      "n_subscribers": 0,
+      "n_third_places": 1,
+      "n_top_ten_places": 2,
+      "n_total_solved": 21,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "saigogineni",
+      "need_verification": false,
+      "rating": 2018,
+      "rating50": 40,
+      "rating_prediction": {
+        "change_diff": 0,
+        "contest": 68982643,
+        "n_contests": 10,
+        "new_rating": 2221,
+        "old_rating": 2018.219,
+        "rank": 1,
+        "rating_change": 203,
+        "rating_perf": 3795,
+        "raw_rating": 2221.016,
+        "time": 1785643200
+      },
+      "rating_update_time": "2026-07-26T04:00:00Z",
+      "related": null,
+      "resource": 102,
+      "resource_rank": 19937,
+      "solving": 87.0,
+      "submissions_info": {},
+      "total_solving": 87.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-08-02T23:59:59.999Z",
+      "upsolving": 0.0,
+      "url": "/account/saigogineni@.com/resource/leetcode.com/"
+    },
+    "model": "ranking.account",
+    "pk": 7500073
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2026-08-01T14:48:56.306Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "aboutMe": "",
+        "categoryDiscussCount": 0,
+        "categoryDiscussCountDiff": 0,
+        "company": null,
+        "countryName": null,
+        "jobTitle": null,
+        "name": "riyatrivedi_07",
+        "postViewCount": 0.0,
+        "postViewCountDiff": 0,
+        "profile_url": {},
+        "ranking": 5000001,
+        "realName": "riyatrivedi_07",
+        "reputation": 0,
+        "reputationDiff": 0,
+        "school": null,
+        "skillTags": [],
+        "slug": "riyatrivedi_07",
+        "solutionCount": 0,
+        "solutionCountDiff": 0,
+        "userAvatar": "https://assets.leetcode.com/users/default_avatar.jpg",
+        "websites": []
+      },
+      "key": "riyatrivedi_07@.com",
+      "last_activity": "2026-08-02T02:32:58Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-08-02T13:27:55.019Z",
+      "n_bronze": null,
+      "n_contests": 2,
+      "n_first_ac": 2,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": 1,
+      "n_silver": null,
+      "n_solved": 8,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 8,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "riyatrivedi_07",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": {
+        "change_diff": 0,
+        "contest": 68982643,
+        "n_contests": 2,
+        "new_rating": 1925,
+        "old_rating": 1500,
+        "rank": 2,
+        "rating_change": 425,
+        "rating_perf": 3596,
+        "raw_rating": 1924.607,
+        "time": 1785643200
+      },
+      "rating_update_time": null,
+      "related": null,
+      "resource": 102,
+      "resource_rank": null,
+      "solving": 36.0,
+      "submissions_info": {},
+      "total_solving": 36.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-08-02T23:59:59.999Z",
+      "upsolving": null,
+      "url": "/account/riyatrivedi_07@.com/resource/leetcode.com/"
+    },
+    "model": "ranking.account",
+    "pk": 11587103
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "IN",
+      "created": "2025-08-02T15:12:59.616Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "aboutMe": "",
+        "attendedContestsCount": 12,
+        "categoryDiscussCount": 0,
+        "categoryDiscussCountDiff": 0,
+        "company": null,
+        "countryName": "India",
+        "globalRanking": 14477,
+        "global_ranking": 14477,
+        "global_ranking_page": 580,
+        "jobTitle": null,
+        "name": "Adarsh Kasaundhan",
+        "postViewCount": 0.0,
+        "postViewCountDiff": 0,
+        "profile_url": {},
+        "ranking": 179671,
+        "rating": 2079,
+        "realName": "Adarsh Kasaundhan",
+        "reputation": 0,
+        "reputationDiff": 0,
+        "school": null,
+        "skillTags": [],
+        "slug": "adarsh321089",
+        "solutionCount": 0,
+        "solutionCountDiff": 0,
+        "userAvatar": "https://assets.leetcode.com/users/adarsh321089/avatar_1754195966.png",
+        "websites": []
+      },
+      "key": "adarsh321089@.com",
+      "last_activity": "2026-08-02T02:33:21Z",
+      "last_rating_activity": "2026-07-12T02:35:45Z",
+      "last_submission": null,
+      "modified": "2026-08-02T13:27:58.287Z",
+      "n_bronze": null,
+      "n_contests": 14,
+      "n_first_ac": 1,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 40,
+      "n_subscribers": 0,
+      "n_third_places": 1,
+      "n_top_ten_places": null,
+      "n_total_solved": 40,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Adarsh Kasaundhan",
+      "need_verification": false,
+      "rating": 2079,
+      "rating50": 41,
+      "rating_prediction": {
+        "change_diff": 0,
+        "contest": 68982643,
+        "n_contests": 14,
+        "new_rating": 2299,
+        "old_rating": 2141.041,
+        "rank": 3,
+        "rating_change": 158,
+        "rating_perf": 3502,
+        "raw_rating": 2298.623,
+        "time": 1785643200
+      },
+      "rating_update_time": "2026-06-07T04:00:00Z",
+      "related": null,
+      "resource": 102,
+      "resource_rank": 14480,
+      "solving": 168.0,
+      "submissions_info": {},
+      "total_solving": 168.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-08-02T23:59:59.999Z",
+      "upsolving": null,
+      "url": "/account/adarsh321089@.com/resource/leetcode.com/"
+    },
+    "model": "ranking.account",
+    "pk": 8519965
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2024-12-22T05:13:25.531Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "aboutMe": "cf同名",
+        "asciiCode": "",
+        "attendedContestsCount": 70,
+        "company": null,
+        "gender": "3",
+        "github": null,
+        "globalLocation": {
+          "city": "",
+          "country": "",
+          "overseasCity": true,
+          "province": ""
+        },
+        "globalRanking": 83,
+        "globalTotalParticipants": 887466,
+        "global_ranking": 83,
+        "global_ranking_page": 4,
+        "ipRegion": "北京",
+        "job": "",
+        "localRanking": 37,
+        "localTotalParticipants": 155299,
+        "location": "0%0",
+        "name": "__baozii__",
+        "profile_url": {},
+        "rating": 3098,
+        "realName": "__baozii__",
+        "school": null,
+        "skillSet": {
+          "langLevels": [
+            {
+              "langName": "cpp",
+              "langVerboseName": "C++",
+              "level": 1
+            },
+            {
+              "langName": "golang",
+              "langVerboseName": "Go",
+              "level": 1
+            },
+            {
+              "langName": "python3",
+              "langVerboseName": "Python3",
+              "level": 2
+            }
+          ],
+          "topicAreaScores": [
+            {
+              "score": 30,
+              "topicArea": {
+                "name": "数据结构",
+                "slug": "data-structures"
+              }
+            },
+            {
+              "score": 20,
+              "topicArea": {
+                "name": "设计",
+                "slug": "design"
+              }
+            },
+            {
+              "score": 0,
+              "topicArea": {
+                "name": "基础架构",
+                "slug": "architecture"
+              }
+            },
+            {
+              "score": 30,
+              "topicArea": {
+                "name": "算法",
+                "slug": "algorithms"
+              }
+            }
+          ]
+        },
+        "skillTags": [],
+        "slug": "ama2ing-kilbyvyl",
+        "socialAccounts": [
+          {
+            "profileUrl": null,
+            "provider": "apple"
+          },
+          {
+            "profileUrl": null,
+            "provider": "qq"
+          }
+        ],
+        "topPercentage": 0.02,
+        "useDefaultAvatar": false,
+        "userAvatar": "https://assets.leetcode.cn/aliyun-lc-upload/users/ama2ing-kilbyvyl/avatar_1765275963.png",
+        "websites": []
+      },
+      "key": "ama2ing-kilbyvyl@.cn",
+      "last_activity": "2026-08-02T02:37:43Z",
+      "last_rating_activity": "2026-07-26T02:48:16Z",
+      "last_submission": null,
+      "modified": "2026-08-02T13:31:26.657Z",
+      "n_bronze": null,
+      "n_contests": 72,
+      "n_first_ac": 17,
+      "n_first_places": 1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 17,
+      "n_second_places": 3,
+      "n_silver": null,
+      "n_solved": 273,
+      "n_subscribers": 0,
+      "n_third_places": 1,
+      "n_top_ten_places": 12,
+      "n_total_solved": 273,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "__baozii__",
+      "need_verification": false,
+      "rating": 3098,
+      "rating50": 61,
+      "rating_prediction": {
+        "contest": 68982643,
+        "n_contests": 72,
+        "new_rating": 2982,
+        "old_rating": 2952.052,
+        "rank": 12,
+        "rating_change": 30,
+        "rating_perf": 3209,
+        "raw_rating": 2981.691,
+        "time": 1785643200
+      },
+      "rating_update_time": "2026-07-26T04:00:00Z",
+      "related": null,
+      "resource": 102,
+      "resource_rank": 85,
+      "solving": 1270.0,
+      "submissions_info": {},
+      "total_solving": 1270.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-08-02T23:59:59.999Z",
+      "upsolving": 0.0,
+      "url": "/account/ama2ing-kilbyvyl@.cn/resource/leetcode.com/"
+    },
+    "model": "ranking.account",
+    "pk": 7842698
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "CN",
+      "created": "2025-06-29T07:26:53.006Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "aboutMe": "Losing all hope is freedom~",
+        "asciiCode": "// 使用函数 draw 绘制图形，反斜杠 \"\\\" 请使用 \"\\\\\" 转义draw(\"贪图玩乐 静观众妙\")",
+        "attendedContestsCount": 280,
+        "company": null,
+        "gender": "2",
+        "github": null,
+        "globalLocation": {
+          "city": "",
+          "country": "",
+          "overseasCity": true,
+          "province": ""
+        },
+        "globalRanking": 1180,
+        "globalTotalParticipants": 887466,
+        "global_ranking": 1180,
+        "global_ranking_page": 48,
+        "ipRegion": "上海",
+        "job": "",
+        "localRanking": 519,
+        "localTotalParticipants": 155299,
+        "location": "310000%0",
+        "name": "已弃坑",
+        "profile_url": {},
+        "rating": 2573,
+        "realName": "已弃坑",
+        "school": null,
+        "skillSet": {
+          "langLevels": [
+            {
+              "langName": "mysql",
+              "langVerboseName": "MySQL",
+              "level": 2
+            },
+            {
+              "langName": "python3",
+              "langVerboseName": "Python3",
+              "level": 5
+            }
+          ],
+          "topicAreaScores": [
+            {
+              "score": 92,
+              "topicArea": {
+                "name": "数据结构",
+                "slug": "data-structures"
+              }
+            },
+            {
+              "score": 96,
+              "topicArea": {
+                "name": "设计",
+                "slug": "design"
+              }
+            },
+            {
+              "score": 80,
+              "topicArea": {
+                "name": "基础架构",
+                "slug": "architecture"
+              }
+            },
+            {
+              "score": 92,
+              "topicArea": {
+                "name": "算法",
+                "slug": "algorithms"
+              }
+            }
+          ]
+        },
+        "skillTags": [],
+        "slug": "yiqikeng",
+        "socialAccounts": [],
+        "topPercentage": 0.33,
+        "useDefaultAvatar": false,
+        "userAvatar": "https://assets.leetcode.cn/aliyun-lc-upload/users/yiqikeng/avatar_1746862091.png",
+        "websites": []
+      },
+      "key": "yiqikeng@.cn",
+      "last_activity": "2026-08-02T02:42:33Z",
+      "last_rating_activity": "2025-09-21T02:56:55Z",
+      "last_submission": null,
+      "modified": "2026-08-02T09:26:01.896Z",
+      "n_bronze": null,
+      "n_contests": 338,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 2,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 252,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 2,
+      "n_total_solved": 252,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "已弃坑",
+      "need_verification": false,
+      "rating": 2573,
+      "rating50": 51,
+      "rating_prediction": {
+        "contest": 68982643,
+        "n_contests": 334,
+        "new_rating": 2985,
+        "old_rating": 2983.75,
+        "rank": 36,
+        "rating_change": 1,
+        "rating_perf": 2987,
+        "raw_rating": 2984.746,
+        "time": 1785643200
+      },
+      "rating_update_time": "2025-09-21T04:00:00Z",
+      "related": null,
+      "resource": 102,
+      "resource_rank": 1204,
+      "solving": 1181.0,
+      "submissions_info": {},
+      "total_solving": 1181.0,
+      "try_fill_missed_ranks_time": "2025-11-16T09:53:06.459Z",
+      "try_renaming_check_time": "2025-10-08T00:37:33.784Z",
+      "updated": "2027-08-02T23:59:59.999Z",
+      "upsolving": 0.0,
+      "url": "/account/yiqikeng@.cn/resource/leetcode.com/"
+    },
+    "model": "ranking.account",
+    "pk": 8446570
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2024-04-28T08:58:14.872Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "aboutMe": "",
+        "attendedContestsCount": 35,
+        "categoryDiscussCount": 0,
+        "categoryDiscussCountDiff": 0,
+        "company": null,
+        "countryName": null,
+        "globalRanking": 748,
+        "global_ranking": 748,
+        "global_ranking_page": 30,
+        "jobTitle": null,
+        "name": "urverymean",
+        "postViewCount": 0.0,
+        "postViewCountDiff": 0,
+        "profile_url": {},
+        "ranking": 1101648,
+        "rating": 2667,
+        "realName": "urverymean",
+        "reputation": 2,
+        "reputationDiff": 0,
+        "school": null,
+        "skillTags": [],
+        "slug": "urverymean",
+        "solutionCount": 0,
+        "solutionCountDiff": 0,
+        "userAvatar": "https://assets.leetcode.com/users/avatars/avatar_1684788800.png",
+        "websites": []
+      },
+      "key": "urverymean@.com",
+      "last_activity": "2026-08-02T02:42:26Z",
+      "last_rating_activity": "2026-07-26T02:57:34Z",
+      "last_submission": null,
+      "modified": "2026-08-02T10:47:14.179Z",
+      "n_bronze": null,
+      "n_contests": 39,
+      "n_first_ac": 1,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 124,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 124,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "urverymean",
+      "need_verification": false,
+      "rating": 2667,
+      "rating50": 53,
+      "rating_prediction": {
+        "contest": 68982643,
+        "n_contests": 39,
+        "new_rating": 2680,
+        "old_rating": 2666.985,
+        "rank": 99,
+        "rating_change": 13,
+        "rating_perf": 2778,
+        "raw_rating": 2679.573,
+        "time": 1785643200
+      },
+      "rating_update_time": "2026-07-26T04:00:00Z",
+      "related": null,
+      "resource": 102,
+      "resource_rank": 757,
+      "solving": 569.0,
+      "submissions_info": {},
+      "total_solving": 569.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-08-02T23:59:59.999Z",
+      "upsolving": 0.0,
+      "url": "/account/urverymean@.com/resource/leetcode.com/"
+    },
+    "model": "ranking.account",
+    "pk": 6851364
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "US",
+      "created": "2025-02-15T15:32:35.434Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "aboutMe": "",
+        "attendedContestsCount": 22,
+        "categoryDiscussCount": 4,
+        "categoryDiscussCountDiff": 3,
+        "company": null,
+        "countryName": "United States",
+        "globalRanking": 3762,
+        "global_ranking": 3762,
+        "global_ranking_page": 151,
+        "jobTitle": null,
+        "name": "Jim_X",
+        "postViewCount": 286.0,
+        "postViewCountDiff": 151,
+        "profile_url": {},
+        "ranking": 320197,
+        "rating": 2333,
+        "realName": "Jim_X",
+        "reputation": 5,
+        "reputationDiff": 4,
+        "school": null,
+        "skillTags": [],
+        "slug": "Jim_X",
+        "solutionCount": 4,
+        "solutionCountDiff": 0,
+        "userAvatar": "https://assets.leetcode.com/users/Jim_X/avatar_1782865707.png",
+        "websites": [
+          "https://www.youtube.com/@Jim_X226"
+        ]
+      },
+      "key": "jim_x@.com",
+      "last_activity": "2026-08-02T02:48:34Z",
+      "last_rating_activity": "2026-07-26T02:50:42Z",
+      "last_submission": "2026-08-02T04:16:11Z",
+      "modified": "2026-08-02T05:37:42.036Z",
+      "n_bronze": null,
+      "n_contests": 22,
+      "n_first_ac": 1,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 76,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 260,
+      "n_upsolved": 184,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Jim_X",
+      "need_verification": false,
+      "rating": 2333,
+      "rating50": 46,
+      "rating_prediction": {
+        "contest": 68982643,
+        "n_contests": 22,
+        "new_rating": 2304,
+        "old_rating": 2332.609,
+        "rank": 2421,
+        "rating_change": -29,
+        "rating_perf": 2063,
+        "raw_rating": 2303.124,
+        "time": 1785643200
+      },
+      "rating_update_time": "2026-07-26T04:00:00Z",
+      "related": null,
+      "resource": 102,
+      "resource_rank": 3761,
+      "solving": 342.0,
+      "submissions_info": {},
+      "total_solving": 526.0,
+      "try_fill_missed_ranks_time": "2026-08-02T05:14:18.326Z",
+      "try_renaming_check_time": null,
+      "updated": "2026-08-02T23:59:59.999Z",
+      "upsolving": 184.0,
+      "url": "/coder/JimX/?resource=102"
+    },
+    "model": "ranking.account",
+    "pk": 8178515
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2025-10-25T01:29:45.709Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "aboutMe": "",
+        "attendedContestsCount": 259,
+        "categoryDiscussCount": 2,
+        "categoryDiscussCountDiff": 0,
+        "company": null,
+        "countryName": null,
+        "globalRanking": 31128,
+        "global_ranking": 31128,
+        "global_ranking_page": 1246,
+        "jobTitle": null,
+        "name": "ray",
+        "postViewCount": 305.0,
+        "postViewCountDiff": 0,
+        "profile_url": {},
+        "ranking": 414,
+        "rating": 1937,
+        "realName": "ray",
+        "reputation": 11,
+        "reputationDiff": 0,
+        "school": null,
+        "skillTags": [],
+        "slug": "rrrrayyyy",
+        "solutionCount": 7,
+        "solutionCountDiff": 0,
+        "userAvatar": "https://assets.leetcode.com/users/resotto/avatar_1733057502.png",
+        "websites": []
+      },
+      "key": "rrrrayyyy@.com",
+      "last_activity": "2026-08-02T02:34:50Z",
+      "last_rating_activity": "2026-07-26T02:48:34Z",
+      "last_submission": "2026-08-02T05:13:44Z",
+      "modified": "2026-08-02T13:29:21.698Z",
+      "n_bronze": null,
+      "n_contests": 272,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 283,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 417,
+      "n_upsolved": 134,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "ray",
+      "need_verification": false,
+      "rating": 1937,
+      "rating50": 38,
+      "rating_prediction": {
+        "contest": 68982643,
+        "n_contests": 269,
+        "new_rating": 1912,
+        "old_rating": 1936.683,
+        "rank": 9465,
+        "rating_change": -25,
+        "rating_perf": 1696,
+        "raw_rating": 1911.416,
+        "time": 1785643200
+      },
+      "rating_update_time": "2026-07-26T04:00:00Z",
+      "related": null,
+      "resource": 102,
+      "resource_rank": 31184,
+      "solving": 1159.0,
+      "submissions_info": {},
+      "total_solving": 1293.0,
+      "try_fill_missed_ranks_time": "2024-06-14T02:31:59.104Z",
+      "try_renaming_check_time": "2025-10-25T02:59:45.328Z",
+      "updated": "2026-08-02T23:59:59.999Z",
+      "upsolving": 134.0,
+      "url": "/coder/resotto/?resource=102"
+    },
+    "model": "ranking.account",
+    "pk": 9613114
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2026-01-17T17:21:50.267Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "aboutMe": "Learning to code !राM - राM ",
+        "attendedContestsCount": 13,
+        "categoryDiscussCount": 0,
+        "categoryDiscussCountDiff": 0,
+        "company": null,
+        "countryName": null,
+        "globalRanking": 599489,
+        "global_ranking": 599489,
+        "global_ranking_page": 23980,
+        "jobTitle": null,
+        "name": "Vishwa-jeet",
+        "postViewCount": 6.0,
+        "postViewCountDiff": 0,
+        "profile_url": {},
+        "ranking": 373374,
+        "rating": 1435,
+        "realName": "Vishwa-jeet",
+        "reputation": 0,
+        "reputationDiff": 0,
+        "school": null,
+        "skillTags": [],
+        "slug": "Sujeet-kv",
+        "solutionCount": 3,
+        "solutionCountDiff": 0,
+        "userAvatar": "https://assets.leetcode.com/users/Sujeet-kv/avatar_1785244538.png",
+        "websites": [
+          "https://sujeet.xyz"
+        ]
+      },
+      "key": "sujeet-kv@.com",
+      "last_activity": "2026-08-02T03:56:43Z",
+      "last_rating_activity": "2026-07-12T03:29:48Z",
+      "last_submission": "2026-08-02T04:00:46Z",
+      "modified": "2026-08-02T05:09:49.932Z",
+      "n_bronze": null,
+      "n_contests": 14,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 23,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 142,
+      "n_upsolved": 119,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Vishwa-jeet",
+      "need_verification": false,
+      "rating": 1435,
+      "rating50": 28,
+      "rating_prediction": {
+        "contest": 68982643,
+        "n_contests": 15,
+        "new_rating": 1425,
+        "old_rating": 1434.888,
+        "rank": 21878,
+        "rating_change": -10,
+        "rating_perf": 1342,
+        "raw_rating": 1425.31,
+        "time": 1785643200
+      },
+      "rating_update_time": "2026-03-15T04:00:00Z",
+      "related": null,
+      "resource": 102,
+      "resource_rank": 544715,
+      "solving": 81.0,
+      "submissions_info": {},
+      "total_solving": 200.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-08-02T23:59:59.999Z",
+      "upsolving": 119.0,
+      "url": "/coder/vishwa-jeet/?resource=102"
+    },
+    "model": "ranking.account",
+    "pk": 9889820
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "KR",
+      "created": "2024-07-28T02:51:29.185Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "aboutMe": ":D",
+        "attendedContestsCount": 26,
+        "categoryDiscussCount": 0,
+        "categoryDiscussCountDiff": 0,
+        "company": null,
+        "countryName": "South Korea",
+        "globalRanking": 26442,
+        "global_ranking": 26442,
+        "global_ranking_page": 1058,
+        "jobTitle": null,
+        "name": "Nguyen Tuan Nghia",
+        "postViewCount": 1204.0,
+        "postViewCountDiff": 0,
+        "profile_url": {},
+        "ranking": 2148,
+        "rating": 1966,
+        "realName": "Nguyen Tuan Nghia",
+        "reputation": 15,
+        "reputationDiff": 0,
+        "school": "Seoul National University",
+        "skillTags": [],
+        "slug": "syncerpn",
+        "solutionCount": 11,
+        "solutionCountDiff": 0,
+        "userAvatar": "https://assets.leetcode.com/users/syncerpn/avatar_1735464696.png",
+        "websites": []
+      },
+      "key": "syncerpn@.com",
+      "last_activity": "2025-09-14T02:32:55Z",
+      "last_rating_activity": "2025-09-14T03:37:03Z",
+      "last_submission": "2026-08-02T18:14:48Z",
+      "modified": "2026-08-02T18:21:22.704Z",
+      "n_bronze": null,
+      "n_contests": 26,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 18,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 560,
+      "n_upsolved": 542,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Nguyen Tuan Nghia",
+      "need_verification": false,
+      "rating": 1966,
+      "rating50": 39,
+      "rating_prediction": {
+        "contest": 61719122,
+        "n_contests": 26,
+        "new_rating": 1965,
+        "old_rating": 1921,
+        "rank": 681,
+        "rating_change": 44,
+        "rating_perf": 2307,
+        "raw_rating": 1964.978,
+        "time": 1757822400
+      },
+      "rating_update_time": "2025-09-14T04:00:00Z",
+      "related": null,
+      "resource": 102,
+      "resource_rank": 26410,
+      "solving": 72.0,
+      "submissions_info": {},
+      "total_solving": 614.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-08-02T23:59:59.999Z",
+      "upsolving": 542.0,
+      "url": "/coder/syncer/?resource=102"
+    },
+    "model": "ranking.account",
+    "pk": 7186353
+  },
+  {
+    "fields": {
+      "account": 7500073,
+      "addition": {
+        "_languages": [
+          "java"
+        ],
+        "_ranking_domain": ".com",
+        "name": "saigogineni",
+        "penalty": "0:02:11",
+        "problems": {
+          "Q1": {
+            "data_region": "us",
+            "external_solution": true,
+            "language": "java",
+            "result": "+",
+            "submission_id": 2090662369,
+            "time": "0:01:37",
+            "time_in_seconds": 97.0
+          },
+          "Q2": {
+            "data_region": "us",
+            "external_solution": true,
+            "language": "java",
+            "result": "+",
+            "submission_id": 2090662493,
+            "time": "0:01:49",
+            "time_in_seconds": 109.0
+          },
+          "Q3": {
+            "data_region": "us",
+            "external_solution": true,
+            "first_ac": true,
+            "language": "java",
+            "result": "+",
+            "submission_id": 2090662637,
+            "time": "0:02:01",
+            "time_in_seconds": 121.0
+          },
+          "Q4": {
+            "data_region": "us",
+            "external_solution": true,
+            "language": "java",
+            "result": "+",
+            "submission_id": 2090662816,
+            "time": "0:02:11",
+            "time_in_seconds": 131.0
+          }
+        },
+        "solved": {
+          "solving": 4
+        },
+        "url": "https://leetcode.com/contest/weekly-contest-513/ranking/1"
+      },
+      "advanced": false,
+      "contest": 68982643,
+      "created": "2026-08-02T02:49:31.664Z",
+      "global_rating_change": null,
+      "last_activity": "2026-08-02T02:32:11Z",
+      "medal": null,
+      "modified": "2026-08-02T05:36:55.495Z",
+      "n_first_ac": 1,
+      "n_solved": 4,
+      "n_total_solved": 4,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "1",
+      "place_as_int": 1,
+      "rating_prediction": {
+        "change_diff": 0,
+        "n_contests": 10,
+        "new_rating": 2221,
+        "old_rating": 2018.219,
+        "rank": 1,
+        "rating_change": 203,
+        "rating_perf": 3795,
+        "raw_rating": 2221.016
+      },
+      "related": null,
+      "resource": 102,
+      "skip_in_stats": false,
+      "solving": 18.0,
+      "total_solving": 18.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91304881
+  },
+  {
+    "fields": {
+      "account": 11587103,
+      "addition": {
+        "_languages": [
+          "cpp"
+        ],
+        "_ranking_domain": ".com",
+        "name": "riyatrivedi_07",
+        "penalty": "0:02:58",
+        "problems": {
+          "Q1": {
+            "data_region": "us",
+            "external_solution": true,
+            "language": "cpp",
+            "result": "+",
+            "submission_id": 2090663158,
+            "time": "0:02:28",
+            "time_in_seconds": 148.0
+          },
+          "Q2": {
+            "data_region": "us",
+            "external_solution": true,
+            "first_ac": true,
+            "language": "cpp",
+            "result": "+",
+            "submission_id": 2090662193,
+            "time": "0:01:16",
+            "time_in_seconds": 76.0
+          },
+          "Q3": {
+            "data_region": "us",
+            "external_solution": true,
+            "language": "cpp",
+            "result": "+",
+            "submission_id": 2090662715,
+            "time": "0:02:06",
+            "time_in_seconds": 126.0
+          },
+          "Q4": {
+            "data_region": "us",
+            "external_solution": true,
+            "language": "cpp",
+            "result": "+",
+            "submission_id": 2090664013,
+            "time": "0:02:58",
+            "time_in_seconds": 178.0
+          }
+        },
+        "solved": {
+          "solving": 4
+        },
+        "url": "https://leetcode.com/contest/weekly-contest-513/ranking/1"
+      },
+      "advanced": false,
+      "contest": 68982643,
+      "created": "2026-08-02T02:49:31.747Z",
+      "global_rating_change": null,
+      "last_activity": "2026-08-02T02:32:58Z",
+      "medal": null,
+      "modified": "2026-08-02T05:36:55.513Z",
+      "n_first_ac": 1,
+      "n_solved": 4,
+      "n_total_solved": 4,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "2",
+      "place_as_int": 2,
+      "rating_prediction": {
+        "change_diff": 0,
+        "n_contests": 2,
+        "new_rating": 1925,
+        "old_rating": 1500,
+        "rank": 2,
+        "rating_change": 425,
+        "rating_perf": 3596,
+        "raw_rating": 1924.607
+      },
+      "related": null,
+      "resource": 102,
+      "skip_in_stats": false,
+      "solving": 18.0,
+      "total_solving": 18.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91304886
+  },
+  {
+    "fields": {
+      "account": 8519965,
+      "addition": {
+        "_languages": [
+          "cpp"
+        ],
+        "_ranking_domain": ".com",
+        "country": "IN",
+        "name": "Adarsh Kasaundhan",
+        "penalty": "0:03:21",
+        "problems": {
+          "Q1": {
+            "data_region": "us",
+            "external_solution": true,
+            "language": "cpp",
+            "result": "+",
+            "submission_id": 2090664813,
+            "time": "0:03:21",
+            "time_in_seconds": 201.0
+          },
+          "Q2": {
+            "data_region": "us",
+            "external_solution": true,
+            "language": "cpp",
+            "result": "+",
+            "submission_id": 2090663418,
+            "time": "0:02:39",
+            "time_in_seconds": 159.0
+          },
+          "Q3": {
+            "data_region": "us",
+            "external_solution": true,
+            "language": "cpp",
+            "result": "+",
+            "submission_id": 2090663069,
+            "time": "0:02:25",
+            "time_in_seconds": 145.0
+          },
+          "Q4": {
+            "data_region": "us",
+            "external_solution": true,
+            "language": "cpp",
+            "result": "+",
+            "submission_id": 2090662779,
+            "time": "0:02:10",
+            "time_in_seconds": 130.0
+          }
+        },
+        "solved": {
+          "solving": 4
+        },
+        "url": "https://leetcode.com/contest/weekly-contest-513/ranking/1"
+      },
+      "advanced": false,
+      "contest": 68982643,
+      "created": "2026-08-02T02:49:31.804Z",
+      "global_rating_change": null,
+      "last_activity": "2026-08-02T02:33:21Z",
+      "medal": null,
+      "modified": "2026-08-02T05:36:55.541Z",
+      "n_first_ac": 0,
+      "n_solved": 4,
+      "n_total_solved": 4,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "3",
+      "place_as_int": 3,
+      "rating_prediction": {
+        "change_diff": 0,
+        "n_contests": 14,
+        "new_rating": 2299,
+        "old_rating": 2141.041,
+        "rank": 3,
+        "rating_change": 158,
+        "rating_perf": 3502,
+        "raw_rating": 2298.623
+      },
+      "related": null,
+      "resource": 102,
+      "skip_in_stats": false,
+      "solving": 18.0,
+      "total_solving": 18.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91304890
+  },
+  {
+    "fields": {
+      "account": 7842698,
+      "addition": {
+        "_languages": [
+          "python3"
+        ],
+        "_ranking_domain": ".com",
+        "name": "__baozii__",
+        "penalty": "0:07:43",
+        "problems": {
+          "Q1": {
+            "data_region": "cn",
+            "external_solution": true,
+            "language": "python3",
+            "result": "+",
+            "submission_id": 739519033,
+            "time": "0:03:04",
+            "time_in_seconds": 184.0
+          },
+          "Q2": {
+            "data_region": "cn",
+            "external_solution": true,
+            "language": "python3",
+            "result": "+",
+            "submission_id": 739518813,
+            "time": "0:02:16",
+            "time_in_seconds": 136.0
+          },
+          "Q3": {
+            "data_region": "cn",
+            "external_solution": true,
+            "language": "python3",
+            "result": "+",
+            "submission_id": 739520234,
+            "time": "0:07:43",
+            "time_in_seconds": 463.0
+          },
+          "Q4": {
+            "data_region": "cn",
+            "external_solution": true,
+            "first_ac": true,
+            "language": "python3",
+            "result": "+",
+            "submission_id": 739518771,
+            "time": "0:02:07",
+            "time_in_seconds": 127.0
+          }
+        },
+        "solved": {
+          "solving": 4
+        },
+        "url": "https://leetcode.com/contest/weekly-contest-513/ranking/1"
+      },
+      "advanced": false,
+      "contest": 68982643,
+      "created": "2026-08-02T02:49:32.549Z",
+      "global_rating_change": null,
+      "last_activity": "2026-08-02T02:37:43Z",
+      "medal": null,
+      "modified": "2026-08-02T05:36:55.720Z",
+      "n_first_ac": 1,
+      "n_solved": 4,
+      "n_total_solved": 4,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "12",
+      "place_as_int": 12,
+      "rating_prediction": {
+        "n_contests": 72,
+        "new_rating": 2982,
+        "old_rating": 2952.052,
+        "rank": 12,
+        "rating_change": 30,
+        "rating_perf": 3209,
+        "raw_rating": 2981.691
+      },
+      "related": null,
+      "resource": 102,
+      "skip_in_stats": false,
+      "solving": 18.0,
+      "total_solving": 18.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91304943
+  },
+  {
+    "fields": {
+      "account": 8446570,
+      "addition": {
+        "_languages": [
+          "python3"
+        ],
+        "_old_key": "freeyourmind@.cn",
+        "_ranking_domain": ".com",
+        "name": "FreeYourMind",
+        "penalty": "0:12:33",
+        "problems": {
+          "Q1": {
+            "data_region": "cn",
+            "external_solution": true,
+            "language": "python3",
+            "result": "+",
+            "submission_id": 739521388,
+            "time": "0:12:33",
+            "time_in_seconds": 753.0
+          },
+          "Q2": {
+            "data_region": "cn",
+            "external_solution": true,
+            "language": "python3",
+            "result": "+",
+            "submission_id": 739521129,
+            "time": "0:11:30",
+            "time_in_seconds": 690.0
+          },
+          "Q3": {
+            "data_region": "cn",
+            "external_solution": true,
+            "language": "python3",
+            "result": "+",
+            "submission_id": 739521301,
+            "time": "0:12:14",
+            "time_in_seconds": 734.0
+          },
+          "Q4": {
+            "data_region": "cn",
+            "external_solution": true,
+            "language": "python3",
+            "result": "+",
+            "submission_id": 739521080,
+            "time": "0:11:20",
+            "time_in_seconds": 680.0
+          }
+        },
+        "solved": {
+          "solving": 4
+        },
+        "url": "https://leetcode.com/contest/weekly-contest-513/ranking/2"
+      },
+      "advanced": false,
+      "contest": 68982643,
+      "created": "2026-08-02T02:53:32.115Z",
+      "global_rating_change": null,
+      "last_activity": "2026-08-02T02:42:33Z",
+      "medal": null,
+      "modified": "2026-08-02T05:36:47.420Z",
+      "n_first_ac": 0,
+      "n_solved": 4,
+      "n_total_solved": 4,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "36",
+      "place_as_int": 36,
+      "rating_prediction": {
+        "n_contests": 334,
+        "new_rating": 2985,
+        "old_rating": 2983.75,
+        "rank": 36,
+        "rating_change": 1,
+        "rating_perf": 2987,
+        "raw_rating": 2984.746
+      },
+      "related": null,
+      "resource": 102,
+      "skip_in_stats": false,
+      "solving": 18.0,
+      "total_solving": 18.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91313509
+  },
+  {
+    "fields": {
+      "account": 6851364,
+      "addition": {
+        "_languages": [
+          "cpp",
+          "python3"
+        ],
+        "_ranking_domain": ".com",
+        "name": "urverymean",
+        "penalty": "0:20:50",
+        "problems": {
+          "Q1": {
+            "data_region": "us",
+            "external_solution": true,
+            "first_ac": true,
+            "language": "python3",
+            "result": "+",
+            "submission_id": 2090661956,
+            "time": "0:00:42",
+            "time_in_seconds": 42.0
+          },
+          "Q2": {
+            "data_region": "us",
+            "external_solution": true,
+            "language": "cpp",
+            "result": "+",
+            "submission_id": 2090709926,
+            "time": "0:20:50",
+            "time_in_seconds": 1250.0
+          },
+          "Q3": {
+            "data_region": "us",
+            "external_solution": true,
+            "language": "python3",
+            "result": "+",
+            "submission_id": 2090689120,
+            "time": "0:12:26",
+            "time_in_seconds": 746.0
+          },
+          "Q4": {
+            "data_region": "us",
+            "external_solution": true,
+            "language": "cpp",
+            "result": "+",
+            "submission_id": 2090709339,
+            "time": "0:20:36",
+            "time_in_seconds": 1236.0
+          }
+        },
+        "solved": {
+          "solving": 4
+        },
+        "url": "https://leetcode.com/contest/weekly-contest-513/ranking/4"
+      },
+      "advanced": false,
+      "contest": 68982643,
+      "created": "2026-08-02T02:49:46.650Z",
+      "global_rating_change": null,
+      "last_activity": "2026-08-02T02:50:50Z",
+      "medal": null,
+      "modified": "2026-08-02T05:36:57.690Z",
+      "n_first_ac": 1,
+      "n_solved": 4,
+      "n_total_solved": 4,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "99",
+      "place_as_int": 99,
+      "rating_prediction": {
+        "n_contests": 39,
+        "new_rating": 2680,
+        "old_rating": 2666.985,
+        "rank": 99,
+        "rating_change": 13,
+        "rating_perf": 2778,
+        "raw_rating": 2679.573
+      },
+      "related": null,
+      "resource": 102,
+      "skip_in_stats": false,
+      "solving": 18.0,
+      "total_solving": 18.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91305669
+  },
+  {
+    "fields": {
+      "account": 8178515,
+      "addition": {
+        "_languages": [
+          "cpp"
+        ],
+        "_ranking_domain": ".com",
+        "country": "US",
+        "name": "Jim_X",
+        "penalty": "0:18:34",
+        "problems": {
+          "Q1": {
+            "data_region": "us",
+            "external_solution": true,
+            "language": "cpp",
+            "result": "+",
+            "submission_id": 2090662197,
+            "time": "0:01:17",
+            "time_in_seconds": 77.0
+          },
+          "Q2": {
+            "data_region": "us",
+            "external_solution": true,
+            "language": "cpp",
+            "result": "+",
+            "submission_id": 2090663842,
+            "time": "0:02:53",
+            "time_in_seconds": 173.0
+          },
+          "Q3": {
+            "data_region": "us",
+            "external_solution": true,
+            "language": "cpp",
+            "result": "+",
+            "submission_id": 2090704352,
+            "time": "0:18:34",
+            "time_in_seconds": 1114.0
+          },
+          "Q4": {
+            "upsolving": {
+              "binary": true,
+              "result": "+",
+              "submission_id": 2090849712,
+              "submission_time": 1785644171
+            }
+          }
+        },
+        "solved": {
+          "solving": 3
+        },
+        "url": "https://leetcode.com/contest/weekly-contest-513/ranking/97"
+      },
+      "advanced": false,
+      "contest": 68982643,
+      "created": "2026-08-02T02:49:47.616Z",
+      "global_rating_change": null,
+      "last_activity": "2026-08-02T02:48:34Z",
+      "medal": null,
+      "modified": "2026-08-02T05:37:42.026Z",
+      "n_first_ac": 0,
+      "n_solved": 3,
+      "n_total_solved": 4,
+      "n_upsolved": 1,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "2421",
+      "place_as_int": 2421,
+      "rating_prediction": {
+        "n_contests": 22,
+        "new_rating": 2304,
+        "old_rating": 2332.609,
+        "rank": 2421,
+        "rating_change": -29,
+        "rating_perf": 2063,
+        "raw_rating": 2303.124
+      },
+      "related": null,
+      "resource": 102,
+      "skip_in_stats": false,
+      "solving": 12.0,
+      "total_solving": 13.0,
+      "upsolving": 1.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91305698
+  },
+  {
+    "fields": {
+      "account": 9613114,
+      "addition": {
+        "_languages": [
+          "golang"
+        ],
+        "_ranking_domain": ".com",
+        "name": "ray",
+        "penalty": "0:04:50",
+        "problems": {
+          "Q1": {
+            "data_region": "us",
+            "external_solution": true,
+            "language": "golang",
+            "result": "+",
+            "submission_id": 2090663025,
+            "time": "0:02:23",
+            "time_in_seconds": 143.0
+          },
+          "Q2": {
+            "data_region": "us",
+            "external_solution": true,
+            "language": "golang",
+            "result": "+",
+            "submission_id": 2090668437,
+            "time": "0:04:50",
+            "time_in_seconds": 290.0
+          },
+          "Q3": {
+            "upsolving": {
+              "binary": true,
+              "result": "+",
+              "submission_id": 2090902311,
+              "submission_time": 1785647624
+            }
+          }
+        },
+        "solved": {
+          "solving": 2
+        },
+        "url": "https://leetcode.com/contest/weekly-contest-513/ranking/379"
+      },
+      "advanced": false,
+      "contest": 68982643,
+      "created": "2026-08-02T04:13:18.952Z",
+      "global_rating_change": null,
+      "last_activity": "2026-08-02T02:34:50Z",
+      "medal": null,
+      "modified": "2026-08-02T05:36:55.459Z",
+      "n_first_ac": 0,
+      "n_solved": 2,
+      "n_total_solved": 3,
+      "n_upsolved": 1,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "9465",
+      "place_as_int": 9465,
+      "rating_prediction": {
+        "n_contests": 269,
+        "new_rating": 1912,
+        "old_rating": 1936.683,
+        "rank": 9465,
+        "rating_change": -25,
+        "rating_perf": 1696,
+        "raw_rating": 1911.416
+      },
+      "related": null,
+      "resource": 102,
+      "skip_in_stats": false,
+      "solving": 7.0,
+      "total_solving": 8.0,
+      "upsolving": 1.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91322091
+  },
+  {
+    "fields": {
+      "account": 9889820,
+      "addition": {
+        "_no_update_n_contests": true,
+        "name": "Vishwa-jeet",
+        "problems": {
+          "Q2": {
+            "upsolving": {
+              "binary": true,
+              "result": "+",
+              "submission_id": 2090837107,
+              "submission_time": 1785643246
+            }
+          }
+        }
+      },
+      "advanced": false,
+      "contest": 68982643,
+      "created": "2026-08-02T05:09:49.104Z",
+      "global_rating_change": null,
+      "last_activity": null,
+      "medal": null,
+      "modified": "2026-08-02T05:09:49.108Z",
+      "n_first_ac": 0,
+      "n_solved": 0,
+      "n_total_solved": 0,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": null,
+      "place_as_int": null,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 102,
+      "skip_in_stats": true,
+      "solving": 0.0,
+      "total_solving": 0.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91340998
+  },
+  {
+    "fields": {
+      "account": 7186353,
+      "addition": {
+        "_no_update_n_contests": true,
+        "name": "Nguyen Tuan Nghia",
+        "problems": {
+          "Q1": {
+            "upsolving": {
+              "binary": true,
+              "result": "+",
+              "submission_id": 2091111882,
+              "submission_time": 1785659911
+            }
+          },
+          "Q2": {
+            "upsolving": {
+              "binary": true,
+              "result": "+",
+              "submission_id": 2091324918,
+              "submission_time": 1785672851
+            }
+          },
+          "Q3": {
+            "upsolving": {
+              "binary": true,
+              "result": "+",
+              "submission_id": 2091756909,
+              "submission_time": 1785694488
+            }
+          }
+        }
+      },
+      "advanced": false,
+      "contest": 68982643,
+      "created": "2026-08-02T18:21:21.244Z",
+      "global_rating_change": null,
+      "last_activity": null,
+      "medal": null,
+      "modified": "2026-08-02T18:21:21.431Z",
+      "n_first_ac": 0,
+      "n_solved": 0,
+      "n_total_solved": 0,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": null,
+      "place_as_int": null,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 102,
+      "skip_in_stats": true,
+      "solving": 0.0,
+      "total_solving": 0.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91345432
+  }
+]

@@ -1,0 +1,64 @@
+{
+    "host": "leetcode.com",
+    "rid": 102,
+    "path": "./module/leetcode.com/index.php",
+    "url": "https://leetcode.com/contest/",
+    "parse_url": "https://leetcode.com/contest/",
+    "timezone": "UTC",
+    "api_url": null,
+    "info": {
+        "accounts": {
+            "limit": 100
+        },
+        "problems": {
+            "rating": {
+                "old_rating_only": true
+            },
+            "upsolving": {
+                "help_message": "Only the most recent successful solutions."
+            }
+        },
+        "standings": {
+            "timeline": {
+                "time_factor": {
+                    "1": [
+                        1
+                    ],
+                    "2": [
+                        60,
+                        1
+                    ],
+                    "3": [
+                        3600,
+                        60,
+                        1
+                    ]
+                },
+                "penalty_more": 300,
+                "penalty_format": 3,
+                "penalty_rounding": "none",
+                "penalty_aggregate": "max"
+            },
+            "name_instead_key": true
+        },
+        "get_events": {
+            "colors": {
+                "darken": "#164430",
+                "lighten": "#D1EFE1"
+            }
+        },
+        "statistics": {
+            "wait_rating": {
+                "days": 15,
+                "has_coder": true,
+                "top_rank_percent": 0.3
+            },
+            "n_top_download_submissions": 1000
+        },
+        "default_variables": {
+            "min_n_participations": "10"
+        }
+    },
+    "parse_full_list": false,
+    "recorded_at": "2026-08-06 17:54:50"
+}

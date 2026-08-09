@@ -1,0 +1,72 @@
+[
+    {
+        "end_time": "24 march 2026 23:59 Europe/Warsaw",
+        "host": "potyczki.mimuw.edu.pl",
+        "key": "Potyczki Algorytmiczne 2026. Runda 1",
+        "rid": 131,
+        "standings_url": "https://sio2.mimuw.edu.pl/c/pa-2026-1/ranking/",
+        "start_time": "23 march 2026 12:00 Europe/Warsaw",
+        "timezone": "Europe/Warsaw",
+        "title": "Potyczki Algorytmiczne 2026. Runda 1",
+        "url": "https://sio2.mimuw.edu.pl/c/pa-2026-1/p/"
+    },
+    {
+        "end_time": "25 march 2026 23:59 Europe/Warsaw",
+        "host": "potyczki.mimuw.edu.pl",
+        "key": "Potyczki Algorytmiczne 2026. Runda 2",
+        "rid": 131,
+        "standings_url": "https://sio2.mimuw.edu.pl/c/pa-2026-1/ranking/",
+        "start_time": "24 march 2026 12:00 Europe/Warsaw",
+        "timezone": "Europe/Warsaw",
+        "title": "Potyczki Algorytmiczne 2026. Runda 2",
+        "url": "https://sio2.mimuw.edu.pl/c/pa-2026-1/p/"
+    },
+    {
+        "end_time": "26 march 2026 23:59 Europe/Warsaw",
+        "host": "potyczki.mimuw.edu.pl",
+        "key": "Potyczki Algorytmiczne 2026. Runda 3",
+        "rid": 131,
+        "standings_url": "https://sio2.mimuw.edu.pl/c/pa-2026-1/ranking/",
+        "start_time": "25 march 2026 12:00 Europe/Warsaw",
+        "timezone": "Europe/Warsaw",
+        "title": "Potyczki Algorytmiczne 2026. Runda 3",
+        "url": "https://sio2.mimuw.edu.pl/c/pa-2026-1/p/"
+    },
+    {
+        "end_time": "27 march 2026 23:59 Europe/Warsaw",
+        "host": "potyczki.mimuw.edu.pl",
+        "key": "Potyczki Algorytmiczne 2026. Runda 4",
+        "rid": 131,
+        "standings_url": "https://sio2.mimuw.edu.pl/c/pa-2026-1/ranking/",
+        "start_time": "26 march 2026 12:00 Europe/Warsaw",
+        "timezone": "Europe/Warsaw",
+        "title": "Potyczki Algorytmiczne 2026. Runda 4",
+        "url": "https://sio2.mimuw.edu.pl/c/pa-2026-1/p/"
+    },
+    {
+        "end_time": "29 march 2026 23:59 Europe/Warsaw",
+        "end_time_shift": "+1 day",
+        "host": "potyczki.mimuw.edu.pl",
+        "info": {
+            "_inherit_stage": true
+        },
+        "key": "potyczki-algorytmiczne-2026",
+        "rid": 131,
+        "start_time": "23 march 2026 12:00 Europe/Warsaw",
+        "start_time_shift": "-1 hour",
+        "timezone": "Europe/Warsaw",
+        "title": "Potyczki Algorytmiczne 2026",
+        "url": "https://potyczki.mimuw.edu.pl/harmonogram/"
+    },
+    {
+        "end_time": "29 march 2026 23:59 Europe/Warsaw",
+        "host": "potyczki.mimuw.edu.pl",
+        "key": "Potyczki Algorytmiczne 2026. Runda 5",
+        "rid": 131,
+        "standings_url": "https://sio2.mimuw.edu.pl/c/pa-2026-1/ranking/",
+        "start_time": "27 march 2026 12:00 Europe/Warsaw",
+        "timezone": "Europe/Warsaw",
+        "title": "Potyczki Algorytmiczne 2026. Runda 5",
+        "url": "https://sio2.mimuw.edu.pl/c/pa-2026-1/p/"
+    }
+]

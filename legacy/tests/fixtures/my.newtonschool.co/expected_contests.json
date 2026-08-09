@@ -1,0 +1,102 @@
+[
+    {
+        "end_time": 1695837600,
+        "host": "my.newtonschool.co",
+        "key": "1zxi4400tvi8/p0fjubx92rcs",
+        "rid": 130,
+        "start_time": 1695828600,
+        "timezone": null,
+        "title": "CodeRush September '23",
+        "url": "https://my.newtonschool.co/course/1zxi4400tvi8/assignment/p0fjubx92rcs/dashboard/"
+    },
+    {
+        "end_time": 1698775200,
+        "host": "my.newtonschool.co",
+        "key": "oq8nzv2opy9p/ni25u6ss8112",
+        "rid": 130,
+        "start_time": 1698766200,
+        "timezone": null,
+        "title": "CodeRush October '23",
+        "url": "https://my.newtonschool.co/course/oq8nzv2opy9p/assignment/ni25u6ss8112/dashboard/"
+    },
+    {
+        "end_time": 1701280800,
+        "host": "my.newtonschool.co",
+        "key": "saxvqaddofe1/rl6opxp7o17u",
+        "rid": 130,
+        "start_time": 1701271800,
+        "timezone": null,
+        "title": "CodeRush November '23",
+        "url": "https://my.newtonschool.co/course/saxvqaddofe1/assignment/rl6opxp7o17u/dashboard/"
+    },
+    {
+        "end_time": 1703700000,
+        "host": "my.newtonschool.co",
+        "key": "uit55t66ux9r/mtdbgegi6qwo",
+        "rid": 130,
+        "start_time": 1703691000,
+        "timezone": null,
+        "title": "CodeRush December '23",
+        "url": "https://my.newtonschool.co/course/uit55t66ux9r/assignment/mtdbgegi6qwo/dashboard/"
+    },
+    {
+        "end_time": 1706551200,
+        "host": "my.newtonschool.co",
+        "key": "68mdsx136gf6/gsvuxfty66ic",
+        "rid": 130,
+        "start_time": 1706542200,
+        "timezone": null,
+        "title": "CodeRush January '24",
+        "url": "https://my.newtonschool.co/course/68mdsx136gf6/assignment/gsvuxfty66ic/dashboard/"
+    },
+    {
+        "end_time": 1709575200,
+        "host": "my.newtonschool.co",
+        "key": "3eyws79n1emj/k8u1xrpj76cz",
+        "rid": 130,
+        "start_time": 1709566200,
+        "timezone": null,
+        "title": "CodeRush March '24",
+        "url": "https://my.newtonschool.co/course/3eyws79n1emj/assignment/k8u1xrpj76cz/dashboard/"
+    },
+    {
+        "end_time": 1721647800,
+        "host": "my.newtonschool.co",
+        "key": "f0qegjxzm2nc/gykgehvvq22v",
+        "rid": 130,
+        "start_time": 1720690200,
+        "timezone": null,
+        "title": "NST Junior Practice Coding Olympiad - II",
+        "url": "https://my.newtonschool.co/course/f0qegjxzm2nc/assignment/gykgehvvq22v/dashboard/"
+    },
+    {
+        "end_time": 1721647800,
+        "host": "my.newtonschool.co",
+        "key": "xlbjxuehnn16/m4vb9upu20ip",
+        "rid": 130,
+        "start_time": 1720690200,
+        "timezone": null,
+        "title": "NST Junior Practice Coding Olympiad - I",
+        "url": "https://my.newtonschool.co/course/xlbjxuehnn16/assignment/m4vb9upu20ip/dashboard/"
+    },
+    {
+        "end_time": 1721655000,
+        "host": "my.newtonschool.co",
+        "key": "a4u8zo4z69ts/dn2ixxignif5",
+        "rid": 130,
+        "start_time": 1721647800,
+        "timezone": null,
+        "title": "NST Junior Coding Olympiad",
+        "url": "https://my.newtonschool.co/course/a4u8zo4z69ts/assignment/dn2ixxignif5/dashboard/"
+    },
+    {
+        "end_time": 1727199000,
+        "host": "my.newtonschool.co",
+        "key": "dnpxotzj9sa4/mvd7x4mnc13c",
+        "rid": 130,
+        "start_time": 1727191800,
+        "timezone": null,
+        "title": "Developer Hiring Challenge September'24",
+        "url": "https://my.newtonschool.co/course/dnpxotzj9sa4/assignment/mvd7x4mnc13c/dashboard/"
+    }
+]

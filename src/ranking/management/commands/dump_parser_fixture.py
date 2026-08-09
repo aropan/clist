@@ -22,13 +22,17 @@ from django_print_sql import print_sql_decorator
 from clist.models import Contest, Resource
 from ranking.models import Statistics
 from ranking.tests.parser_regression import (
+    HTTP_CACHE_FILENAME,
     PARSER_FIXTURES_ROOT,
     discover_parser_fixtures,
     fixture_file_path,
     fixture_path_for_contest,
     get_standings,
+    materialized_http_cache,
     normalize_standings,
     open_deterministic_gzip,
+    pack_http_cache,
+    read_http_cache_archive,
     standings_context_from_statistics,
     write_expected_standings,
     write_json,
@@ -719,17 +723,15 @@ class Command(BaseCommand):
         return None
 
     def validate_recording(self, fixture_path, show_sensitive_matches=False, resource_host=None):
+        fixture_path = Path(fixture_path)
         sensitive_values = self.sensitive_values()
-        for path in fixture_path.rglob("*"):
-            if not path.is_file():
-                continue
-            relative_path = path.relative_to(fixture_path)
+
+        def validate_content(content, relative_path):
             is_httpcache = relative_path.parts and relative_path.parts[0] == "httpcache"
             allowed_fields = PUBLIC_HTTPCACHE_JSON_FIELDS.get(resource_host, ()) if is_httpcache else ()
             public_text_patterns = PUBLIC_HTTPCACHE_TEXT_PATHS.get(resource_host, ()) if is_httpcache else ()
             is_public_text_cache = any(pattern.search(relative_path.name) for pattern in public_text_patterns)
-            content = path.read_bytes()
-            if path.suffix == ".gz":
+            if relative_path.suffix == ".gz":
                 try:
                     content = gzip.decompress(content)
                 except OSError as error:
@@ -771,10 +773,24 @@ class Command(BaseCommand):
             for name, value in sensitive_values:
                 if value not in content:
                     continue
-                message = f"refusing to keep an environment secret in {path.relative_to(fixture_path)}"
+                message = f"refusing to keep an environment secret in {relative_path}"
                 if show_sensitive_matches:
                     message += f": environment {name}={self.format_sensitive_match(value)}"
                 raise CommandError(message)
+
+        archive_path = fixture_file_path(fixture_path, "httpcache.json")
+        for path in fixture_path.rglob("*"):
+            if not path.is_file() or path == archive_path:
+                continue
+            validate_content(path.read_bytes(), path.relative_to(fixture_path))
+
+        if archive_path.is_file():
+            try:
+                cache_files = read_http_cache_archive(archive_path)
+            except ValueError as error:
+                raise CommandError(f"invalid HTTP cache archive: {archive_path.relative_to(fixture_path)}") from error
+            for relative_path, content in cache_files.items():
+                validate_content(content, Path("httpcache").joinpath(*relative_path.parts))
 
     def replace_fixture(self, source, destination):
         backup = destination.with_name(f".{destination.name}.backup")
@@ -817,9 +833,6 @@ class Command(BaseCommand):
         expected_standings = fixture_path / "expected_standings.json"
         if expected_standings.is_file():
             compressed.append(self.gzip_file(expected_standings))
-
-        for cache_file in sorted((fixture_path / "httpcache").glob("*.html")):
-            compressed.append(self.gzip_file(cache_file))
 
         if compressed:
             self.verbose(f"compressed {len(compressed)} fixture file(s) with gzip", level=2)
@@ -1176,20 +1189,30 @@ class Command(BaseCommand):
             )
             self.verbose("compress fixture files", level=2)
             self.compress_fixture_files(temporary_path)
-            self.verbose("run compressed offline replay", level=2)
-            replayed = get_standings(
-                contest,
-                cache_path,
-                allow_network=False,
-                users=selected_statistics.users,
-                statistics=sanitized_statistics,
+            self.verbose("bundle HTTP cache", level=2)
+            n_cache_files = pack_http_cache(cache_path, temporary_path / HTTP_CACHE_FILENAME)
+            shutil.rmtree(cache_path)
+            self.verbose(f"bundled {n_cache_files} HTTP cache file(s)", level=3)
+            self.validate_recording(
+                temporary_path,
+                show_sensitive_matches=show_sensitive_matches,
+                resource_host=resource_host,
             )
-            self.verbose(f"compressed offline standings: {self.describe_standings(replayed)}", level=3)
-            self.verbose("compare live and compressed offline normalized standings", level=2)
+            self.verbose("run bundled offline replay", level=2)
+            with materialized_http_cache(temporary_path) as bundled_cache_path:
+                replayed = get_standings(
+                    contest,
+                    bundled_cache_path,
+                    allow_network=False,
+                    users=selected_statistics.users,
+                    statistics=sanitized_statistics,
+                )
+            self.verbose(f"bundled offline standings: {self.describe_standings(replayed)}", level=3)
+            self.verbose("compare live and bundled offline normalized standings", level=2)
             self.assert_same_normalized_standings(
                 standings,
                 replayed,
-                "compressed fixture standings differ from the live recording",
+                "bundled fixture standings differ from the live recording",
             )
             self.verbose("make fixture files readable", level=3)
             self.make_fixture_readable(temporary_path)
@@ -1229,21 +1252,24 @@ class Command(BaseCommand):
             for required in ("db.json", "expected_standings.json"):
                 if not fixture_file_path(fixture_path, required).exists():
                     raise CommandError(f"fixture is incomplete, missing {required}: {fixture_path}")
-            if not (fixture_path / "httpcache").is_dir():
-                raise CommandError(f"fixture is incomplete, missing httpcache: {fixture_path}")
+            cache_archive_path = fixture_file_path(fixture_path, "httpcache.json")
+            if not cache_archive_path.is_file():
+                raise CommandError(f"fixture is incomplete, missing {HTTP_CACHE_FILENAME}: {fixture_path}")
             selected_statistics = self.select_statistics_for_fixture(contest)
-            sanitized_cache_files = self.sanitize_fixture_files(fixture_path / "httpcache")
-            if sanitized_cache_files:
-                self.verbose(f"sanitized {sanitized_cache_files} HTTP cache file(s)", level=2)
             sanitized_statistics = self.sanitize_fixture_data(selected_statistics.statistics_by_key)
             self.verbose("replay existing fixture cache offline", level=2)
-            standings = get_standings(
-                contest,
-                fixture_path / "httpcache",
-                allow_network=False,
-                users=selected_statistics.users,
-                statistics=sanitized_statistics,
-            )
+            with materialized_http_cache(fixture_path) as cache_path:
+                sanitized_cache_files = self.sanitize_fixture_files(cache_path)
+                if sanitized_cache_files:
+                    self.verbose(f"sanitized {sanitized_cache_files} HTTP cache file(s)", level=2)
+                standings = get_standings(
+                    contest,
+                    cache_path,
+                    allow_network=False,
+                    users=selected_statistics.users,
+                    statistics=sanitized_statistics,
+                )
+                pack_http_cache(cache_path, cache_archive_path)
             self.verbose(f"offline standings: {self.describe_standings(standings)}", level=3)
             self.verbose("write database fixture with selected statistics", level=2)
             write_json(

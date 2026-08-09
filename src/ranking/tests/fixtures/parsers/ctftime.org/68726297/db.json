@@ -1,0 +1,319 @@
+[
+  {
+    "fields": {
+      "accounts_fields": {
+        "types": {
+          "avatar_url": [
+            "str"
+          ]
+        },
+        "verification_fields": []
+      },
+      "allow_delete_archived_statistics": false,
+      "api_url": null,
+      "auto_remove_started": false,
+      "avatar_url": "{info[avatar_url]}",
+      "avg_rating": null,
+      "color": "#66CCBB",
+      "contest_update_time": "2026-08-03T18:37:09.006Z",
+      "country_rank_update_time": "2026-08-04T00:00:08.715Z",
+      "created": "2014-03-11T06:00:24Z",
+      "default_account_type": 1,
+      "enable": true,
+      "has_account_last_submission": null,
+      "has_account_n_writers": null,
+      "has_account_verification": false,
+      "has_accounts_infos_update": true,
+      "has_country_medal": null,
+      "has_country_place": null,
+      "has_country_rating": false,
+      "has_inherit_medals_to_related": false,
+      "has_multi_account": true,
+      "has_problem_archive": false,
+      "has_problem_rating": false,
+      "has_problem_statistic": false,
+      "has_problem_update": false,
+      "has_rating_history": false,
+      "has_standings_renamed_account": false,
+      "has_statistic_medal": true,
+      "has_statistic_n_first_ac": null,
+      "has_statistic_n_total_solved": null,
+      "has_statistic_place": true,
+      "has_statistic_total_solving": true,
+      "has_submissions_statistics_log": false,
+      "has_upsolving": false,
+      "host": "ctftime.org",
+      "icon_file": "resources/ctftime_org.png",
+      "icon_updated_at": "2025-12-14T19:00:07.931Z",
+      "icon_url": null,
+      "info": {
+        "get_events": {
+          "colors": {
+            "darken": "#16443D",
+            "lighten": "#D1EFEA"
+          }
+        },
+        "standings": {
+          "name_instead_key": true
+        }
+      },
+      "modified": "2026-08-04T00:00:09.239Z",
+      "n_accounts": 255344,
+      "n_accounts_to_update": 0,
+      "n_contests": 2230,
+      "n_rating_accounts": null,
+      "n_statistics": 550094,
+      "n_team_accounts": 0,
+      "n_university_accounts": 0,
+      "parse_url": null,
+      "path": "./module/ctftime.org/index.php",
+      "problem_archive_update_time": null,
+      "problem_rating_predictor": {},
+      "problem_url": null,
+      "problems_fields": {
+        "types": {}
+      },
+      "profile_url": "https://ctftime.org/team/{account}",
+      "rank_update_time": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "ratings": [],
+      "regexp": null,
+      "short_host": "ctf",
+      "skip_for_contests_chart": false,
+      "statistics_fields": {
+        "types": {
+          "medal": [
+            "str"
+          ],
+          "name": [
+            "str"
+          ],
+          "percent": [
+            "str"
+          ],
+          "rating points": [
+            "float",
+            "int"
+          ]
+        }
+      },
+      "timezone": "UTC",
+      "uid": "i5s4vllijrcm3ofuqtgkjo82tk@group.calendar.google.com",
+      "url": "https://ctftime.org/"
+    },
+    "model": "clist.resource",
+    "pk": 70
+  },
+  {
+    "fields": {
+      "created": "2021-08-28T02:57:39.159Z",
+      "delay_on_error": "08:00:00",
+      "delay_on_success": "1 00:00:00",
+      "delay_shortly_after": "00:05:00",
+      "enable": true,
+      "long_contest_divider": 15,
+      "long_contest_idle": "06:00:00",
+      "max_delay_after_end": "3 00:00:00",
+      "min_delay_after_end": "00:10:00",
+      "modified": "2021-08-28T15:13:27.895Z",
+      "path": "ranking/management/modules/ctftime",
+      "resource": 70,
+      "shortly_after": "00:30:00"
+    },
+    "model": "ranking.module",
+    "pk": 62
+  },
+  {
+    "fields": {
+      "allow_updating_statistics_for_participants": null,
+      "auto_updated": "2026-07-21T14:46:54Z",
+      "calculate_time": false,
+      "created": "2026-07-07T18:10:38.227Z",
+      "duration_in_secs": 28800,
+      "edit": null,
+      "elimination_tournament_info": {},
+      "end_time": "2026-07-18T15:00:00Z",
+      "finalists_info": {},
+      "has_fixed_rating_prediction_field": null,
+      "has_hidden_results": false,
+      "has_submissions": null,
+      "has_submissions_tests": null,
+      "has_unlimited_statistics": null,
+      "hide_unsolved_standings_problems": null,
+      "host": "ctftime.org",
+      "info": {
+        "fields": [
+          "name",
+          "rating points",
+          "percent",
+          "medal"
+        ],
+        "fields_types": {
+          "medal": [
+            "str"
+          ],
+          "name": [
+            "str"
+          ],
+          "percent": [
+            "str"
+          ],
+          "rating points": [
+            "int"
+          ]
+        },
+        "hidden_fields": [],
+        "standings": {
+          "medals": [
+            {
+              "count": 1,
+              "name": "gold"
+            }
+          ]
+        }
+      },
+      "invisible": false,
+      "is_auto_added": true,
+      "is_promoted": null,
+      "is_rated": null,
+      "key": "3357",
+      "kind": null,
+      "link_statistic_timing": null,
+      "merging_contests": [],
+      "modified": "2026-07-07T18:10:38.227Z",
+      "n_problems": null,
+      "n_statistics": 8,
+      "notification_timing": "2026-07-07T18:12:09.816Z",
+      "parsed_percentage": null,
+      "parsed_time": "2026-07-20T15:37:05.980Z",
+      "problem_rating_hash": null,
+      "problem_rating_update_required": false,
+      "rating_prediction_fields": null,
+      "rating_prediction_hash": null,
+      "rating_prediction_timing": null,
+      "raw_info": {},
+      "registration_url": null,
+      "related": null,
+      "resource": 70,
+      "series": null,
+      "set_matched_coders_to_members": null,
+      "slug": "axiomctf-2026-finals",
+      "standings_kind": null,
+      "standings_url": null,
+      "start_time": "2026-07-18T07:00:00Z",
+      "statistic_timing": "2026-07-21T15:37:05.980Z",
+      "statistics_update_required": false,
+      "submissions_info": {},
+      "title": "AxiomCTF 2026 Finals",
+      "title_path": "axiomctf.2026.finals",
+      "trial_standings_url": null,
+      "uid": "629l252v24qa06khk08ehfnfs8",
+      "updated": "2026-07-21T14:46:54.774Z",
+      "upload_solved_problems_solutions": null,
+      "upsolving_key": null,
+      "upsolving_url": null,
+      "url": "https://ctftime.org/event/3357/",
+      "variables": {},
+      "wait_for_successful_update_timing": null,
+      "with_advance": false,
+      "with_medals": true
+    },
+    "model": "clist.contest",
+    "pk": 68726297
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "RU",
+      "created": "2024-11-04T12:10:07.073Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar_url": "https://ctftime.org/media/cache/68/4a/684aca02dc4d8c9f7491533f03c502dc.png",
+        "country": "RU",
+        "name": "N0_captur3_flag?:_("
+      },
+      "key": "361594",
+      "last_activity": "2026-07-18T07:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-07-20T03:39:09.620Z",
+      "n_bronze": null,
+      "n_contests": 11,
+      "n_first_ac": 0,
+      "n_first_places": 1,
+      "n_gold": 1,
+      "n_listvalues": 0,
+      "n_medals": 1,
+      "n_other_medals": null,
+      "n_places": 3,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 0,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 2,
+      "n_total_solved": 0,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "N0_captur3_flag?:_(",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 70,
+      "resource_rank": null,
+      "solving": 104281.8,
+      "submissions_info": {},
+      "total_solving": 104281.8,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-07-20T23:59:59.999Z",
+      "upsolving": 0.0,
+      "url": "/account/361594/resource/ctftime.org/"
+    },
+    "model": "ranking.account",
+    "pk": 7636523
+  },
+  {
+    "fields": {
+      "account": 7636523,
+      "addition": {
+        "medal": "gold",
+        "name": "N0_captur3_flag?:_(",
+        "percent": "100.00",
+        "rating points": 0
+      },
+      "advanced": false,
+      "contest": 68726297,
+      "created": "2026-07-19T15:36:08.079Z",
+      "global_rating_change": null,
+      "last_activity": "2026-07-18T07:00:00Z",
+      "medal": "gold",
+      "modified": "2026-07-20T15:37:06.351Z",
+      "n_first_ac": 0,
+      "n_solved": 0,
+      "n_total_solved": 0,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "1",
+      "place_as_int": 1,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 70,
+      "skip_in_stats": false,
+      "solving": 4549.8,
+      "total_solving": 4549.8,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 90995704
+  }
+]

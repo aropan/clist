@@ -1,0 +1,1373 @@
+[
+  {
+    "fields": {
+      "accounts_fields": {
+        "types": {},
+        "verification_fields": []
+      },
+      "allow_delete_archived_statistics": false,
+      "api_url": null,
+      "auto_remove_started": false,
+      "avatar_url": null,
+      "avg_rating": null,
+      "color": "#CC6581",
+      "contest_update_time": "2026-06-07T17:47:23.688Z",
+      "country_rank_update_time": "2026-06-10T18:20:06.661Z",
+      "created": "2023-02-13T00:35:00.670Z",
+      "default_account_type": 1,
+      "enable": true,
+      "has_account_last_submission": null,
+      "has_account_n_writers": null,
+      "has_account_verification": false,
+      "has_accounts_infos_update": true,
+      "has_country_medal": null,
+      "has_country_place": null,
+      "has_country_rating": false,
+      "has_inherit_medals_to_related": false,
+      "has_multi_account": true,
+      "has_problem_archive": false,
+      "has_problem_rating": false,
+      "has_problem_statistic": true,
+      "has_problem_update": false,
+      "has_rating_history": false,
+      "has_standings_renamed_account": true,
+      "has_statistic_medal": true,
+      "has_statistic_n_first_ac": true,
+      "has_statistic_n_total_solved": true,
+      "has_statistic_place": true,
+      "has_statistic_total_solving": false,
+      "has_submissions_statistics_log": false,
+      "has_upsolving": false,
+      "host": "ucup.ac",
+      "icon_file": "resources/ucup_ac.png",
+      "icon_updated_at": "2025-12-14T00:14:54.936Z",
+      "icon_url": null,
+      "info": {
+        "get_events": {
+          "colors": {
+            "darken": "#441623",
+            "lighten": "#EFD0D9"
+          }
+        },
+        "standings": {
+          "name_instead_key": true,
+          "timeline": {
+            "time_factor": {
+              "1": [
+                1
+              ],
+              "2": [
+                3600,
+                60
+              ],
+              "3": [
+                3600,
+                60,
+                1
+              ]
+            }
+          }
+        }
+      },
+      "modified": "2026-07-07T22:51:56.072Z",
+      "n_accounts": 28453,
+      "n_accounts_to_update": 0,
+      "n_contests": 133,
+      "n_rating_accounts": null,
+      "n_statistics": 51121,
+      "n_team_accounts": 0,
+      "n_university_accounts": 0,
+      "parse_url": "https://ucup.ac/",
+      "path": "./module/ucup.ac/index.php",
+      "problem_archive_update_time": null,
+      "problem_rating_predictor": {},
+      "problem_url": null,
+      "problems_fields": {
+        "types": {
+          "first_ac__accounts": [
+            "list"
+          ],
+          "first_ac__in_seconds": [
+            "int"
+          ],
+          "first_ac__time": [
+            "str"
+          ]
+        }
+      },
+      "profile_url": null,
+      "rank_update_time": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "ratings": [],
+      "regexp": null,
+      "short_host": "ucup",
+      "skip_for_contests_chart": false,
+      "statistics_fields": {
+        "types": {
+          "affiliation": [
+            "NoneType",
+            "str"
+          ],
+          "name": [
+            "str"
+          ],
+          "original_handle": [
+            "str"
+          ],
+          "out_of_competition": [
+            "bool"
+          ],
+          "participant_type": [
+            "int"
+          ],
+          "penalty": [
+            "int"
+          ],
+          "rating": [
+            "int"
+          ],
+          "season_rating": [
+            "float"
+          ],
+          "stage_gp_score": [
+            "float",
+            "int"
+          ],
+          "stage_norm_score": [
+            "float"
+          ],
+          "stage_rank": [
+            "int"
+          ],
+          "stage_score": [
+            "float"
+          ],
+          "standings_rating": [
+            "float"
+          ],
+          "total_rating": [
+            "float"
+          ]
+        }
+      },
+      "timezone": null,
+      "uid": "kdor96va8dasucspg62acurhmk@group.calendar.google.com",
+      "url": "https://ucup.ac/"
+    },
+    "model": "clist.resource",
+    "pk": 139
+  },
+  {
+    "fields": {
+      "created": "2023-02-13T23:34:02.868Z",
+      "delay_on_error": "10:00:00",
+      "delay_on_success": "15:00:00",
+      "delay_shortly_after": "00:05:00",
+      "enable": true,
+      "long_contest_divider": 15,
+      "long_contest_idle": "06:00:00",
+      "max_delay_after_end": "8 00:00:00",
+      "min_delay_after_end": "01:00:00",
+      "modified": "2024-12-16T22:23:23.470Z",
+      "path": "ranking/management/modules/ucup",
+      "resource": 139,
+      "shortly_after": "00:30:00"
+    },
+    "model": "ranking.module",
+    "pk": 72
+  },
+  {
+    "fields": {
+      "allow_updating_statistics_for_participants": null,
+      "auto_updated": "2025-02-18T13:56:01.989Z",
+      "calculate_time": false,
+      "created": "2025-02-18T13:56:01.967Z",
+      "duration_in_secs": 18000,
+      "edit": null,
+      "elimination_tournament_info": {},
+      "end_time": "2025-02-22T08:30:00Z",
+      "finalists_info": {
+        "fields": [
+          "Region"
+        ],
+        "has_name": true,
+        "n_finalists": 20,
+        "parse_args": {
+          "contest": 57558499,
+          "force_color": false,
+          "member_field": "Team Member",
+          "member_from_url": "/profile/",
+          "name_field": "Team Name",
+          "no_color": false,
+          "pythonpath": null,
+          "resource": "cf",
+          "settings": null,
+          "skip_checks": false,
+          "traceback": false,
+          "url": "https://mirror.codeforces.com/blog/entry/136593",
+          "verbosity": 1
+        },
+        "resources": [
+          1
+        ]
+      },
+      "has_fixed_rating_prediction_field": null,
+      "has_hidden_results": false,
+      "has_submissions": null,
+      "has_submissions_tests": null,
+      "has_unlimited_statistics": null,
+      "hide_unsolved_standings_problems": null,
+      "host": "ucup.ac",
+      "info": {
+        "_submissions_info": {},
+        "fields": [
+          "penalty",
+          "name",
+          "original_handle",
+          "standings_rating",
+          "rating",
+          "affiliation",
+          "participant_type",
+          "out_of_competition",
+          "problems",
+          "_old_key",
+          "medal"
+        ],
+        "fields_types": {
+          "_old_key": [
+            "str"
+          ],
+          "affiliation": [
+            "NoneType"
+          ],
+          "name": [
+            "str"
+          ],
+          "original_handle": [
+            "str"
+          ],
+          "out_of_competition": [
+            "bool"
+          ],
+          "participant_type": [
+            "int"
+          ],
+          "penalty": [
+            "int"
+          ],
+          "problems": [
+            "dict"
+          ],
+          "rating": [
+            "int"
+          ],
+          "standings_rating": [
+            "float"
+          ]
+        },
+        "hidden_fields": [
+          "original_handle",
+          "affiliation",
+          "rating",
+          "standings_rating",
+          "out_of_competition"
+        ],
+        "problems": [
+          {
+            "code": "10099",
+            "n_total": 20,
+            "name": "Traveling in Cells 2",
+            "short": "A",
+            "url": "https://contest.ucup.ac/contest/1919/problem/10099"
+          },
+          {
+            "code": "10100",
+            "first_ac": {
+              "accounts": [
+                "team-3"
+              ],
+              "in_seconds": 15261,
+              "time": "4:14"
+            },
+            "n_accepted": 1,
+            "n_teams": 2,
+            "n_total": 20,
+            "name": "Exchanging Kubic 3",
+            "short": "B",
+            "url": "https://contest.ucup.ac/contest/1919/problem/10100"
+          },
+          {
+            "code": "10101",
+            "first_ac": {
+              "accounts": [
+                "team-52"
+              ],
+              "in_seconds": 2977,
+              "time": "0:49"
+            },
+            "n_accepted": 18,
+            "n_teams": 20,
+            "n_total": 20,
+            "name": "Longest Increasing Subsequence",
+            "short": "C",
+            "url": "https://contest.ucup.ac/contest/1919/problem/10101"
+          },
+          {
+            "code": "10102",
+            "first_ac": {
+              "accounts": [
+                "team-3"
+              ],
+              "in_seconds": 12615,
+              "time": "3:30"
+            },
+            "n_accepted": 4,
+            "n_teams": 6,
+            "n_total": 20,
+            "name": "Puzzle: Nurikabe",
+            "short": "D",
+            "url": "https://contest.ucup.ac/contest/1919/problem/10102"
+          },
+          {
+            "code": "10103",
+            "first_ac": {
+              "accounts": [
+                "team-1878"
+              ],
+              "in_seconds": 13339,
+              "time": "3:42"
+            },
+            "n_accepted": 1,
+            "n_teams": 3,
+            "n_total": 20,
+            "name": "Quad Kingdoms Chess 2",
+            "short": "E",
+            "url": "https://contest.ucup.ac/contest/1919/problem/10103"
+          },
+          {
+            "code": "10104",
+            "first_ac": {
+              "accounts": [
+                "team-253"
+              ],
+              "in_seconds": 3274,
+              "time": "0:54"
+            },
+            "n_accepted": 17,
+            "n_teams": 18,
+            "n_total": 20,
+            "name": "World of Rains",
+            "short": "F",
+            "url": "https://contest.ucup.ac/contest/1919/problem/10104"
+          },
+          {
+            "code": "10105",
+            "n_total": 20,
+            "name": "Circular Parterre",
+            "short": "G",
+            "url": "https://contest.ucup.ac/contest/1919/problem/10105"
+          },
+          {
+            "code": "10106",
+            "first_ac": {
+              "accounts": [
+                "team-1878"
+              ],
+              "in_seconds": 2672,
+              "time": "0:44"
+            },
+            "n_accepted": 3,
+            "n_teams": 4,
+            "n_total": 20,
+            "name": "Homeward Glance",
+            "short": "H",
+            "url": "https://contest.ucup.ac/contest/1919/problem/10106"
+          },
+          {
+            "code": "10107",
+            "first_ac": {
+              "accounts": [
+                "team-123"
+              ],
+              "in_seconds": 544,
+              "time": "0:09"
+            },
+            "n_accepted": 20,
+            "n_teams": 20,
+            "n_total": 20,
+            "name": "Deciding Game",
+            "short": "I",
+            "url": "https://contest.ucup.ac/contest/1919/problem/10107"
+          },
+          {
+            "code": "10108",
+            "first_ac": {
+              "accounts": [
+                "team-1878"
+              ],
+              "in_seconds": 2148,
+              "time": "0:35"
+            },
+            "n_accepted": 20,
+            "n_teams": 20,
+            "n_total": 20,
+            "name": "Divide the String",
+            "short": "J",
+            "url": "https://contest.ucup.ac/contest/1919/problem/10108"
+          },
+          {
+            "code": "10109",
+            "first_ac": {
+              "accounts": [
+                "team-3"
+              ],
+              "in_seconds": 8901,
+              "time": "2:28"
+            },
+            "n_accepted": 5,
+            "n_teams": 11,
+            "n_total": 20,
+            "name": "Master of Modular Arithmetic",
+            "short": "K",
+            "url": "https://contest.ucup.ac/contest/1919/problem/10109"
+          },
+          {
+            "code": "10110",
+            "first_ac": {
+              "accounts": [
+                "team-87"
+              ],
+              "in_seconds": 2242,
+              "time": "0:37"
+            },
+            "n_accepted": 20,
+            "n_teams": 20,
+            "n_total": 20,
+            "name": "Not Another Constructive Problem",
+            "short": "L",
+            "url": "https://contest.ucup.ac/contest/1919/problem/10110"
+          },
+          {
+            "code": "10111",
+            "first_ac": {
+              "accounts": [
+                "team-1878"
+              ],
+              "in_seconds": 7316,
+              "time": "2:01"
+            },
+            "n_accepted": 4,
+            "n_teams": 7,
+            "n_total": 20,
+            "name": "Dividing Chains",
+            "short": "M",
+            "url": "https://contest.ucup.ac/contest/1919/problem/10111"
+          }
+        ],
+        "standings": {
+          "alternative_url": "https://contest.ucup.ac/contest/1919/standings/",
+          "data": {
+            "contest_id": 1919,
+            "contest_type": "ICPC",
+            "external": 0,
+            "finalized": 0,
+            "fullscore": 1300,
+            "standings_version": 2
+          },
+          "filters": [
+            {
+              "field": "member",
+              "regex": "^ucup-2-final-team-"
+            }
+          ],
+          "modifiers": [
+            {
+              "field": "name",
+              "regex": "^(?P<value>.*)\\s+\\(Universal Cup\\)$"
+            }
+          ],
+          "parse_submissions": false
+        }
+      },
+      "invisible": false,
+      "is_auto_added": false,
+      "is_promoted": true,
+      "is_rated": null,
+      "key": "ucup-2-final",
+      "kind": null,
+      "link_statistic_timing": null,
+      "merging_contests": [],
+      "modified": "2025-02-20T11:12:11.072Z",
+      "n_problems": 13,
+      "n_statistics": 20,
+      "notification_timing": "2025-02-20T11:14:22.285Z",
+      "parsed_percentage": null,
+      "parsed_time": "2025-03-04T21:58:08.598Z",
+      "problem_rating_hash": null,
+      "problem_rating_update_required": false,
+      "rating_prediction_fields": {},
+      "rating_prediction_hash": null,
+      "rating_prediction_timing": null,
+      "raw_info": {},
+      "registration_url": null,
+      "related": null,
+      "resource": 139,
+      "series": null,
+      "set_matched_coders_to_members": false,
+      "slug": "the-2025-universal-cup-finals",
+      "standings_kind": "icpc",
+      "standings_url": "https://scoreboard.ucup.ac/",
+      "start_time": "2025-02-22T02:30:00Z",
+      "statistic_timing": "2025-03-05T12:58:08.598Z",
+      "statistics_update_required": false,
+      "submissions_info": {},
+      "title": "The 2025 Universal Cup Finals",
+      "title_path": "the.2025.universal.cup.finals",
+      "trial_standings_url": null,
+      "uid": "0lsov1thf7qnvq079d3gbdeats",
+      "updated": "2025-03-04T21:58:23.900Z",
+      "upload_solved_problems_solutions": null,
+      "upsolving_key": null,
+      "upsolving_url": null,
+      "url": "https://ucup.ac/2025-ucup-finals/",
+      "variables": {},
+      "wait_for_successful_update_timing": null,
+      "with_advance": false,
+      "with_medals": true
+    },
+    "model": "clist.contest",
+    "pk": 57558499
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2023-11-08T19:16:50.300Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "team-1878",
+      "last_activity": "2026-05-30T08:06:19Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-06-08T05:48:09.589Z",
+      "n_bronze": null,
+      "n_contests": 100,
+      "n_first_ac": 501,
+      "n_first_places": 57,
+      "n_gold": 2,
+      "n_listvalues": 0,
+      "n_medals": 2,
+      "n_other_medals": null,
+      "n_places": 94,
+      "n_second_places": 18,
+      "n_silver": null,
+      "n_solved": 2548,
+      "n_subscribers": 0,
+      "n_third_places": 4,
+      "n_top_ten_places": 15,
+      "n_total_solved": 2570,
+      "n_upsolved": 22,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "USA1 (Andrew He, Kevin Sun, Gennady Korotkevich)",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 139,
+      "resource_rank": null,
+      "solving": 2566.0,
+      "submissions_info": {},
+      "total_solving": 2577.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-06-08T23:59:59.999Z",
+      "upsolving": 11.0,
+      "url": "/account/team-1878/resource/ucup.ac/"
+    },
+    "model": "ranking.account",
+    "pk": 6008924
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2023-11-08T19:20:15.310Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "team-3",
+      "last_activity": "2026-05-30T08:26:20Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-06-08T05:48:09.668Z",
+      "n_bronze": null,
+      "n_contests": 55,
+      "n_first_ac": 118,
+      "n_first_places": 8,
+      "n_gold": 1,
+      "n_listvalues": 0,
+      "n_medals": 1,
+      "n_other_medals": null,
+      "n_places": 49,
+      "n_second_places": 8,
+      "n_silver": null,
+      "n_solved": 1543,
+      "n_subscribers": 0,
+      "n_third_places": 11,
+      "n_top_ten_places": 22,
+      "n_total_solved": 1544,
+      "n_upsolved": 1,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "03 Slimes (Yuhao Du, Haojia Shi)",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 139,
+      "resource_rank": null,
+      "solving": 1547.0,
+      "submissions_info": {},
+      "total_solving": 1548.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-06-08T23:59:59.999Z",
+      "upsolving": 1.0,
+      "url": "/account/team-3/resource/ucup.ac/"
+    },
+    "model": "ranking.account",
+    "pk": 6009382
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2023-11-08T19:16:50.604Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "team-87",
+      "last_activity": "2026-05-31T08:15:02Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-06-08T05:48:09.552Z",
+      "n_bronze": 1,
+      "n_contests": 123,
+      "n_first_ac": 487,
+      "n_first_places": 42,
+      "n_gold": 1,
+      "n_listvalues": 0,
+      "n_medals": 2,
+      "n_other_medals": null,
+      "n_places": 122,
+      "n_second_places": 41,
+      "n_silver": null,
+      "n_solved": 3478,
+      "n_subscribers": 0,
+      "n_third_places": 20,
+      "n_top_ten_places": 19,
+      "n_total_solved": 3514,
+      "n_upsolved": 36,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "HoMaMaOvO (Riku Kawasaki, Masaki Nishimoto, Yui Hosaka)",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 139,
+      "resource_rank": null,
+      "solving": 3489.0,
+      "submissions_info": {},
+      "total_solving": 3525.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-06-08T23:59:59.999Z",
+      "upsolving": 36.0,
+      "url": "/account/team-87/resource/ucup.ac/"
+    },
+    "model": "ranking.account",
+    "pk": 6008925
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2023-11-08T19:20:18.320Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "team-253",
+      "last_activity": "2026-05-31T08:08:45Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-07-07T22:51:51.756Z",
+      "n_bronze": null,
+      "n_contests": 92,
+      "n_first_ac": 130,
+      "n_first_places": 4,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": 2,
+      "n_other_medals": null,
+      "n_places": 74,
+      "n_second_places": 12,
+      "n_silver": 2,
+      "n_solved": 2278,
+      "n_subscribers": 0,
+      "n_third_places": 15,
+      "n_top_ten_places": 43,
+      "n_total_solved": 2328,
+      "n_upsolved": 50,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Polish Mafia (Mateusz Radecki)",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 139,
+      "resource_rank": null,
+      "solving": 2295.0,
+      "submissions_info": {},
+      "total_solving": 2342.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-06-08T23:59:59.999Z",
+      "upsolving": 47.0,
+      "url": "/account/team-253/resource/ucup.ac/"
+    },
+    "model": "ranking.account",
+    "pk": 6009387
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2023-11-08T19:20:15.572Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "team-52",
+      "last_activity": "2025-04-26T09:13:59Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-05-04T00:09:52.651Z",
+      "n_bronze": 1,
+      "n_contests": 45,
+      "n_first_ac": 8,
+      "n_first_places": 1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": 1,
+      "n_other_medals": null,
+      "n_places": 15,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 370,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 14,
+      "n_total_solved": 386,
+      "n_upsolved": 16,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "呆呆鸟 (Weicheng Wang, Anyi Xu, Xiangwen Wang)",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 139,
+      "resource_rank": null,
+      "solving": 373.0,
+      "submissions_info": {},
+      "total_solving": 388.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-05-04T23:59:59.999Z",
+      "upsolving": 15.0,
+      "url": "/account/team-52/resource/ucup.ac/"
+    },
+    "model": "ranking.account",
+    "pk": 6009383
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2023-11-08T19:16:52.702Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "team-123",
+      "last_activity": "2025-09-27T09:05:31Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-11-17T20:53:33.882Z",
+      "n_bronze": null,
+      "n_contests": 52,
+      "n_first_ac": 11,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 21,
+      "n_second_places": 2,
+      "n_silver": null,
+      "n_solved": 478,
+      "n_subscribers": 0,
+      "n_third_places": 2,
+      "n_top_ten_places": 17,
+      "n_total_solved": 489,
+      "n_upsolved": 11,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Harbour.Space P+P+P + Anton (Yahor Dubovik, Sergei Zolotarev, Anton Paliukhovich)",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 139,
+      "resource_rank": null,
+      "solving": 478.0,
+      "submissions_info": {},
+      "total_solving": 489.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-09-28T23:59:59.999Z",
+      "upsolving": 11.0,
+      "url": "/account/team-123/resource/ucup.ac/"
+    },
+    "model": "ranking.account",
+    "pk": 6008936
+  },
+  {
+    "fields": {
+      "account": 6008924,
+      "addition": {
+        "_old_key": "ucup-2-final-team-A1",
+        "affiliation": null,
+        "medal": "gold",
+        "name": "USA1 (Gennady Korotkevich (tourist), Kevin Sun (ksun48), Andrew Lawrence He (ecnerwala))",
+        "original_handle": "$DEFAULT_DAT_PREFIX_A1",
+        "out_of_competition": false,
+        "participant_type": 3,
+        "penalty": 1388,
+        "problems": {
+          "B": {
+            "result": "-1"
+          },
+          "C": {
+            "result": "+",
+            "time": "1:36",
+            "time_in_seconds": 5800
+          },
+          "D": {
+            "result": "+2",
+            "time": "4:34",
+            "time_in_seconds": 16493
+          },
+          "E": {
+            "first_ac": true,
+            "result": "+",
+            "time": "3:42",
+            "time_in_seconds": 13339
+          },
+          "F": {
+            "result": "+2",
+            "time": "1:12",
+            "time_in_seconds": 4366
+          },
+          "H": {
+            "first_ac": true,
+            "result": "+",
+            "time": "0:44",
+            "time_in_seconds": 2672
+          },
+          "I": {
+            "result": "+2",
+            "time": "0:10",
+            "time_in_seconds": 603
+          },
+          "J": {
+            "first_ac": true,
+            "result": "+1",
+            "time": "0:35",
+            "time_in_seconds": 2148
+          },
+          "K": {
+            "result": "+1",
+            "time": "4:07",
+            "time_in_seconds": 14869
+          },
+          "L": {
+            "result": "+1",
+            "time": "1:27",
+            "time_in_seconds": 5255
+          },
+          "M": {
+            "first_ac": true,
+            "result": "+",
+            "time": "2:01",
+            "time_in_seconds": 7316
+          }
+        },
+        "rating": 1750,
+        "standings_rating": 100
+      },
+      "advanced": false,
+      "contest": 57558499,
+      "created": "2025-02-24T14:08:20.999Z",
+      "global_rating_change": null,
+      "last_activity": "2025-02-22T07:04:53Z",
+      "medal": "gold",
+      "modified": "2025-03-04T21:58:13.337Z",
+      "n_first_ac": 4,
+      "n_solved": 10,
+      "n_total_solved": 10,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 1388.0,
+      "place": "1",
+      "place_as_int": 1,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 139,
+      "skip_in_stats": false,
+      "solving": 10.0,
+      "total_solving": 10.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 75075384
+  },
+  {
+    "fields": {
+      "account": 6009382,
+      "addition": {
+        "_old_key": "ucup-2-final-team-C1",
+        "affiliation": null,
+        "medal": "gold",
+        "name": "03 Slimes (Kangyang Zhou (orzdevinwang), Mingyang Deng (heuristica), Ziqian Zhong (TLE))",
+        "original_handle": "$DEFAULT_DAT_PREFIX_C1",
+        "out_of_competition": false,
+        "participant_type": 3,
+        "penalty": 1928,
+        "problems": {
+          "B": {
+            "first_ac": true,
+            "result": "+3",
+            "time": "4:14",
+            "time_in_seconds": 15261
+          },
+          "C": {
+            "result": "+4",
+            "time": "3:02",
+            "time_in_seconds": 10935
+          },
+          "D": {
+            "first_ac": true,
+            "result": "+5",
+            "time": "3:30",
+            "time_in_seconds": 12615
+          },
+          "E": {
+            "result": "-1"
+          },
+          "F": {
+            "result": "+",
+            "time": "3:13",
+            "time_in_seconds": 11616
+          },
+          "H": {
+            "result": "+",
+            "time": "4:51",
+            "time_in_seconds": 17494
+          },
+          "I": {
+            "result": "+1",
+            "time": "0:18",
+            "time_in_seconds": 1124
+          },
+          "J": {
+            "result": "+",
+            "time": "1:59",
+            "time_in_seconds": 7167
+          },
+          "K": {
+            "first_ac": true,
+            "result": "+6",
+            "time": "2:28",
+            "time_in_seconds": 8901
+          },
+          "L": {
+            "result": "+1",
+            "time": "1:53",
+            "time_in_seconds": 6781
+          }
+        },
+        "rating": 1750,
+        "standings_rating": 89.765625
+      },
+      "advanced": false,
+      "contest": 57558499,
+      "created": "2025-02-24T14:08:21.052Z",
+      "global_rating_change": null,
+      "last_activity": "2025-02-22T07:21:34Z",
+      "medal": "gold",
+      "modified": "2025-03-04T21:58:13.249Z",
+      "n_first_ac": 3,
+      "n_solved": 9,
+      "n_total_solved": 9,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 1928.0,
+      "place": "2",
+      "place_as_int": 2,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 139,
+      "skip_in_stats": false,
+      "solving": 9.0,
+      "total_solving": 9.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 75075385
+  },
+  {
+    "fields": {
+      "account": 6008925,
+      "addition": {
+        "_old_key": "ucup-2-final-team-B1",
+        "affiliation": null,
+        "medal": "gold",
+        "name": "HoMaMaOvO (Riku Kawasaki (maroonrk), Yui Hosaka (hos.lyric), Masaki Nishimoto (maspy))",
+        "original_handle": "$DEFAULT_DAT_PREFIX_B1",
+        "out_of_competition": false,
+        "participant_type": 3,
+        "penalty": 1273,
+        "problems": {
+          "C": {
+            "result": "+",
+            "time": "1:54",
+            "time_in_seconds": 6880
+          },
+          "E": {
+            "result": "-1"
+          },
+          "F": {
+            "result": "+6",
+            "time": "4:57",
+            "time_in_seconds": 17879
+          },
+          "H": {
+            "result": "+",
+            "time": "3:30",
+            "time_in_seconds": 12612
+          },
+          "I": {
+            "result": "+",
+            "time": "0:12",
+            "time_in_seconds": 774
+          },
+          "J": {
+            "result": "+",
+            "time": "1:10",
+            "time_in_seconds": 4214
+          },
+          "K": {
+            "result": "+2",
+            "time": "3:50",
+            "time_in_seconds": 13839
+          },
+          "L": {
+            "first_ac": true,
+            "result": "+",
+            "time": "0:37",
+            "time_in_seconds": 2242
+          },
+          "M": {
+            "result": "+",
+            "time": "2:23",
+            "time_in_seconds": 8598
+          }
+        },
+        "rating": 1750,
+        "standings_rating": 79.58333333333333
+      },
+      "advanced": false,
+      "contest": 57558499,
+      "created": "2025-02-24T14:08:21.095Z",
+      "global_rating_change": null,
+      "last_activity": "2025-02-22T07:27:59Z",
+      "medal": "gold",
+      "modified": "2025-03-04T21:58:13.221Z",
+      "n_first_ac": 1,
+      "n_solved": 8,
+      "n_total_solved": 8,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 1273.0,
+      "place": "3",
+      "place_as_int": 3,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 139,
+      "skip_in_stats": false,
+      "solving": 8.0,
+      "total_solving": 8.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 75075386
+  },
+  {
+    "fields": {
+      "account": 6009387,
+      "addition": {
+        "_old_key": "ucup-2-final-team-A2",
+        "affiliation": null,
+        "medal": "silver",
+        "name": "Polish Mafia (Marcin Smulewicz (Marcin_smu), Mateusz Radecki (Radewoosh), Wojciech Krzysztof Nadara (Swistakk))",
+        "original_handle": "$DEFAULT_DAT_PREFIX_A2",
+        "out_of_competition": false,
+        "participant_type": 3,
+        "penalty": 790,
+        "problems": {
+          "C": {
+            "result": "+",
+            "time": "1:58",
+            "time_in_seconds": 7138
+          },
+          "D": {
+            "result": "+2",
+            "time": "4:30",
+            "time_in_seconds": 16253
+          },
+          "F": {
+            "first_ac": true,
+            "result": "+",
+            "time": "0:54",
+            "time_in_seconds": 3274
+          },
+          "I": {
+            "result": "+",
+            "time": "0:11",
+            "time_in_seconds": 708
+          },
+          "J": {
+            "result": "+1",
+            "time": "1:42",
+            "time_in_seconds": 6163
+          },
+          "L": {
+            "result": "+1",
+            "time": "2:35",
+            "time_in_seconds": 9357
+          },
+          "M": {
+            "result": "-1"
+          }
+        },
+        "rating": 1750,
+        "standings_rating": 59.0625
+      },
+      "advanced": false,
+      "contest": 57558499,
+      "created": "2025-02-24T14:08:21.132Z",
+      "global_rating_change": null,
+      "last_activity": "2025-02-22T07:00:53Z",
+      "medal": "silver",
+      "modified": "2025-03-04T21:58:13.118Z",
+      "n_first_ac": 1,
+      "n_solved": 6,
+      "n_total_solved": 6,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 790.0,
+      "place": "4",
+      "place_as_int": 4,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 139,
+      "skip_in_stats": false,
+      "solving": 6.0,
+      "total_solving": 6.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 75075387
+  },
+  {
+    "fields": {
+      "account": 6009383,
+      "addition": {
+        "_old_key": "ucup-2-final-team-A4",
+        "affiliation": null,
+        "medal": "bronze",
+        "name": "Naive Birds (Xiangwen Wang (LJC00118), Weicheng Wang (wasa855), Anyi Xu (xay5421))",
+        "original_handle": "$DEFAULT_DAT_PREFIX_A4",
+        "out_of_competition": false,
+        "participant_type": 3,
+        "penalty": 625,
+        "problems": {
+          "C": {
+            "first_ac": true,
+            "result": "+",
+            "time": "0:49",
+            "time_in_seconds": 2977
+          },
+          "F": {
+            "result": "+",
+            "time": "1:59",
+            "time_in_seconds": 7161
+          },
+          "I": {
+            "result": "+3",
+            "time": "0:26",
+            "time_in_seconds": 1593
+          },
+          "J": {
+            "result": "+3",
+            "time": "2:29",
+            "time_in_seconds": 8972
+          },
+          "K": {
+            "result": "-1"
+          },
+          "L": {
+            "result": "+",
+            "time": "2:42",
+            "time_in_seconds": 9745
+          },
+          "M": {
+            "result": "-1"
+          }
+        },
+        "rating": 1750,
+        "standings_rating": 48.307291666666664
+      },
+      "advanced": false,
+      "contest": 57558499,
+      "created": "2025-02-24T14:08:21.329Z",
+      "global_rating_change": null,
+      "last_activity": "2025-02-22T05:12:25Z",
+      "medal": "bronze",
+      "modified": "2025-03-04T21:58:13.179Z",
+      "n_first_ac": 1,
+      "n_solved": 5,
+      "n_total_solved": 5,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 625.0,
+      "place": "9",
+      "place_as_int": 9,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 139,
+      "skip_in_stats": false,
+      "solving": 5.0,
+      "total_solving": 5.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 75075392
+  },
+  {
+    "fields": {
+      "account": 6008936,
+      "addition": {
+        "_old_key": "ucup-2-final-team-C2",
+        "affiliation": null,
+        "name": "P+P+P (Yahor Dubovik (244mhq), Sergei Zolotarev (353cerega), Batyr Sardarbekov (998batrr))",
+        "original_handle": "$DEFAULT_DAT_PREFIX_C2",
+        "out_of_competition": false,
+        "participant_type": 3,
+        "penalty": 935,
+        "problems": {
+          "C": {
+            "result": "+3",
+            "time": "3:36",
+            "time_in_seconds": 13003
+          },
+          "D": {
+            "result": "+4",
+            "time": "3:45",
+            "time_in_seconds": 13503
+          },
+          "I": {
+            "first_ac": true,
+            "result": "+",
+            "time": "0:09",
+            "time_in_seconds": 544
+          },
+          "J": {
+            "result": "+",
+            "time": "1:25",
+            "time_in_seconds": 5121
+          },
+          "L": {
+            "result": "+3",
+            "time": "3:20",
+            "time_in_seconds": 12014
+          }
+        },
+        "rating": 1750,
+        "standings_rating": 46.223958333333336
+      },
+      "advanced": false,
+      "contest": 57558499,
+      "created": "2025-02-24T14:08:21.641Z",
+      "global_rating_change": null,
+      "last_activity": "2025-02-22T06:15:03Z",
+      "medal": null,
+      "modified": "2025-03-04T21:58:12.490Z",
+      "n_first_ac": 1,
+      "n_solved": 5,
+      "n_total_solved": 5,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 935.0,
+      "place": "18",
+      "place_as_int": 18,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 139,
+      "skip_in_stats": false,
+      "solving": 5.0,
+      "total_solving": 5.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 75075401
+  }
+]

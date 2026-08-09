@@ -1,0 +1,98 @@
+[
+    {
+        "duration": null,
+        "end_time": 1576009800,
+        "host": "codingame.com",
+        "key": "clash-wars-java",
+        "kind": "clash",
+        "rid": 81,
+        "start_time": 1576004400,
+        "timezone": "UTC",
+        "title": "Clash Wars - Java #1",
+        "url": "https://www.codingame.com/contests/clash-wars-java"
+    },
+    {
+        "duration": null,
+        "end_time": 1576621800,
+        "host": "codingame.com",
+        "key": "clash-wars-python",
+        "kind": "clash",
+        "rid": 81,
+        "start_time": 1576616400,
+        "timezone": "UTC",
+        "title": "Clash Wars - Python #1",
+        "url": "https://www.codingame.com/contests/clash-wars-python"
+    },
+    {
+        "duration": null,
+        "end_time": 1578609000,
+        "host": "codingame.com",
+        "key": "clash-wars-cpp",
+        "kind": "clash",
+        "rid": 81,
+        "start_time": 1578603600,
+        "timezone": "UTC",
+        "title": "Clash Wars - C++ #1",
+        "url": "https://www.codingame.com/contests/clash-wars-cpp"
+    },
+    {
+        "duration": null,
+        "end_time": 1579458600,
+        "host": "codingame.com",
+        "key": "clash-wars-js",
+        "kind": "clash",
+        "rid": 81,
+        "start_time": 1579453200,
+        "timezone": "UTC",
+        "title": "Clash Wars - JavaScript #1",
+        "url": "https://www.codingame.com/contests/clash-wars-js"
+    },
+    {
+        "duration": null,
+        "end_time": 1580063400,
+        "host": "codingame.com",
+        "key": "clash-wars-csharp",
+        "kind": "clash",
+        "rid": 81,
+        "start_time": 1580058000,
+        "timezone": "UTC",
+        "title": "Clash Wars - C# #1",
+        "url": "https://www.codingame.com/contests/clash-wars-csharp"
+    },
+    {
+        "duration": null,
+        "end_time": 1753689600,
+        "host": "codingame.com",
+        "key": "summer-challenge-2025-coderpad-play",
+        "kind": "battle",
+        "rid": 81,
+        "start_time": 1752757200,
+        "timezone": "UTC",
+        "title": "Summer Challenge 2025",
+        "url": "https://www.codingame.com/contests/summer-challenge-2025-coderpad-play"
+    },
+    {
+        "duration": null,
+        "end_time": 1774342800,
+        "host": "codingame.com",
+        "key": "winter-challenge-2026-exotec",
+        "kind": "battle",
+        "rid": 81,
+        "start_time": 1773133200,
+        "timezone": "UTC",
+        "title": "Winter Challenge 2026",
+        "url": "https://www.codingame.com/contests/winter-challenge-2026-exotec"
+    },
+    {
+        "duration": null,
+        "end_time": 1779696000,
+        "host": "codingame.com",
+        "key": "spring-challenge-2026-troll-farm",
+        "kind": "battle",
+        "rid": 81,
+        "start_time": 1778572800,
+        "timezone": "UTC",
+        "title": "Spring Challenge 2026",
+        "url": "https://www.codingame.com/contests/spring-challenge-2026-troll-farm"
+    }
+]

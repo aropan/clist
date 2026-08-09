@@ -1,0 +1,60 @@
+{
+    "host": "codechef.com",
+    "rid": 2,
+    "path": "./module/codechef.com/index.php",
+    "url": "https://www.codechef.com/contests",
+    "parse_url": "https://www.codechef.com/contests",
+    "timezone": "Asia/Calcutta",
+    "api_url": null,
+    "info": {
+        "ratings": {
+            "problems": {
+                "ignore_missing_account": true
+            }
+        },
+        "accounts": {
+            "limit": 300
+        },
+        "standings": {
+            "timeline": {
+                "time_factor": {
+                    "1": [
+                        1
+                    ],
+                    "2": [
+                        60,
+                        1
+                    ],
+                    "3": [
+                        3600,
+                        60,
+                        1
+                    ]
+                },
+                "penalty_more": 0,
+                "penalty_format": 3,
+                "attempt_penalty": 1200,
+                "penalty_rounding": "none",
+                "penalty_selector": ".addition-time-cell",
+                "penalty_more_selector": ".addition-penalty-cell"
+            },
+            "avg_problem_width": true
+        },
+        "get_events": {
+            "colors": {
+                "darken": "#441630",
+                "lighten": "#EFD1E1"
+            }
+        },
+        "statistics": {
+            "wait_rating": {
+                "days": 2
+            }
+        },
+        "default_variables": {
+            "min_n_participations": "10"
+        }
+    },
+    "parse_full_list": false,
+    "recorded_at": "2026-08-08 17:04:15"
+}

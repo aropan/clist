@@ -1,0 +1,45 @@
+{
+    "host": "uoj.ac",
+    "rid": 172,
+    "path": "./module/uoj.ac/index.php",
+    "url": "https://uoj.ac/contests",
+    "parse_url": "https://uoj.ac/contests",
+    "timezone": "Asia/Shanghai",
+    "api_url": null,
+    "info": {
+        "standings": {
+            "timeline": {
+                "time_factor": {
+                    "1": [
+                        60
+                    ],
+                    "2": [
+                        60,
+                        1
+                    ],
+                    "3": [
+                        3600,
+                        60,
+                        1
+                    ]
+                },
+                "penalty_more": 1200,
+                "penalty_format": 3,
+                "penalty_rounding": "none"
+            },
+            "name_instead_key": true,
+            "keep_rating_fields": true
+        },
+        "get_events": {
+            "colors": {
+                "darken": "#441916",
+                "lighten": "#EFD2D0"
+            }
+        },
+        "statistics": {
+            "default_problem_full_score": 100
+        }
+    },
+    "parse_full_list": false,
+    "recorded_at": "2026-08-08 17:01:33"
+}

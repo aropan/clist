@@ -1,0 +1,33 @@
+{
+    "host": "basecamp.eolymp.com",
+    "rid": 10,
+    "path": "./module/e-olymp.com/index.php",
+    "url": "https://basecamp.eolymp.com/contests",
+    "parse_url": "https://basecamp.eolymp.com/contests",
+    "timezone": "Europe/Kiev",
+    "api_url": null,
+    "info": {
+        "ratings": {
+            "chartjs": {
+                "n_bins": 50,
+                "coloring_field": "rank_percentile"
+            },
+            "reverse_circle_percent": true
+        },
+        "standings": {
+            "name_instead_key": true
+        },
+        "get_events": {
+            "colors": {
+                "darken": "#16442B",
+                "lighten": "#D1EFDE"
+            }
+        },
+        "major_kinds": [
+            "IOI",
+            "ICPC"
+        ]
+    },
+    "parse_full_list": false,
+    "recorded_at": "2026-08-08 17:02:08"
+}

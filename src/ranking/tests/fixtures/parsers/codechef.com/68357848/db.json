@@ -1,0 +1,4010 @@
+[
+  {
+    "fields": {
+      "accounts_fields": {
+        "types": {
+          "about_me": [
+            "str"
+          ],
+          "avatar_url": [
+            "str"
+          ],
+          "compile_error": [
+            "str"
+          ],
+          "institution": [
+            "str"
+          ],
+          "link": [
+            "str"
+          ],
+          "members": [
+            "list"
+          ],
+          "motto": [
+            "str"
+          ],
+          "organisation": [
+            "str"
+          ],
+          "problems_solved": [
+            "str"
+          ],
+          "runtime_error": [
+            "str"
+          ],
+          "solutions_accepted": [
+            "str"
+          ],
+          "solutions_submitted": [
+            "str"
+          ],
+          "student/professional": [
+            "str"
+          ],
+          "time_limit_exceeded": [
+            "str"
+          ],
+          "username": [
+            "str"
+          ],
+          "wrong_answer": [
+            "str"
+          ]
+        },
+        "verification_fields": [
+          "name",
+          "student/professional"
+        ]
+      },
+      "allow_delete_archived_statistics": false,
+      "api_url": null,
+      "auto_remove_started": false,
+      "avatar_url": "{info[avatar_url]}",
+      "avg_rating": 1267.361387153706,
+      "color": "#CC669E",
+      "contest_update_time": "2026-08-04T11:19:10.673Z",
+      "country_rank_update_time": "2026-08-04T12:20:08.518Z",
+      "created": "2013-02-03T00:00:00Z",
+      "default_account_type": 1,
+      "enable": true,
+      "has_account_last_submission": true,
+      "has_account_n_writers": true,
+      "has_account_verification": true,
+      "has_accounts_infos_update": true,
+      "has_country_medal": null,
+      "has_country_place": null,
+      "has_country_rating": true,
+      "has_inherit_medals_to_related": false,
+      "has_multi_account": true,
+      "has_problem_archive": false,
+      "has_problem_rating": true,
+      "has_problem_statistic": true,
+      "has_problem_update": true,
+      "has_rating_history": true,
+      "has_standings_renamed_account": false,
+      "has_statistic_medal": null,
+      "has_statistic_n_first_ac": null,
+      "has_statistic_n_total_solved": null,
+      "has_statistic_place": null,
+      "has_statistic_total_solving": null,
+      "has_submissions_statistics_log": false,
+      "has_upsolving": true,
+      "host": "codechef.com",
+      "icon_file": "resources/codechef_com.png",
+      "icon_updated_at": "2025-12-14T00:27:40.071Z",
+      "icon_url": null,
+      "info": {
+        "accounts": {
+          "limit": 300
+        },
+        "default_variables": {
+          "min_n_participations": "10"
+        },
+        "get_events": {
+          "colors": {
+            "darken": "#441630",
+            "lighten": "#EFD1E1"
+          }
+        },
+        "ratings": {
+          "problems": {
+            "ignore_missing_account": true
+          }
+        },
+        "standings": {
+          "avg_problem_width": true,
+          "timeline": {
+            "attempt_penalty": 1200,
+            "penalty_format": 3,
+            "penalty_more": 0,
+            "penalty_more_selector": ".addition-penalty-cell",
+            "penalty_rounding": "none",
+            "penalty_selector": ".addition-time-cell",
+            "time_factor": {
+              "1": [
+                1
+              ],
+              "2": [
+                60,
+                1
+              ],
+              "3": [
+                3600,
+                60,
+                1
+              ]
+            }
+          }
+        },
+        "statistics": {
+          "wait_rating": {
+            "days": 2
+          }
+        }
+      },
+      "modified": "2026-08-04T13:25:44.566Z",
+      "n_accounts": 1117720,
+      "n_accounts_to_update": 8901,
+      "n_contests": 2244,
+      "n_rating_accounts": 923358,
+      "n_statistics": 7370715,
+      "n_team_accounts": 82102,
+      "n_university_accounts": 0,
+      "parse_url": null,
+      "path": "./module/codechef.com/index.php",
+      "problem_archive_update_time": null,
+      "problem_rating_predictor": {},
+      "problem_url": null,
+      "problems_fields": {
+        "fixed_fields": [
+          "native_rating"
+        ],
+        "types": {
+          "best_tag": [
+            "str"
+          ],
+          "category_name": [
+            "str"
+          ],
+          "contest_key": [
+            "str"
+          ],
+          "editorial_url": [
+            "str"
+          ],
+          "first_ac__accounts": [
+            "list"
+          ],
+          "first_ac__in_seconds": [
+            "int"
+          ],
+          "first_ac__time": [
+            "str"
+          ],
+          "hints": [
+            "list"
+          ],
+          "is_challenge": [
+            "bool"
+          ],
+          "languages_supported": [
+            "list"
+          ],
+          "max_score": [
+            "int"
+          ],
+          "max_timelimit": [
+            "str"
+          ],
+          "native_rating": [
+            "int"
+          ],
+          "source_sizelimit": [
+            "str"
+          ],
+          "video_editorial_url": [
+            "str"
+          ],
+          "writers": [
+            "list"
+          ]
+        }
+      },
+      "profile_url": "https://www.codechef.com/users/{account}",
+      "rank_update_time": "2026-08-01T10:00:07.968Z",
+      "rating_prediction": null,
+      "rating_update_time": "2026-08-04T13:25:44.562Z",
+      "ratings": [
+        {
+          "color": "gray",
+          "hex_rgb": "#808080",
+          "high": 1400,
+          "hsl": [
+            0,
+            0,
+            0.5
+          ],
+          "low": -100500,
+          "name": "★",
+          "next": 1400,
+          "prev": -100500
+        },
+        {
+          "color": "green",
+          "hex_rgb": "#008000",
+          "high": 1600,
+          "hsl": [
+            0.33,
+            1,
+            0.25
+          ],
+          "low": 1400,
+          "name": "★★",
+          "next": 1600,
+          "prev": 1400
+        },
+        {
+          "color": "blue",
+          "hex_rgb": "#0000FF",
+          "high": 1800,
+          "hsl": [
+            0.67,
+            1,
+            0.5
+          ],
+          "low": 1600,
+          "name": "★★★",
+          "next": 1800,
+          "prev": 1600
+        },
+        {
+          "color": "violet",
+          "hex_rgb": "#AA00AA",
+          "high": 2000,
+          "hsl": [
+            0.83,
+            1,
+            0.33
+          ],
+          "low": 1800,
+          "name": "★★★★",
+          "next": 2000,
+          "prev": 1800
+        },
+        {
+          "color": "yellow",
+          "hex_rgb": "#BBBB00",
+          "high": 2200,
+          "hsl": [
+            0.17,
+            1,
+            0.37
+          ],
+          "low": 2000,
+          "name": "★★★★★",
+          "next": 2200,
+          "prev": 2000
+        },
+        {
+          "color": "orange",
+          "hex_rgb": "#FF8C00",
+          "high": 2500,
+          "hsl": [
+            0.09,
+            1,
+            0.5
+          ],
+          "low": 2200,
+          "name": "★★★★★★",
+          "next": 2500,
+          "prev": 2200
+        },
+        {
+          "color": "red",
+          "hex_rgb": "#FF0000",
+          "high": 3000,
+          "hsl": [
+            0,
+            1,
+            0.5
+          ],
+          "low": 2500,
+          "name": "★★★★★★★",
+          "next": 3000,
+          "prev": 2500
+        },
+        {
+          "color": "red",
+          "hex_rgb": "#FF0000",
+          "high": 100500,
+          "hsl": [
+            0.0,
+            1.0,
+            0.375
+          ],
+          "low": 3000,
+          "name": "★★★★★★★",
+          "prev": 2500
+        }
+      ],
+      "regexp": null,
+      "short_host": "cc",
+      "skip_for_contests_chart": false,
+      "statistics_fields": {
+        "types": {
+          "advanced": [
+            "bool"
+          ],
+          "country": [
+            "str"
+          ],
+          "division": [
+            "str"
+          ],
+          "institution": [
+            "NoneType",
+            "str"
+          ],
+          "institution_type": [
+            "NoneType",
+            "str"
+          ],
+          "is_user_premium": [
+            "bool"
+          ],
+          "medal": [
+            "str"
+          ],
+          "name": [
+            "NoneType",
+            "str"
+          ],
+          "new_rating": [
+            "int"
+          ],
+          "old_rating": [
+            "int"
+          ],
+          "penalty": [
+            "int"
+          ],
+          "rating": [
+            "str"
+          ],
+          "rating_change": [
+            "str",
+            "int"
+          ],
+          "time": [
+            "str"
+          ],
+          "total_time": [
+            "str"
+          ],
+          "user_gender": [
+            "NoneType",
+            "str"
+          ]
+        }
+      },
+      "timezone": "Asia/Calcutta",
+      "uid": "ogc7qt4hlg454ggkj9o6ttqnq8@group.calendar.google.com",
+      "url": "https://www.codechef.com/contests"
+    },
+    "model": "clist.resource",
+    "pk": 2
+  },
+  {
+    "fields": {
+      "created": "2019-05-08T23:44:51.688Z",
+      "delay_on_error": "01:00:00",
+      "delay_on_success": "08:00:00",
+      "delay_shortly_after": "00:05:00",
+      "enable": true,
+      "long_contest_divider": 15,
+      "long_contest_idle": "06:00:00",
+      "max_delay_after_end": "2 00:00:00",
+      "min_delay_after_end": null,
+      "modified": "2022-10-29T11:23:26.769Z",
+      "path": "ranking/management/modules/codechef",
+      "resource": 2,
+      "shortly_after": "00:30:00"
+    },
+    "model": "ranking.module",
+    "pk": 16
+  },
+  {
+    "fields": {
+      "allow_updating_statistics_for_participants": null,
+      "auto_updated": "2026-08-04T13:12:32Z",
+      "calculate_time": false,
+      "created": "2026-06-18T09:10:09.282Z",
+      "duration_in_secs": 9000,
+      "edit": null,
+      "elimination_tournament_info": {},
+      "end_time": "2026-07-29T17:00:00Z",
+      "finalists_info": {},
+      "has_fixed_rating_prediction_field": null,
+      "has_hidden_results": false,
+      "has_submissions": null,
+      "has_submissions_tests": null,
+      "has_unlimited_statistics": null,
+      "hide_unsolved_standings_problems": null,
+      "host": "codechef.com",
+      "info": {
+        "_external_fields": [
+          "new_rating",
+          "rating_change"
+        ],
+        "fields": [
+          "time",
+          "problems",
+          "solved",
+          "name",
+          "country",
+          "institution",
+          "institution_type",
+          "user_gender",
+          "is_user_premium",
+          "old_rating",
+          "division",
+          "rating_change",
+          "new_rating"
+        ],
+        "fields_types": {
+          "country": [
+            "str"
+          ],
+          "division": [
+            "str"
+          ],
+          "institution": [
+            "str"
+          ],
+          "institution_type": [
+            "str",
+            "NoneType"
+          ],
+          "is_user_premium": [
+            "bool"
+          ],
+          "name": [
+            "str"
+          ],
+          "new_rating": [
+            "int"
+          ],
+          "old_rating": [
+            "int"
+          ],
+          "problems": [
+            "dict"
+          ],
+          "rating_change": [
+            "int"
+          ],
+          "solved": [
+            "dict"
+          ],
+          "time": [
+            "str"
+          ],
+          "user_gender": [
+            "str",
+            "NoneType"
+          ]
+        },
+        "hidden_fields": [
+          "institution_type",
+          "user_gender",
+          "country",
+          "institution",
+          "name",
+          "is_user_premium",
+          "old_rating",
+          "rating_change"
+        ],
+        "problems": {
+          "division": {
+            "div_1": [
+              {
+                "code": "VALLFLAT",
+                "contest_key": "START249A",
+                "is_challenge": false,
+                "languages_supported": [
+                  "CPP20",
+                  "PYTH 3",
+                  "C",
+                  "JAVA",
+                  "PYP3",
+                  "CS2",
+                  "NODEJS",
+                  "GO",
+                  "TS",
+                  "PHP",
+                  "kotlin",
+                  "rust",
+                  "R",
+                  "CAML"
+                ],
+                "max_score": 100,
+                "max_timelimit": "1",
+                "n_accepted": 73,
+                "n_teams": 73,
+                "n_total": 76,
+                "name": "Valley Flattening",
+                "native_rating": 1694,
+                "rating": 1659,
+                "short": "VALLFLAT",
+                "source_sizelimit": "50000",
+                "tags": [
+                  "nishank_adm",
+                  "start249"
+                ],
+                "url": "https://www.codechef.com/problems/VALLFLAT",
+                "writers": [
+                  "nishank_adm"
+                ]
+              },
+              {
+                "code": "UPDWPAL",
+                "contest_key": "START249A",
+                "is_challenge": false,
+                "languages_supported": [
+                  "CPP20",
+                  "PYTH 3",
+                  "C",
+                  "JAVA",
+                  "PYP3",
+                  "CS2",
+                  "NODEJS",
+                  "GO",
+                  "TS",
+                  "PHP",
+                  "kotlin",
+                  "rust",
+                  "R",
+                  "CAML"
+                ],
+                "max_score": 100,
+                "max_timelimit": "1",
+                "n_accepted": 76,
+                "n_teams": 76,
+                "n_total": 76,
+                "name": "Up-Down Palindrome",
+                "native_rating": 1375,
+                "rating": 1381,
+                "short": "UPDWPAL",
+                "source_sizelimit": "50000",
+                "tags": [
+                  "nishank_adm",
+                  "start249"
+                ],
+                "url": "https://www.codechef.com/problems/UPDWPAL",
+                "writers": [
+                  "nishank_adm"
+                ]
+              },
+              {
+                "code": "MINREDSR",
+                "contest_key": "START249A",
+                "is_challenge": false,
+                "languages_supported": [
+                  "CPP20",
+                  "PYTH 3",
+                  "C",
+                  "JAVA",
+                  "PYP3",
+                  "CS2",
+                  "NODEJS",
+                  "GO",
+                  "TS",
+                  "PHP",
+                  "kotlin",
+                  "rust",
+                  "R",
+                  "CAML"
+                ],
+                "max_score": 100,
+                "max_timelimit": "1",
+                "n_accepted": 46,
+                "n_teams": 46,
+                "n_total": 76,
+                "name": "Moving Blue Boxes",
+                "native_rating": 2230,
+                "rating": 2150,
+                "short": "MINREDSR",
+                "source_sizelimit": "50000",
+                "tags": [
+                  "greedy",
+                  "nishank_adm",
+                  "start249"
+                ],
+                "url": "https://www.codechef.com/problems/MINREDSR",
+                "writers": [
+                  "nishank_adm"
+                ]
+              },
+              {
+                "code": "PTRISMIN",
+                "contest_key": "START249A",
+                "is_challenge": false,
+                "languages_supported": [
+                  "CPP20",
+                  "PYTH 3",
+                  "C",
+                  "JAVA",
+                  "PYP3",
+                  "CS2",
+                  "NODEJS",
+                  "GO",
+                  "TS",
+                  "PHP",
+                  "kotlin",
+                  "rust",
+                  "R",
+                  "CAML"
+                ],
+                "max_score": 100,
+                "max_timelimit": "2",
+                "n_accepted": 31,
+                "n_teams": 31,
+                "n_total": 76,
+                "name": "Point Rise",
+                "native_rating": 2185,
+                "rating": 2193,
+                "short": "PTRISMIN",
+                "source_sizelimit": "50000",
+                "tags": [
+                  "nishank_adm",
+                  "sorting",
+                  "start249"
+                ],
+                "url": "https://www.codechef.com/problems/PTRISMIN",
+                "writers": [
+                  "nishank_adm"
+                ]
+              },
+              {
+                "best_tag": "Binary Search",
+                "code": "TREEGUARD",
+                "contest_key": "START249A",
+                "is_challenge": false,
+                "languages_supported": [
+                  "CPP20",
+                  "PYTH 3",
+                  "C",
+                  "JAVA",
+                  "PYP3",
+                  "CS2",
+                  "NODEJS",
+                  "GO",
+                  "TS",
+                  "PHP",
+                  "kotlin",
+                  "rust",
+                  "R",
+                  "CAML"
+                ],
+                "max_score": 100,
+                "max_timelimit": "3",
+                "n_accepted": 21,
+                "n_teams": 21,
+                "n_total": 76,
+                "name": "Tree Guard",
+                "native_rating": 2401,
+                "rating": 2336,
+                "short": "TREEGUARD",
+                "source_sizelimit": "50000",
+                "tags": [
+                  "binary-search",
+                  "binary-search",
+                  "dynamic-programming",
+                  "dynamic-programming",
+                  "nishank_adm",
+                  "start249",
+                  "start249",
+                  "trees",
+                  "trees"
+                ],
+                "url": "https://www.codechef.com/problems/TREEGUARD",
+                "writers": [
+                  "nishank_adm"
+                ]
+              },
+              {
+                "best_tag": "Segment Tree",
+                "code": "MINREDSR2",
+                "contest_key": "START249A",
+                "is_challenge": false,
+                "languages_supported": [
+                  "CPP20",
+                  "PYTH 3",
+                  "C",
+                  "JAVA",
+                  "PYP3",
+                  "CS2",
+                  "NODEJS",
+                  "GO",
+                  "TS",
+                  "PHP",
+                  "kotlin",
+                  "rust",
+                  "R",
+                  "CAML"
+                ],
+                "max_score": 100,
+                "max_timelimit": "2.5",
+                "n_accepted": 6,
+                "n_teams": 6,
+                "n_total": 76,
+                "name": "Moving Blue Boxes (Hard)",
+                "native_rating": 2830,
+                "rating": 2690,
+                "short": "MINREDSR2",
+                "source_sizelimit": "50000",
+                "tags": [
+                  "data-structure",
+                  "nishank_adm",
+                  "segment-tree",
+                  "stack",
+                  "start249"
+                ],
+                "url": "https://www.codechef.com/problems/MINREDSR2",
+                "writers": [
+                  "nishank_adm"
+                ]
+              },
+              {
+                "best_tag": "Dynamic Programming",
+                "code": "TREEGUARD2",
+                "contest_key": "START249A",
+                "is_challenge": false,
+                "languages_supported": [
+                  "CPP20",
+                  "PYTH 3",
+                  "C",
+                  "JAVA",
+                  "PYP3",
+                  "CS2",
+                  "NODEJS",
+                  "GO",
+                  "TS",
+                  "PHP",
+                  "kotlin",
+                  "rust",
+                  "R",
+                  "CAML"
+                ],
+                "max_score": 100,
+                "max_timelimit": "3",
+                "n_accepted": 11,
+                "n_teams": 11,
+                "n_total": 76,
+                "name": "Tree Guard (Counting)",
+                "native_rating": 2652,
+                "rating": 2520,
+                "short": "TREEGUARD2",
+                "source_sizelimit": "50000",
+                "tags": [
+                  "dynamic-programming",
+                  "interpolation",
+                  "nishank_adm",
+                  "start249",
+                  "trees"
+                ],
+                "url": "https://www.codechef.com/problems/TREEGUARD2",
+                "writers": [
+                  "nishank_adm"
+                ]
+              }
+            ],
+            "div_2": [
+              {
+                "code": "PRDEXC",
+                "contest_key": "START249B",
+                "is_challenge": false,
+                "languages_supported": [
+                  "CPP20",
+                  "PYTH 3",
+                  "C",
+                  "JAVA",
+                  "PYP3",
+                  "CS2",
+                  "NODEJS",
+                  "GO",
+                  "TS",
+                  "PHP",
+                  "kotlin",
+                  "rust",
+                  "R",
+                  "CAML"
+                ],
+                "max_score": 100,
+                "max_timelimit": "1",
+                "n_accepted": 897,
+                "n_teams": 897,
+                "n_total": 907,
+                "name": "Product Exceed",
+                "native_rating": 981,
+                "rating": 1015,
+                "short": "PRDEXC",
+                "source_sizelimit": "50000",
+                "tags": [
+                  "nishank_adm",
+                  "start249"
+                ],
+                "url": "https://www.codechef.com/problems/PRDEXC",
+                "writers": [
+                  "nishank_adm"
+                ]
+              },
+              {
+                "code": "VALLFLAT",
+                "contest_key": "START249B",
+                "is_challenge": false,
+                "languages_supported": [
+                  "CPP20",
+                  "PYTH 3",
+                  "C",
+                  "JAVA",
+                  "PYP3",
+                  "CS2",
+                  "NODEJS",
+                  "GO",
+                  "TS",
+                  "PHP",
+                  "kotlin",
+                  "rust",
+                  "R",
+                  "CAML"
+                ],
+                "max_score": 100,
+                "max_timelimit": "1",
+                "n_accepted": 730,
+                "n_teams": 730,
+                "n_total": 907,
+                "name": "Valley Flattening",
+                "native_rating": 1694,
+                "rating": 1659,
+                "short": "VALLFLAT",
+                "source_sizelimit": "50000",
+                "tags": [
+                  "nishank_adm",
+                  "start249"
+                ],
+                "url": "https://www.codechef.com/problems/VALLFLAT",
+                "writers": [
+                  "nishank_adm"
+                ]
+              },
+              {
+                "code": "UPDWPAL",
+                "contest_key": "START249B",
+                "is_challenge": false,
+                "languages_supported": [
+                  "CPP20",
+                  "PYTH 3",
+                  "C",
+                  "JAVA",
+                  "PYP3",
+                  "CS2",
+                  "NODEJS",
+                  "GO",
+                  "TS",
+                  "PHP",
+                  "kotlin",
+                  "rust",
+                  "R",
+                  "CAML"
+                ],
+                "max_score": 100,
+                "max_timelimit": "1",
+                "n_accepted": 782,
+                "n_teams": 782,
+                "n_total": 907,
+                "name": "Up-Down Palindrome",
+                "native_rating": 1375,
+                "rating": 1381,
+                "short": "UPDWPAL",
+                "source_sizelimit": "50000",
+                "tags": [
+                  "nishank_adm",
+                  "start249"
+                ],
+                "url": "https://www.codechef.com/problems/UPDWPAL",
+                "writers": [
+                  "nishank_adm"
+                ]
+              },
+              {
+                "code": "MINREDSR",
+                "contest_key": "START249B",
+                "is_challenge": false,
+                "languages_supported": [
+                  "CPP20",
+                  "PYTH 3",
+                  "C",
+                  "JAVA",
+                  "PYP3",
+                  "CS2",
+                  "NODEJS",
+                  "GO",
+                  "TS",
+                  "PHP",
+                  "kotlin",
+                  "rust",
+                  "R",
+                  "CAML"
+                ],
+                "max_score": 100,
+                "max_timelimit": "1",
+                "n_accepted": 208,
+                "n_teams": 208,
+                "n_total": 907,
+                "name": "Moving Blue Boxes",
+                "native_rating": 2230,
+                "rating": 2150,
+                "short": "MINREDSR",
+                "source_sizelimit": "50000",
+                "tags": [
+                  "greedy",
+                  "nishank_adm",
+                  "start249"
+                ],
+                "url": "https://www.codechef.com/problems/MINREDSR",
+                "writers": [
+                  "nishank_adm"
+                ]
+              },
+              {
+                "code": "PTRISMIN",
+                "contest_key": "START249B",
+                "is_challenge": false,
+                "languages_supported": [
+                  "CPP20",
+                  "PYTH 3",
+                  "C",
+                  "JAVA",
+                  "PYP3",
+                  "CS2",
+                  "NODEJS",
+                  "GO",
+                  "TS",
+                  "PHP",
+                  "kotlin",
+                  "rust",
+                  "R",
+                  "CAML"
+                ],
+                "max_score": 100,
+                "max_timelimit": "2",
+                "n_accepted": 124,
+                "n_teams": 124,
+                "n_total": 907,
+                "name": "Point Rise",
+                "native_rating": 2185,
+                "rating": 2193,
+                "short": "PTRISMIN",
+                "source_sizelimit": "50000",
+                "tags": [
+                  "nishank_adm",
+                  "sorting",
+                  "start249"
+                ],
+                "url": "https://www.codechef.com/problems/PTRISMIN",
+                "writers": [
+                  "nishank_adm"
+                ]
+              },
+              {
+                "best_tag": "Binary Search",
+                "code": "TREEGUARD",
+                "contest_key": "START249B",
+                "is_challenge": false,
+                "languages_supported": [
+                  "CPP20",
+                  "PYTH 3",
+                  "C",
+                  "JAVA",
+                  "PYP3",
+                  "CS2",
+                  "NODEJS",
+                  "GO",
+                  "TS",
+                  "PHP",
+                  "kotlin",
+                  "rust",
+                  "R",
+                  "CAML"
+                ],
+                "max_score": 100,
+                "max_timelimit": "3",
+                "n_accepted": 72,
+                "n_teams": 72,
+                "n_total": 907,
+                "name": "Tree Guard",
+                "native_rating": 2401,
+                "rating": 2336,
+                "short": "TREEGUARD",
+                "source_sizelimit": "50000",
+                "tags": [
+                  "binary-search",
+                  "binary-search",
+                  "dynamic-programming",
+                  "dynamic-programming",
+                  "nishank_adm",
+                  "start249",
+                  "start249",
+                  "trees",
+                  "trees"
+                ],
+                "url": "https://www.codechef.com/problems/TREEGUARD",
+                "writers": [
+                  "nishank_adm"
+                ]
+              },
+              {
+                "best_tag": "Segment Tree",
+                "code": "MINREDSR2",
+                "contest_key": "START249B",
+                "is_challenge": false,
+                "languages_supported": [
+                  "CPP20",
+                  "PYTH 3",
+                  "C",
+                  "JAVA",
+                  "PYP3",
+                  "CS2",
+                  "NODEJS",
+                  "GO",
+                  "TS",
+                  "PHP",
+                  "kotlin",
+                  "rust",
+                  "R",
+                  "CAML"
+                ],
+                "max_score": 100,
+                "max_timelimit": "2.5",
+                "n_accepted": 8,
+                "n_teams": 8,
+                "n_total": 907,
+                "name": "Moving Blue Boxes (Hard)",
+                "native_rating": 2830,
+                "rating": 2690,
+                "short": "MINREDSR2",
+                "source_sizelimit": "50000",
+                "tags": [
+                  "data-structure",
+                  "nishank_adm",
+                  "segment-tree",
+                  "stack",
+                  "start249"
+                ],
+                "url": "https://www.codechef.com/problems/MINREDSR2",
+                "writers": [
+                  "nishank_adm"
+                ]
+              }
+            ],
+            "div_3": [
+              {
+                "code": "GPUBUY",
+                "contest_key": "START249C",
+                "is_challenge": false,
+                "languages_supported": [
+                  "CPP20",
+                  "PYTH 3",
+                  "C",
+                  "JAVA",
+                  "PYP3",
+                  "CS2",
+                  "NODEJS",
+                  "GO",
+                  "TS",
+                  "PHP",
+                  "kotlin",
+                  "rust",
+                  "R",
+                  "CAML"
+                ],
+                "max_score": 100,
+                "max_timelimit": "1",
+                "n_accepted": 3468,
+                "n_teams": 3468,
+                "n_total": 3503,
+                "name": "Buying GPU",
+                "native_rating": 728,
+                "rating": 762,
+                "short": "GPUBUY",
+                "source_sizelimit": "50000",
+                "tags": [
+                  "nishank_adm",
+                  "start249"
+                ],
+                "url": "https://www.codechef.com/problems/GPUBUY",
+                "writers": [
+                  "nishank_adm"
+                ]
+              },
+              {
+                "code": "PRDEXC",
+                "contest_key": "START249C",
+                "is_challenge": false,
+                "languages_supported": [
+                  "CPP20",
+                  "PYTH 3",
+                  "C",
+                  "JAVA",
+                  "PYP3",
+                  "CS2",
+                  "NODEJS",
+                  "GO",
+                  "TS",
+                  "PHP",
+                  "kotlin",
+                  "rust",
+                  "R",
+                  "CAML"
+                ],
+                "max_score": 100,
+                "max_timelimit": "1",
+                "n_accepted": 3268,
+                "n_teams": 3268,
+                "n_total": 3503,
+                "name": "Product Exceed",
+                "native_rating": 981,
+                "rating": 1015,
+                "short": "PRDEXC",
+                "source_sizelimit": "50000",
+                "tags": [
+                  "nishank_adm",
+                  "start249"
+                ],
+                "url": "https://www.codechef.com/problems/PRDEXC",
+                "writers": [
+                  "nishank_adm"
+                ]
+              },
+              {
+                "code": "VALLFLAT",
+                "contest_key": "START249C",
+                "is_challenge": false,
+                "languages_supported": [
+                  "CPP20",
+                  "PYTH 3",
+                  "C",
+                  "JAVA",
+                  "PYP3",
+                  "CS2",
+                  "NODEJS",
+                  "GO",
+                  "TS",
+                  "PHP",
+                  "kotlin",
+                  "rust",
+                  "R",
+                  "CAML"
+                ],
+                "max_score": 100,
+                "max_timelimit": "1",
+                "n_accepted": 1377,
+                "n_teams": 1377,
+                "n_total": 3503,
+                "name": "Valley Flattening",
+                "native_rating": 1694,
+                "rating": 1659,
+                "short": "VALLFLAT",
+                "source_sizelimit": "50000",
+                "tags": [
+                  "nishank_adm",
+                  "start249"
+                ],
+                "url": "https://www.codechef.com/problems/VALLFLAT",
+                "writers": [
+                  "nishank_adm"
+                ]
+              },
+              {
+                "code": "UPDWPAL",
+                "contest_key": "START249C",
+                "is_challenge": false,
+                "languages_supported": [
+                  "CPP20",
+                  "PYTH 3",
+                  "C",
+                  "JAVA",
+                  "PYP3",
+                  "CS2",
+                  "NODEJS",
+                  "GO",
+                  "TS",
+                  "PHP",
+                  "kotlin",
+                  "rust",
+                  "R",
+                  "CAML"
+                ],
+                "max_score": 100,
+                "max_timelimit": "1",
+                "n_accepted": 2586,
+                "n_teams": 2586,
+                "n_total": 3503,
+                "name": "Up-Down Palindrome",
+                "native_rating": 1375,
+                "rating": 1381,
+                "short": "UPDWPAL",
+                "source_sizelimit": "50000",
+                "tags": [
+                  "nishank_adm",
+                  "start249"
+                ],
+                "url": "https://www.codechef.com/problems/UPDWPAL",
+                "writers": [
+                  "nishank_adm"
+                ]
+              },
+              {
+                "code": "MINREDSR",
+                "contest_key": "START249C",
+                "is_challenge": false,
+                "languages_supported": [
+                  "CPP20",
+                  "PYTH 3",
+                  "C",
+                  "JAVA",
+                  "PYP3",
+                  "CS2",
+                  "NODEJS",
+                  "GO",
+                  "TS",
+                  "PHP",
+                  "kotlin",
+                  "rust",
+                  "R",
+                  "CAML"
+                ],
+                "max_score": 100,
+                "max_timelimit": "1",
+                "n_accepted": 83,
+                "n_teams": 83,
+                "n_total": 3503,
+                "name": "Moving Blue Boxes",
+                "native_rating": 2230,
+                "rating": 2150,
+                "short": "MINREDSR",
+                "source_sizelimit": "50000",
+                "tags": [
+                  "greedy",
+                  "nishank_adm",
+                  "start249"
+                ],
+                "url": "https://www.codechef.com/problems/MINREDSR",
+                "writers": [
+                  "nishank_adm"
+                ]
+              },
+              {
+                "code": "PTRISMIN",
+                "contest_key": "START249C",
+                "is_challenge": false,
+                "languages_supported": [
+                  "CPP20",
+                  "PYTH 3",
+                  "C",
+                  "JAVA",
+                  "PYP3",
+                  "CS2",
+                  "NODEJS",
+                  "GO",
+                  "TS",
+                  "PHP",
+                  "kotlin",
+                  "rust",
+                  "R",
+                  "CAML"
+                ],
+                "max_score": 100,
+                "max_timelimit": "2",
+                "n_accepted": 49,
+                "n_teams": 49,
+                "n_total": 3503,
+                "name": "Point Rise",
+                "native_rating": 2185,
+                "rating": 2193,
+                "short": "PTRISMIN",
+                "source_sizelimit": "50000",
+                "tags": [
+                  "nishank_adm",
+                  "sorting",
+                  "start249"
+                ],
+                "url": "https://www.codechef.com/problems/PTRISMIN",
+                "writers": [
+                  "nishank_adm"
+                ]
+              },
+              {
+                "best_tag": "Binary Search",
+                "code": "TREEGUARD",
+                "contest_key": "START249C",
+                "is_challenge": false,
+                "languages_supported": [
+                  "CPP20",
+                  "PYTH 3",
+                  "C",
+                  "JAVA",
+                  "PYP3",
+                  "CS2",
+                  "NODEJS",
+                  "GO",
+                  "TS",
+                  "PHP",
+                  "kotlin",
+                  "rust",
+                  "R",
+                  "CAML"
+                ],
+                "max_score": 100,
+                "max_timelimit": "3",
+                "n_accepted": 25,
+                "n_teams": 25,
+                "n_total": 3503,
+                "name": "Tree Guard",
+                "native_rating": 2401,
+                "rating": 2336,
+                "short": "TREEGUARD",
+                "source_sizelimit": "50000",
+                "tags": [
+                  "binary-search",
+                  "binary-search",
+                  "dynamic-programming",
+                  "dynamic-programming",
+                  "nishank_adm",
+                  "start249",
+                  "start249",
+                  "trees",
+                  "trees"
+                ],
+                "url": "https://www.codechef.com/problems/TREEGUARD",
+                "writers": [
+                  "nishank_adm"
+                ]
+              }
+            ],
+            "div_4": [
+              {
+                "code": "VARDIGS",
+                "contest_key": "START249D",
+                "is_challenge": false,
+                "languages_supported": [
+                  "CPP20",
+                  "PYTH 3",
+                  "C",
+                  "JAVA",
+                  "PYP3",
+                  "CS2",
+                  "NODEJS",
+                  "GO",
+                  "TS",
+                  "PHP",
+                  "kotlin",
+                  "rust",
+                  "R",
+                  "CAML"
+                ],
+                "max_score": 100,
+                "max_timelimit": "1",
+                "n_accepted": 27850,
+                "n_teams": 27850,
+                "n_total": 28213,
+                "name": "Varied Digits",
+                "native_rating": 215,
+                "rating": 167,
+                "short": "VARDIGS",
+                "source_sizelimit": "50000",
+                "tags": [
+                  "nishank_adm",
+                  "start249"
+                ],
+                "url": "https://www.codechef.com/problems/VARDIGS",
+                "writers": [
+                  "nishank_adm"
+                ]
+              },
+              {
+                "code": "GPUBUY",
+                "contest_key": "START249D",
+                "is_challenge": false,
+                "languages_supported": [
+                  "CPP20",
+                  "PYTH 3",
+                  "C",
+                  "JAVA",
+                  "PYP3",
+                  "CS2",
+                  "NODEJS",
+                  "GO",
+                  "TS",
+                  "PHP",
+                  "kotlin",
+                  "rust",
+                  "R",
+                  "CAML"
+                ],
+                "max_score": 100,
+                "max_timelimit": "1",
+                "n_accepted": 22903,
+                "n_teams": 22903,
+                "n_total": 28213,
+                "name": "Buying GPU",
+                "native_rating": 728,
+                "rating": 762,
+                "short": "GPUBUY",
+                "source_sizelimit": "50000",
+                "tags": [
+                  "nishank_adm",
+                  "start249"
+                ],
+                "url": "https://www.codechef.com/problems/GPUBUY",
+                "writers": [
+                  "nishank_adm"
+                ]
+              },
+              {
+                "code": "PRDEXC",
+                "contest_key": "START249D",
+                "is_challenge": false,
+                "languages_supported": [
+                  "CPP20",
+                  "PYTH 3",
+                  "C",
+                  "JAVA",
+                  "PYP3",
+                  "CS2",
+                  "NODEJS",
+                  "GO",
+                  "TS",
+                  "PHP",
+                  "kotlin",
+                  "rust",
+                  "R",
+                  "CAML"
+                ],
+                "max_score": 100,
+                "max_timelimit": "1",
+                "n_accepted": 17137,
+                "n_teams": 17137,
+                "n_total": 28213,
+                "name": "Product Exceed",
+                "native_rating": 981,
+                "rating": 1015,
+                "short": "PRDEXC",
+                "source_sizelimit": "50000",
+                "tags": [
+                  "nishank_adm",
+                  "start249"
+                ],
+                "url": "https://www.codechef.com/problems/PRDEXC",
+                "writers": [
+                  "nishank_adm"
+                ]
+              },
+              {
+                "code": "VALLFLAT",
+                "contest_key": "START249D",
+                "is_challenge": false,
+                "languages_supported": [
+                  "CPP20",
+                  "PYTH 3",
+                  "C",
+                  "JAVA",
+                  "PYP3",
+                  "CS2",
+                  "NODEJS",
+                  "GO",
+                  "TS",
+                  "PHP",
+                  "kotlin",
+                  "rust",
+                  "R",
+                  "CAML"
+                ],
+                "max_score": 100,
+                "max_timelimit": "1",
+                "n_accepted": 1628,
+                "n_teams": 1628,
+                "n_total": 28213,
+                "name": "Valley Flattening",
+                "native_rating": 1694,
+                "rating": 1659,
+                "short": "VALLFLAT",
+                "source_sizelimit": "50000",
+                "tags": [
+                  "nishank_adm",
+                  "start249"
+                ],
+                "url": "https://www.codechef.com/problems/VALLFLAT",
+                "writers": [
+                  "nishank_adm"
+                ]
+              },
+              {
+                "code": "UPDWPAL",
+                "contest_key": "START249D",
+                "is_challenge": false,
+                "languages_supported": [
+                  "CPP20",
+                  "PYTH 3",
+                  "C",
+                  "JAVA",
+                  "PYP3",
+                  "CS2",
+                  "NODEJS",
+                  "GO",
+                  "TS",
+                  "PHP",
+                  "kotlin",
+                  "rust",
+                  "R",
+                  "CAML"
+                ],
+                "max_score": 100,
+                "max_timelimit": "1",
+                "n_accepted": 6648,
+                "n_teams": 6648,
+                "n_total": 28213,
+                "name": "Up-Down Palindrome",
+                "native_rating": 1375,
+                "rating": 1381,
+                "short": "UPDWPAL",
+                "source_sizelimit": "50000",
+                "tags": [
+                  "nishank_adm",
+                  "start249"
+                ],
+                "url": "https://www.codechef.com/problems/UPDWPAL",
+                "writers": [
+                  "nishank_adm"
+                ]
+              },
+              {
+                "code": "MINREDSR",
+                "contest_key": "START249D",
+                "is_challenge": false,
+                "languages_supported": [
+                  "CPP20",
+                  "PYTH 3",
+                  "C",
+                  "JAVA",
+                  "PYP3",
+                  "CS2",
+                  "NODEJS",
+                  "GO",
+                  "TS",
+                  "PHP",
+                  "kotlin",
+                  "rust",
+                  "R",
+                  "CAML"
+                ],
+                "max_score": 100,
+                "max_timelimit": "1",
+                "n_accepted": 94,
+                "n_teams": 94,
+                "n_total": 28213,
+                "name": "Moving Blue Boxes",
+                "native_rating": 2230,
+                "rating": 2150,
+                "short": "MINREDSR",
+                "source_sizelimit": "50000",
+                "tags": [
+                  "greedy",
+                  "nishank_adm",
+                  "start249"
+                ],
+                "url": "https://www.codechef.com/problems/MINREDSR",
+                "writers": [
+                  "nishank_adm"
+                ]
+              },
+              {
+                "code": "PTRISMIN",
+                "contest_key": "START249D",
+                "is_challenge": false,
+                "languages_supported": [
+                  "CPP20",
+                  "PYTH 3",
+                  "C",
+                  "JAVA",
+                  "PYP3",
+                  "CS2",
+                  "NODEJS",
+                  "GO",
+                  "TS",
+                  "PHP",
+                  "kotlin",
+                  "rust",
+                  "R",
+                  "CAML"
+                ],
+                "max_score": 100,
+                "max_timelimit": "2",
+                "n_accepted": 233,
+                "n_teams": 233,
+                "n_total": 28213,
+                "name": "Point Rise",
+                "native_rating": 2185,
+                "rating": 2193,
+                "short": "PTRISMIN",
+                "source_sizelimit": "50000",
+                "tags": [
+                  "nishank_adm",
+                  "sorting",
+                  "start249"
+                ],
+                "url": "https://www.codechef.com/problems/PTRISMIN",
+                "writers": [
+                  "nishank_adm"
+                ]
+              }
+            ]
+          },
+          "divisions_order": [
+            "div_1",
+            "div_2",
+            "div_3",
+            "div_4"
+          ],
+          "n_problems": {
+            "div_1": 7,
+            "div_2": 7,
+            "div_3": 7,
+            "div_4": 7
+          },
+          "n_statistics": {
+            "div_1": 76,
+            "div_2": 907,
+            "div_3": 3503,
+            "div_4": 28213
+          }
+        },
+        "writers": [
+          "nishank_adm"
+        ]
+      },
+      "invisible": false,
+      "is_auto_added": true,
+      "is_promoted": null,
+      "is_rated": true,
+      "key": "START249",
+      "kind": null,
+      "link_statistic_timing": null,
+      "merging_contests": [],
+      "modified": "2026-07-29T10:47:19.054Z",
+      "n_problems": 10,
+      "n_statistics": 32901,
+      "notification_timing": "2026-07-29T10:49:12.810Z",
+      "parsed_percentage": null,
+      "parsed_time": "2026-07-31T11:45:10.274Z",
+      "problem_rating_hash": "d84c127bee58a6edba95f5495c845100627903eb03e7d70503d198890da603ad",
+      "problem_rating_update_required": false,
+      "rating_prediction_fields": null,
+      "rating_prediction_hash": null,
+      "rating_prediction_timing": null,
+      "raw_info": {
+        "_outdated": {
+          "banner": "https://cdn.codechef.com/download/small-banner/START249/1785319962.png",
+          "contest_editorials": "",
+          "penalisedUsersCount": 327,
+          "show_div_based_contest": true,
+          "time": {
+            "current": 1785469460,
+            "end": 1785344400,
+            "freezing": 0,
+            "start": 1785335400
+          }
+        },
+        "announcements": "<p><span style=\"color:#169179;\"><strong>Compete in this contest. Build on .tech.</strong></span></p>\n<p><strong>Participating in this contest? Claim a sponsored 1-year .tech domain and join 500k+ builders shipping what's next. </strong></p>\n<p><strong>Sponsored for 1 year. 2 years for the top 3 finishers.</strong></p>\n<p><span style=\"font-weight:400;\">Don’t let your code live only on the leaderboard. Build a portfolio, project, or product the world can find on .tech.</span></p>\n<div style=\"text-align:center;\"><strong><a class=\"button blue\" href=\"https://get.tech/claim/codechef\" rel=\"nofollow\">Claim your .tech domain</a></strong></div>\n<div style=\"text-align:center;\"> </div>\n<div style=\"text-align:left;\"><strong>---------------------------------------------------------------------------------------------------</strong></div>\n<div style=\"text-align:center;\">\n<p style=\"text-align:left;\"><strong>Our Partner Colleges are hiring:</strong></p>\n<p style=\"text-align:left;\"><strong>Job Title: DSA &amp; Competitive Programming Trainer at Partner Colleges</strong></p>\n<ul style=\"text-align:left;\">\n<li><strong>Experience:</strong> 0 to 1 year</li>\n<li><strong>Location:</strong> Maharashtra, Karnataka, Andhra Pradesh</li>\n<li><strong>Compensation:</strong> 7 - 8 LPA</li>\n</ul>\n<p style=\"text-align:left;\">As part of CodeChef's College Program, CodeChef conducts Training and Labs at Engineering Colleges. Our Partner colleges are currently hiring multiple members as a part of CodeChef's Learning Team to be based at the College campus at the following locations</p>\n<div style=\"text-align:left;\"><strong> <a class=\"button blue\" href=\"https://jobboard.codechef.com/company/codechef/jobs/trainer-hiring-at-partner-colleges\" target=\"_blank\" rel=\"nofollow noreferrer noopener\"> Apply Here</a></strong></div>\n</div>",
+        "autoRefresh": true,
+        "banner": "https://cdn.codechef.com/download/small-banner/START249/1785338484.png",
+        "child_contests": {
+          "div_1": {
+            "contest_code": "START249A",
+            "contest_link": "/START249A",
+            "div": {
+              "code": "div_1",
+              "description": "Users with rating above 2000",
+              "div_number": "1",
+              "max_rating": 50000,
+              "min_rating": 2000,
+              "name": "Division 1"
+            },
+            "division_generation": 3
+          },
+          "div_2": {
+            "contest_code": "START249B",
+            "contest_link": "/START249B",
+            "div": {
+              "code": "div_2",
+              "description": "Users with rating between 1600 and 1999",
+              "div_number": "2",
+              "max_rating": 1999,
+              "min_rating": 1600,
+              "name": "Division 2"
+            },
+            "division_generation": 3
+          },
+          "div_3": {
+            "contest_code": "START249C",
+            "contest_link": "/START249C",
+            "div": {
+              "code": "div_3",
+              "description": "Users with rating upto 1599",
+              "div_number": "3",
+              "max_rating": 1599,
+              "min_rating": 1400,
+              "name": "Division 3"
+            },
+            "division_generation": 3
+          },
+          "div_4": {
+            "contest_code": "START249D",
+            "contest_link": "/START249D",
+            "div": {
+              "code": "div_4",
+              "description": "Users with rating upto 1399",
+              "div_number": "4",
+              "max_rating": 1399,
+              "min_rating": 0,
+              "name": "Division 4"
+            },
+            "division_generation": 3
+          }
+        },
+        "code": "START249",
+        "contest_editorials": "https://discuss.codechef.com/tag/start249/11028",
+        "contest_introduction": "https://discuss.codechef.com/t/invitation-to-codechef-starters-249-rated-upto-6-stars-29th-august/125682",
+        "contest_video_editorials": "",
+        "custom_contest_page_meta_desc": "",
+        "custom_contest_page_title": "",
+        "division_generation": 3,
+        "duration": "150",
+        "ip": "152.53.187.243",
+        "isAssessmentContest": false,
+        "isParentContestRated": "0",
+        "isRanklistFrozen": false,
+        "isRatedContest": "1",
+        "is_OTP_required": false,
+        "is_a_parent_contest": true,
+        "is_contest_elements_visible": true,
+        "is_flexi_time_contest": false,
+        "is_linked_problems_contest": "0",
+        "is_older_rating_based_division_system": false,
+        "is_proctored": false,
+        "is_registration_enabled_contest": false,
+        "name": "Starters 249 (Rated till 6 star)",
+        "partial_scores": [],
+        "penalisedUsersCount": 0,
+        "problems": [],
+        "problemsstats": {
+          "attempted": [],
+          "locked": [],
+          "partially_solved": [],
+          "solved": []
+        },
+        "rank_and_score": {
+          "rank": "NA",
+          "score": "NA"
+        },
+        "rules": "<h4>CodeChef: A Platform for Aspiring Programmers</h4>\n<p class=\"last\">CodeChef was created as a platform to help programmers make it big in the world of algorithms, computer programming, and programming contests. At CodeChef, our dedicated efforts are aimed at reviving the inner geek within you, as we proudly host a thrilling programming (coding) contest every Wednesday.</p>\n<h4>About CodeChef Starters:</h4>\n<p>CodeChef Starters is a short programming contest which takes place on every Wednesday </p>\n<h4>Contest Details:</h4>\n<ul class=\"last\">\n<li><strong>D</strong><strong>uration: </strong> 2.5 hours </li>\n<li><strong>Start Date: </strong>Wednesday, 29th July, 2026 at 20:00 HRS (IST)</li>\n<li><strong>End Date: </strong>Wednesday, 29th July, 2026 at 22:30 HRS (IST)</li>\n<li>Check your timezone <a href=\"https://www.timeanddate.com/worldclock/fixedtime.html?msg=CodeChef+Starters+249&amp;iso=20260729T20&amp;p1=44&amp;ah=2&amp;am=30\" target=\"_blank\" rel=\"nofollow noreferrer noopener\">here</a>.</li>\n</ul>\n<h4>Eligibility Criteria: Anyone with a knack for programming</h4>\n<p class=\"last\">Our contests are open to all programmers across the globe.</p>\n<h4>What's in it for you?</h4>\n<p>The idea behind these programming contests is that we want you to learn while competing. Also, we believe that it is alright to refer to tutorials, books, and other materials, learn a concept, and then apply the same to solve a problem during a contest. But it is <strong>not alright to copy other people's solutions or seek other people's help to solve a problem. </strong>All the participants are expected to abide to <a class=\"button blue\" href=\"../codeofconduct\">CodeChef's Code Of Conduct</a>.</p>\n<h4>Rules and Regulations:</h4>\n<ul>\n<li>This is an IOI-style contest. This means that the problems will be partially graded. You will get the score for passing certain test data.</li>\n<li>The details of the failed test cases will also be visible on your solution page.</li>\n<li>You can submit solutions as many times as you'd like, there are no penalties for incorrect submissions. Only your best correct submission will be considered.</li>\n<li>Those who achieve the score first will be placed higher in the ranklist in case of a tie.</li>\n<li><strong>We have removed all the Institutions that we could not identify from our database. We request you to update your institutions once again by going to your profile page.</strong></li>\n<li>You can also send in your queries in an email to <a href=\"mailto:<redacted-email>\" target=\"_blank\" rel=\"noreferrer noopener\"><redacted-email></a>, during the contest.</li>\n<li>Please do not discuss strategy, suggestions, or tips in the comments during a live contest. Posting questions clarifying the problem statement is ok. If you are unsure, email us at <a href=\"mailto:<redacted-email>\" target=\"_blank\" rel=\"noreferrer noopener\"> <redacted-email></a>.</li>\n<li>Discussing CodeChef's problems or any aspect of a problem, on any other platform on the web, on identification, could lead to the disabling of the respective account and banning from the community.</li>\n</ul>\n<p><strong>Note: You can now \"Code, Compile, and Run\" your codes on our <a href=\"../ide\">Online IDE</a>.</strong></p>\n<p>However, if you are using any other online development environment, make sure that other contestants don't have access to your code. As a contestant, you are responsible for making sure others don't access the code that you submit. If you use Ideone, make sure to mark your submission \"private\" (not secret)\".</p>",
+        "show_div_based_contest": false,
+        "stats": null,
+        "status": "success",
+        "time": {
+          "current": 1785498324,
+          "end": 1785344400,
+          "freezing": 0,
+          "start": 1785335400
+        },
+        "todos": [],
+        "ttl": 60,
+        "user": {
+          "username": null
+        },
+        "user_contest_code": null,
+        "user_rating_div": {
+          "div": {
+            "code": "all",
+            "description": "All the users",
+            "max_rating": 50000,
+            "min_rating": 0,
+            "name": "All"
+          },
+          "rating": -1
+        },
+        "visitedContests": []
+      },
+      "registration_url": null,
+      "related": null,
+      "resource": 2,
+      "series": null,
+      "set_matched_coders_to_members": null,
+      "slug": "starters-249-rated-till-6-star",
+      "standings_kind": "scoring",
+      "standings_url": "https://www.codechef.com/START249",
+      "start_time": "2026-07-29T14:30:00Z",
+      "statistic_timing": "2026-07-31T19:45:10.274Z",
+      "statistics_update_required": false,
+      "submissions_info": {},
+      "title": "Starters 249 (Rated till 6 star)",
+      "title_path": "starters.249.rated.till.6.star",
+      "trial_standings_url": null,
+      "uid": "of4h6a2058lukv1g2iq2crrorc",
+      "updated": "2026-08-04T13:21:57.264Z",
+      "upload_solved_problems_solutions": null,
+      "upsolving_key": null,
+      "upsolving_url": null,
+      "url": "https://www.codechef.com/START249",
+      "variables": {},
+      "wait_for_successful_update_timing": "2026-07-30T18:31:18.010Z",
+      "with_advance": false,
+      "with_medals": false
+    },
+    "model": "clist.contest",
+    "pk": 68357848
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "IN",
+      "created": "2026-05-27T15:47:24.541Z",
+      "deleted": true,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "institution": "Indian Institute of Technology Bombay Mumbai, Maharashtra, India",
+        "name": "Rahul Kumar Agrawal",
+        "rating": 2248,
+        "student/professional": "Student"
+      },
+      "key": "evil_joker",
+      "last_activity": "2026-07-29T14:30:00Z",
+      "last_rating_activity": "2026-07-01T14:30:00Z",
+      "last_submission": null,
+      "modified": "2026-08-01T01:55:27.401Z",
+      "n_bronze": null,
+      "n_contests": 7,
+      "n_first_ac": 0,
+      "n_first_places": 1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 4,
+      "n_second_places": 0,
+      "n_silver": null,
+      "n_solved": 47,
+      "n_subscribers": 0,
+      "n_third_places": 0,
+      "n_top_ten_places": 3,
+      "n_total_solved": 55,
+      "n_upsolved": 8,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Rahul Kumar Agrawal",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": "2026-07-01T16:30:00Z",
+      "related": null,
+      "resource": 2,
+      "resource_rank": null,
+      "solving": 4600.0,
+      "submissions_info": {},
+      "total_solving": 5400.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-08-01T01:33:21.615Z",
+      "upsolving": 800.0,
+      "url": "/account/evil_joker/resource/codechef.com/"
+    },
+    "model": "ranking.account",
+    "pk": 10981479
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "IN",
+      "created": "2026-03-25T15:07:09.872Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "institution": "Sethu Institute of Technology",
+        "name": "VIGNESH V",
+        "rating": 1967,
+        "student/professional": "Student"
+      },
+      "key": "vicky_0128",
+      "last_activity": "2026-07-29T14:30:00Z",
+      "last_rating_activity": "2026-07-29T14:30:00Z",
+      "last_submission": null,
+      "modified": "2026-07-30T10:55:08.616Z",
+      "n_bronze": null,
+      "n_contests": 4,
+      "n_first_ac": 0,
+      "n_first_places": 1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 25,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 0,
+      "n_total_solved": 28,
+      "n_upsolved": 3,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "VIGNESH V",
+      "need_verification": false,
+      "rating": 1967,
+      "rating50": 39,
+      "rating_prediction": null,
+      "rating_update_time": "2026-07-29T17:00:00Z",
+      "related": null,
+      "resource": 2,
+      "resource_rank": 10957,
+      "solving": 2500.0,
+      "submissions_info": {},
+      "total_solving": 2800.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-07-30T23:59:59.999Z",
+      "upsolving": 300.0,
+      "url": "/account/vicky_0128/resource/codechef.com/"
+    },
+    "model": "ranking.account",
+    "pk": 10363527
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "IN",
+      "created": "2024-09-18T17:01:15.030Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "institution": "VIT University, Chennai Tamil Nadu",
+        "name": "Harsh Vikram Singh 23brs1216",
+        "rating": 1571,
+        "student/professional": "Student"
+      },
+      "key": "basic_song_19",
+      "last_activity": "2026-07-29T14:30:00Z",
+      "last_rating_activity": "2026-07-29T14:30:00Z",
+      "last_submission": null,
+      "modified": "2026-07-30T18:54:48.899Z",
+      "n_bronze": null,
+      "n_contests": 14,
+      "n_first_ac": 0,
+      "n_first_places": 1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 2,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 24,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 1,
+      "n_total_solved": 24,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Harsh Vikram Singh 23brs1216",
+      "need_verification": false,
+      "rating": 1571,
+      "rating50": 31,
+      "rating_prediction": null,
+      "rating_update_time": "2026-07-29T17:00:00Z",
+      "related": null,
+      "resource": 2,
+      "resource_rank": 115104,
+      "solving": 2400.0,
+      "submissions_info": {},
+      "total_solving": 2400.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-07-30T23:59:59.999Z",
+      "upsolving": 0.0,
+      "url": "/account/basic_song_19/resource/codechef.com/"
+    },
+    "model": "ranking.account",
+    "pk": 7511285
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "IN",
+      "created": "2026-02-04T16:52:50.238Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "institution": "Sethu Institute of Technology",
+        "name": "SANJAY A",
+        "rating": 1018,
+        "student/professional": "Student"
+      },
+      "key": "sanjay_6045",
+      "last_activity": "2026-07-29T14:30:00Z",
+      "last_rating_activity": "2026-07-29T14:30:00Z",
+      "last_submission": null,
+      "modified": "2026-07-31T21:20:55.453Z",
+      "n_bronze": null,
+      "n_contests": 15,
+      "n_first_ac": 0,
+      "n_first_places": 2,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 2,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 42,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 0,
+      "n_total_solved": 42,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "SANJAY A",
+      "need_verification": false,
+      "rating": 1018,
+      "rating50": 20,
+      "rating_prediction": null,
+      "rating_update_time": "2026-07-15T16:30:00Z",
+      "related": null,
+      "resource": 2,
+      "resource_rank": 661459,
+      "solving": 4200.0,
+      "submissions_info": {},
+      "total_solving": 4200.0,
+      "try_fill_missed_ranks_time": "2026-05-07T10:31:42.764Z",
+      "try_renaming_check_time": "2026-05-07T10:31:42.624Z",
+      "updated": "2027-07-31T23:59:59.999Z",
+      "upsolving": null,
+      "url": "/account/sanjay_6045/resource/codechef.com/"
+    },
+    "model": "ranking.account",
+    "pk": 9962093
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "IN",
+      "created": "2026-05-06T14:40:57.968Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "name": "Reshu singh",
+        "rating": 1412,
+        "student/professional": "Other"
+      },
+      "key": "reshusingh2505",
+      "last_activity": "2026-07-29T14:30:00Z",
+      "last_rating_activity": "2026-07-29T14:30:00Z",
+      "last_submission": null,
+      "modified": "2026-07-30T10:56:12.966Z",
+      "n_bronze": null,
+      "n_contests": 39,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 5,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 143,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 5,
+      "n_total_solved": 145,
+      "n_upsolved": 2,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Reshu singh",
+      "need_verification": false,
+      "rating": 1412,
+      "rating50": 28,
+      "rating_prediction": null,
+      "rating_update_time": "2026-07-29T17:00:00Z",
+      "related": null,
+      "resource": 2,
+      "resource_rank": 232694,
+      "solving": 14374.0,
+      "submissions_info": {},
+      "total_solving": 14574.0,
+      "try_fill_missed_ranks_time": "2026-06-25T04:43:51.539Z",
+      "try_renaming_check_time": "2026-05-06T17:39:07.032Z",
+      "updated": "2027-07-30T23:59:59.999Z",
+      "upsolving": 200.0,
+      "url": "/account/reshusingh2505/resource/codechef.com/"
+    },
+    "model": "ranking.account",
+    "pk": 10783685
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "IN",
+      "created": "2025-09-03T15:25:30.134Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "name": "THUMMALA HARSHITH REDDY",
+        "rating": 1752,
+        "student/professional": "Other"
+      },
+      "key": "reddy_03_029",
+      "last_activity": "2026-07-29T14:30:00Z",
+      "last_rating_activity": "2026-07-15T14:30:00Z",
+      "last_submission": null,
+      "modified": "2026-07-31T02:05:59.505Z",
+      "n_bronze": null,
+      "n_contests": 23,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 3,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 94,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 3,
+      "n_total_solved": 94,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "THUMMALA HARSHITH REDDY",
+      "need_verification": false,
+      "rating": 1752,
+      "rating50": 35,
+      "rating_prediction": null,
+      "rating_update_time": "2026-07-15T16:30:00Z",
+      "related": null,
+      "resource": 2,
+      "resource_rank": 39903,
+      "solving": 9400.0,
+      "submissions_info": {},
+      "total_solving": 9400.0,
+      "try_fill_missed_ranks_time": "2026-07-31T02:05:59.484Z",
+      "try_renaming_check_time": "2026-05-21T01:29:27.582Z",
+      "updated": "2027-07-31T23:59:59.999Z",
+      "upsolving": null,
+      "url": "/account/reddy_03_029/resource/codechef.com/"
+    },
+    "model": "ranking.account",
+    "pk": 8939841
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "IN",
+      "created": "2026-07-20T13:43:10.010Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "name": "Arvind C R",
+        "rating": 1736,
+        "student/professional": "Other"
+      },
+      "key": "aloft_seed_51",
+      "last_activity": "2026-07-29T14:30:00Z",
+      "last_rating_activity": "2026-07-29T14:30:00Z",
+      "last_submission": null,
+      "modified": "2026-07-31T20:57:31.116Z",
+      "n_bronze": null,
+      "n_contests": 3,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 19,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 22,
+      "n_upsolved": 3,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Arvind C R",
+      "need_verification": false,
+      "rating": 1736,
+      "rating50": 34,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 2,
+      "resource_rank": 43797,
+      "solving": 1900.0,
+      "submissions_info": {},
+      "total_solving": 2200.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-07-31T23:59:59.999Z",
+      "upsolving": 300.0,
+      "url": "/account/aloft_seed_51/resource/codechef.com/"
+    },
+    "model": "ranking.account",
+    "pk": 11540849
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "IN",
+      "created": "2025-12-03T14:56:05.895Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "name": "Aniruddha Patil",
+        "rating": 2093,
+        "student/professional": "Other"
+      },
+      "key": "noob_hakur",
+      "last_activity": "2026-07-29T14:30:00Z",
+      "last_rating_activity": "2026-07-29T14:30:00Z",
+      "last_submission": null,
+      "modified": "2026-07-31T11:59:01.174Z",
+      "n_bronze": null,
+      "n_contests": 19,
+      "n_first_ac": 2,
+      "n_first_places": 2,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 3,
+      "n_second_places": 0,
+      "n_silver": null,
+      "n_solved": 87,
+      "n_subscribers": 0,
+      "n_third_places": 0,
+      "n_top_ten_places": 1,
+      "n_total_solved": 104,
+      "n_upsolved": 17,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Aniruddha Patil",
+      "need_verification": false,
+      "rating": 2093,
+      "rating50": 41,
+      "rating_prediction": null,
+      "rating_update_time": "2026-07-29T17:00:00Z",
+      "related": null,
+      "resource": 2,
+      "resource_rank": 4445,
+      "solving": 8700.0,
+      "submissions_info": {},
+      "total_solving": 10400.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-07-31T23:59:59.999Z",
+      "upsolving": 1700.0,
+      "url": "/account/noob_hakur/resource/codechef.com/"
+    },
+    "model": "ranking.account",
+    "pk": 9718556
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "IN",
+      "created": "2024-10-23T14:57:21.298Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar_url": "https://cdn.codechef.com/sites/default/files/uploads/pictures/406e368cccbae5b2aa7b8eb5041cedb7.jpg",
+        "name": "z y z y",
+        "rating": 1593,
+        "student/professional": "Other"
+      },
+      "key": "i_am_splash",
+      "last_activity": "2026-07-29T14:30:00Z",
+      "last_rating_activity": "2026-07-29T14:30:00Z",
+      "last_submission": "2026-07-29T17:33:35.271Z",
+      "modified": "2026-08-03T00:20:02.402Z",
+      "n_bronze": null,
+      "n_contests": 34,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 104,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 183,
+      "n_upsolved": 79,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "z y z y",
+      "need_verification": false,
+      "rating": 1593,
+      "rating50": 31,
+      "rating_prediction": null,
+      "rating_update_time": "2026-07-29T17:00:00Z",
+      "related": null,
+      "resource": 2,
+      "resource_rank": 103568,
+      "solving": 10400.0,
+      "submissions_info": {
+        "count": 64,
+        "last_submission_id": 1322289177,
+        "last_submission_time": "2026-07-29T17:33:35.271015+00:00"
+      },
+      "total_solving": 18300.0,
+      "try_fill_missed_ranks_time": "2025-05-01T06:21:46.442Z",
+      "try_renaming_check_time": "2025-05-01T06:21:46.264Z",
+      "updated": "2026-08-11T23:59:59.999Z",
+      "upsolving": 7900.0,
+      "url": "/coder/I_/?resource=2"
+    },
+    "model": "ranking.account",
+    "pk": 7604557
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "IN",
+      "created": "2025-06-26T11:13:16.618Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar_url": "https://cdn.codechef.com/sites/default/files/uploads/pictures/8c9a8540d14dbcbe4d6581a41f129529.png",
+        "institution": "KIET Group of Institutions, Ghaziabad",
+        "name": "ADITYA UPADHYAY",
+        "rating": 1597,
+        "student/professional": "Student"
+      },
+      "key": "adityaa_up62",
+      "last_activity": "2026-07-29T14:30:00Z",
+      "last_rating_activity": "2026-07-29T14:30:00Z",
+      "last_submission": "2026-08-05T09:14:00Z",
+      "modified": "2026-08-04T00:50:36.772Z",
+      "n_bronze": null,
+      "n_contests": 28,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 74,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 246,
+      "n_upsolved": 172,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "ADITYA UPADHYAY",
+      "need_verification": false,
+      "rating": 1597,
+      "rating50": 31,
+      "rating_prediction": null,
+      "rating_update_time": "2026-07-29T17:00:00Z",
+      "related": null,
+      "resource": 2,
+      "resource_rank": 101580,
+      "solving": 7400.0,
+      "submissions_info": {
+        "count": 157,
+        "last_submission_id": 1322114075,
+        "last_submission_time": "2026-10-06T14:51:00+00:00"
+      },
+      "total_solving": 24349.0,
+      "try_fill_missed_ranks_time": "2025-06-27T22:24:49.035Z",
+      "try_renaming_check_time": "2025-06-27T22:24:48.408Z",
+      "updated": "2026-08-04T23:59:59.999Z",
+      "upsolving": 16949.0,
+      "url": "/coder/aditya_up62/?resource=2"
+    },
+    "model": "ranking.account",
+    "pk": 8444899
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "IN",
+      "created": "2025-05-14T14:46:45.397Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "institution": "Dhirubhai Ambani Institute of Information and Communication Technology, Gandhinagar Gujarat, India",
+        "name": "Vikas Soni",
+        "rating": 1911,
+        "student/professional": "Student"
+      },
+      "key": "vikas_soni0",
+      "last_activity": "2026-07-29T14:30:00Z",
+      "last_rating_activity": "2026-07-29T14:30:00Z",
+      "last_submission": "2026-07-29T16:33:00Z",
+      "modified": "2026-08-03T00:25:19.899Z",
+      "n_bronze": null,
+      "n_contests": 26,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 101,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 137,
+      "n_upsolved": 36,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Vikas Soni",
+      "need_verification": false,
+      "rating": 1911,
+      "rating50": 38,
+      "rating_prediction": null,
+      "rating_update_time": "2026-07-29T17:00:00Z",
+      "related": null,
+      "resource": 2,
+      "resource_rank": 14934,
+      "solving": 10100.0,
+      "submissions_info": {
+        "count": 33,
+        "last_submission_id": 1322277180,
+        "last_submission_time": "2026-07-29T16:33:00+00:00"
+      },
+      "total_solving": 13700.0,
+      "try_fill_missed_ranks_time": "2025-05-14T20:27:08.058Z",
+      "try_renaming_check_time": "2025-05-14T20:27:07.483Z",
+      "updated": "2026-08-11T23:59:59.999Z",
+      "upsolving": 3600.0,
+      "url": "/coder/Vikas_soni/?resource=2"
+    },
+    "model": "ranking.account",
+    "pk": 8368650
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "IN",
+      "created": "2023-11-29T14:57:43.253Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "name": "royal_agent09",
+        "rating": 1654,
+        "student/professional": "Other"
+      },
+      "key": "royal_agent09",
+      "last_activity": "2026-07-29T14:30:00Z",
+      "last_rating_activity": "2026-07-29T14:30:00Z",
+      "last_submission": "2026-07-29T17:37:22.950Z",
+      "modified": "2026-08-03T01:01:01.015Z",
+      "n_bronze": null,
+      "n_contests": 4,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 10,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 10,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": null,
+      "need_verification": false,
+      "rating": 1654,
+      "rating50": 33,
+      "rating_prediction": null,
+      "rating_update_time": "2026-07-29T17:00:00Z",
+      "related": null,
+      "resource": 2,
+      "resource_rank": 70124,
+      "solving": 1000.0,
+      "submissions_info": {
+        "count": 5,
+        "last_submission_id": 1322315965,
+        "last_submission_time": "2026-07-29T17:37:22.950054+00:00"
+      },
+      "total_solving": 1000.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-08-11T23:59:59.999Z",
+      "upsolving": 0.0,
+      "url": "/coder/Royal_agent09/?search=resource:codechef.com"
+    },
+    "model": "ranking.account",
+    "pk": 6053262
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "IN",
+      "created": "2024-07-31T14:41:54.490Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar_url": "https://cdn.codechef.com/sites/default/files/uploads/pictures/dbb472b3c8a4bebac6ad702ca922e6a2.png",
+        "institution": "Vellore Institute of Technology, Amaravati Andhra Pradesh, India",
+        "name": "R Kumaresh",
+        "rating": 1577,
+        "student/professional": "Student"
+      },
+      "key": "kumaresh_rk",
+      "last_activity": "2026-07-29T14:30:00Z",
+      "last_rating_activity": "2026-07-29T14:30:00Z",
+      "last_submission": "2026-07-30T05:05:10.884Z",
+      "modified": "2026-08-01T01:36:05.089Z",
+      "n_bronze": null,
+      "n_contests": 16,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 7,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 11,
+      "n_upsolved": 4,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "R Kumaresh",
+      "need_verification": false,
+      "rating": 1577,
+      "rating50": 31,
+      "rating_prediction": null,
+      "rating_update_time": "2026-07-29T17:00:00Z",
+      "related": null,
+      "resource": 2,
+      "resource_rank": 111800,
+      "solving": 700.0,
+      "submissions_info": {
+        "count": 7,
+        "last_submission_id": 1322765807,
+        "last_submission_time": "2026-07-30T05:05:10.884107+00:00"
+      },
+      "total_solving": 1100.0,
+      "try_fill_missed_ranks_time": "2024-09-03T08:42:52.069Z",
+      "try_renaming_check_time": null,
+      "updated": "2026-08-04T23:59:59.999Z",
+      "upsolving": 400.0,
+      "url": "/coder/KumareshRamachandran/?search=resource:codechef.com"
+    },
+    "model": "ranking.account",
+    "pk": 7193473
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "IN",
+      "created": "2024-10-23T14:54:25.435Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "name": "Suphal Bochkar",
+        "rating": 1328,
+        "student/professional": "Other"
+      },
+      "key": "suphalbochkar",
+      "last_activity": "2026-07-29T14:30:00Z",
+      "last_rating_activity": "2026-07-29T14:30:00Z",
+      "last_submission": "2026-07-29T16:30:46.672Z",
+      "modified": "2026-08-03T00:54:22.853Z",
+      "n_bronze": null,
+      "n_contests": 15,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 24,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 25,
+      "n_upsolved": 1,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Suphal Bochkar",
+      "need_verification": false,
+      "rating": 1328,
+      "rating50": 26,
+      "rating_prediction": null,
+      "rating_update_time": "2026-07-29T17:00:00Z",
+      "related": null,
+      "resource": 2,
+      "resource_rank": 309372,
+      "solving": 2400.0,
+      "submissions_info": {
+        "count": 8,
+        "last_submission_id": 1322161610,
+        "last_submission_time": "2026-07-29T16:30:46.672595+00:00"
+      },
+      "total_solving": 2500.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-08-11T23:59:59.999Z",
+      "upsolving": 100.0,
+      "url": "/coder/suphalbochkar67/?resource=2"
+    },
+    "model": "ranking.account",
+    "pk": 7604071
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "IN",
+      "created": "2024-11-20T16:38:47.587Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "name": "dd_9",
+        "rating": 1340,
+        "student/professional": "Other"
+      },
+      "key": "dd_9",
+      "last_activity": "2026-07-29T14:30:00Z",
+      "last_rating_activity": "2026-07-29T14:30:00Z",
+      "last_submission": "2026-07-29T16:10:29.305Z",
+      "modified": "2026-08-01T01:04:03.649Z",
+      "n_bronze": null,
+      "n_contests": 40,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 86,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 87,
+      "n_upsolved": 1,
+      "n_win": null,
+      "n_writers": 0,
+      "name": null,
+      "need_verification": false,
+      "rating": 1340,
+      "rating50": 26,
+      "rating_prediction": null,
+      "rating_update_time": "2026-07-29T17:00:00Z",
+      "related": null,
+      "resource": 2,
+      "resource_rank": 298406,
+      "solving": 8600.0,
+      "submissions_info": {
+        "count": 18,
+        "last_submission_id": 1322132203,
+        "last_submission_time": "2026-07-29T16:10:29.305534+00:00"
+      },
+      "total_solving": 8700.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-08-05T23:59:59.999Z",
+      "upsolving": 100.0,
+      "url": "/coder/DD_88/?resource=2"
+    },
+    "model": "ranking.account",
+    "pk": 7713923
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "IN",
+      "created": "2019-12-28T18:01:19.224Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "institution": "Indian Institute of Technology Madras",
+        "name": "Kaustubh Miglani",
+        "rating": 2540,
+        "student/professional": "Student"
+      },
+      "key": "kira_1234",
+      "last_activity": "2026-07-29T14:30:00Z",
+      "last_rating_activity": "2025-07-13T14:30:00Z",
+      "last_submission": "2026-07-29T17:45:46.142Z",
+      "modified": "2026-08-03T00:12:02.477Z",
+      "n_bronze": null,
+      "n_contests": 111,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 0,
+      "n_second_places": 0,
+      "n_silver": null,
+      "n_solved": 22,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 0,
+      "n_total_solved": 282,
+      "n_upsolved": 260,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Kaustubh Miglani",
+      "need_verification": false,
+      "rating": 2540,
+      "rating50": 50,
+      "rating_prediction": null,
+      "rating_update_time": "2025-07-13T17:30:00Z",
+      "related": null,
+      "resource": 2,
+      "resource_rank": 369,
+      "solving": 2200.0,
+      "submissions_info": {
+        "count": 132,
+        "last_submission_id": 1322342270,
+        "last_submission_time": "2026-07-29T17:45:46.142492+00:00"
+      },
+      "total_solving": 28200.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-08-11T23:59:59.999Z",
+      "upsolving": 26000.0,
+      "url": "/coder/phoxwayne/?search=resource:codechef.com"
+    },
+    "model": "ranking.account",
+    "pk": 1434370
+  },
+  {
+    "fields": {
+      "account": 10981479,
+      "addition": {
+        "country": "IN",
+        "division": "div_1",
+        "institution": "Indian Institute of Technology Bombay",
+        "institution_type": "College",
+        "is_user_premium": false,
+        "name": "Rahul Kumar Agrawal",
+        "old_rating": 2248,
+        "problems": {
+          "MINREDSR": {
+            "result": 100
+          },
+          "MINREDSR2": {
+            "result": 100
+          },
+          "PTRISMIN": {
+            "result": 100
+          },
+          "TREEGUARD": {
+            "result": 100
+          },
+          "TREEGUARD2": {
+            "result": 100
+          },
+          "UPDWPAL": {
+            "result": 100
+          },
+          "VALLFLAT": {
+            "result": 100
+          }
+        },
+        "solved": {
+          "solving": 7,
+          "upsolving": 0
+        },
+        "time": "01:46:19",
+        "user_gender": "Male"
+      },
+      "advanced": false,
+      "contest": 68357848,
+      "created": "2026-07-29T14:54:32.181Z",
+      "global_rating_change": null,
+      "last_activity": "2026-07-29T14:30:00Z",
+      "medal": null,
+      "modified": "2026-07-31T11:59:00.651Z",
+      "n_first_ac": 0,
+      "n_solved": 7,
+      "n_total_solved": 7,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "1",
+      "place_as_int": 1,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 2,
+      "skip_in_stats": false,
+      "solving": 700.0,
+      "total_solving": 700.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91196256
+  },
+  {
+    "fields": {
+      "account": 10363527,
+      "addition": {
+        "country": "IN",
+        "division": "div_2",
+        "institution": "Sethu Institute of Technology",
+        "institution_type": "College",
+        "is_user_premium": true,
+        "name": "VIGNESH V",
+        "new_rating": 1967,
+        "old_rating": 1639,
+        "problems": {
+          "GPUBUY": {
+            "upsolving": {
+              "result": 100
+            }
+          },
+          "MINREDSR": {
+            "result": 100
+          },
+          "MINREDSR2": {
+            "result": 100
+          },
+          "PRDEXC": {
+            "result": 100
+          },
+          "PTRISMIN": {
+            "result": 100
+          },
+          "TREEGUARD": {
+            "result": 100
+          },
+          "TREEGUARD2": {
+            "upsolving": {
+              "result": 100
+            }
+          },
+          "UPDWPAL": {
+            "result": 100
+          },
+          "VALLFLAT": {
+            "result": 100
+          },
+          "VARDIGS": {
+            "upsolving": {
+              "result": 100
+            }
+          }
+        },
+        "rating_change": 328,
+        "solved": {
+          "solving": 7,
+          "upsolving": 3
+        },
+        "time": "01:09:34",
+        "user_gender": "Male"
+      },
+      "advanced": false,
+      "contest": 68357848,
+      "created": "2026-07-29T14:54:37.255Z",
+      "global_rating_change": null,
+      "last_activity": "2026-07-29T14:30:00Z",
+      "medal": null,
+      "modified": "2026-07-31T11:59:01.920Z",
+      "n_first_ac": 0,
+      "n_solved": 7,
+      "n_total_solved": 10,
+      "n_upsolved": 3,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "1",
+      "place_as_int": 1,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 2,
+      "skip_in_stats": false,
+      "solving": 700.0,
+      "total_solving": 1000.0,
+      "upsolving": 300.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91196378
+  },
+  {
+    "fields": {
+      "account": 7511285,
+      "addition": {
+        "country": "IN",
+        "division": "div_3",
+        "institution": "VIT University, Chennai",
+        "institution_type": "College",
+        "is_user_premium": false,
+        "name": "Harsh Vikram Singh 23brs1216",
+        "new_rating": 1571,
+        "old_rating": 1498,
+        "problems": {
+          "GPUBUY": {
+            "result": 100
+          },
+          "MINREDSR": {
+            "result": 100
+          },
+          "PRDEXC": {
+            "result": 100
+          },
+          "PTRISMIN": {
+            "result": 100
+          },
+          "TREEGUARD": {
+            "result": 100
+          },
+          "UPDWPAL": {
+            "result": 100
+          },
+          "VALLFLAT": {
+            "result": 100
+          }
+        },
+        "rating_change": 73,
+        "solved": {
+          "solving": 7,
+          "upsolving": 0
+        },
+        "time": "00:37:18",
+        "user_gender": "Male"
+      },
+      "advanced": false,
+      "contest": 68357848,
+      "created": "2026-07-29T15:07:19.333Z",
+      "global_rating_change": null,
+      "last_activity": "2026-07-29T14:30:00Z",
+      "medal": null,
+      "modified": "2026-07-31T11:59:18.020Z",
+      "n_first_ac": 0,
+      "n_solved": 7,
+      "n_total_solved": 7,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "1",
+      "place_as_int": 1,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 2,
+      "skip_in_stats": false,
+      "solving": 700.0,
+      "total_solving": 700.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91204800
+  },
+  {
+    "fields": {
+      "account": 9962093,
+      "addition": {
+        "country": "IN",
+        "division": "div_4",
+        "institution": "Sethu Institute of Technology",
+        "institution_type": "College",
+        "is_user_premium": true,
+        "name": "SANJAY A",
+        "new_rating": 1018,
+        "old_rating": 933,
+        "problems": {
+          "GPUBUY": {
+            "result": 100
+          },
+          "MINREDSR": {
+            "result": 100
+          },
+          "PRDEXC": {
+            "result": 100
+          },
+          "PTRISMIN": {
+            "result": 100
+          },
+          "UPDWPAL": {
+            "result": 100
+          },
+          "VALLFLAT": {
+            "result": 100
+          },
+          "VARDIGS": {
+            "result": 100
+          }
+        },
+        "rating_change": 85,
+        "solved": {
+          "solving": 7,
+          "upsolving": 0
+        },
+        "time": "00:45:47",
+        "user_gender": "Male"
+      },
+      "advanced": false,
+      "contest": 68357848,
+      "created": "2026-07-29T15:23:52.673Z",
+      "global_rating_change": null,
+      "last_activity": "2026-07-29T14:30:00Z",
+      "medal": null,
+      "modified": "2026-07-31T21:20:55.411Z",
+      "n_first_ac": 0,
+      "n_solved": 7,
+      "n_total_solved": 7,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "1",
+      "place_as_int": 1,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 2,
+      "skip_in_stats": false,
+      "solving": 700.0,
+      "total_solving": 700.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91212061
+  },
+  {
+    "fields": {
+      "account": 10783685,
+      "addition": {
+        "country": "IN",
+        "division": "div_4",
+        "institution": "",
+        "institution_type": null,
+        "is_user_premium": false,
+        "name": "Reshu singh",
+        "new_rating": 1412,
+        "old_rating": 1299,
+        "problems": {
+          "GPUBUY": {
+            "result": 100
+          },
+          "MINREDSR": {
+            "result": 100
+          },
+          "PRDEXC": {
+            "result": 100
+          },
+          "PTRISMIN": {
+            "result": 100
+          },
+          "TREEGUARD": {
+            "upsolving": {
+              "result": 100
+            }
+          },
+          "TREEGUARD2": {
+            "upsolving": {
+              "result": 100
+            }
+          },
+          "UPDWPAL": {
+            "result": 100
+          },
+          "VALLFLAT": {
+            "result": 100
+          },
+          "VARDIGS": {
+            "result": 100
+          }
+        },
+        "rating_change": 113,
+        "solved": {
+          "solving": 7,
+          "upsolving": 2
+        },
+        "time": "00:52:16",
+        "user_gender": "Female"
+      },
+      "advanced": false,
+      "contest": 68357848,
+      "created": "2026-07-29T14:55:30.888Z",
+      "global_rating_change": null,
+      "last_activity": "2026-07-29T14:30:00Z",
+      "medal": null,
+      "modified": "2026-07-31T12:00:12.854Z",
+      "n_first_ac": 0,
+      "n_solved": 7,
+      "n_total_solved": 9,
+      "n_upsolved": 2,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "6",
+      "place_as_int": 6,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 2,
+      "skip_in_stats": false,
+      "solving": 700.0,
+      "total_solving": 900.0,
+      "upsolving": 200.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91198002
+  },
+  {
+    "fields": {
+      "account": 8939841,
+      "addition": {
+        "_skip_on_update": true,
+        "name": "THUMMALA HARSHITH REDDY",
+        "new_rating": 1752,
+        "old_rating": 1257,
+        "rating_change": 495
+      },
+      "advanced": false,
+      "contest": 68357848,
+      "created": "2026-07-31T02:05:59.441Z",
+      "global_rating_change": null,
+      "last_activity": null,
+      "medal": null,
+      "modified": "2026-07-31T02:05:59.496Z",
+      "n_first_ac": 0,
+      "n_solved": 0,
+      "n_total_solved": 0,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "11",
+      "place_as_int": 11,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 2,
+      "skip_in_stats": false,
+      "solving": 0.0,
+      "total_solving": 0.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91236930
+  },
+  {
+    "fields": {
+      "account": 11540849,
+      "addition": {
+        "country": "IN",
+        "division": "div_4",
+        "institution": "",
+        "institution_type": null,
+        "is_user_premium": false,
+        "name": "Arvind C R",
+        "new_rating": 1736,
+        "problems": {
+          "GPUBUY": {
+            "result": 100
+          },
+          "MINREDSR": {
+            "result": 100
+          },
+          "MINREDSR2": {
+            "upsolving": {
+              "result": 100
+            }
+          },
+          "PRDEXC": {
+            "result": 100
+          },
+          "PTRISMIN": {
+            "result": 100
+          },
+          "TREEGUARD": {
+            "upsolving": {
+              "result": 100
+            }
+          },
+          "TREEGUARD2": {
+            "upsolving": {
+              "result": 100
+            }
+          },
+          "UPDWPAL": {
+            "result": 100
+          },
+          "VALLFLAT": {
+            "result": 100
+          },
+          "VARDIGS": {
+            "result": 100
+          }
+        },
+        "solved": {
+          "solving": 7,
+          "upsolving": 3
+        },
+        "time": "01:26:06",
+        "user_gender": "Male"
+      },
+      "advanced": false,
+      "contest": 68357848,
+      "created": "2026-07-29T15:23:49.220Z",
+      "global_rating_change": null,
+      "last_activity": "2026-07-29T14:30:00Z",
+      "medal": null,
+      "modified": "2026-07-31T20:57:31.075Z",
+      "n_first_ac": 0,
+      "n_solved": 7,
+      "n_total_solved": 10,
+      "n_upsolved": 3,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "26",
+      "place_as_int": 26,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 2,
+      "skip_in_stats": false,
+      "solving": 700.0,
+      "total_solving": 1000.0,
+      "upsolving": 300.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91211940
+  },
+  {
+    "fields": {
+      "account": 9718556,
+      "addition": {
+        "country": "IN",
+        "division": "div_1",
+        "institution": "",
+        "institution_type": null,
+        "is_user_premium": false,
+        "name": "Aniruddha Patil",
+        "new_rating": 2093,
+        "old_rating": 2078,
+        "problems": {
+          "GPUBUY": {
+            "upsolving": {
+              "result": 100
+            }
+          },
+          "MINREDSR": {
+            "result": 100
+          },
+          "PRDEXC": {
+            "upsolving": {
+              "result": 100
+            }
+          },
+          "UPDWPAL": {
+            "result": 100
+          },
+          "VALLFLAT": {
+            "result": 100
+          },
+          "VARDIGS": {
+            "upsolving": {
+              "result": 100
+            }
+          }
+        },
+        "rating_change": 15,
+        "solved": {
+          "solving": 3,
+          "upsolving": 3
+        },
+        "time": "01:18:31",
+        "user_gender": ""
+      },
+      "advanced": false,
+      "contest": 68357848,
+      "created": "2026-07-29T15:06:44.978Z",
+      "global_rating_change": null,
+      "last_activity": "2026-07-29T14:30:00Z",
+      "medal": null,
+      "modified": "2026-07-31T11:59:01.206Z",
+      "n_first_ac": 0,
+      "n_solved": 3,
+      "n_total_solved": 6,
+      "n_upsolved": 3,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "36",
+      "place_as_int": 36,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 2,
+      "skip_in_stats": false,
+      "solving": 300.0,
+      "total_solving": 600.0,
+      "upsolving": 300.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91204374
+  },
+  {
+    "fields": {
+      "account": 7604557,
+      "addition": {
+        "country": "IN",
+        "division": "div_3",
+        "institution": "",
+        "institution_type": null,
+        "is_user_premium": false,
+        "name": "z y z y",
+        "new_rating": 1593,
+        "old_rating": 1551,
+        "problems": {
+          "GPUBUY": {
+            "result": 100
+          },
+          "MINREDSR": {
+            "upsolving": {
+              "binary": false,
+              "id": 1322289177,
+              "language": "C++",
+              "result": 0,
+              "submission_time": 1785346415.271015,
+              "url": "https://www.codechef.com/viewsolution/1322289177",
+              "verdict": "WA"
+            }
+          },
+          "PRDEXC": {
+            "result": 100
+          },
+          "UPDWPAL": {
+            "result": 100
+          },
+          "VALLFLAT": {
+            "result": 100
+          }
+        },
+        "rating_change": 42,
+        "solved": {
+          "solving": 4,
+          "upsolving": 0
+        },
+        "time": "00:29:41",
+        "user_gender": "Male"
+      },
+      "advanced": false,
+      "contest": 68357848,
+      "created": "2026-07-29T14:54:54.294Z",
+      "global_rating_change": null,
+      "last_activity": "2026-07-29T14:30:00Z",
+      "medal": null,
+      "modified": "2026-07-31T11:59:19.883Z",
+      "n_first_ac": 0,
+      "n_solved": 4,
+      "n_total_solved": 4,
+      "n_upsolved": 0,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "134",
+      "place_as_int": 134,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 2,
+      "skip_in_stats": false,
+      "solving": 400.0,
+      "total_solving": 400.0,
+      "upsolving": 0.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91196900
+  },
+  {
+    "fields": {
+      "account": 8444899,
+      "addition": {
+        "country": "IN",
+        "division": "div_3",
+        "institution": "KIET Group of Institutions, Ghaziabad",
+        "institution_type": "College",
+        "is_user_premium": false,
+        "name": "ADITYA UPADHYAY",
+        "new_rating": 1597,
+        "old_rating": 1559,
+        "problems": {
+          "GPUBUY": {
+            "result": 100
+          },
+          "PRDEXC": {
+            "result": 100
+          },
+          "UPDWPAL": {
+            "result": 100
+          },
+          "VALLFLAT": {
+            "result": 100
+          },
+          "VARDIGS": {
+            "upsolving": {
+              "id": 1322114075,
+              "language": "C++",
+              "partial": false,
+              "result": 100,
+              "submission_time": 1785338160.0,
+              "url": "https://www.codechef.com/viewsolution/1322114075",
+              "verdict": "AC"
+            }
+          }
+        },
+        "rating_change": 38,
+        "solved": {
+          "solving": 4,
+          "upsolving": 1
+        },
+        "time": "00:36:14",
+        "user_gender": "Male"
+      },
+      "advanced": false,
+      "contest": 68357848,
+      "created": "2026-07-29T14:54:48.290Z",
+      "global_rating_change": null,
+      "last_activity": "2026-07-29T14:30:00Z",
+      "medal": null,
+      "modified": "2026-08-02T02:51:12.986Z",
+      "n_first_ac": 0,
+      "n_solved": 4,
+      "n_total_solved": 5,
+      "n_upsolved": 1,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "168",
+      "place_as_int": 168,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 2,
+      "skip_in_stats": false,
+      "solving": 400.0,
+      "total_solving": 500.0,
+      "upsolving": 100.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91196713
+  },
+  {
+    "fields": {
+      "account": 8368650,
+      "addition": {
+        "country": "IN",
+        "division": "div_2",
+        "institution": "Dhirubhai Ambani Institute of Information and Communication Technology, Gandhinagar",
+        "institution_type": "College",
+        "is_user_premium": false,
+        "name": "Vikas Soni",
+        "new_rating": 1911,
+        "old_rating": 1904,
+        "problems": {
+          "GPUBUY": {
+            "upsolving": {
+              "id": 1322277180,
+              "language": "C++",
+              "partial": false,
+              "result": 100,
+              "submission_time": 1785342780.0,
+              "url": "https://www.codechef.com/viewsolution/1322277180",
+              "verdict": "AC"
+            }
+          },
+          "MINREDSR": {
+            "result": 100
+          },
+          "PRDEXC": {
+            "result": 100
+          },
+          "UPDWPAL": {
+            "result": 100
+          },
+          "VALLFLAT": {
+            "result": 100
+          },
+          "VARDIGS": {
+            "upsolving": {
+              "id": 1322274478,
+              "language": "C++",
+              "partial": false,
+              "result": 100,
+              "submission_time": 1785342660.0,
+              "url": "https://www.codechef.com/viewsolution/1322274478",
+              "verdict": "AC"
+            }
+          }
+        },
+        "rating_change": 7,
+        "solved": {
+          "solving": 4,
+          "upsolving": 2
+        },
+        "time": "01:47:55",
+        "user_gender": ""
+      },
+      "advanced": false,
+      "contest": 68357848,
+      "created": "2026-07-29T15:06:56.812Z",
+      "global_rating_change": null,
+      "last_activity": "2026-07-29T14:30:00Z",
+      "medal": null,
+      "modified": "2026-08-03T00:25:16.899Z",
+      "n_first_ac": 0,
+      "n_solved": 4,
+      "n_total_solved": 6,
+      "n_upsolved": 2,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "195",
+      "place_as_int": 195,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 2,
+      "skip_in_stats": false,
+      "solving": 400.0,
+      "total_solving": 600.0,
+      "upsolving": 200.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91204550
+  },
+  {
+    "fields": {
+      "account": 6053262,
+      "addition": {
+        "country": "IN",
+        "division": "div_3",
+        "institution": "",
+        "institution_type": null,
+        "is_user_premium": false,
+        "name": "royal_agent09",
+        "new_rating": 1654,
+        "old_rating": 1558,
+        "problems": {
+          "GPUBUY": {
+            "result": 100
+          },
+          "MINREDSR": {
+            "upsolving": {
+              "binary": false,
+              "id": 1322313846,
+              "language": "C++",
+              "result": 0,
+              "submission_time": 1785346642.950054,
+              "url": "https://www.codechef.com/viewsolution/1322313846",
+              "verdict": "CE"
+            }
+          },
+          "PRDEXC": {
+            "result": 100
+          },
+          "PTRISMIN": {
+            "upsolving": {
+              "binary": false,
+              "id": 1322315582,
+              "language": "C++",
+              "result": 0,
+              "submission_time": 1785346642.946674,
+              "url": "https://www.codechef.com/viewsolution/1322315582",
+              "verdict": "WA"
+            }
+          },
+          "UPDWPAL": {
+            "result": 100
+          },
+          "VALLFLAT": {
+            "result": 100
+          }
+        },
+        "rating_change": 96,
+        "solved": {
+          "solving": 4,
+          "upsolving": 0
+        },
+        "time": "00:52:21",
+        "user_gender": ""
+      },
+      "advanced": false,
+      "contest": 68357848,
+      "created": "2026-07-29T15:07:41.639Z",
+      "global_rating_change": null,
+      "last_activity": "2026-07-29T14:30:00Z",
+      "medal": null,
+      "modified": "2026-07-31T11:59:22.863Z",
+      "n_first_ac": 0,
+      "n_solved": 4,
+      "n_total_solved": 4,
+      "n_upsolved": 0,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "344",
+      "place_as_int": 344,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 2,
+      "skip_in_stats": false,
+      "solving": 400.0,
+      "total_solving": 400.0,
+      "upsolving": 0.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91205337
+  },
+  {
+    "fields": {
+      "account": 7193473,
+      "addition": {
+        "country": "IN",
+        "division": "div_3",
+        "institution": "Vellore Institute of Technology, Amaravati",
+        "institution_type": "College",
+        "is_user_premium": false,
+        "name": "R Kumaresh",
+        "new_rating": 1577,
+        "old_rating": 1554,
+        "problems": {
+          "GPUBUY": {
+            "result": 100
+          },
+          "MINREDSR": {
+            "upsolving": {
+              "id": 1322765807,
+              "language": "C++",
+              "partial": false,
+              "result": 100,
+              "submission_time": 1785387910.884107,
+              "url": "https://www.codechef.com/viewsolution/1322765807",
+              "verdict": "AC"
+            }
+          },
+          "PRDEXC": {
+            "result": 100
+          },
+          "UPDWPAL": {
+            "result": 100
+          },
+          "VALLFLAT": {
+            "result": 100
+          }
+        },
+        "rating_change": 23,
+        "solved": {
+          "solving": 4,
+          "upsolving": 0
+        },
+        "time": "01:12:21",
+        "user_gender": "Male"
+      },
+      "advanced": false,
+      "contest": 68357848,
+      "created": "2026-07-29T14:55:27.625Z",
+      "global_rating_change": null,
+      "last_activity": "2026-07-29T14:30:00Z",
+      "medal": null,
+      "modified": "2026-07-31T11:59:28.923Z",
+      "n_first_ac": 0,
+      "n_solved": 4,
+      "n_total_solved": 5,
+      "n_upsolved": 1,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "679",
+      "place_as_int": 679,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 2,
+      "skip_in_stats": false,
+      "solving": 400.0,
+      "total_solving": 500.0,
+      "upsolving": 100.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91197890
+  },
+  {
+    "fields": {
+      "account": 7604071,
+      "addition": {
+        "country": "IN",
+        "division": "div_4",
+        "institution": "",
+        "institution_type": null,
+        "is_user_premium": false,
+        "name": "Suphal Bochkar",
+        "new_rating": 1328,
+        "old_rating": 1283,
+        "problems": {
+          "GPUBUY": {
+            "result": 100
+          },
+          "PRDEXC": {
+            "result": 100
+          },
+          "UPDWPAL": {
+            "result": 100
+          },
+          "VALLFLAT": {
+            "upsolving": {
+              "binary": false,
+              "id": 1322161610,
+              "language": "C++",
+              "result": 0,
+              "submission_time": 1785342646.672595,
+              "url": "https://www.codechef.com/viewsolution/1322161610",
+              "verdict": "WA"
+            }
+          },
+          "VARDIGS": {
+            "result": 100
+          }
+        },
+        "rating_change": 45,
+        "solved": {
+          "solving": 4,
+          "upsolving": 0
+        },
+        "time": "00:39:18",
+        "user_gender": "Male"
+      },
+      "advanced": false,
+      "contest": 68357848,
+      "created": "2026-07-29T14:56:03.216Z",
+      "global_rating_change": null,
+      "last_activity": "2026-07-29T14:30:00Z",
+      "medal": null,
+      "modified": "2026-07-31T12:00:35.083Z",
+      "n_first_ac": 0,
+      "n_solved": 4,
+      "n_total_solved": 4,
+      "n_upsolved": 0,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "1700",
+      "place_as_int": 1700,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 2,
+      "skip_in_stats": false,
+      "solving": 400.0,
+      "total_solving": 400.0,
+      "upsolving": 0.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91199023
+  },
+  {
+    "fields": {
+      "account": 7713923,
+      "addition": {
+        "country": "IN",
+        "division": "div_4",
+        "institution": "",
+        "institution_type": null,
+        "is_user_premium": false,
+        "name": "dd_9",
+        "new_rating": 1340,
+        "old_rating": 1324,
+        "problems": {
+          "GPUBUY": {
+            "result": 100
+          },
+          "PRDEXC": {
+            "result": 100
+          },
+          "UPDWPAL": {
+            "upsolving": {
+              "binary": false,
+              "id": 1322110616,
+              "language": "JAVA",
+              "result": 0,
+              "submission_time": 1785341429.305534,
+              "url": "https://www.codechef.com/viewsolution/1322110616",
+              "verdict": "WA"
+            }
+          },
+          "VARDIGS": {
+            "result": 100
+          }
+        },
+        "rating_change": 16,
+        "solved": {
+          "solving": 3,
+          "upsolving": 0
+        },
+        "time": "00:13:45",
+        "user_gender": ""
+      },
+      "advanced": false,
+      "contest": 68357848,
+      "created": "2026-07-29T14:55:50.886Z",
+      "global_rating_change": null,
+      "last_activity": "2026-07-29T14:30:00Z",
+      "medal": null,
+      "modified": "2026-07-31T12:01:35.585Z",
+      "n_first_ac": 0,
+      "n_solved": 3,
+      "n_total_solved": 3,
+      "n_upsolved": 0,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "6492",
+      "place_as_int": 6492,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 2,
+      "skip_in_stats": false,
+      "solving": 300.0,
+      "total_solving": 300.0,
+      "upsolving": 0.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91198630
+  },
+  {
+    "fields": {
+      "account": 1434370,
+      "addition": {
+        "_no_update_n_contests": true,
+        "name": "Kaustubh Miglani",
+        "problems": {
+          "MINREDSR": {
+            "upsolving": {
+              "id": 1322176644,
+              "language": "C++",
+              "partial": false,
+              "result": 100,
+              "submission_time": 1785339946.179641,
+              "url": "https://www.codechef.com/viewsolution/1322176644",
+              "verdict": "AC"
+            }
+          },
+          "PTRISMIN": {
+            "upsolving": {
+              "id": 1322262080,
+              "language": "C++",
+              "partial": false,
+              "result": 100,
+              "submission_time": 1785343546.165101,
+              "url": "https://www.codechef.com/viewsolution/1322262080",
+              "verdict": "AC"
+            }
+          },
+          "TREEGUARD": {
+            "upsolving": {
+              "binary": false,
+              "id": 1322313632,
+              "language": "C++",
+              "result": 0,
+              "submission_time": 1785347146.142492,
+              "url": "https://www.codechef.com/viewsolution/1322313632",
+              "verdict": "WA"
+            }
+          },
+          "UPDWPAL": {
+            "upsolving": {
+              "id": 1322027286,
+              "language": "C++",
+              "partial": false,
+              "result": 100,
+              "submission_time": 1785339946.193655,
+              "url": "https://www.codechef.com/viewsolution/1322027286",
+              "verdict": "AC"
+            }
+          },
+          "VALLFLAT": {
+            "upsolving": {
+              "id": 1322019310,
+              "language": "C++",
+              "partial": false,
+              "result": 100,
+              "submission_time": 1785339946.209303,
+              "url": "https://www.codechef.com/viewsolution/1322019310",
+              "verdict": "AC"
+            }
+          }
+        }
+      },
+      "advanced": false,
+      "contest": 68357848,
+      "created": "2026-07-29T18:45:46.129Z",
+      "global_rating_change": null,
+      "last_activity": null,
+      "medal": null,
+      "modified": "2026-07-29T18:45:46.209Z",
+      "n_first_ac": 0,
+      "n_solved": 0,
+      "n_total_solved": 0,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": null,
+      "place_as_int": null,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 2,
+      "skip_in_stats": true,
+      "solving": 0.0,
+      "total_solving": 0.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91230538
+  }
+]

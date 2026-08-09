@@ -1,0 +1,590 @@
+[
+  {
+    "fields": {
+      "accounts_fields": {
+        "types": {
+          "avatar": [
+            "str"
+          ],
+          "background": [
+            "str"
+          ],
+          "badge": [
+            "NoneType",
+            "str"
+          ],
+          "blog_address": [
+            "NoneType",
+            "str"
+          ],
+          "ccf_level": [
+            "int"
+          ],
+          "color": [
+            "str"
+          ],
+          "elo": [
+            "NoneType"
+          ],
+          "elo_value": [
+            "NoneType",
+            "int"
+          ],
+          "follower_count": [
+            "int"
+          ],
+          "following_count": [
+            "int"
+          ],
+          "introduction": [
+            "str"
+          ],
+          "is_admin": [
+            "bool"
+          ],
+          "is_banned": [
+            "bool"
+          ],
+          "is_root": [
+            "bool"
+          ],
+          "passed_problem_count": [
+            "NoneType",
+            "int"
+          ],
+          "ranking": [
+            "NoneType",
+            "int"
+          ],
+          "register_time": [
+            "int"
+          ],
+          "slogan": [
+            "str"
+          ],
+          "submitted_problem_count": [
+            "NoneType",
+            "int"
+          ],
+          "uid": [
+            "int"
+          ],
+          "xcpc_level": [
+            "int"
+          ]
+        },
+        "verification_fields": [
+          "introduction",
+          "slogan"
+        ]
+      },
+      "allow_delete_archived_statistics": false,
+      "api_url": null,
+      "auto_remove_started": false,
+      "avatar_url": "{info[avatar]}",
+      "avg_rating": 831.0857507703412,
+      "color": "#CC65B5",
+      "contest_update_time": "2026-08-02T10:10:08.794Z",
+      "country_rank_update_time": "2026-08-02T11:40:06.060Z",
+      "created": "2024-05-26T12:56:05.434Z",
+      "default_account_type": 1,
+      "enable": true,
+      "has_account_last_submission": null,
+      "has_account_n_writers": null,
+      "has_account_verification": true,
+      "has_accounts_infos_update": true,
+      "has_country_medal": null,
+      "has_country_place": null,
+      "has_country_rating": false,
+      "has_inherit_medals_to_related": false,
+      "has_multi_account": false,
+      "has_problem_archive": false,
+      "has_problem_rating": true,
+      "has_problem_statistic": true,
+      "has_problem_update": false,
+      "has_rating_history": true,
+      "has_standings_renamed_account": false,
+      "has_statistic_medal": null,
+      "has_statistic_n_first_ac": null,
+      "has_statistic_n_total_solved": null,
+      "has_statistic_place": null,
+      "has_statistic_total_solving": null,
+      "has_submissions_statistics_log": false,
+      "has_upsolving": false,
+      "host": "luogu.com.cn",
+      "icon_file": "resources/luogu_com_cn.png",
+      "icon_updated_at": "2025-12-14T00:02:01.649Z",
+      "icon_url": null,
+      "info": {
+        "accounts": {
+          "limit": 400
+        },
+        "get_events": {
+          "colors": {
+            "darken": "#44163A",
+            "lighten": "#EFD0E8"
+          }
+        },
+        "standings": {
+          "name_instead_key": true
+        },
+        "statistics": {
+          "account_updated_delta": {
+            "minutes": 1
+          },
+          "wait_rating": {
+            "days": 3,
+            "title_re": "\\brated\\b"
+          }
+        }
+      },
+      "modified": "2026-08-02T11:40:06.232Z",
+      "n_accounts": 172505,
+      "n_accounts_to_update": 0,
+      "n_contests": 1346,
+      "n_rating_accounts": 63987,
+      "n_statistics": 835233,
+      "n_team_accounts": 0,
+      "n_university_accounts": 0,
+      "parse_url": null,
+      "path": "./module/luogu.com.cn/index.php",
+      "problem_archive_update_time": null,
+      "problem_rating_predictor": {},
+      "problem_url": "https://www.luogu.com.cn/problem/{key}",
+      "problems_fields": {
+        "types": {
+          "difficulty": [
+            "int"
+          ],
+          "first_ac__accounts": [
+            "list"
+          ],
+          "first_ac__in_seconds": [
+            "float"
+          ],
+          "first_ac__time": [
+            "str"
+          ],
+          "full_score": [
+            "int"
+          ],
+          "type": [
+            "str"
+          ]
+        }
+      },
+      "profile_url": "https://www.luogu.com.cn/user/{account}",
+      "rank_update_time": "2026-07-31T00:30:06.544Z",
+      "rating_prediction": null,
+      "rating_update_time": "2026-08-02T11:13:13.615Z",
+      "ratings": [
+        {
+          "color": "green",
+          "hex_rgb": "#008000",
+          "high": 400,
+          "hsl": [
+            0.33,
+            1,
+            0.25
+          ],
+          "low": -100500,
+          "next": 400
+        },
+        {
+          "color": "cyan",
+          "hex_rgb": "#03A89E",
+          "high": 800,
+          "hsl": [
+            0.49,
+            0.96,
+            0.34
+          ],
+          "low": 400,
+          "next": 800,
+          "prev": 400
+        },
+        {
+          "color": "blue",
+          "hex_rgb": "#0000FF",
+          "high": 1200,
+          "hsl": [
+            0.67,
+            1,
+            0.5
+          ],
+          "low": 800,
+          "next": 1200,
+          "prev": 800
+        },
+        {
+          "color": "yellow",
+          "hex_rgb": "#BBBB00",
+          "high": 1600,
+          "hsl": [
+            0.17,
+            1,
+            0.37
+          ],
+          "low": 1200,
+          "next": 1600,
+          "prev": 1200
+        },
+        {
+          "color": "orange",
+          "hex_rgb": "#FF8C00",
+          "high": 2000,
+          "hsl": [
+            0.09,
+            1,
+            0.5
+          ],
+          "low": 1600,
+          "next": 2000,
+          "prev": 1600
+        },
+        {
+          "color": "red",
+          "hex_rgb": "#FF0000",
+          "high": 2500,
+          "hsl": [
+            0,
+            1,
+            0.5
+          ],
+          "low": 2000,
+          "next": 2500,
+          "prev": 2000
+        },
+        {
+          "color": "red",
+          "hex_rgb": "#FF0000",
+          "high": 100500,
+          "hsl": [
+            0,
+            1,
+            0.375
+          ],
+          "low": 2500,
+          "prev": 2000
+        }
+      ],
+      "regexp": null,
+      "short_host": "luogu",
+      "skip_for_contests_chart": false,
+      "statistics_fields": {
+        "types": {
+          "name": [
+            "str"
+          ],
+          "new_rating": [
+            "int"
+          ],
+          "old_rating": [
+            "int"
+          ],
+          "penalty": [
+            "str",
+            "int"
+          ],
+          "rating_change": [
+            "int"
+          ]
+        }
+      },
+      "timezone": null,
+      "uid": "0db51a70041e98a59a27e1e5bd4f2e050b79dcd12abbe0a075e653993705791a@group.calendar.google.com",
+      "url": "https://www.luogu.com.cn/contest/list"
+    },
+    "model": "clist.resource",
+    "pk": 162
+  },
+  {
+    "fields": {
+      "created": "2024-05-26T18:01:35.892Z",
+      "delay_on_error": "01:00:00",
+      "delay_on_success": "12:00:00",
+      "delay_shortly_after": "00:05:00",
+      "enable": true,
+      "long_contest_divider": 15,
+      "long_contest_idle": "06:00:00",
+      "max_delay_after_end": "5 00:00:00",
+      "min_delay_after_end": "00:10:00",
+      "modified": "2025-11-26T20:04:53.343Z",
+      "path": "ranking/management/modules/luogu",
+      "resource": 162,
+      "shortly_after": "00:30:00"
+    },
+    "model": "ranking.module",
+    "pk": 79
+  },
+  {
+    "fields": {
+      "allow_updating_statistics_for_participants": null,
+      "auto_updated": "2026-08-02T19:30:25Z",
+      "calculate_time": false,
+      "created": "2026-07-22T09:11:13.090Z",
+      "duration_in_secs": 14400,
+      "edit": null,
+      "elimination_tournament_info": {},
+      "end_time": "2026-08-02T10:00:00Z",
+      "finalists_info": {},
+      "has_fixed_rating_prediction_field": null,
+      "has_hidden_results": false,
+      "has_submissions": null,
+      "has_submissions_tests": null,
+      "has_unlimited_statistics": null,
+      "hide_unsolved_standings_problems": null,
+      "host": "luogu.com.cn",
+      "info": {
+        "fields": [
+          "_standings_page",
+          "name",
+          "penalty",
+          "problems"
+        ],
+        "fields_types": {
+          "_standings_page": [
+            "int"
+          ],
+          "name": [
+            "str"
+          ],
+          "penalty": [
+            "str"
+          ],
+          "problems": [
+            "dict"
+          ]
+        },
+        "hidden_fields": [],
+        "parse": {
+          "host": {
+            "id": 1000,
+            "isPremium": true,
+            "name": "洛谷官方团队"
+          },
+          "invitationCodeType": 1,
+          "method": 4,
+          "problemCount": 4,
+          "rated": 3,
+          "rule_type": 4,
+          "squad": false,
+          "visibility": 1
+        },
+        "problems": [
+          {
+            "code": "P17178",
+            "n_accepted": 474,
+            "n_failed": 226,
+            "n_teams": 700,
+            "n_total": 1377,
+            "rating": 1126,
+            "short": "P17178"
+          },
+          {
+            "code": "P17179",
+            "n_accepted": 277,
+            "n_failed": 184,
+            "n_teams": 461,
+            "n_total": 1377,
+            "rating": 1379,
+            "short": "P17179"
+          },
+          {
+            "code": "P17180",
+            "n_accepted": 128,
+            "n_failed": 97,
+            "n_teams": 225,
+            "n_total": 1377,
+            "rating": 1661,
+            "short": "P17180"
+          },
+          {
+            "code": "P17177",
+            "n_accepted": 915,
+            "n_failed": 384,
+            "n_teams": 1299,
+            "n_total": 1377,
+            "rating": 689,
+            "short": "P17177"
+          }
+        ]
+      },
+      "invisible": false,
+      "is_auto_added": true,
+      "is_promoted": null,
+      "is_rated": null,
+      "key": "290490",
+      "kind": null,
+      "link_statistic_timing": null,
+      "merging_contests": [],
+      "modified": "2026-07-25T01:30:00.766Z",
+      "n_problems": 4,
+      "n_statistics": 1377,
+      "notification_timing": "2026-07-25T01:31:32.664Z",
+      "parsed_percentage": null,
+      "parsed_time": "2026-08-02T10:31:08.792Z",
+      "problem_rating_hash": "d063eaf1ae6e9afea5a6eb09b5cea02289f238ddb70f9bd31805d53715c3b465",
+      "problem_rating_update_required": false,
+      "rating_prediction_fields": null,
+      "rating_prediction_hash": null,
+      "rating_prediction_timing": null,
+      "raw_info": {},
+      "registration_url": null,
+      "related": null,
+      "resource": 162,
+      "series": null,
+      "set_matched_coders_to_members": null,
+      "slug": "lgr-293-div2-luo-gu-8-yue-yue-sai-i-cjloi-round-2-rated-ioi",
+      "standings_kind": "scoring",
+      "standings_url": "https://www.luogu.com.cn/contest/290490#scoreboard",
+      "start_time": "2026-08-02T06:00:00Z",
+      "statistic_timing": "2026-08-02T22:31:08.792Z",
+      "statistics_update_required": false,
+      "submissions_info": {},
+      "title": "【LGR-293-Div.2】洛谷 8 月月赛 I & CJLOI Round 2 [rated, ioi]",
+      "title_path": "lgr.293.div2.luo.gu.8.yue.yue.sai.i.cjloi.round.2.rated.ioi",
+      "trial_standings_url": null,
+      "uid": "09pobeu65na7ldqruqsk84s0tc",
+      "updated": "2026-08-02T19:30:25.737Z",
+      "upload_solved_problems_solutions": null,
+      "upsolving_key": null,
+      "upsolving_url": null,
+      "url": "https://www.luogu.com.cn/contest/290490",
+      "variables": {},
+      "wait_for_successful_update_timing": null,
+      "with_advance": false,
+      "with_medals": false
+    },
+    "model": "clist.contest",
+    "pk": 69027148
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2025-06-01T03:35:35.091Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar": "https://cdn.luogu.com.cn/upload/usericon/1549956.png",
+        "background": "https://cdn.luogu.com.cn/upload/image_hosting/zdjisikx.png",
+        "badge": null,
+        "ccf_level": 0,
+        "color": "Orange",
+        "elo": null,
+        "elo_value": null,
+        "follower_count": 42,
+        "following_count": 11,
+        "is_admin": false,
+        "is_banned": false,
+        "name": "W_Jiabao",
+        "passed_problem_count": 1623,
+        "ranking": 3988,
+        "rating": 1582,
+        "register_time": 1730170523,
+        "slogan": "天高地迥",
+        "submitted_problem_count": 1796,
+        "uid": 1549956,
+        "xcpc_level": 0
+      },
+      "key": "1549956",
+      "last_activity": "2026-08-02T06:00:00Z",
+      "last_rating_activity": "2026-02-25T06:00:00Z",
+      "last_submission": null,
+      "modified": "2026-08-02T14:30:33.443Z",
+      "n_bronze": null,
+      "n_contests": 27,
+      "n_first_ac": 0,
+      "n_first_places": 1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 3,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 59,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 2,
+      "n_total_solved": 59,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "W_Jiabao",
+      "need_verification": false,
+      "rating": 1582,
+      "rating50": 31,
+      "rating_prediction": null,
+      "rating_update_time": "2025-10-07T10:00:00Z",
+      "related": null,
+      "resource": 162,
+      "resource_rank": 2887,
+      "solving": 18161.0,
+      "submissions_info": {},
+      "total_solving": 18161.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-08-02T23:59:59.999Z",
+      "upsolving": null,
+      "url": "/account/1549956/resource/luogu.com.cn/"
+    },
+    "model": "ranking.account",
+    "pk": 8399114
+  },
+  {
+    "fields": {
+      "account": 8399114,
+      "addition": {
+        "_standings_page": 1,
+        "name": "W_Jiabao",
+        "penalty": "2:10:55",
+        "problems": {
+          "P17177": {
+            "result": 100,
+            "time": "0:09"
+          },
+          "P17178": {
+            "result": 100,
+            "time": "0:16"
+          },
+          "P17179": {
+            "result": 100,
+            "time": "0:38"
+          },
+          "P17180": {
+            "result": 100,
+            "time": "1:07"
+          }
+        }
+      },
+      "advanced": false,
+      "contest": 69027148,
+      "created": "2026-08-02T10:10:49.274Z",
+      "global_rating_change": null,
+      "last_activity": "2026-08-02T06:00:00Z",
+      "medal": null,
+      "modified": "2026-08-02T10:31:50.879Z",
+      "n_first_ac": 0,
+      "n_solved": 4,
+      "n_total_solved": 4,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "1",
+      "place_as_int": 1,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 162,
+      "skip_in_stats": false,
+      "solving": 400.0,
+      "total_solving": 400.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91341935
+  }
+]

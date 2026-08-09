@@ -1,0 +1,506 @@
+[
+    {
+        "duration": "10:00",
+        "end_time": "01.04.2005",
+        "host": "dl.gsu.by",
+        "info": {
+            "default_problem_full_score": 100,
+            "series": "byio"
+        },
+        "key": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2004-2005",
+        "rid": 4,
+        "skip_check_time": false,
+        "skip_update_key": true,
+        "standings_url": "https://dl.gsu.by/olymp/xrestable.jsp?hd=2&hid=375&u.c=46&pi=3&c.s=9&lng=rus",
+        "start_time": "28.03.2005",
+        "timezone": "Europe/Minsk",
+        "title": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2004-2005",
+        "url": "https://dl.gsu.by/olymp/info/allgomel.asp"
+    },
+    {
+        "duration": "10:00",
+        "end_time": "01.04.2006",
+        "host": "dl.gsu.by",
+        "info": {
+            "default_problem_full_score": 100,
+            "series": "byio"
+        },
+        "key": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2005-2006",
+        "rid": 4,
+        "skip_check_time": false,
+        "skip_update_key": true,
+        "standings_url": "https://dl.gsu.by/olymp/xrestable.jsp?hd=2&hid=480&u.c=58&pi=3&c.s=9&lng=rus",
+        "start_time": "28.03.2006",
+        "timezone": "Europe/Minsk",
+        "title": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2005-2006",
+        "url": "https://dl.gsu.by/olymp/info/allgomel.asp"
+    },
+    {
+        "duration": "10:00",
+        "end_time": "01.04.2021",
+        "host": "dl.gsu.by",
+        "info": {
+            "default_problem_full_score": 100,
+            "series": "byio"
+        },
+        "key": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2020-2021",
+        "rid": 4,
+        "skip_check_time": false,
+        "skip_update_key": true,
+        "standings_url": "https://dl.gsu.by/olymp/xrestable.jsp?hd=2&hid=910&u.c=143&lng=rus&pi=3&c.s=9",
+        "start_time": "20.03.2021",
+        "timezone": "Europe/Minsk",
+        "title": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2020-2021",
+        "url": "https://dl.gsu.by/olymp/info/allgomel.asp"
+    },
+    {
+        "duration": "10:00",
+        "end_time": "01.04.2022",
+        "host": "dl.gsu.by",
+        "info": {
+            "default_problem_full_score": 100,
+            "series": "byio"
+        },
+        "key": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2021-2022",
+        "rid": 4,
+        "skip_check_time": true,
+        "skip_update_key": true,
+        "standings_url": "https://dl.gsu.by/olymp/xrestable.jsp?hd=2&hid=948&u.c=147&lng=rus&pi=3&c.s=9",
+        "start_time": "28.03.2022",
+        "timezone": "Europe/Minsk",
+        "title": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2021-2022",
+        "url": "https://dl.gsu.by/olymp/info/allgomel.asp"
+    },
+    {
+        "duration": "10:00",
+        "end_time": "03.04.2010",
+        "host": "dl.gsu.by",
+        "info": {
+            "default_problem_full_score": 100,
+            "series": "byio"
+        },
+        "key": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2009-2010",
+        "rid": 4,
+        "skip_check_time": false,
+        "skip_update_key": true,
+        "standings_url": "https://dl.gsu.by/olymp/xrestable.jsp?hd=2&hid=624&u.c=76&pi=3&c.s=9&lng=rus",
+        "start_time": "28.03.2010",
+        "timezone": "Europe/Minsk",
+        "title": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2009-2010",
+        "url": "https://dl.gsu.by/olymp/info/allgomel.asp"
+    },
+    {
+        "duration": "10:00",
+        "end_time": "04.04.2009",
+        "host": "dl.gsu.by",
+        "info": {
+            "default_problem_full_score": 100,
+            "series": "byio"
+        },
+        "key": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2008-2009",
+        "rid": 4,
+        "skip_check_time": false,
+        "skip_update_key": true,
+        "standings_url": "https://dl.gsu.by/olymp/xrestable.jsp?hd=2&hid=589&u.c=71&pi=3&c.s=9&lng=rus",
+        "start_time": "30.03.2009",
+        "timezone": "Europe/Minsk",
+        "title": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2008-2009",
+        "url": "https://dl.gsu.by/olymp/info/allgomel.asp"
+    },
+    {
+        "duration": "10:00",
+        "end_time": "13.05.2020",
+        "host": "dl.gsu.by",
+        "info": {
+            "default_problem_full_score": 100,
+            "series": "byio"
+        },
+        "key": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2019-2020",
+        "rid": 4,
+        "skip_check_time": false,
+        "skip_update_key": true,
+        "standings_url": "https://dl.gsu.by/olymp/xrestable.jsp?hd=2&hid=898&u.c=141&lng=rus&pi=3&c.s=9",
+        "start_time": "12.05.2020",
+        "timezone": "Europe/Minsk",
+        "title": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2019-2020",
+        "url": "https://dl.gsu.by/olymp/info/allgomel.asp"
+    },
+    {
+        "duration": "10:00",
+        "end_time": "25.03.2016",
+        "host": "dl.gsu.by",
+        "info": {
+            "default_problem_full_score": 100,
+            "series": "byio"
+        },
+        "key": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2015-2016",
+        "rid": 4,
+        "skip_check_time": false,
+        "skip_update_key": true,
+        "standings_url": "https://dl.gsu.by/olymp/xrestable.jsp?hd=2&hid=761&u.c=104&pi=3&c.s=9&lng=rus",
+        "start_time": "22.03.2016",
+        "timezone": "Europe/Minsk",
+        "title": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2015-2016",
+        "url": "https://dl.gsu.by/olymp/info/allgomel.asp"
+    },
+    {
+        "duration": "10:00",
+        "end_time": "26.03.2004",
+        "host": "dl.gsu.by",
+        "info": {
+            "default_problem_full_score": 100,
+            "series": "byio"
+        },
+        "key": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2003-2004",
+        "rid": 4,
+        "skip_check_time": false,
+        "skip_update_key": true,
+        "standings_url": "https://dl.gsu.by/olymp/xrestable.jsp?hd=2&hid=161&u.c=12&pi=3&c.s=9&lng=rus",
+        "start_time": "22.03.2004",
+        "timezone": "Europe/Minsk",
+        "title": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2003-2004",
+        "url": "https://dl.gsu.by/olymp/info/allgomel.asp"
+    },
+    {
+        "duration": "10:00",
+        "end_time": "26.03.2011",
+        "host": "dl.gsu.by",
+        "info": {
+            "default_problem_full_score": 100,
+            "series": "byio"
+        },
+        "key": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2010-2011",
+        "rid": 4,
+        "skip_check_time": false,
+        "skip_update_key": true,
+        "standings_url": "https://dl.gsu.by/olymp/xrestable.jsp?hd=2&hid=636&u.c=79&pi=3&c.s=9&lng=rus",
+        "start_time": "21.03.2011",
+        "timezone": "Europe/Minsk",
+        "title": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2010-2011",
+        "url": "https://dl.gsu.by/olymp/info/allgomel.asp"
+    },
+    {
+        "duration": "10:00",
+        "end_time": "27.03.2015",
+        "host": "dl.gsu.by",
+        "info": {
+            "default_problem_full_score": 100,
+            "series": "byio"
+        },
+        "key": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2014-2015",
+        "rid": 4,
+        "skip_check_time": false,
+        "skip_update_key": true,
+        "standings_url": "https://dl.gsu.by/olymp/xrestable.jsp?hd=2&hid=749&u.c=102&pi=3&c.s=9&lng=rus",
+        "start_time": "23.03.2015",
+        "timezone": "Europe/Minsk",
+        "title": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2014-2015",
+        "url": "https://dl.gsu.by/olymp/info/allgomel.asp"
+    },
+    {
+        "duration": "10:00",
+        "end_time": "28.03.2024",
+        "host": "dl.gsu.by",
+        "info": {
+            "default_problem_full_score": 100,
+            "series": "byio"
+        },
+        "key": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2023-2024",
+        "rid": 4,
+        "skip_check_time": true,
+        "skip_update_key": true,
+        "standings_url": "https://dl.gsu.by/olymp/xrestable.jsp?hd=2&hid=997&u.c=151&lng=rus&pi=3&c.s=9",
+        "start_time": "25.03.2024",
+        "timezone": "Europe/Minsk",
+        "title": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2023-2024",
+        "url": "https://dl.gsu.by/olymp/info/allgomel.asp"
+    },
+    {
+        "duration": "10:00",
+        "end_time": "29.03.1997",
+        "host": "dl.gsu.by",
+        "info": {
+            "default_problem_full_score": 100,
+            "series": "byio"
+        },
+        "key": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 1996-1997",
+        "rid": 4,
+        "skip_check_time": false,
+        "skip_update_key": true,
+        "standings_url": "https://dl.gsu.by/olymp/xrestable.jsp?hd=2&hid=285&u.c=30&pi=3&c.s=9&lng=rus",
+        "start_time": "24.03.1997",
+        "timezone": "Europe/Minsk",
+        "title": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 1996-1997",
+        "url": "https://dl.gsu.by/olymp/info/allgomel.asp"
+    },
+    {
+        "duration": "10:00",
+        "end_time": "29.03.1998",
+        "host": "dl.gsu.by",
+        "info": {
+            "default_problem_full_score": 100,
+            "series": "byio"
+        },
+        "key": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 1997-1998",
+        "rid": 4,
+        "skip_check_time": false,
+        "skip_update_key": true,
+        "standings_url": "https://dl.gsu.by/olymp/xrestable.jsp?hd=2&hid=294&u.c=31&pi=3&c.s=9&lng=rus",
+        "start_time": "24.03.1998",
+        "timezone": "Europe/Minsk",
+        "title": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 1997-1998",
+        "url": "https://dl.gsu.by/olymp/info/allgomel.asp"
+    },
+    {
+        "duration": "10:00",
+        "end_time": "29.03.1999",
+        "host": "dl.gsu.by",
+        "info": {
+            "default_problem_full_score": 100,
+            "series": "byio"
+        },
+        "key": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 1998-1999",
+        "rid": 4,
+        "skip_check_time": false,
+        "skip_update_key": true,
+        "standings_url": "https://dl.gsu.by/olymp/xrestable.jsp?hd=2&hid=303&u.c=32&pi=3&c.s=9&lng=rus",
+        "start_time": "24.03.1999",
+        "timezone": "Europe/Minsk",
+        "title": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 1998-1999",
+        "url": "https://dl.gsu.by/olymp/info/allgomel.asp"
+    },
+    {
+        "duration": "10:00",
+        "end_time": "29.03.2000",
+        "host": "dl.gsu.by",
+        "info": {
+            "default_problem_full_score": 100,
+            "series": "byio"
+        },
+        "key": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 1999-2000",
+        "rid": 4,
+        "skip_check_time": false,
+        "skip_update_key": true,
+        "standings_url": "https://dl.gsu.by/olymp/xrestable.jsp?hd=2&hid=312&u.c=33&pi=3&c.s=9&lng=rus",
+        "start_time": "24.03.2000",
+        "timezone": "Europe/Minsk",
+        "title": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 1999-2000",
+        "url": "https://dl.gsu.by/olymp/info/allgomel.asp"
+    },
+    {
+        "duration": "10:00",
+        "end_time": "29.03.2001",
+        "host": "dl.gsu.by",
+        "info": {
+            "default_problem_full_score": 100,
+            "series": "byio"
+        },
+        "key": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2000-2001",
+        "rid": 4,
+        "skip_check_time": false,
+        "skip_update_key": true,
+        "standings_url": "https://dl.gsu.by/olymp/xrestable.jsp?hd=2&hid=321&u.c=34&pi=3&c.s=9&lng=rus",
+        "start_time": "24.03.2001",
+        "timezone": "Europe/Minsk",
+        "title": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2000-2001",
+        "url": "https://dl.gsu.by/olymp/info/allgomel.asp"
+    },
+    {
+        "duration": "10:00",
+        "end_time": "29.03.2002",
+        "host": "dl.gsu.by",
+        "info": {
+            "default_problem_full_score": 100,
+            "series": "byio"
+        },
+        "key": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2001-2002",
+        "rid": 4,
+        "skip_check_time": false,
+        "skip_update_key": true,
+        "standings_url": "https://dl.gsu.by/olymp/xrestable.jsp?hd=2&hid=330&u.c=35&pi=3&c.s=9&lng=rus",
+        "start_time": "24.03.2002",
+        "timezone": "Europe/Minsk",
+        "title": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2001-2002",
+        "url": "https://dl.gsu.by/olymp/info/allgomel.asp"
+    },
+    {
+        "duration": "10:00",
+        "end_time": "29.03.2003",
+        "host": "dl.gsu.by",
+        "info": {
+            "default_problem_full_score": 100,
+            "series": "byio"
+        },
+        "key": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2002-2003",
+        "rid": 4,
+        "skip_check_time": false,
+        "skip_update_key": true,
+        "standings_url": "https://dl.gsu.by/olymp/xrestable.jsp?hd=2&hid=339&u.c=36&pi=3&c.s=9&lng=rus",
+        "start_time": "24.03.2003",
+        "timezone": "Europe/Minsk",
+        "title": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2002-2003",
+        "url": "https://dl.gsu.by/olymp/info/allgomel.asp"
+    },
+    {
+        "duration": "10:00",
+        "end_time": "29.03.2008",
+        "host": "dl.gsu.by",
+        "info": {
+            "default_problem_full_score": 100,
+            "series": "byio"
+        },
+        "key": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2007-2008",
+        "rid": 4,
+        "skip_check_time": false,
+        "skip_update_key": true,
+        "standings_url": "https://dl.gsu.by/olymp/xrestable.jsp?hd=2&hid=580&u.c=70&pi=3&c.s=9&lng=rus",
+        "start_time": "24.03.2008",
+        "timezone": "Europe/Minsk",
+        "title": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2007-2008",
+        "url": "https://dl.gsu.by/olymp/info/allgomel.asp"
+    },
+    {
+        "duration": "10:00",
+        "end_time": "29.03.2012",
+        "host": "dl.gsu.by",
+        "info": {
+            "default_problem_full_score": 100,
+            "series": "byio"
+        },
+        "key": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2011-2012",
+        "rid": 4,
+        "skip_check_time": false,
+        "skip_update_key": true,
+        "standings_url": "https://dl.gsu.by/olymp/xrestable.jsp?hd=2&hid=672&u.c=85&pi=3&c.s=9&lng=rus",
+        "start_time": "24.03.2012",
+        "timezone": "Europe/Minsk",
+        "title": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2011-2012",
+        "url": "https://dl.gsu.by/olymp/info/allgomel.asp"
+    },
+    {
+        "duration": "10:00",
+        "end_time": "29.03.2014",
+        "host": "dl.gsu.by",
+        "info": {
+            "default_problem_full_score": 100,
+            "series": "byio"
+        },
+        "key": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2013-2014",
+        "rid": 4,
+        "skip_check_time": false,
+        "skip_update_key": true,
+        "standings_url": "https://dl.gsu.by/olymp/xrestable.jsp?hd=2&hid=724&u.c=97&pi=3&c.s=9&lng=rus",
+        "start_time": "24.03.2014",
+        "timezone": "Europe/Minsk",
+        "title": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2013-2014",
+        "url": "https://dl.gsu.by/olymp/info/allgomel.asp"
+    },
+    {
+        "duration": "10:00",
+        "end_time": "29.03.2019",
+        "host": "dl.gsu.by",
+        "info": {
+            "default_problem_full_score": 100,
+            "series": "byio"
+        },
+        "key": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2018-2019",
+        "rid": 4,
+        "skip_check_time": false,
+        "skip_update_key": true,
+        "standings_url": "https://dl.gsu.by/olymp/xrestable.jsp?hd=2&hid=873&u.c=138&lng=rus&pi=3&c.s=9",
+        "start_time": "26.03.2019",
+        "timezone": "Europe/Minsk",
+        "title": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2018-2019",
+        "url": "https://dl.gsu.by/olymp/info/allgomel.asp"
+    },
+    {
+        "duration": "10:00",
+        "end_time": "30.03.2013",
+        "host": "dl.gsu.by",
+        "info": {
+            "default_problem_full_score": 100,
+            "series": "byio"
+        },
+        "key": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2012-2013",
+        "rid": 4,
+        "skip_check_time": false,
+        "skip_update_key": true,
+        "standings_url": "https://dl.gsu.by/olymp/xrestable.jsp?hd=2&hid=699&u.c=90&pi=3&c.s=9&lng=rus",
+        "start_time": "25.03.2013",
+        "timezone": "Europe/Minsk",
+        "title": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2012-2013",
+        "url": "https://dl.gsu.by/olymp/info/allgomel.asp"
+    },
+    {
+        "duration": "10:00",
+        "end_time": "30.03.2018",
+        "host": "dl.gsu.by",
+        "info": {
+            "default_problem_full_score": 100,
+            "series": "byio"
+        },
+        "key": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2017-2018",
+        "rid": 4,
+        "skip_check_time": false,
+        "skip_update_key": true,
+        "standings_url": "https://dl.gsu.by/olymp/xrestable.jsp?hd=2&hid=823&u.c=111&pi=3&c.s=9&lng=rus",
+        "start_time": "26.03.2018",
+        "timezone": "Europe/Minsk",
+        "title": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2017-2018",
+        "url": "https://dl.gsu.by/olymp/info/allgomel.asp"
+    },
+    {
+        "duration": "10:00",
+        "end_time": "30.03.2023",
+        "host": "dl.gsu.by",
+        "info": {
+            "default_problem_full_score": 100,
+            "series": "byio"
+        },
+        "key": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2022-2023",
+        "rid": 4,
+        "skip_check_time": true,
+        "skip_update_key": true,
+        "standings_url": "https://dl.gsu.by/olymp/xrestable.jsp?hd=2&hid=972&u.c=149&lng=rus&pi=3&c.s=9",
+        "start_time": "26.03.2023",
+        "timezone": "Europe/Minsk",
+        "title": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2022-2023",
+        "url": "https://dl.gsu.by/olymp/info/allgomel.asp"
+    },
+    {
+        "duration": "10:00",
+        "end_time": "31.03.2007",
+        "host": "dl.gsu.by",
+        "info": {
+            "default_problem_full_score": 100,
+            "series": "byio"
+        },
+        "key": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2006-2007",
+        "rid": 4,
+        "skip_check_time": false,
+        "skip_update_key": true,
+        "standings_url": "https://dl.gsu.by/olymp/xrestable.jsp?hd=2&hid=490&u.c=60&pi=3&c.s=9&lng=rus",
+        "start_time": "27.03.2007",
+        "timezone": "Europe/Minsk",
+        "title": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2006-2007",
+        "url": "https://dl.gsu.by/olymp/info/allgomel.asp"
+    },
+    {
+        "duration": "10:00",
+        "end_time": "31.03.2017",
+        "host": "dl.gsu.by",
+        "info": {
+            "default_problem_full_score": 100,
+            "series": "byio"
+        },
+        "key": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2016-2017",
+        "rid": 4,
+        "skip_check_time": false,
+        "skip_update_key": true,
+        "standings_url": "https://dl.gsu.by/olymp/xrestable.jsp?hd=2&hid=797&u.c=108&pi=3&c.s=9&lng=rus",
+        "start_time": "27.03.2017",
+        "timezone": "Europe/Minsk",
+        "title": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2016-2017",
+        "url": "https://dl.gsu.by/olymp/info/allgomel.asp"
+    }
+]

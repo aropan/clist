@@ -1,0 +1,1757 @@
+[
+  {
+    "fields": {
+      "accounts_fields": {
+        "types": {
+          "alternatename": [
+            "str"
+          ],
+          "avatar_url": [
+            "str"
+          ],
+          "basicname": [
+            "str"
+          ],
+          "bronzecount": [
+            "str"
+          ],
+          "contacts__codeforces": [
+            "str"
+          ],
+          "contacts__e-mail": [
+            "str"
+          ],
+          "contacts__facebook": [
+            "str"
+          ],
+          "contacts__homepage": [
+            "str"
+          ],
+          "contacts__kattis": [
+            "str"
+          ],
+          "contacts__linkedin": [
+            "str"
+          ],
+          "contacts__topcoder": [
+            "str"
+          ],
+          "contacts__twitter": [
+            "str"
+          ],
+          "goldcount": [
+            "str"
+          ],
+          "silvercount": [
+            "str"
+          ]
+        },
+        "verification_fields": []
+      },
+      "allow_delete_archived_statistics": false,
+      "api_url": null,
+      "auto_remove_started": false,
+      "avatar_url": "{info[avatar_url]}",
+      "avg_rating": null,
+      "color": "#CA66CC",
+      "contest_update_time": "2025-08-03T05:00:11Z",
+      "country_rank_update_time": "2025-08-06T05:40:05Z",
+      "created": "2015-07-28T09:19:45Z",
+      "default_account_type": 1,
+      "enable": true,
+      "has_account_last_submission": null,
+      "has_account_n_writers": null,
+      "has_account_verification": false,
+      "has_accounts_infos_update": true,
+      "has_country_medal": true,
+      "has_country_place": null,
+      "has_country_rating": false,
+      "has_inherit_medals_to_related": false,
+      "has_multi_account": false,
+      "has_problem_archive": false,
+      "has_problem_rating": false,
+      "has_problem_statistic": true,
+      "has_problem_update": false,
+      "has_rating_history": false,
+      "has_standings_renamed_account": false,
+      "has_statistic_medal": true,
+      "has_statistic_n_first_ac": false,
+      "has_statistic_n_total_solved": true,
+      "has_statistic_place": true,
+      "has_statistic_total_solving": true,
+      "has_submissions_statistics_log": false,
+      "has_upsolving": false,
+      "host": "stats.ioinformatics.org",
+      "icon_file": "resources/stats_ioinformatics_org.png",
+      "icon_updated_at": "2025-12-18T00:10:12Z",
+      "icon_url": null,
+      "info": {
+        "get_events": {
+          "colors": {
+            "darken": "#431644",
+            "lighten": "#EFD1EF"
+          }
+        },
+        "standings": {
+          "name_instead_key": true,
+          "relative_problem_time": true,
+          "timeline": {
+            "no_penalty_time": true,
+            "time_factor": {
+              "1": [
+                60
+              ],
+              "2": [
+                60,
+                1
+              ],
+              "3": [
+                3600,
+                60,
+                1
+              ]
+            }
+          }
+        }
+      },
+      "modified": "2026-08-04T00:01:04.319Z",
+      "n_accounts": 7541,
+      "n_accounts_to_update": 13,
+      "n_contests": 38,
+      "n_rating_accounts": null,
+      "n_statistics": 10501,
+      "n_team_accounts": 0,
+      "n_university_accounts": 0,
+      "parse_url": null,
+      "path": null,
+      "problem_archive_update_time": null,
+      "problem_rating_predictor": {},
+      "problem_url": null,
+      "problems_fields": {
+        "types": {
+          "first_ac__accounts": [
+            "list"
+          ],
+          "first_ac__in_seconds": [
+            "int"
+          ],
+          "first_ac__time": [
+            "str"
+          ],
+          "full_score": [
+            "int"
+          ],
+          "order": [
+            "int"
+          ],
+          "score_mode": [
+            "str"
+          ],
+          "score_precision": [
+            "int"
+          ],
+          "subtasks": [
+            "list"
+          ]
+        }
+      },
+      "profile_url": "https://stats.ioinformatics.org/people/{account}",
+      "rank_update_time": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "ratings": [],
+      "regexp": "#<tr>\\s*<td[^>]*>\\s*<a[^>]*>\\s*(?P<key>(?P<no>[0-9]+))\\s*</a>\\s*</td><td[^>]*>\\s*<a[^>]*href=\"(?P<url>[^>]*)\"[^>]*>\\s*[0-9]{2,4}\\s*</a>\\s*</td><td[^>]*>(?P<start_time>[^<]*) &ndash; (?P<end_time>[^<]*)</td><td[^>]*>\\s*<a[^>]*>(?P<country>[^<]*)</a>\\s*</td>#",
+      "short_host": "ioi",
+      "skip_for_contests_chart": false,
+      "statistics_fields": {
+        "types": {
+          "CF": [
+            "str"
+          ],
+          "IOI1989": [
+            "str"
+          ],
+          "IOI1990": [
+            "str"
+          ],
+          "IOI1991": [
+            "str"
+          ],
+          "IOI1992": [
+            "str"
+          ],
+          "IOI1993": [
+            "str"
+          ],
+          "IOI1994": [
+            "str"
+          ],
+          "IOI1995": [
+            "str"
+          ],
+          "IOI1996": [
+            "str"
+          ],
+          "IOI1997": [
+            "str"
+          ],
+          "IOI1998": [
+            "str"
+          ],
+          "IOI1999": [
+            "str"
+          ],
+          "IOI2000": [
+            "str"
+          ],
+          "IOI2001": [
+            "str"
+          ],
+          "IOI2002": [
+            "str"
+          ],
+          "IOI2003": [
+            "str"
+          ],
+          "IOI2004": [
+            "str"
+          ],
+          "IOI2005": [
+            "str"
+          ],
+          "IOI2006": [
+            "str"
+          ],
+          "IOI2007": [
+            "str"
+          ],
+          "IOI2008": [
+            "str"
+          ],
+          "IOI2009": [
+            "str"
+          ],
+          "IOI2010": [
+            "str"
+          ],
+          "IOI2011": [
+            "str"
+          ],
+          "IOI2012": [
+            "str"
+          ],
+          "IOI2013": [
+            "str"
+          ],
+          "IOI2014": [
+            "str"
+          ],
+          "IOI2015": [
+            "str"
+          ],
+          "IOI2016": [
+            "str"
+          ],
+          "IOI2017": [
+            "str"
+          ],
+          "IOI2018": [
+            "str"
+          ],
+          "IOI2019": [
+            "str"
+          ],
+          "IOI2020": [
+            "str"
+          ],
+          "IOI2021": [
+            "str"
+          ],
+          "IOI2022": [
+            "str"
+          ],
+          "IOI2023": [
+            "str"
+          ],
+          "IOI2024": [
+            "str"
+          ],
+          "IOI2025": [
+            "str"
+          ],
+          "TC": [
+            "str"
+          ],
+          "country": [
+            "str"
+          ],
+          "day 1": [
+            "str"
+          ],
+          "day 2": [
+            "str"
+          ],
+          "medal": [
+            "str"
+          ],
+          "name": [
+            "str"
+          ],
+          "rel.": [
+            "str"
+          ]
+        }
+      },
+      "timezone": "UTC",
+      "uid": "dattf2s7mel5sfn3evba272ma0@group.calendar.google.com",
+      "url": "https://stats.ioinformatics.org/olympiads/"
+    },
+    "model": "clist.resource",
+    "pk": 82
+  },
+  {
+    "fields": {
+      "created": "2019-11-18T02:42:15.038Z",
+      "delay_on_error": "01:00:00",
+      "delay_on_success": "08:00:00",
+      "delay_shortly_after": "00:05:00",
+      "enable": true,
+      "long_contest_divider": 15,
+      "long_contest_idle": "06:00:00",
+      "max_delay_after_end": "7 00:00:00",
+      "min_delay_after_end": "05:00:00",
+      "modified": "2019-11-18T02:42:15.038Z",
+      "path": "ranking/management/modules/stats_ioinformatics",
+      "resource": 82,
+      "shortly_after": "00:30:00"
+    },
+    "model": "ranking.module",
+    "pk": 25
+  },
+  {
+    "fields": {
+      "aliases": [
+        "international-olympiad-in-informatics",
+        "ioi"
+      ],
+      "created": "2023-03-05T03:13:13.444Z",
+      "modified": "2023-03-11T12:29:53.251Z",
+      "name": "International Olympiad in Informatics",
+      "short": "IOI",
+      "slug": "ioi"
+    },
+    "model": "clist.contestseries",
+    "pk": 14
+  },
+  {
+    "fields": {
+      "allow_updating_statistics_for_participants": null,
+      "auto_updated": "2025-09-02T23:45:34Z",
+      "calculate_time": false,
+      "created": "2025-07-30T12:46:00.390Z",
+      "duration_in_secs": 36000,
+      "edit": null,
+      "elimination_tournament_info": {},
+      "end_time": "2025-08-03T00:00:00Z",
+      "finalists_info": {},
+      "has_fixed_rating_prediction_field": null,
+      "has_hidden_results": false,
+      "has_submissions": null,
+      "has_submissions_tests": null,
+      "has_unlimited_statistics": null,
+      "hide_unsolved_standings_problems": null,
+      "host": "stats.ioinformatics.org",
+      "info": {
+        "_official_specific_team_data": {
+          "IOI1": {
+            "country": "Russia"
+          },
+          "IOI3": {
+            "country": "Belarus"
+          }
+        },
+        "_official_website_ranking": "https://ranking.ioi2025.bo/",
+        "custom_start_time": 1754038800,
+        "fields": [
+          "problems",
+          "name",
+          "rel.",
+          "country",
+          "medal",
+          "CF",
+          "IOI2025",
+          "IOI2024",
+          "IOI2023",
+          "IOI2022",
+          "IOI2021",
+          "IOI2020"
+        ],
+        "fields_types": {
+          "CF": [
+            "str"
+          ],
+          "IOI2020": [
+            "str"
+          ],
+          "IOI2021": [
+            "str"
+          ],
+          "IOI2022": [
+            "str"
+          ],
+          "IOI2023": [
+            "str"
+          ],
+          "IOI2024": [
+            "str"
+          ],
+          "IOI2025": [
+            "str"
+          ],
+          "country": [
+            "str"
+          ],
+          "medal": [
+            "str"
+          ],
+          "name": [
+            "str"
+          ],
+          "problems": [
+            "dict"
+          ],
+          "rel.": [
+            "str"
+          ]
+        },
+        "hidden_fields": [
+          "CF",
+          "IOI2025",
+          "IOI2024",
+          "IOI2023",
+          "IOI2022",
+          "IOI2021",
+          "IOI2020"
+        ],
+        "problems": [
+          {
+            "first_ac": {
+              "accounts": [
+                "8605"
+              ],
+              "in_seconds": 1875,
+              "time": "0:31:15"
+            },
+            "full_score": 100,
+            "n_accepted": 53,
+            "n_partial": 271,
+            "n_teams": 324,
+            "n_total": 334,
+            "name": "Souvenirs",
+            "order": 0,
+            "score_mode": "max_subtask",
+            "score_precision": 2,
+            "short": "souvenirs",
+            "subtasks": [
+              "Subtask 0 (0)",
+              "Subtask 1 (4)",
+              "Subtask 2 (3)",
+              "Subtask 3 (14)",
+              "Subtask 4 (18)",
+              "Subtask 5 (28)",
+              "Subtask 6 (33)"
+            ],
+            "url": "https://stats.ioinformatics.org/tasks/2025/souvenirs"
+          },
+          {
+            "first_ac": {
+              "accounts": [
+                "8606"
+              ],
+              "in_seconds": 9885,
+              "time": "2:44:45"
+            },
+            "full_score": 100,
+            "n_accepted": 1,
+            "n_partial": 324,
+            "n_teams": 328,
+            "n_total": 334,
+            "name": "Triple Peaks",
+            "order": 1,
+            "score_mode": "max_subtask",
+            "score_precision": 2,
+            "short": "triples",
+            "subtasks": [
+              "Subtask 0 (0)",
+              "Subtask 1 (8)",
+              "Subtask 2 (6)",
+              "Subtask 3 (10)",
+              "Subtask 4 (11)",
+              "Subtask 5 (16)",
+              "Subtask 6 (19)",
+              "Subtask 7 (5)",
+              "Subtask 8 (5)",
+              "Subtask 9 (5)",
+              "Subtask 10 (5)",
+              "Subtask 11 (5)",
+              "Subtask 12 (5)"
+            ],
+            "url": "https://stats.ioinformatics.org/tasks/2025/triples"
+          },
+          {
+            "first_ac": {
+              "accounts": [
+                "8604"
+              ],
+              "in_seconds": 4770,
+              "time": "1:19:30"
+            },
+            "full_score": 100,
+            "n_accepted": 12,
+            "n_partial": 296,
+            "n_teams": 308,
+            "n_total": 334,
+            "name": "World Map",
+            "order": 2,
+            "score_mode": "max_subtask",
+            "score_precision": 2,
+            "short": "worldmap",
+            "subtasks": [
+              "Subtask 0 (0)",
+              "Subtask 1 (5)",
+              "Subtask 2 (10)",
+              "Subtask 3 (7)",
+              "Subtask 4 (8)",
+              "Subtask 5 (14)",
+              "Subtask 6 (56)"
+            ],
+            "url": "https://stats.ioinformatics.org/tasks/2025/worldmap"
+          },
+          {
+            "first_ac": {
+              "accounts": [
+                "8606"
+              ],
+              "in_seconds": 2720,
+              "time": "0:45:20"
+            },
+            "full_score": 100,
+            "n_accepted": 14,
+            "n_partial": 307,
+            "n_teams": 321,
+            "n_total": 334,
+            "name": "Festival",
+            "order": 0,
+            "score_mode": "max_subtask",
+            "score_precision": 2,
+            "short": "festival",
+            "subtasks": [
+              "Subtask 0 (0)",
+              "Subtask 1 (5)",
+              "Subtask 2 (7)",
+              "Subtask 3 (12)",
+              "Subtask 4 (15)",
+              "Subtask 5 (27)",
+              "Subtask 6 (16)",
+              "Subtask 7 (18)"
+            ],
+            "url": "https://stats.ioinformatics.org/tasks/2025/festival"
+          },
+          {
+            "full_score": 100,
+            "n_partial": 291,
+            "n_teams": 291,
+            "n_total": 334,
+            "name": "Migrations",
+            "order": 1,
+            "score_mode": "max_subtask",
+            "score_precision": 2,
+            "short": "migrations",
+            "subtasks": [
+              "Subtask 0 (0)",
+              "Subtask 1 (30)",
+              "Subtask 2 (70)"
+            ],
+            "url": "https://stats.ioinformatics.org/tasks/2025/migrations"
+          },
+          {
+            "first_ac": {
+              "accounts": [
+                "8606"
+              ],
+              "in_seconds": 6625,
+              "time": "1:50:25"
+            },
+            "full_score": 100,
+            "n_accepted": 11,
+            "n_partial": 302,
+            "n_teams": 313,
+            "n_total": 334,
+            "name": "Obstacles for a Llama",
+            "order": 2,
+            "score_mode": "max_subtask",
+            "score_precision": 2,
+            "short": "obstacles",
+            "subtasks": [
+              "Subtask 0 (0)",
+              "Subtask 1 (10)",
+              "Subtask 2 (14)",
+              "Subtask 3 (13)",
+              "Subtask 4 (21)",
+              "Subtask 5 (25)",
+              "Subtask 6 (17)"
+            ],
+            "url": "https://stats.ioinformatics.org/tasks/2025/obstacles"
+          }
+        ],
+        "standings": {
+          "external_urls": [
+            {
+              "name": "ranking.ioi2025.bo",
+              "url": "https://ranking.ioi2025.bo/"
+            }
+          ],
+          "score_precision": 2
+        }
+      },
+      "invisible": false,
+      "is_auto_added": true,
+      "is_promoted": null,
+      "is_rated": null,
+      "key": "37",
+      "kind": null,
+      "link_statistic_timing": null,
+      "merging_contests": [],
+      "modified": "2025-07-30T17:11:48.271Z",
+      "n_problems": 6,
+      "n_statistics": 334,
+      "notification_timing": "2025-07-30T12:55:34.694Z",
+      "parsed_percentage": null,
+      "parsed_time": "2025-08-09T21:20:06.572Z",
+      "problem_rating_hash": null,
+      "problem_rating_update_required": false,
+      "rating_prediction_fields": null,
+      "rating_prediction_hash": null,
+      "rating_prediction_timing": null,
+      "raw_info": {},
+      "registration_url": null,
+      "related": null,
+      "resource": 82,
+      "series": 14,
+      "set_matched_coders_to_members": null,
+      "slug": "37th-international-olympiad-in-informatics-bolivia",
+      "standings_kind": "scoring",
+      "standings_url": "https://stats.ioinformatics.org/results/2025",
+      "start_time": "2025-07-27T00:00:00Z",
+      "statistic_timing": "2025-08-10T05:20:06.572Z",
+      "statistics_update_required": false,
+      "submissions_info": {},
+      "title": "37th International Olympiad in Informatics. Bolivia",
+      "title_path": "37th.international.olympiad.in.informatics.bolivia",
+      "trial_standings_url": null,
+      "uid": "gdcqcks8e331vqtm729qsks31o",
+      "updated": "2026-07-06T22:03:47.385Z",
+      "upload_solved_problems_solutions": null,
+      "upsolving_key": null,
+      "upsolving_url": null,
+      "url": "https://stats.ioinformatics.org/olympiads/2025",
+      "variables": {},
+      "wait_for_successful_update_timing": null,
+      "with_advance": false,
+      "with_medals": true
+    },
+    "model": "clist.contest",
+    "pk": 61064166
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "CN",
+      "created": "2025-07-31T11:00:51.706Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "basicname": "Contestant",
+        "bronzecount": "0",
+        "goldcount": "1",
+        "silvercount": "0"
+      },
+      "key": "8606",
+      "last_activity": "2025-07-30T14:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-08-04T00:01:02.737Z",
+      "n_bronze": null,
+      "n_contests": 1,
+      "n_first_ac": 3,
+      "n_first_places": 1,
+      "n_gold": 1,
+      "n_listvalues": 0,
+      "n_medals": 1,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": 0,
+      "n_silver": null,
+      "n_solved": 5,
+      "n_subscribers": 0,
+      "n_third_places": 0,
+      "n_top_ten_places": 0,
+      "n_total_solved": 5,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Hengxi Liu",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 82,
+      "resource_rank": null,
+      "solving": 591.23,
+      "submissions_info": {},
+      "total_solving": 591.23,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-08-04T23:59:59.999Z",
+      "upsolving": null,
+      "url": "/coder/%E2%88%A88211904/?resource=82"
+    },
+    "model": "ranking.account",
+    "pk": 8515573
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "KR",
+      "created": "2024-09-01T06:00:17.183Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar_url": "https://stats.ioinformatics.org/img/photos/2025/8407.jpeg",
+        "basicname": "Contestant",
+        "bronzecount": "0",
+        "goldcount": "1",
+        "silvercount": "1"
+      },
+      "key": "8407",
+      "last_activity": "2025-07-30T14:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-08-04T00:00:26.238Z",
+      "n_bronze": null,
+      "n_contests": 2,
+      "n_first_ac": 0,
+      "n_first_places": 0,
+      "n_gold": 1,
+      "n_listvalues": 0,
+      "n_medals": 2,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": 1,
+      "n_silver": 1,
+      "n_solved": 5,
+      "n_subscribers": 0,
+      "n_third_places": 0,
+      "n_top_ten_places": 0,
+      "n_total_solved": 5,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Mingyu Woo",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 82,
+      "resource_rank": null,
+      "solving": 932.1800000000001,
+      "submissions_info": {},
+      "total_solving": 932.1800000000001,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-08-04T23:59:59.999Z",
+      "upsolving": 0.0,
+      "url": "/coder/%E2%88%A87480072/?resource=82"
+    },
+    "model": "ranking.account",
+    "pk": 7418336
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "CN",
+      "created": "2025-07-31T11:00:52.211Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "basicname": "Contestant",
+        "bronzecount": "0",
+        "goldcount": "1",
+        "silvercount": "0"
+      },
+      "key": "8605",
+      "last_activity": "2025-07-30T14:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-08-04T00:00:34.250Z",
+      "n_bronze": null,
+      "n_contests": 1,
+      "n_first_ac": 1,
+      "n_first_places": 0,
+      "n_gold": 1,
+      "n_listvalues": 0,
+      "n_medals": 1,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": 0,
+      "n_silver": null,
+      "n_solved": 3,
+      "n_subscribers": 0,
+      "n_third_places": 1,
+      "n_top_ten_places": 0,
+      "n_total_solved": 3,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Sizhe Fan",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 82,
+      "resource_rank": null,
+      "solving": 552.34,
+      "submissions_info": {},
+      "total_solving": 552.34,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-08-04T23:59:59.999Z",
+      "upsolving": null,
+      "url": "/coder/%E2%88%A88526508/?resource=82"
+    },
+    "model": "ranking.account",
+    "pk": 8515574
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "US",
+      "created": "2021-07-04T22:19:48.359Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar_url": "https://stats.ioinformatics.org/img/photos/2024/7645.png",
+        "basicname": "Contestant",
+        "bronzecount": "0",
+        "goldcount": "4",
+        "silvercount": "1"
+      },
+      "key": "7645",
+      "last_activity": "2025-07-30T14:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-08-04T00:00:20.095Z",
+      "n_bronze": null,
+      "n_contests": 5,
+      "n_first_ac": 1,
+      "n_first_places": null,
+      "n_gold": 4,
+      "n_listvalues": 0,
+      "n_medals": 5,
+      "n_other_medals": null,
+      "n_places": 4,
+      "n_second_places": 0,
+      "n_silver": 1,
+      "n_solved": 15,
+      "n_subscribers": 1,
+      "n_third_places": 0,
+      "n_top_ten_places": 4,
+      "n_total_solved": 15,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Rain Jiang",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 82,
+      "resource_rank": null,
+      "solving": 2279.41,
+      "submissions_info": {},
+      "total_solving": 2279.41,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-08-04T23:59:59.999Z",
+      "upsolving": 0.0,
+      "url": "/coder/%E2%88%A83884830/?resource=82"
+    },
+    "model": "ranking.account",
+    "pk": 3021153
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "CN",
+      "created": "2025-07-31T11:00:51.113Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "basicname": "Contestant",
+        "bronzecount": "0",
+        "goldcount": "1",
+        "silvercount": "0"
+      },
+      "key": "8604",
+      "last_activity": "2025-07-30T14:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-08-04T00:00:34.292Z",
+      "n_bronze": null,
+      "n_contests": 1,
+      "n_first_ac": 1,
+      "n_first_places": 0,
+      "n_gold": 1,
+      "n_listvalues": 0,
+      "n_medals": 1,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": 0,
+      "n_silver": null,
+      "n_solved": 3,
+      "n_subscribers": 0,
+      "n_third_places": 0,
+      "n_top_ten_places": 1,
+      "n_total_solved": 3,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Haifeng Liu",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 82,
+      "resource_rank": null,
+      "solving": 511.82,
+      "submissions_info": {},
+      "total_solving": 511.82,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-08-04T23:59:59.999Z",
+      "upsolving": null,
+      "url": "/coder/%E2%88%A88526510/?resource=82"
+    },
+    "model": "ranking.account",
+    "pk": 8515572
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "EG",
+      "created": "2024-09-01T06:00:13.411Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar_url": "https://stats.ioinformatics.org/img/photos/2026/8297.jpeg",
+        "basicname": "Delegation member",
+        "bronzecount": "1",
+        "contacts": {
+          "codeforces": "http://codeforces.com/profile/MinaRagy06"
+        },
+        "goldcount": "0",
+        "silvercount": "1"
+      },
+      "key": "8297",
+      "last_activity": "2025-07-30T14:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-08-04T00:00:35.210Z",
+      "n_bronze": null,
+      "n_contests": 2,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": 1,
+      "n_other_medals": 1,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": 1,
+      "n_solved": 2,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 2,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Mina Gayed",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 82,
+      "resource_rank": null,
+      "solving": 688.13,
+      "submissions_info": {},
+      "total_solving": 688.13,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-08-04T23:59:59.999Z",
+      "upsolving": 0.0,
+      "url": "/coder/%E2%88%A88526518/?resource=82"
+    },
+    "model": "ranking.account",
+    "pk": 7418229
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "NG",
+      "created": "2020-09-23T12:15:19.955Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar_url": "https://stats.ioinformatics.org/img/photos/2024/7204.png",
+        "basicname": "Contestant",
+        "bronzecount": "0",
+        "contacts": {
+          "codeforces": "http://codeforces.com/profile/CM_Dan4life",
+          "kattis": "https://open.kattis.com/users/dan4life"
+        },
+        "goldcount": "0",
+        "silvercount": "0"
+      },
+      "key": "7204",
+      "last_activity": "2025-07-30T14:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-08-04T00:00:21.215Z",
+      "n_bronze": null,
+      "n_contests": 5,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": 1,
+      "n_places": 0,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 0,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 0,
+      "n_total_solved": 0,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Daniel Emeka-Ilozor",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 82,
+      "resource_rank": null,
+      "solving": 544.94,
+      "submissions_info": {},
+      "total_solving": 544.94,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-08-04T23:59:59.999Z",
+      "upsolving": 0.0,
+      "url": "/coder/Dan4Life/?resource=82"
+    },
+    "model": "ranking.account",
+    "pk": 2285495
+  },
+  {
+    "fields": {
+      "account": 8515573,
+      "addition": {
+        "IOI2025": "Gold (1 st )",
+        "country": "China",
+        "medal": "gold",
+        "name": "Hengxi Liu",
+        "problems": {
+          "festival": {
+            "_attempt_time": 2720,
+            "absolute_time": "5:45:20",
+            "attempt": 2,
+            "first_ac": true,
+            "partial": false,
+            "result": 100.0,
+            "time": "0:45:20",
+            "time_in_seconds": 2720
+          },
+          "migrations": {
+            "_attempt_time": 15138,
+            "absolute_time": "9:12:18",
+            "attempt": 2,
+            "partial": true,
+            "result": 91.23,
+            "time": "4:12:18",
+            "time_in_seconds": 15138
+          },
+          "obstacles": {
+            "_attempt_time": 6625,
+            "absolute_time": "6:50:25",
+            "attempt": 2,
+            "first_ac": true,
+            "partial": false,
+            "result": 100.0,
+            "time": "1:50:25",
+            "time_in_seconds": 6625
+          },
+          "souvenirs": {
+            "_attempt_time": 6299,
+            "absolute_time": "1:44:59",
+            "attempt": 1,
+            "partial": false,
+            "result": 100.0,
+            "time": "1:44:59",
+            "time_in_seconds": 6299
+          },
+          "triples": {
+            "_attempt_time": 9885,
+            "absolute_time": "2:44:45",
+            "attempt": 8,
+            "first_ac": true,
+            "partial": false,
+            "result": 100.0,
+            "time": "2:44:45",
+            "time_in_seconds": 9885
+          },
+          "worldmap": {
+            "_attempt_time": 11737,
+            "absolute_time": "3:15:37",
+            "attempt": 3,
+            "partial": false,
+            "result": 100.0,
+            "time": "3:15:37",
+            "time_in_seconds": 11737
+          }
+        },
+        "rel.": "98.54%"
+      },
+      "advanced": false,
+      "contest": 61064166,
+      "created": "2025-07-30T14:28:28.755Z",
+      "global_rating_change": null,
+      "last_activity": "2025-07-27T03:15:37Z",
+      "medal": "gold",
+      "modified": "2025-08-09T21:20:10.714Z",
+      "n_first_ac": 3,
+      "n_solved": 5,
+      "n_total_solved": 5,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "1",
+      "place_as_int": 1,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 82,
+      "skip_in_stats": false,
+      "solving": 591.23,
+      "total_solving": 591.23,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 78890632
+  },
+  {
+    "fields": {
+      "account": 7418336,
+      "addition": {
+        "IOI2024": "Silver",
+        "IOI2025": "Gold (2 nd )",
+        "country": "Republic of Korea",
+        "medal": "gold",
+        "name": "Mingyu Woo",
+        "problems": {
+          "festival": {
+            "_attempt_time": 6324,
+            "absolute_time": "6:45:24",
+            "attempt": 1,
+            "partial": false,
+            "result": 100.0,
+            "time": "1:45:24",
+            "time_in_seconds": 6324
+          },
+          "migrations": {
+            "_attempt_time": 9374,
+            "absolute_time": "7:36:14",
+            "attempt": 4,
+            "partial": true,
+            "result": 82.45,
+            "time": "2:36:14",
+            "time_in_seconds": 9374
+          },
+          "obstacles": {
+            "_attempt_time": 16880,
+            "absolute_time": "9:41:20",
+            "attempt": 4,
+            "partial": false,
+            "result": 100.0,
+            "time": "4:41:20",
+            "time_in_seconds": 16880
+          },
+          "souvenirs": {
+            "_attempt_time": 9748,
+            "absolute_time": "2:42:28",
+            "attempt": 2,
+            "partial": false,
+            "result": 100.0,
+            "time": "2:42:28",
+            "time_in_seconds": 9748
+          },
+          "triples": {
+            "_attempt_time": 17956,
+            "absolute_time": "4:59:16",
+            "attempt": 11,
+            "partial": true,
+            "result": 99.33,
+            "time": "4:59:16",
+            "time_in_seconds": 17956
+          },
+          "worldmap": {
+            "_attempt_time": 15988,
+            "absolute_time": "4:26:28",
+            "attempt": 4,
+            "partial": true,
+            "result": 93.0,
+            "time": "4:26:28",
+            "time_in_seconds": 15988
+          }
+        },
+        "rel.": "95.80%"
+      },
+      "advanced": false,
+      "contest": 61064166,
+      "created": "2025-07-30T14:28:21.018Z",
+      "global_rating_change": null,
+      "last_activity": "2025-07-27T04:41:20Z",
+      "medal": "gold",
+      "modified": "2025-08-09T21:20:10.754Z",
+      "n_first_ac": 0,
+      "n_solved": 3,
+      "n_total_solved": 3,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "2",
+      "place_as_int": 2,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 82,
+      "skip_in_stats": false,
+      "solving": 574.78,
+      "total_solving": 574.78,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 78890440
+  },
+  {
+    "fields": {
+      "account": 8515574,
+      "addition": {
+        "IOI2025": "Gold (3 rd )",
+        "country": "China",
+        "medal": "gold",
+        "name": "Sizhe Fan",
+        "problems": {
+          "festival": {
+            "_attempt_time": 3109,
+            "absolute_time": "5:51:49",
+            "attempt": 2,
+            "partial": false,
+            "result": 100.0,
+            "time": "0:51:49",
+            "time_in_seconds": 3109
+          },
+          "migrations": {
+            "_attempt_time": 12248,
+            "absolute_time": "8:24:08",
+            "attempt": 2,
+            "partial": true,
+            "result": 91.23,
+            "time": "3:24:08",
+            "time_in_seconds": 12248
+          },
+          "obstacles": {
+            "_attempt_time": 17794,
+            "absolute_time": "9:56:34",
+            "attempt": 4,
+            "partial": true,
+            "result": 83.0,
+            "time": "4:56:34",
+            "time_in_seconds": 17794
+          },
+          "souvenirs": {
+            "_attempt_time": 1875,
+            "absolute_time": "0:31:15",
+            "attempt": 1,
+            "first_ac": true,
+            "partial": false,
+            "result": 100.0,
+            "time": "0:31:15",
+            "time_in_seconds": 1875
+          },
+          "triples": {
+            "_attempt_time": 11722,
+            "absolute_time": "3:15:22",
+            "attempt": 2,
+            "partial": true,
+            "result": 78.11,
+            "time": "3:15:22",
+            "time_in_seconds": 11722
+          },
+          "worldmap": {
+            "_attempt_time": 6607,
+            "absolute_time": "1:50:07",
+            "attempt": 3,
+            "partial": false,
+            "result": 100.0,
+            "time": "1:50:07",
+            "time_in_seconds": 6607
+          }
+        },
+        "rel.": "92.06%"
+      },
+      "advanced": false,
+      "contest": 61064166,
+      "created": "2025-07-30T14:28:28.574Z",
+      "global_rating_change": null,
+      "last_activity": "2025-07-27T01:50:07Z",
+      "medal": "gold",
+      "modified": "2025-08-09T21:20:10.784Z",
+      "n_first_ac": 1,
+      "n_solved": 3,
+      "n_total_solved": 3,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "3",
+      "place_as_int": 3,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 82,
+      "skip_in_stats": false,
+      "solving": 552.34,
+      "total_solving": 552.34,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 78890627
+  },
+  {
+    "fields": {
+      "account": 3021153,
+      "addition": {
+        "IOI2021": "Gold (5 th )",
+        "IOI2022": "Silver",
+        "IOI2023": "Gold (5 th )",
+        "IOI2024": "Gold (5 th )",
+        "IOI2025": "Gold",
+        "country": "United States of America",
+        "medal": "gold",
+        "name": "Rain Jiang",
+        "problems": {
+          "festival": {
+            "_attempt_time": 13686,
+            "absolute_time": "8:48:06",
+            "attempt": 4,
+            "partial": false,
+            "result": 100.0,
+            "time": "3:48:06",
+            "time_in_seconds": 13686
+          },
+          "migrations": {
+            "_attempt_time": 9406,
+            "absolute_time": "7:36:46",
+            "attempt": 2,
+            "partial": true,
+            "result": 65.0,
+            "time": "2:36:46",
+            "time_in_seconds": 9406
+          },
+          "obstacles": {
+            "_attempt_time": 10721,
+            "absolute_time": "7:58:41",
+            "attempt": 2,
+            "partial": false,
+            "result": 100.0,
+            "time": "2:58:41",
+            "time_in_seconds": 10721
+          },
+          "souvenirs": {
+            "_attempt_time": 13198,
+            "absolute_time": "3:39:58",
+            "attempt": 3,
+            "partial": false,
+            "result": 100.0,
+            "time": "3:39:58",
+            "time_in_seconds": 13198
+          },
+          "triples": {
+            "_attempt_time": 17669,
+            "absolute_time": "4:54:29",
+            "attempt": 6,
+            "partial": true,
+            "result": 75.41,
+            "time": "4:54:29",
+            "time_in_seconds": 17669
+          },
+          "worldmap": {
+            "_attempt_time": 9289,
+            "absolute_time": "2:34:49",
+            "attempt": 3,
+            "partial": true,
+            "result": 86.0,
+            "time": "2:34:49",
+            "time_in_seconds": 9289
+          }
+        },
+        "rel.": "87.73%"
+      },
+      "advanced": false,
+      "contest": 61064166,
+      "created": "2025-07-30T14:28:19.989Z",
+      "global_rating_change": null,
+      "last_activity": "2025-07-27T03:48:06Z",
+      "medal": "gold",
+      "modified": "2025-08-09T21:20:10.858Z",
+      "n_first_ac": 0,
+      "n_solved": 3,
+      "n_total_solved": 3,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "6",
+      "place_as_int": 6,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 82,
+      "skip_in_stats": false,
+      "solving": 526.41,
+      "total_solving": 526.41,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 78890416
+  },
+  {
+    "fields": {
+      "account": 8515572,
+      "addition": {
+        "IOI2025": "Gold",
+        "country": "China",
+        "medal": "gold",
+        "name": "Haifeng Liu",
+        "problems": {
+          "festival": {
+            "_attempt_time": 4590,
+            "absolute_time": "6:16:30",
+            "attempt": 1,
+            "partial": false,
+            "result": 100.0,
+            "time": "1:16:30",
+            "time_in_seconds": 4590
+          },
+          "migrations": {
+            "_attempt_time": 9546,
+            "absolute_time": "7:39:06",
+            "attempt": 1,
+            "partial": true,
+            "result": 30.0,
+            "time": "2:39:06",
+            "time_in_seconds": 9546
+          },
+          "obstacles": {
+            "_attempt_time": 16069,
+            "absolute_time": "9:27:49",
+            "attempt": 4,
+            "partial": true,
+            "result": 83.0,
+            "time": "4:27:49",
+            "time_in_seconds": 16069
+          },
+          "souvenirs": {
+            "_attempt_time": 7378,
+            "absolute_time": "2:02:58",
+            "attempt": 2,
+            "partial": false,
+            "result": 100.0,
+            "time": "2:02:58",
+            "time_in_seconds": 7378
+          },
+          "triples": {
+            "_attempt_time": 17562,
+            "absolute_time": "4:52:42",
+            "attempt": 11,
+            "partial": true,
+            "result": 98.83,
+            "time": "4:52:42",
+            "time_in_seconds": 17562
+          },
+          "worldmap": {
+            "_attempt_time": 4770,
+            "absolute_time": "1:19:30",
+            "attempt": 1,
+            "first_ac": true,
+            "partial": false,
+            "result": 100.0,
+            "time": "1:19:30",
+            "time_in_seconds": 4770
+          }
+        },
+        "rel.": "85.30%"
+      },
+      "advanced": false,
+      "contest": 61064166,
+      "created": "2025-07-30T14:28:27.378Z",
+      "global_rating_change": null,
+      "last_activity": "2025-07-27T02:02:58Z",
+      "medal": "gold",
+      "modified": "2025-08-09T21:20:10.917Z",
+      "n_first_ac": 1,
+      "n_solved": 3,
+      "n_total_solved": 3,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "8",
+      "place_as_int": 8,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 82,
+      "skip_in_stats": false,
+      "solving": 511.82,
+      "total_solving": 511.82,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 78890595
+  },
+  {
+    "fields": {
+      "account": 7418229,
+      "addition": {
+        "CF": "MinaRagy06",
+        "IOI2024": "Bronze *",
+        "IOI2025": "Silver",
+        "country": "Egypt",
+        "medal": "silver",
+        "name": "Mina Gayed",
+        "problems": {
+          "festival": {
+            "_attempt_time": 15011,
+            "absolute_time": "9:10:11",
+            "attempt": 4,
+            "partial": true,
+            "result": 39.0,
+            "time": "4:10:11",
+            "time_in_seconds": 15011
+          },
+          "migrations": {
+            "_attempt_time": 5129,
+            "absolute_time": "6:25:29",
+            "attempt": 2,
+            "partial": true,
+            "result": 72.89,
+            "time": "1:25:29",
+            "time_in_seconds": 5129
+          },
+          "obstacles": {
+            "_attempt_time": 15889,
+            "absolute_time": "9:24:49",
+            "attempt": 5,
+            "partial": false,
+            "result": 100.0,
+            "time": "4:24:49",
+            "time_in_seconds": 15889
+          },
+          "souvenirs": {
+            "_attempt_time": 8233,
+            "absolute_time": "2:17:13",
+            "attempt": 5,
+            "partial": false,
+            "result": 100.0,
+            "time": "2:17:13",
+            "time_in_seconds": 8233
+          },
+          "triples": {
+            "_attempt_time": 17295,
+            "absolute_time": "4:48:15",
+            "attempt": 7,
+            "partial": true,
+            "result": 43.85,
+            "time": "4:48:15",
+            "time_in_seconds": 17295
+          },
+          "worldmap": {
+            "_attempt_time": 16827,
+            "absolute_time": "4:40:27",
+            "attempt": 6,
+            "partial": true,
+            "result": 72.0,
+            "time": "4:40:27",
+            "time_in_seconds": 16827
+          }
+        },
+        "rel.": "71.29%"
+      },
+      "advanced": false,
+      "contest": 61064166,
+      "created": "2025-07-30T14:28:28.544Z",
+      "global_rating_change": null,
+      "last_activity": "2025-07-27T04:24:49Z",
+      "medal": "silver",
+      "modified": "2025-08-09T21:20:11.308Z",
+      "n_first_ac": 0,
+      "n_solved": 2,
+      "n_total_solved": 2,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "30",
+      "place_as_int": 30,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 82,
+      "skip_in_stats": false,
+      "solving": 427.74,
+      "total_solving": 427.74,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 78890626
+  },
+  {
+    "fields": {
+      "account": 2285495,
+      "addition": {
+        "CF": "CM_Dan4life",
+        "IOI2020": "No Award",
+        "IOI2021": "No Award",
+        "IOI2022": "No Award",
+        "IOI2024": "HM",
+        "IOI2025": "No Award",
+        "country": "Nigeria",
+        "name": "Daniel Emeka-Ilozor",
+        "problems": {
+          "festival": {
+            "_attempt_time": 12619,
+            "absolute_time": "8:30:19",
+            "attempt": 2,
+            "partial": true,
+            "result": 32.0,
+            "time": "3:30:19",
+            "time_in_seconds": 12619
+          },
+          "migrations": {
+            "_attempt_time": 6756,
+            "absolute_time": "6:52:36",
+            "attempt": 1,
+            "partial": true,
+            "result": 10.0,
+            "time": "1:52:36",
+            "time_in_seconds": 6756
+          },
+          "obstacles": {
+            "_attempt_time": 5357,
+            "absolute_time": "6:29:17",
+            "attempt": 2,
+            "partial": true,
+            "result": 37.0,
+            "time": "1:29:17",
+            "time_in_seconds": 5357
+          },
+          "souvenirs": {
+            "_attempt_time": 2210,
+            "absolute_time": "0:36:50",
+            "attempt": 4,
+            "partial": true,
+            "result": 39.0,
+            "time": "0:36:50",
+            "time_in_seconds": 2210
+          },
+          "triples": {
+            "_attempt_time": 12386,
+            "absolute_time": "3:26:26",
+            "attempt": 4,
+            "partial": true,
+            "result": 40.29,
+            "time": "3:26:26",
+            "time_in_seconds": 12386
+          },
+          "worldmap": {
+            "_attempt_time": 15058,
+            "absolute_time": "4:10:58",
+            "attempt": 5,
+            "partial": true,
+            "result": 44.0,
+            "time": "4:10:58",
+            "time_in_seconds": 15058
+          }
+        },
+        "rel.": "33.72%"
+      },
+      "advanced": false,
+      "contest": 61064166,
+      "created": "2025-07-30T14:28:28.238Z",
+      "global_rating_change": null,
+      "last_activity": "2025-07-27T00:00:00Z",
+      "medal": null,
+      "modified": "2025-08-09T21:20:14.566Z",
+      "n_first_ac": 0,
+      "n_solved": 0,
+      "n_total_solved": 0,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "215",
+      "place_as_int": 215,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 82,
+      "skip_in_stats": false,
+      "solving": 202.29,
+      "total_solving": 202.29,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 78890618
+  }
+]

@@ -1,0 +1,1272 @@
+[
+    {
+        "duration": "05:00",
+        "end_time": "2024-06-01 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 40,
+            "standings_url": "https://contest.ucup.ac/contest/2135/standings/",
+            "title": "Potyczki"
+        },
+        "key": "ucup-3-stage-0",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/1695/standings/",
+        "start_time": "2024-06-01 05:00 UTC",
+        "timezone": null,
+        "title": "The 3rd Universal Cup. Stage 0: America",
+        "url": "https://ucup.ac/archive/season3/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2024-06-08 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 40,
+            "standings_url": "https://contest.ucup.ac/contest/2135/standings/",
+            "title": "Potyczki"
+        },
+        "key": "ucup-3-stage-1",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/1696/standings/",
+        "start_time": "2024-06-08 05:00 UTC",
+        "timezone": null,
+        "title": "The 3rd Universal Cup. Stage 1: St. Petersburg",
+        "url": "https://ucup.ac/archive/season3/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2024-06-15 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 40,
+            "standings_url": "https://contest.ucup.ac/contest/2135/standings/",
+            "title": "Potyczki"
+        },
+        "key": "ucup-3-stage-2",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/1699/standings",
+        "start_time": "2024-06-15 05:00 UTC",
+        "timezone": null,
+        "title": "The 3rd Universal Cup. Stage 2: Zielona Gora",
+        "url": "https://ucup.ac/archive/season3/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2024-06-29 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 40,
+            "standings_url": "https://contest.ucup.ac/contest/2135/standings/",
+            "title": "Potyczki"
+        },
+        "key": "ucup-3-stage-3",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/1714/standings/",
+        "start_time": "2024-06-29 05:00 UTC",
+        "timezone": null,
+        "title": "The 3rd Universal Cup. Stage 3: Ukraine",
+        "url": "https://ucup.ac/archive/season3/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2024-07-13 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 40,
+            "standings_url": "https://contest.ucup.ac/contest/2135/standings/",
+            "title": "Potyczki"
+        },
+        "key": "ucup-3-stage-4",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/1738/standings",
+        "start_time": "2024-07-13 05:00 UTC",
+        "timezone": null,
+        "title": "The 3rd Universal Cup. Stage 4: Hongo",
+        "url": "https://ucup.ac/archive/season3/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2024-07-27 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 40,
+            "standings_url": "https://contest.ucup.ac/contest/2135/standings/",
+            "title": "Potyczki"
+        },
+        "key": "ucup-3-stage-5",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/1741/standings/",
+        "start_time": "2024-07-27 05:00 UTC",
+        "timezone": null,
+        "title": "The 3rd Universal Cup. Stage 5: Moscow",
+        "url": "https://ucup.ac/archive/season3/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2024-08-10 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 40,
+            "standings_url": "https://contest.ucup.ac/contest/2135/standings/",
+            "title": "Potyczki"
+        },
+        "key": "ucup-3-stage-6",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/1762/standings/",
+        "start_time": "2024-08-10 05:00 UTC",
+        "timezone": null,
+        "title": "The 3rd Universal Cup. Stage 6: Osijek",
+        "url": "https://ucup.ac/archive/season3/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2024-08-24 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 40,
+            "standings_url": "https://contest.ucup.ac/contest/2135/standings/",
+            "title": "Potyczki"
+        },
+        "key": "ucup-3-stage-7",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/1774/standings/",
+        "start_time": "2024-08-24 05:00 UTC",
+        "timezone": null,
+        "title": "The 3rd Universal Cup. Stage 7: Warsaw",
+        "url": "https://ucup.ac/archive/season3/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2024-08-31 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 40,
+            "standings_url": "https://contest.ucup.ac/contest/2135/standings/",
+            "title": "Potyczki"
+        },
+        "key": "ucup-3-stage-8",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/1780/standings/",
+        "start_time": "2024-08-31 05:00 UTC",
+        "timezone": null,
+        "title": "The 3rd Universal Cup. Stage 8: Cangqian",
+        "url": "https://ucup.ac/archive/season3/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2024-09-07 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 40,
+            "standings_url": "https://contest.ucup.ac/contest/2135/standings/",
+            "title": "Potyczki"
+        },
+        "key": "ucup-3-stage-9",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/1784/standings/",
+        "start_time": "2024-09-07 05:00 UTC",
+        "timezone": null,
+        "title": "The 3rd Universal Cup. Stage 9: Xi'an",
+        "url": "https://ucup.ac/archive/season3/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2024-09-28 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 40,
+            "standings_url": "https://contest.ucup.ac/contest/2135/standings/",
+            "title": "Potyczki"
+        },
+        "key": "ucup-3-stage-10",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/1803/standings/",
+        "start_time": "2024-09-28 05:00 UTC",
+        "timezone": null,
+        "title": "The 3rd Universal Cup. Stage 10: West Lake",
+        "url": "https://ucup.ac/archive/season3/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2024-10-05 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 40,
+            "standings_url": "https://contest.ucup.ac/contest/2135/standings/",
+            "title": "Potyczki"
+        },
+        "key": "ucup-3-stage-11",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/1804/standings/",
+        "start_time": "2024-10-05 05:00 UTC",
+        "timezone": null,
+        "title": "The 3rd Universal Cup. Stage 11: Sumiyosi",
+        "url": "https://ucup.ac/archive/season3/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2024-10-12 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 40,
+            "standings_url": "https://contest.ucup.ac/contest/2135/standings/",
+            "title": "Potyczki"
+        },
+        "key": "ucup-3-stage-12",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/1807/standings/",
+        "start_time": "2024-10-12 05:00 UTC",
+        "timezone": null,
+        "title": "The 3rd Universal Cup. Stage 12: Qinhuangdao",
+        "url": "https://ucup.ac/archive/season3/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2024-10-19 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 40,
+            "standings_url": "https://contest.ucup.ac/contest/2135/standings/",
+            "title": "Potyczki"
+        },
+        "key": "ucup-3-stage-13",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/1812/standings/",
+        "start_time": "2024-10-19 05:00 UTC",
+        "timezone": null,
+        "title": "The 3rd Universal Cup. Stage 13: Sendai",
+        "url": "https://ucup.ac/archive/season3/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2024-10-26 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 40,
+            "standings_url": "https://contest.ucup.ac/contest/2135/standings/",
+            "title": "Potyczki"
+        },
+        "key": "ucup-3-stage-14",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/1817/standings/",
+        "start_time": "2024-10-26 05:00 UTC",
+        "timezone": null,
+        "title": "The 3rd Universal Cup. Stage 14: Harbin",
+        "url": "https://ucup.ac/archive/season3/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2024-11-02 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 40,
+            "standings_url": "https://contest.ucup.ac/contest/2135/standings/",
+            "title": "Potyczki"
+        },
+        "key": "ucup-3-stage-15",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/1821/standings/",
+        "start_time": "2024-11-02 05:00 UTC",
+        "timezone": null,
+        "title": "The 3rd Universal Cup. Stage 15: Chengdu",
+        "url": "https://ucup.ac/archive/season3/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2024-11-09 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 40,
+            "standings_url": "https://contest.ucup.ac/contest/2135/standings/",
+            "title": "Potyczki"
+        },
+        "key": "ucup-3-stage-16",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/1828/standings/",
+        "start_time": "2024-11-09 05:00 UTC",
+        "timezone": null,
+        "title": "The 3rd Universal Cup. Stage 16: Nanjing",
+        "url": "https://ucup.ac/archive/season3/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2024-11-16 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 40,
+            "standings_url": "https://contest.ucup.ac/contest/2135/standings/",
+            "title": "Potyczki"
+        },
+        "key": "ucup-3-stage-17",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/1843/standings/",
+        "start_time": "2024-11-16 05:00 UTC",
+        "timezone": null,
+        "title": "The 3rd Universal Cup. Stage 17: Jinan",
+        "url": "https://ucup.ac/archive/season3/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2024-11-23 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 40,
+            "standings_url": "https://contest.ucup.ac/contest/2135/standings/",
+            "title": "Potyczki"
+        },
+        "key": "ucup-3-stage-18",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/1849/standings/",
+        "start_time": "2024-11-23 05:00 UTC",
+        "timezone": null,
+        "title": "The 3rd Universal Cup. Stage 18: Southeastern Europe",
+        "url": "https://ucup.ac/archive/season3/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2024-11-30 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 40,
+            "standings_url": "https://contest.ucup.ac/contest/2135/standings/",
+            "title": "Potyczki"
+        },
+        "key": "ucup-3-stage-19",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/1865/standings/",
+        "start_time": "2024-11-30 05:00 UTC",
+        "timezone": null,
+        "title": "The 3rd Universal Cup. Stage 19: Shenyang",
+        "url": "https://ucup.ac/archive/season3/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2024-12-07 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 40,
+            "standings_url": "https://contest.ucup.ac/contest/2135/standings/",
+            "title": "Potyczki"
+        },
+        "key": "ucup-3-stage-20",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/1871/standings/",
+        "start_time": "2024-12-07 05:00 UTC",
+        "timezone": null,
+        "title": "The 3rd Universal Cup. Stage 20: Kunming",
+        "url": "https://ucup.ac/archive/season3/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2024-12-14 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 40,
+            "standings_url": "https://contest.ucup.ac/contest/2135/standings/",
+            "title": "Potyczki"
+        },
+        "key": "ucup-3-stage-21",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/1872/standings/",
+        "start_time": "2024-12-14 05:00 UTC",
+        "timezone": null,
+        "title": "The 3rd Universal Cup. Stage 21: Ōokayama",
+        "url": "https://ucup.ac/archive/season3/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2024-12-21 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 40,
+            "standings_url": "https://contest.ucup.ac/contest/2135/standings/",
+            "title": "Potyczki"
+        },
+        "key": "ucup-3-stage-22",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/1873/standings/",
+        "start_time": "2024-12-21 05:00 UTC",
+        "timezone": null,
+        "title": "The 3rd Universal Cup. Stage 22: Zhengzhou",
+        "url": "https://ucup.ac/archive/season3/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2024-12-28 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 40,
+            "standings_url": "https://contest.ucup.ac/contest/2135/standings/",
+            "title": "Potyczki"
+        },
+        "key": "ucup-3-stage-23",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/1885/standings/",
+        "start_time": "2024-12-28 05:00 UTC",
+        "timezone": null,
+        "title": "The 3rd Universal Cup. Stage 23: Hong Kong",
+        "url": "https://ucup.ac/archive/season3/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2025-01-04 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 40,
+            "standings_url": "https://contest.ucup.ac/contest/2135/standings/",
+            "title": "Potyczki"
+        },
+        "key": "ucup-3-stage-24",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/1890/standings/",
+        "start_time": "2025-01-04 05:00 UTC",
+        "timezone": null,
+        "title": "The 3rd Universal Cup. Stage 24: Poland",
+        "url": "https://ucup.ac/archive/season3/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2025-01-11 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 40,
+            "standings_url": "https://contest.ucup.ac/contest/2135/standings/",
+            "title": "Potyczki"
+        },
+        "key": "ucup-3-stage-25",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/1893/standings/",
+        "start_time": "2025-01-11 05:00 UTC",
+        "timezone": null,
+        "title": "The 3rd Universal Cup. Stage 25: Hangzhou",
+        "url": "https://ucup.ac/archive/season3/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2025-01-18 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 40,
+            "standings_url": "https://contest.ucup.ac/contest/2135/standings/",
+            "title": "Potyczki"
+        },
+        "key": "ucup-3-stage-26",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/1894/standings/",
+        "start_time": "2025-01-18 05:00 UTC",
+        "timezone": null,
+        "title": "The 3rd Universal Cup. Stage 26: China",
+        "url": "https://ucup.ac/archive/season3/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2025-01-25 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 40,
+            "standings_url": "https://contest.ucup.ac/contest/2135/standings/",
+            "title": "Potyczki"
+        },
+        "key": "ucup-3-stage-27",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/1901/standings/",
+        "start_time": "2025-01-25 05:00 UTC",
+        "timezone": null,
+        "title": "The 3rd Universal Cup. Stage 27: London",
+        "url": "https://ucup.ac/archive/season3/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2025-02-01 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 40,
+            "standings_url": "https://contest.ucup.ac/contest/2135/standings/",
+            "title": "Potyczki"
+        },
+        "key": "ucup-3-stage-28",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/1903/standings/",
+        "start_time": "2025-02-01 05:00 UTC",
+        "timezone": null,
+        "title": "The 3rd Universal Cup. Stage 28: Haidian Huangzhuang",
+        "url": "https://ucup.ac/archive/season3/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2025-02-08 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 40,
+            "standings_url": "https://contest.ucup.ac/contest/2135/standings/",
+            "title": "Potyczki"
+        },
+        "key": "ucup-3-stage-29",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/1913/standings/",
+        "start_time": "2025-02-08 05:00 UTC",
+        "timezone": null,
+        "title": "The 3rd Universal Cup. Stage 29: Metropolis",
+        "url": "https://ucup.ac/archive/season3/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2025-02-15 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 40,
+            "standings_url": "https://contest.ucup.ac/contest/2135/standings/",
+            "title": "Potyczki"
+        },
+        "key": "ucup-3-stage-30",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/1917/standings/",
+        "start_time": "2025-02-15 05:00 UTC",
+        "timezone": null,
+        "title": "The 3rd Universal Cup. Stage 30: Northern",
+        "url": "https://ucup.ac/archive/season3/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2025-03-01 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 40,
+            "standings_url": "https://contest.ucup.ac/contest/2135/standings/",
+            "title": "Potyczki"
+        },
+        "key": "ucup-3-stage-31",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/1924/standings/",
+        "start_time": "2025-03-01 05:00 UTC",
+        "timezone": null,
+        "title": "The 3rd Universal Cup. Stage 31: Wroclaw",
+        "url": "https://ucup.ac/archive/season3/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2025-03-15 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 40,
+            "standings_url": "https://contest.ucup.ac/contest/2135/standings/",
+            "title": "Potyczki"
+        },
+        "key": "ucup-3-stage-32",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/1939/standings/",
+        "start_time": "2025-03-15 05:00 UTC",
+        "timezone": null,
+        "title": "The 3rd Universal Cup. Stage 32: Dhaka",
+        "url": "https://ucup.ac/archive/season3/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2025-03-29 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 40,
+            "standings_url": "https://contest.ucup.ac/contest/2135/standings/",
+            "title": "Potyczki"
+        },
+        "key": "ucup-3-stage-33",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/1954/standings/",
+        "start_time": "2025-03-29 05:00 UTC",
+        "timezone": null,
+        "title": "The 3rd Universal Cup. Stage 33: India",
+        "url": "https://ucup.ac/archive/season3/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2025-04-12 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 40,
+            "standings_url": "https://contest.ucup.ac/contest/2135/standings/",
+            "title": "Potyczki"
+        },
+        "key": "ucup-3-stage-34",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/1965/standings/",
+        "start_time": "2025-04-12 05:00 UTC",
+        "timezone": null,
+        "title": "The 3rd Universal Cup. Stage 34: Aobayama",
+        "url": "https://ucup.ac/archive/season3/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2025-04-26 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 40,
+            "standings_url": "https://contest.ucup.ac/contest/2135/standings/",
+            "title": "Potyczki"
+        },
+        "key": "ucup-3-stage-35",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/1993/standings/",
+        "start_time": "2025-04-26 05:00 UTC",
+        "timezone": null,
+        "title": "The 3rd Universal Cup. Stage 35: Kraków",
+        "url": "https://ucup.ac/archive/season3/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2025-05-10 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 40,
+            "standings_url": "https://contest.ucup.ac/contest/2135/standings/",
+            "title": "Potyczki"
+        },
+        "key": "ucup-3-stage-36",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/2021/standings/",
+        "start_time": "2025-05-10 05:00 UTC",
+        "timezone": null,
+        "title": "The 3rd Universal Cup. Stage 36: Wulin",
+        "url": "https://ucup.ac/archive/season3/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2025-05-17 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 40,
+            "standings_url": "https://contest.ucup.ac/contest/2135/standings/",
+            "title": "Potyczki"
+        },
+        "key": "ucup-3-stage-37",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/2025/standings/",
+        "start_time": "2025-05-17 05:00 UTC",
+        "timezone": null,
+        "title": "The 3rd Universal Cup. Stage 37: Wuhan",
+        "url": "https://ucup.ac/archive/season3/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2025-05-24 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 40,
+            "standings_url": "https://contest.ucup.ac/contest/2135/standings/",
+            "title": "Potyczki"
+        },
+        "key": "ucup-3-stage-38",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/2036/standings/",
+        "start_time": "2025-05-24 05:00 UTC",
+        "timezone": null,
+        "title": "The 3rd Universal Cup. Stage 38: Guangzhou",
+        "url": "https://ucup.ac/archive/season3/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2025-06-07 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 40,
+            "standings_url": "https://contest.ucup.ac/contest/2135/standings/",
+            "title": "Potyczki"
+        },
+        "key": "ucup-3-stage-39",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/2071/standings/",
+        "start_time": "2025-06-07 05:00 UTC",
+        "timezone": null,
+        "title": "The 3rd Universal Cup. Stage 39: Tokyo",
+        "url": "https://ucup.ac/archive/season3/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2025-06-21 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 40,
+            "standings_url": "https://contest.ucup.ac/contest/2135/standings/",
+            "title": "Potyczki"
+        },
+        "key": "ucup-3-stage-40",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/2135/standings/",
+        "start_time": "2025-06-21 05:00 UTC",
+        "timezone": null,
+        "title": "The 3rd Universal Cup. Stage 40: Potyczki",
+        "url": "https://ucup.ac/archive/season3/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2025-09-27 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 24,
+            "standings_url": "https://contest.ucup.ac/contest/3773/standings/",
+            "title": "Zagreb"
+        },
+        "key": "ucup-4-stage-0",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/2041/standings/",
+        "start_time": "2025-09-27 05:00 UTC",
+        "timezone": null,
+        "title": "The 4th Universal Cup. Stage 0: America",
+        "url": "https://ucup.ac/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2025-10-04 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 24,
+            "standings_url": "https://contest.ucup.ac/contest/3773/standings/",
+            "title": "Zagreb"
+        },
+        "key": "ucup-4-stage-1",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/2539/standings/",
+        "start_time": "2025-10-04 05:00 UTC",
+        "timezone": null,
+        "title": "The 4th Universal Cup. Stage 1: Korolyov",
+        "url": "https://ucup.ac/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2025-10-11 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 24,
+            "standings_url": "https://contest.ucup.ac/contest/3773/standings/",
+            "title": "Zagreb"
+        },
+        "key": "ucup-4-stage-2",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/2551/standings/",
+        "start_time": "2025-10-11 05:00 UTC",
+        "timezone": null,
+        "title": "The 4th Universal Cup. Stage 2: Paris",
+        "url": "https://ucup.ac/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2025-10-25 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 24,
+            "standings_url": "https://contest.ucup.ac/contest/3773/standings/",
+            "title": "Zagreb"
+        },
+        "key": "ucup-4-stage-3",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/2559/standings/",
+        "start_time": "2025-10-25 05:00 UTC",
+        "timezone": null,
+        "title": "The 4th Universal Cup. Stage 3: Polar",
+        "url": "https://ucup.ac/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2025-11-01 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 24,
+            "standings_url": "https://contest.ucup.ac/contest/3773/standings/",
+            "title": "Zagreb"
+        },
+        "key": "ucup-4-stage-4",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/2567/standings/",
+        "start_time": "2025-11-01 05:00 UTC",
+        "timezone": null,
+        "title": "The 4th Universal Cup. Stage 4: Chengdu",
+        "url": "https://ucup.ac/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2025-11-05 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 24,
+            "standings_url": "https://contest.ucup.ac/contest/3773/standings/",
+            "title": "Zagreb"
+        },
+        "key": "ucup-4-extra-stage-1",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/2562/standings",
+        "start_time": "2025-11-05 05:00 UTC",
+        "timezone": null,
+        "title": "The 4th Universal Cup. Extra Stage 1: Xi'an",
+        "url": "https://ucup.ac/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2025-11-09 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 24,
+            "standings_url": "https://contest.ucup.ac/contest/3773/standings/",
+            "title": "Zagreb"
+        },
+        "key": "ucup-4-stage-5",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/2581/standings/",
+        "start_time": "2025-11-09 05:00 UTC",
+        "timezone": null,
+        "title": "The 4th Universal Cup. Stage 5: Nanjing",
+        "url": "https://ucup.ac/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2025-11-18 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 24,
+            "standings_url": "https://contest.ucup.ac/contest/3773/standings/",
+            "title": "Zagreb"
+        },
+        "key": "ucup-4-extra-stage-2",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/2609/standings",
+        "start_time": "2025-11-18 05:00 UTC",
+        "timezone": null,
+        "title": "The 4th Universal Cup. Extra Stage 2: Wuhan",
+        "url": "https://ucup.ac/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2025-11-22 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 24,
+            "standings_url": "https://contest.ucup.ac/contest/3773/standings/",
+            "title": "Zagreb"
+        },
+        "key": "ucup-4-stage-6",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/2641/standings/",
+        "start_time": "2025-11-22 05:00 UTC",
+        "timezone": null,
+        "title": "The 4th Universal Cup. Stage 6: Shenyang",
+        "url": "https://ucup.ac/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2025-11-29 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 24,
+            "standings_url": "https://contest.ucup.ac/contest/3773/standings/",
+            "title": "Zagreb"
+        },
+        "key": "ucup-4-stage-7",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/2661/standings/",
+        "start_time": "2025-11-29 05:00 UTC",
+        "timezone": null,
+        "title": "The 4th Universal Cup. Stage 7: Zhengzhou",
+        "url": "https://ucup.ac/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2025-12-06 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 24,
+            "standings_url": "https://contest.ucup.ac/contest/3773/standings/",
+            "title": "Zagreb"
+        },
+        "key": "ucup-4-stage-8",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/2668/standings/",
+        "start_time": "2025-12-06 05:00 UTC",
+        "timezone": null,
+        "title": "The 4th Universal Cup. Stage 8: Poland",
+        "url": "https://ucup.ac/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2025-12-13 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 24,
+            "standings_url": "https://contest.ucup.ac/contest/3773/standings/",
+            "title": "Zagreb"
+        },
+        "key": "ucup-4-stage-9",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/2693/standings/",
+        "start_time": "2025-12-13 05:00 UTC",
+        "timezone": null,
+        "title": "The 4th Universal Cup. Stage 9: Jinan",
+        "url": "https://ucup.ac/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2025-12-20 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 24,
+            "standings_url": "https://contest.ucup.ac/contest/3773/standings/",
+            "title": "Zagreb"
+        },
+        "key": "ucup-4-extra-stage-3",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/2757/standings",
+        "start_time": "2025-12-20 05:00 UTC",
+        "timezone": null,
+        "title": "The 4th Universal Cup. Extra Stage 3: Osijek",
+        "url": "https://ucup.ac/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2025-12-27 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 24,
+            "standings_url": "https://contest.ucup.ac/contest/3773/standings/",
+            "title": "Zagreb"
+        },
+        "key": "ucup-4-stage-10",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/2814/standings/",
+        "start_time": "2025-12-27 05:00 UTC",
+        "timezone": null,
+        "title": "The 4th Universal Cup. Stage 10: Wrocław",
+        "url": "https://ucup.ac/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2026-01-03 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 24,
+            "standings_url": "https://contest.ucup.ac/contest/3773/standings/",
+            "title": "Zagreb"
+        },
+        "key": "ucup-4-stage-11",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/2828/standings/",
+        "start_time": "2026-01-03 05:00 UTC",
+        "timezone": null,
+        "title": "The 4th Universal Cup. Stage 11: Southeastern Europe",
+        "url": "https://ucup.ac/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2026-01-10 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 24,
+            "standings_url": "https://contest.ucup.ac/contest/3773/standings/",
+            "title": "Zagreb"
+        },
+        "key": "ucup-4-stage-12",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/2908/standings/",
+        "start_time": "2026-01-10 05:00 UTC",
+        "timezone": null,
+        "title": "The 4th Universal Cup. Stage 12: Shanghai",
+        "url": "https://ucup.ac/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2026-01-17 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 24,
+            "standings_url": "https://contest.ucup.ac/contest/3773/standings/",
+            "title": "Zagreb"
+        },
+        "key": "ucup-4-stage-13",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/2921/standings/",
+        "start_time": "2026-01-17 05:00 UTC",
+        "timezone": null,
+        "title": "The 4th Universal Cup. Stage 13: Ōokayama",
+        "url": "https://ucup.ac/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2026-01-31 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 24,
+            "standings_url": "https://contest.ucup.ac/contest/3773/standings/",
+            "title": "Zagreb"
+        },
+        "key": "ucup-4-stage-14",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/3169/standings/",
+        "start_time": "2026-01-31 05:00 UTC",
+        "timezone": null,
+        "title": "The 4th Universal Cup. Stage 14: Hong Kong",
+        "url": "https://ucup.ac/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2026-02-07 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 24,
+            "standings_url": "https://contest.ucup.ac/contest/3773/standings/",
+            "title": "Zagreb"
+        },
+        "key": "ucup-4-stage-15",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/3295/standings/",
+        "start_time": "2026-02-07 05:00 UTC",
+        "timezone": null,
+        "title": "The 4th Universal Cup. Stage 15: China",
+        "url": "https://ucup.ac/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2026-02-14 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 24,
+            "standings_url": "https://contest.ucup.ac/contest/3773/standings/",
+            "title": "Zagreb"
+        },
+        "key": "ucup-4-stage-16",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/3347/standings/",
+        "start_time": "2026-02-14 05:00 UTC",
+        "timezone": null,
+        "title": "The 4th Universal Cup. Stage 16: Warsaw",
+        "url": "https://ucup.ac/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2026-02-21 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 24,
+            "standings_url": "https://contest.ucup.ac/contest/3773/standings/",
+            "title": "Zagreb"
+        },
+        "key": "ucup-4-stage-17",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/3384/standings/",
+        "start_time": "2026-02-21 05:00 UTC",
+        "timezone": null,
+        "title": "The 4th Universal Cup. Stage 17: St. Petersburg",
+        "url": "https://ucup.ac/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2026-02-23 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 24,
+            "standings_url": "https://contest.ucup.ac/contest/3773/standings/",
+            "title": "Zagreb"
+        },
+        "key": "ucup-4-extra-stage-4",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/3387/standings",
+        "start_time": "2026-02-23 05:00 UTC",
+        "timezone": null,
+        "title": "The 4th Universal Cup. Extra Stage 4: Chongqing",
+        "url": "https://ucup.ac/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2026-02-28 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 24,
+            "standings_url": "https://contest.ucup.ac/contest/3773/standings/",
+            "title": "Zagreb"
+        },
+        "key": "ucup-4-stage-18",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/3420/standings/",
+        "start_time": "2026-02-28 05:00 UTC",
+        "timezone": null,
+        "title": "The 4th Universal Cup. Stage 18: Hongō",
+        "url": "https://ucup.ac/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2026-03-07 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 24,
+            "standings_url": "https://contest.ucup.ac/contest/3773/standings/",
+            "title": "Zagreb"
+        },
+        "key": "ucup-4-stage-19",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/3426/standings/",
+        "start_time": "2026-03-07 05:00 UTC",
+        "timezone": null,
+        "title": "The 4th Universal Cup. Stage 19: Belarus",
+        "url": "https://ucup.ac/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2026-03-21 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 24,
+            "standings_url": "https://contest.ucup.ac/contest/3773/standings/",
+            "title": "Zagreb"
+        },
+        "key": "ucup-4-stage-20",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/3516/standings/",
+        "start_time": "2026-03-21 05:00 UTC",
+        "timezone": null,
+        "title": "The 4th Universal Cup. Stage 20: India",
+        "url": "https://ucup.ac/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2026-03-28 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 24,
+            "standings_url": "https://contest.ucup.ac/contest/3773/standings/",
+            "title": "Zagreb"
+        },
+        "key": "ucup-4-stage-21",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/3542/standings",
+        "start_time": "2026-03-28 05:00 UTC",
+        "timezone": null,
+        "title": "The 4th Universal Cup. Stage 21: Kamigō",
+        "url": "https://ucup.ac/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2026-04-04 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 24,
+            "standings_url": "https://contest.ucup.ac/contest/3773/standings/",
+            "title": "Zagreb"
+        },
+        "key": "ucup-4-stage-22",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/3575/standings/",
+        "start_time": "2026-04-04 05:00 UTC",
+        "timezone": null,
+        "title": "The 4th Universal Cup. Stage 22: Kyoto",
+        "url": "https://ucup.ac/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2026-04-18 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 24,
+            "standings_url": "https://contest.ucup.ac/contest/3773/standings/",
+            "title": "Zagreb"
+        },
+        "key": "ucup-4-extra-stage-5",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/3588/standings",
+        "start_time": "2026-04-18 05:00 UTC",
+        "timezone": null,
+        "title": "The 4th Universal Cup. Extra Stage 5: Shenzhen",
+        "url": "https://ucup.ac/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2026-05-02 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 24,
+            "standings_url": "https://contest.ucup.ac/contest/3773/standings/",
+            "title": "Zagreb"
+        },
+        "key": "ucup-4-stage-23",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/3727/standings/",
+        "start_time": "2026-05-02 05:00 UTC",
+        "timezone": null,
+        "title": "The 4th Universal Cup. Stage 23: Nanyang",
+        "url": "https://ucup.ac/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2026-05-16 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 24,
+            "standings_url": "https://contest.ucup.ac/contest/3773/standings/",
+            "title": "Zagreb"
+        },
+        "key": "ucup-4-stage-24",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/3749/standings/",
+        "start_time": "2026-05-16 05:00 UTC",
+        "timezone": null,
+        "title": "The 4th Universal Cup. Stage 24: Wulin",
+        "url": "https://ucup.ac/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2026-05-30 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "stage": 24,
+            "standings_url": "https://contest.ucup.ac/contest/3773/standings/",
+            "title": "Zagreb"
+        },
+        "key": "ucup-4-stage-25",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/3773/standings/",
+        "start_time": "2026-05-30 05:00 UTC",
+        "timezone": null,
+        "title": "The 4th Universal Cup. Stage 25: Zagreb",
+        "url": "https://ucup.ac/"
+    },
+    {
+        "duration": "05:00",
+        "end_time": "2026-05-31 23:00 UTC",
+        "host": "ucup.ac",
+        "info": {
+            "parse": {
+                "season": "4",
+                "stage": "extra-stage-6"
+            }
+        },
+        "key": "ucup-4-extra-stage-6",
+        "rid": 139,
+        "standings_url": "https://contest.ucup.ac/contest/3766/standings",
+        "start_time": "2026-05-31 05:00 UTC",
+        "timezone": null,
+        "title": "The 4th Universal Cup. Extra Stage 6: Shaanxi",
+        "url": "https://ucup.ac/"
+    },
+    {
+        "end_time": 1751756400,
+        "host": "ucup.ac",
+        "info": {
+            "_inherit_stage": true
+        },
+        "key": "ucup-3-rating",
+        "rid": 139,
+        "standings_url": "https://ucup.ac/archive/season3/rating/",
+        "start_time": "2024-06-01 05:00 UTC",
+        "timezone": null,
+        "title": "The 3rd Universal Cup. Rating",
+        "url": "https://ucup.ac/archive/season3/"
+    },
+    {
+        "end_time": 1781478000,
+        "host": "ucup.ac",
+        "info": {
+            "_inherit_stage": true
+        },
+        "key": "ucup-4-rating",
+        "rid": 139,
+        "standings_url": "https://ucup.ac/rating/",
+        "start_time": "2025-09-27 05:00 UTC",
+        "timezone": null,
+        "title": "The 4th Universal Cup. Rating",
+        "url": "https://ucup.ac/"
+    }
+]

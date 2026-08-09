@@ -156,7 +156,7 @@ function curlexec(&$url, $postfields = null, $params = [])
         $curlexec_method = isset($params['no_body']) ? 'HEAD' : ($postfields === null ? 'GET' : 'POST');
         $curlexec_postfields = $postfields === null ? '' : (is_array($postfields) ? http_build_query($postfields) : $postfields);
         $curlexec_cache_name = CURLEXEC_CACHE_DIR . '/' . parse_url($url, PHP_URL_HOST) . '-' . md5($curlexec_method . "\n" . $url . "\n" . $curlexec_postfields);
-        $curlexec_cache_file = $curlexec_cache_name . '.html.gz';
+        $curlexec_cache_file = $curlexec_cache_name . '.html';
         $curlexec_meta_file = $curlexec_cache_name . '.meta.json';
     }
 
@@ -197,11 +197,15 @@ function curlexec(&$url, $postfields = null, $params = [])
     $with_curl = isset($params['with_curl']) && $params['with_curl'];
 
     if (CURLEXEC_CACHE_MODE === 'replay') {
-        if (!file_exists($curlexec_cache_file) || !file_exists($curlexec_meta_file)) {
+        $curlexec_replay_cache_file = file_exists($curlexec_cache_file) ? $curlexec_cache_file : $curlexec_cache_file . '.gz';
+        if (!file_exists($curlexec_replay_cache_file) || !file_exists($curlexec_meta_file)) {
             fwrite(STDERR, "curlexec replay miss: `$url` ($curlexec_cache_file)\n");
             exit(1);
         }
-        $page = gzdecode(file_get_contents($curlexec_cache_file));
+        $page = file_get_contents($curlexec_replay_cache_file);
+        if (substr($curlexec_replay_cache_file, -3) === '.gz') {
+            $page = gzdecode($page);
+        }
         $curlexec_meta = json_decode(file_get_contents($curlexec_meta_file), true);
         if ($page === false || !is_array($curlexec_meta)) {
             fwrite(STDERR, "curlexec replay corrupted cache: `$url` ($curlexec_cache_file)\n");
@@ -309,7 +313,7 @@ function curlexec(&$url, $postfields = null, $params = [])
             '$1://<redacted>@',
             $curlexec_raw_page,
         );
-        file_put_contents($curlexec_cache_file, gzencode($curlexec_raw_page, 9));
+        file_put_contents($curlexec_cache_file, $curlexec_raw_page);
         file_put_contents($curlexec_meta_file, json_encode([
             'method' => $curlexec_method,
             'url' => $curlexec_requested_url,

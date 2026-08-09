@@ -1,0 +1,1945 @@
+[
+  {
+    "fields": {
+      "accounts_fields": {
+        "types": {
+          "rank": [
+            "int"
+          ],
+          "rank_str": [
+            "str"
+          ]
+        }
+      },
+      "allow_delete_archived_statistics": false,
+      "api_url": null,
+      "auto_remove_started": false,
+      "avatar_url": null,
+      "avg_rating": 1162.7205281358063,
+      "color": "#C565CC",
+      "contest_update_time": "2026-08-02T13:05:09.134Z",
+      "country_rank_update_time": "2026-08-03T15:40:06.983Z",
+      "created": "2024-08-04T13:05:59.505Z",
+      "default_account_type": 1,
+      "enable": true,
+      "has_account_last_submission": null,
+      "has_account_n_writers": null,
+      "has_account_verification": false,
+      "has_accounts_infos_update": true,
+      "has_country_medal": null,
+      "has_country_place": null,
+      "has_country_rating": false,
+      "has_inherit_medals_to_related": false,
+      "has_multi_account": true,
+      "has_problem_archive": false,
+      "has_problem_rating": true,
+      "has_problem_statistic": true,
+      "has_problem_update": false,
+      "has_rating_history": true,
+      "has_standings_renamed_account": false,
+      "has_statistic_medal": null,
+      "has_statistic_n_first_ac": null,
+      "has_statistic_n_total_solved": null,
+      "has_statistic_place": true,
+      "has_statistic_total_solving": null,
+      "has_submissions_statistics_log": false,
+      "has_upsolving": false,
+      "host": "ac.nowcoder.com",
+      "icon_file": "resources/ac_nowcoder.png",
+      "icon_updated_at": "2025-12-14T00:06:36.738Z",
+      "icon_url": null,
+      "info": {
+        "get_events": {
+          "colors": {
+            "darken": "#411644",
+            "lighten": "#EDD0EF"
+          }
+        },
+        "standings": {
+          "name_instead_key": true
+        }
+      },
+      "modified": "2026-08-04T00:16:47.029Z",
+      "n_accounts": 145447,
+      "n_accounts_to_update": 0,
+      "n_contests": 1321,
+      "n_rating_accounts": 101192,
+      "n_statistics": 766091,
+      "n_team_accounts": 15108,
+      "n_university_accounts": 0,
+      "parse_url": null,
+      "path": "./module/ac.nowcoder.com/index.php",
+      "problem_archive_update_time": null,
+      "problem_rating_predictor": {},
+      "problem_url": null,
+      "problems_fields": {
+        "types": {
+          "accepted_count": [
+            "int"
+          ],
+          "first_ac__accounts": [
+            "list"
+          ],
+          "first_ac__in_seconds": [
+            "float"
+          ],
+          "first_ac__time": [
+            "str"
+          ],
+          "full_score": [
+            "int"
+          ],
+          "submit_count": [
+            "int"
+          ]
+        }
+      },
+      "profile_url": "https://ac.nowcoder.com/acm/contest/profile/{account}",
+      "rank_update_time": "2026-08-01T21:45:06.642Z",
+      "rating_prediction": null,
+      "rating_update_time": "2026-08-04T00:16:47.029Z",
+      "ratings": [
+        {
+          "color": "gray",
+          "hex_rgb": "#808080",
+          "high": 700,
+          "hsl": [
+            0,
+            0,
+            0.5
+          ],
+          "low": -100500,
+          "next": 700,
+          "prev": -100500
+        },
+        {
+          "color": "violet",
+          "hex_rgb": "#AA00AA",
+          "high": 1100,
+          "hsl": [
+            0.83,
+            1.0,
+            0.33
+          ],
+          "low": 700,
+          "next": 1100,
+          "prev": 700
+        },
+        {
+          "color": "blue",
+          "hex_rgb": "#0000FF",
+          "high": 1500,
+          "hsl": [
+            0.67,
+            1.0,
+            0.5
+          ],
+          "low": 1100,
+          "next": 1500,
+          "prev": 1100
+        },
+        {
+          "color": "green",
+          "hex_rgb": "#008000",
+          "high": 2000,
+          "hsl": [
+            0.33,
+            1.0,
+            0.25
+          ],
+          "low": 1500,
+          "next": 2000,
+          "prev": 1500
+        },
+        {
+          "color": "yellow",
+          "hex_rgb": "#BBBB00",
+          "high": 2400,
+          "hsl": [
+            0.17,
+            1.0,
+            0.37
+          ],
+          "low": 2000,
+          "next": 2400,
+          "prev": 2000
+        },
+        {
+          "color": "orange",
+          "hex_rgb": "#FF8C00",
+          "high": 2800,
+          "hsl": [
+            0.09,
+            1,
+            0.5
+          ],
+          "low": 2400,
+          "next": 2800,
+          "prev": 2400
+        },
+        {
+          "color": "red",
+          "hex_rgb": "#FF0000",
+          "high": 3200,
+          "hsl": [
+            0.0,
+            1.0,
+            0.5
+          ],
+          "low": 2800,
+          "next": 3200,
+          "prev": 2800
+        },
+        {
+          "color": "legendary",
+          "hex_rgb": "#FF0000",
+          "high": 100500,
+          "hsl": [
+            0.0,
+            1.0,
+            0.375
+          ],
+          "low": 3200,
+          "prev": 2800
+        }
+      ],
+      "regexp": null,
+      "short_host": "nc",
+      "skip_for_contests_chart": false,
+      "statistics_fields": {
+        "types": {
+          "color_level": [
+            "int"
+          ],
+          "full_score": [
+            "float"
+          ],
+          "is_team": [
+            "bool"
+          ],
+          "name": [
+            "str"
+          ],
+          "penalty": [
+            "str"
+          ],
+          "school": [
+            "str"
+          ],
+          "total_score": [
+            "float"
+          ]
+        }
+      },
+      "timezone": null,
+      "uid": "9855349b963d3785f6a2531a43341a20727aa7d8b4f22c7f2ea8b0a28355e6fe@group.calendar.google.com",
+      "url": "https://ac.nowcoder.com/acm/contest/vip-index"
+    },
+    "model": "clist.resource",
+    "pk": 166
+  },
+  {
+    "fields": {
+      "created": "2024-08-06T11:03:54.011Z",
+      "delay_on_error": "01:00:00",
+      "delay_on_success": "08:00:00",
+      "delay_shortly_after": "00:05:00",
+      "enable": true,
+      "long_contest_divider": 15,
+      "long_contest_idle": "06:00:00",
+      "max_delay_after_end": "2 00:00:00",
+      "min_delay_after_end": "00:05:00",
+      "modified": "2025-11-01T13:45:35.359Z",
+      "path": "ranking/management/modules/ac_nowcoder",
+      "resource": 166,
+      "shortly_after": "00:30:00"
+    },
+    "model": "ranking.module",
+    "pk": 84
+  },
+  {
+    "fields": {
+      "allow_updating_statistics_for_participants": null,
+      "auto_updated": "2026-05-12T01:51:06Z",
+      "calculate_time": false,
+      "created": "2025-01-02T11:28:56.917Z",
+      "duration_in_secs": 7200,
+      "edit": null,
+      "elimination_tournament_info": {},
+      "end_time": "2025-01-12T13:00:00Z",
+      "finalists_info": {},
+      "has_fixed_rating_prediction_field": null,
+      "has_hidden_results": false,
+      "has_submissions": null,
+      "has_submissions_tests": null,
+      "has_unlimited_statistics": null,
+      "hide_unsolved_standings_problems": null,
+      "host": "ac.nowcoder.com",
+      "info": {
+        "fields": [
+          "name",
+          "solved",
+          "penalty",
+          "is_team",
+          "color_level",
+          "full_score",
+          "school",
+          "problems"
+        ],
+        "fields_types": {
+          "color_level": [
+            "int"
+          ],
+          "full_score": [
+            "float"
+          ],
+          "is_team": [
+            "bool"
+          ],
+          "name": [
+            "str"
+          ],
+          "penalty": [
+            "str"
+          ],
+          "problems": [
+            "dict"
+          ],
+          "school": [
+            "str"
+          ],
+          "solved": [
+            "dict"
+          ]
+        },
+        "hidden_fields": [
+          "school",
+          "color_level",
+          "full_score",
+          "is_team"
+        ],
+        "parse": {
+          "contestSignUpEndTime": 1736686800000,
+          "contestSignUpStartTime": 1735783200000,
+          "countDownTime": -41871043908,
+          "creatorId": 919247,
+          "creatorName": "比那名居的桃子",
+          "filledPassword": false,
+          "isManager": false,
+          "isSignUp": false,
+          "isTeamSignUp": false,
+          "settingInfo": {
+            "allowMessage": true,
+            "allowTeamSignUp": false,
+            "excitationStatus": "Finished",
+            "forceOnlyMyStatusFilter": false,
+            "isProblemAutoOpen": true,
+            "logoUrl": "https://uploadfiles.nowcoder.com/images/20231024/919247_1698133488580/D83B2FAF25FB04A2D62E52C202CB9781",
+            "managerList": [
+              374967423
+            ],
+            "nbCount": 5,
+            "needCharge": false,
+            "needPassword": false,
+            "needRankFrozen": false,
+            "needRatingUpperLimit": true,
+            "needSignUpField": false,
+            "needSignUpRedirect": false,
+            "needUserNameFormat": false,
+            "organizerName": "牛客竞赛",
+            "problemOriginal": true,
+            "rankSaveStatus": "Finished",
+            "ratingStatus": "No",
+            "ratingUpperLimit": 1799,
+            "sameEndTimeAsSignUpEnd": true
+          },
+          "signUpCount": 2482,
+          "signUpCountDownTime": -42767443908,
+          "signUpEndCountDownTime": -41863843908,
+          "teamId": 0,
+          "teamName": "",
+          "topCategoryId": 13,
+          "type": 3,
+          "userLevel": 7
+        },
+        "problems": [
+          {
+            "accepted_count": 1846,
+            "code": 277534,
+            "first_ac": {
+              "accounts": [
+                "976419854"
+              ],
+              "in_seconds": 19.0,
+              "time": "19"
+            },
+            "full_score": 50,
+            "n_accepted": 1846,
+            "n_partial": 62,
+            "n_teams": 1913,
+            "n_total": 1946,
+            "name": "小红出题",
+            "rating": 334,
+            "short": "A",
+            "submit_count": 4464,
+            "url": "https://ac.nowcoder.com/acm/contest/99990/A"
+          },
+          {
+            "accepted_count": 1206,
+            "code": 279741,
+            "first_ac": {
+              "accounts": [
+                "636523364"
+              ],
+              "in_seconds": 56.0,
+              "time": "56"
+            },
+            "full_score": 75,
+            "n_accepted": 1206,
+            "n_partial": 286,
+            "n_teams": 1532,
+            "n_total": 1946,
+            "name": "串串香",
+            "rating": 810,
+            "short": "B",
+            "submit_count": 3008,
+            "url": "https://ac.nowcoder.com/acm/contest/99990/B"
+          },
+          {
+            "accepted_count": 1064,
+            "code": 277393,
+            "first_ac": {
+              "accounts": [
+                "976419854"
+              ],
+              "in_seconds": 24.0,
+              "time": "24"
+            },
+            "full_score": 100,
+            "n_accepted": 1064,
+            "n_partial": 439,
+            "n_teams": 1524,
+            "n_total": 1946,
+            "name": "小红的gcd",
+            "rating": 925,
+            "short": "C",
+            "submit_count": 4473,
+            "url": "https://ac.nowcoder.com/acm/contest/99990/C"
+          },
+          {
+            "accepted_count": 367,
+            "code": 277719,
+            "first_ac": {
+              "accounts": [
+                "677028801"
+              ],
+              "in_seconds": 210.0,
+              "time": "3:30"
+            },
+            "full_score": 150,
+            "n_accepted": 367,
+            "n_partial": 475,
+            "n_teams": 934,
+            "n_total": 1946,
+            "name": "奇偶调整",
+            "rating": 1464,
+            "short": "D",
+            "submit_count": 3400,
+            "url": "https://ac.nowcoder.com/acm/contest/99990/D"
+          },
+          {
+            "accepted_count": 158,
+            "code": 281956,
+            "first_ac": {
+              "accounts": [
+                "677028801"
+              ],
+              "in_seconds": 579.0,
+              "time": "9:39"
+            },
+            "full_score": 200,
+            "n_accepted": 158,
+            "n_partial": 664,
+            "n_teams": 846,
+            "n_total": 1946,
+            "name": "幂次进近",
+            "rating": 1777,
+            "short": "E",
+            "submit_count": 4538,
+            "url": "https://ac.nowcoder.com/acm/contest/99990/E"
+          },
+          {
+            "accepted_count": 111,
+            "code": 286220,
+            "first_ac": {
+              "accounts": [
+                "208060891"
+              ],
+              "in_seconds": 563.0,
+              "time": "9:23"
+            },
+            "full_score": 250,
+            "n_accepted": 111,
+            "n_partial": 205,
+            "n_teams": 383,
+            "n_total": 1946,
+            "name": "同位序列",
+            "rating": 1899,
+            "short": "F",
+            "submit_count": 1191,
+            "url": "https://ac.nowcoder.com/acm/contest/99990/F"
+          }
+        ]
+      },
+      "invisible": false,
+      "is_auto_added": true,
+      "is_promoted": null,
+      "is_rated": null,
+      "key": "99990",
+      "kind": null,
+      "link_statistic_timing": null,
+      "merging_contests": [],
+      "modified": "2025-01-02T11:28:56.917Z",
+      "n_problems": 6,
+      "n_statistics": 1946,
+      "notification_timing": "2025-01-02T11:30:22.640Z",
+      "parsed_percentage": null,
+      "parsed_time": "2025-01-13T05:29:06.255Z",
+      "problem_rating_hash": "0f7a4dde86eb37c227af9a0ca386a7999f912e2f9aa7a0e2eb6a29a16c1e6989",
+      "problem_rating_update_required": false,
+      "rating_prediction_fields": null,
+      "rating_prediction_hash": null,
+      "rating_prediction_timing": null,
+      "raw_info": {},
+      "registration_url": null,
+      "related": null,
+      "resource": 166,
+      "series": null,
+      "set_matched_coders_to_members": null,
+      "slug": "niu-ke-zhou-sai-round-76-ioi",
+      "standings_kind": "scoring",
+      "standings_url": "https://ac.nowcoder.com/acm/contest/99990#rank",
+      "start_time": "2025-01-12T11:00:00Z",
+      "statistic_timing": "2025-01-13T13:29:06.255Z",
+      "statistics_update_required": false,
+      "submissions_info": {},
+      "title": "牛客周赛 Round 76 [IOI]",
+      "title_path": "niu.ke.zhou.sai.round.76.ioi",
+      "trial_standings_url": null,
+      "uid": "i2tgp8njsmfb5fpp92oq0ucino",
+      "updated": "2026-05-12T01:51:06.056Z",
+      "upload_solved_problems_solutions": null,
+      "upsolving_key": null,
+      "upsolving_url": null,
+      "url": "https://ac.nowcoder.com/acm/contest/99990",
+      "variables": {},
+      "wait_for_successful_update_timing": null,
+      "with_advance": false,
+      "with_medals": false
+    },
+    "model": "clist.contest",
+    "pk": 56644516
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2024-08-09T14:29:03.910Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "is_team": false,
+        "rank": 853,
+        "rating": 2071
+      },
+      "key": "677028801",
+      "last_activity": "2026-08-02T12:46:44Z",
+      "last_rating_activity": "2024-01-28T11:47:08Z",
+      "last_submission": null,
+      "modified": "2026-08-04T05:30:47.778Z",
+      "n_bronze": null,
+      "n_contests": 118,
+      "n_first_ac": 80,
+      "n_first_places": 87,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 98,
+      "n_second_places": 3,
+      "n_silver": null,
+      "n_solved": 364,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 8,
+      "n_total_solved": 364,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "YoungShawn",
+      "need_verification": false,
+      "rating": 2071,
+      "rating50": 41,
+      "rating_prediction": null,
+      "rating_update_time": "2024-08-12T17:25:04Z",
+      "related": null,
+      "resource": 166,
+      "resource_rank": 1405,
+      "solving": 58189.0,
+      "submissions_info": {},
+      "total_solving": 58189.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-08-03T23:59:59.999Z",
+      "upsolving": 0.0,
+      "url": "/account/677028801/resource/ac.nowcoder.com/"
+    },
+    "model": "ranking.account",
+    "pk": 7281170
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2024-08-09T15:40:46.244Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "rank": 255,
+        "rating": 2352
+      },
+      "key": "636523364",
+      "last_activity": "2025-02-16T11:27:20Z",
+      "last_rating_activity": "2024-11-29T12:57:18Z",
+      "last_submission": null,
+      "modified": "2026-02-18T00:11:19.452Z",
+      "n_bronze": null,
+      "n_contests": 61,
+      "n_first_ac": 1,
+      "n_first_places": 16,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 26,
+      "n_second_places": 2,
+      "n_silver": null,
+      "n_solved": 4,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 8,
+      "n_total_solved": 4,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "some_idiot",
+      "need_verification": false,
+      "rating": 2352,
+      "rating50": 47,
+      "rating_prediction": null,
+      "rating_update_time": "2024-11-30T01:54:05Z",
+      "related": null,
+      "resource": 166,
+      "resource_rank": 465,
+      "solving": 500.0,
+      "submissions_info": {},
+      "total_solving": 500.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-02-18T23:59:59.999Z",
+      "upsolving": 0.0,
+      "url": "/account/636523364/resource/ac.nowcoder.com/"
+    },
+    "model": "ranking.account",
+    "pk": 7288314
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2024-08-09T15:41:43.803Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "is_team": false,
+        "rating": 1515
+      },
+      "key": "208060891",
+      "last_activity": "2025-02-16T12:43:16Z",
+      "last_rating_activity": "2025-02-14T12:54:05Z",
+      "last_submission": null,
+      "modified": "2026-05-12T02:25:27.443Z",
+      "n_bronze": null,
+      "n_contests": 42,
+      "n_first_ac": 1,
+      "n_first_places": 5,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 6,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 27,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 1,
+      "n_total_solved": 27,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "pdsu_欧阳齐",
+      "need_verification": false,
+      "rating": 1515,
+      "rating50": 30,
+      "rating_prediction": null,
+      "rating_update_time": "2024-12-14T01:15:05Z",
+      "related": null,
+      "resource": 166,
+      "resource_rank": 9174,
+      "solving": 3358.0,
+      "submissions_info": {},
+      "total_solving": 3358.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-02-18T23:59:59.999Z",
+      "upsolving": 0.0,
+      "url": "/account/208060891/resource/ac.nowcoder.com/"
+    },
+    "model": "ranking.account",
+    "pk": 7289029
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2024-08-10T13:39:01.284Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "is_team": false,
+        "rank": 640,
+        "rating": 2124
+      },
+      "key": "99809606",
+      "last_activity": "2026-06-01T12:54:04Z",
+      "last_rating_activity": "2026-03-13T12:30:43Z",
+      "last_submission": null,
+      "modified": "2026-07-12T23:37:31.749Z",
+      "n_bronze": null,
+      "n_contests": 31,
+      "n_first_ac": 0,
+      "n_first_places": 5,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 6,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 68,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 1,
+      "n_total_solved": 68,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "牛客99809606号",
+      "need_verification": false,
+      "rating": 2124,
+      "rating50": 42,
+      "rating_prediction": null,
+      "rating_update_time": "2024-12-21T02:18:05Z",
+      "related": null,
+      "resource": 166,
+      "resource_rank": 1130,
+      "solving": 4566.0,
+      "submissions_info": {},
+      "total_solving": 4566.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-06-02T23:59:59.999Z",
+      "upsolving": 0.0,
+      "url": "/account/99809606/resource/ac.nowcoder.com/"
+    },
+    "model": "ranking.account",
+    "pk": 7312562
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2024-08-09T15:52:09.931Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "rank": 1466,
+        "rating": 1882
+      },
+      "key": "340083818",
+      "last_activity": "2025-01-19T12:31:38Z",
+      "last_rating_activity": "2025-01-17T11:56:37Z",
+      "last_submission": null,
+      "modified": "2026-01-21T00:11:41.711Z",
+      "n_bronze": null,
+      "n_contests": 28,
+      "n_first_ac": 0,
+      "n_first_places": 1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 2,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 0,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 1,
+      "n_total_solved": 0,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "划船2号",
+      "need_verification": false,
+      "rating": 1882,
+      "rating50": 37,
+      "rating_prediction": null,
+      "rating_update_time": "2024-11-11T00:00:05Z",
+      "related": null,
+      "resource": 166,
+      "resource_rank": 2799,
+      "solving": 0.0,
+      "submissions_info": {},
+      "total_solving": 0.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-01-21T23:59:59.999Z",
+      "upsolving": 0.0,
+      "url": "/account/340083818/resource/ac.nowcoder.com/"
+    },
+    "model": "ranking.account",
+    "pk": 7290673
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2024-12-15T13:05:58.693Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "rank": 2978,
+        "rating": 1659
+      },
+      "key": "385033556",
+      "last_activity": "2025-01-12T11:25:10Z",
+      "last_rating_activity": "2024-12-15T12:10:59Z",
+      "last_submission": null,
+      "modified": "2026-01-14T00:08:17.803Z",
+      "n_bronze": null,
+      "n_contests": 2,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 0,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 0,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "牛客385033556号",
+      "need_verification": false,
+      "rating": 1659,
+      "rating50": 33,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 166,
+      "resource_rank": 5854,
+      "solving": 0.0,
+      "submissions_info": {},
+      "total_solving": 0.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-01-14T23:59:59.999Z",
+      "upsolving": 0.0,
+      "url": "/account/385033556/resource/ac.nowcoder.com/"
+    },
+    "model": "ranking.account",
+    "pk": 7826111
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2024-12-22T13:06:09.663Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "rank_str": "9999+",
+        "rating": 894
+      },
+      "key": "551146901",
+      "last_activity": "2025-04-01T11:00:00Z",
+      "last_rating_activity": "2025-02-23T11:22:38Z",
+      "last_submission": null,
+      "modified": "2026-04-03T00:01:57.578Z",
+      "n_bronze": null,
+      "n_contests": 8,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 5,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 5,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "耀然慕辰",
+      "need_verification": false,
+      "rating": 894,
+      "rating50": 17,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 166,
+      "resource_rank": 45366,
+      "solving": 475.0,
+      "submissions_info": {},
+      "total_solving": 475.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-04-03T23:59:59.999Z",
+      "upsolving": 0.0,
+      "url": "/account/551146901/resource/ac.nowcoder.com/"
+    },
+    "model": "ranking.account",
+    "pk": 7846289
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2024-08-06T11:57:08.659Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "is_team": false,
+        "rank": 4778,
+        "rating": 1537
+      },
+      "key": "396080450",
+      "last_activity": "2026-04-26T12:24:31Z",
+      "last_rating_activity": "2026-04-26T12:24:31Z",
+      "last_submission": null,
+      "modified": "2026-05-12T15:16:26.221Z",
+      "n_bronze": null,
+      "n_contests": 139,
+      "n_first_ac": 0,
+      "n_first_places": 1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 65,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 65,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "面筋多加芝麻酱",
+      "need_verification": false,
+      "rating": 1537,
+      "rating50": 30,
+      "rating_prediction": null,
+      "rating_update_time": "2024-12-23T01:21:05Z",
+      "related": null,
+      "resource": 166,
+      "resource_rank": 8604,
+      "solving": 5632.45,
+      "submissions_info": {},
+      "total_solving": 5632.45,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-05-12T23:59:59.999Z",
+      "upsolving": 0.0,
+      "url": "/account/396080450/resource/ac.nowcoder.com/"
+    },
+    "model": "ranking.account",
+    "pk": 7216208
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2024-09-06T13:06:05.461Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "is_team": false,
+        "rank_str": "9999+",
+        "rating": 511
+      },
+      "key": "112131371",
+      "last_activity": "2026-05-29T11:26:31Z",
+      "last_rating_activity": "2026-05-29T11:26:31Z",
+      "last_submission": null,
+      "modified": "2026-07-12T23:35:22.368Z",
+      "n_bronze": null,
+      "n_contests": 50,
+      "n_first_ac": 1,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 23,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 23,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "牛客112131371",
+      "need_verification": false,
+      "rating": 511,
+      "rating50": 10,
+      "rating_prediction": null,
+      "rating_update_time": "2024-12-14T01:15:05Z",
+      "related": null,
+      "resource": 166,
+      "resource_rank": 88658,
+      "solving": 1518.75,
+      "submissions_info": {},
+      "total_solving": 1518.75,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-05-30T23:59:59.999Z",
+      "upsolving": 0.0,
+      "url": "/account/112131371/resource/ac.nowcoder.com/"
+    },
+    "model": "ranking.account",
+    "pk": 7479657
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2024-08-06T11:57:06.666Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "is_team": false,
+        "rank": 1164,
+        "rating": 1958
+      },
+      "key": "976419854",
+      "last_activity": "2025-02-02T11:48:52Z",
+      "last_rating_activity": "2025-01-17T11:57:48Z",
+      "last_submission": null,
+      "modified": "2026-05-12T02:25:02.149Z",
+      "n_bronze": null,
+      "n_contests": 87,
+      "n_first_ac": 0,
+      "n_first_places": 9,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 9,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 4,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 4,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "zronghui",
+      "need_verification": false,
+      "rating": 1958,
+      "rating50": 39,
+      "rating_prediction": null,
+      "rating_update_time": "2024-12-23T01:21:05Z",
+      "related": null,
+      "resource": 166,
+      "resource_rank": 2196,
+      "solving": 836.18,
+      "submissions_info": {},
+      "total_solving": 836.18,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-02-04T23:59:59.999Z",
+      "upsolving": 0.0,
+      "url": "/coder/zronghui/?resource=166"
+    },
+    "model": "ranking.account",
+    "pk": 7216101
+  },
+  {
+    "fields": {
+      "account": 7281170,
+      "addition": {
+        "color_level": 5,
+        "full_score": 825.0,
+        "is_team": false,
+        "name": "YoungShawn",
+        "penalty": "0:28:58",
+        "problems": {
+          "A": {
+            "result": 50.0,
+            "submission_id": 74659032,
+            "time": "12:32",
+            "time_consumption": 460,
+            "time_in_seconds": 752.0
+          },
+          "B": {
+            "result": 75.0,
+            "submission_id": 74658875,
+            "time": "11:47",
+            "time_consumption": 487,
+            "time_in_seconds": 707.0
+          },
+          "C": {
+            "result": 100.0,
+            "submission_id": 74658730,
+            "time": "11:14",
+            "time_consumption": 589,
+            "time_in_seconds": 674.0
+          },
+          "D": {
+            "first_ac": true,
+            "result": 150.0,
+            "submission_id": 74656462,
+            "time": "3:30",
+            "time_consumption": 2272,
+            "time_in_seconds": 210.0
+          },
+          "E": {
+            "first_ac": true,
+            "result": 200.0,
+            "submission_id": 74658318,
+            "time": "9:39",
+            "time_consumption": 2901,
+            "time_in_seconds": 579.0
+          },
+          "F": {
+            "result": 250.0,
+            "submission_id": 74662238,
+            "time": "28:58",
+            "time_consumption": 799,
+            "time_in_seconds": 1738.0
+          }
+        },
+        "school": "北京大学",
+        "solved": {
+          "solving": 6
+        }
+      },
+      "advanced": false,
+      "contest": 56644516,
+      "created": "2025-01-12T13:06:12.265Z",
+      "global_rating_change": null,
+      "last_activity": "2025-01-12T11:28:58Z",
+      "medal": null,
+      "modified": "2025-03-18T04:38:25.947Z",
+      "n_first_ac": 2,
+      "n_solved": 6,
+      "n_total_solved": 6,
+      "n_upsolved": 0,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "1",
+      "place_as_int": 1,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 166,
+      "skip_in_stats": false,
+      "solving": 825.0,
+      "total_solving": 825.0,
+      "upsolving": 0.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 73312961
+  },
+  {
+    "fields": {
+      "account": 7288314,
+      "addition": {
+        "color_level": 5,
+        "full_score": 825.0,
+        "is_team": false,
+        "name": "some_idiot",
+        "penalty": "0:46:55",
+        "problems": {
+          "A": {
+            "result": 50.0,
+            "submission_id": 74659179,
+            "time": "13:15",
+            "time_consumption": 68,
+            "time_in_seconds": 795.0
+          },
+          "B": {
+            "first_ac": true,
+            "result": 75.0,
+            "submission_id": 74655683,
+            "time": "56",
+            "time_consumption": 120,
+            "time_in_seconds": 56.0
+          },
+          "C": {
+            "result": 100.0,
+            "submission_id": 74659347,
+            "time": "14:01",
+            "time_consumption": 20,
+            "time_in_seconds": 841.0
+          },
+          "D": {
+            "result": 150.0,
+            "submission_id": 74658994,
+            "time": "12:22",
+            "time_consumption": 396,
+            "time_in_seconds": 742.0
+          },
+          "E": {
+            "result": 200.0,
+            "submission_id": 74663910,
+            "time": "37:33",
+            "time_consumption": 68,
+            "time_in_seconds": 2253.0
+          },
+          "F": {
+            "result": 250.0,
+            "submission_id": 74665658,
+            "time": "46:55",
+            "time_consumption": 130,
+            "time_in_seconds": 2815.0
+          }
+        },
+        "school": "疯人院",
+        "solved": {
+          "solving": 6
+        }
+      },
+      "advanced": false,
+      "contest": 56644516,
+      "created": "2025-01-12T13:06:12.580Z",
+      "global_rating_change": null,
+      "last_activity": "2025-01-12T11:46:55Z",
+      "medal": null,
+      "modified": "2025-03-18T04:38:26.264Z",
+      "n_first_ac": 1,
+      "n_solved": 6,
+      "n_total_solved": 6,
+      "n_upsolved": 0,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "1",
+      "place_as_int": 1,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 166,
+      "skip_in_stats": false,
+      "solving": 825.0,
+      "total_solving": 825.0,
+      "upsolving": 0.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 73312969
+  },
+  {
+    "fields": {
+      "account": 7289029,
+      "addition": {
+        "color_level": 4,
+        "full_score": 825.0,
+        "is_team": false,
+        "name": "pdsu_欧阳齐",
+        "penalty": "0:58:55",
+        "problems": {
+          "A": {
+            "result": 50.0,
+            "submission_id": 74656357,
+            "time": "3:11",
+            "time_consumption": 2,
+            "time_in_seconds": 191.0
+          },
+          "B": {
+            "result": 75.0,
+            "submission_id": 74656373,
+            "time": "3:14",
+            "time_consumption": 3,
+            "time_in_seconds": 194.0
+          },
+          "C": {
+            "result": 100.0,
+            "submission_id": 74656573,
+            "time": "3:50",
+            "time_consumption": 19,
+            "time_in_seconds": 230.0
+          },
+          "D": {
+            "result": 150.0,
+            "submission_id": 74667872,
+            "time": "58:55",
+            "time_consumption": 702,
+            "time_in_seconds": 3535.0
+          },
+          "E": {
+            "result": 200.0,
+            "submission_id": 74659171,
+            "time": "13:12",
+            "time_consumption": 122,
+            "time_in_seconds": 792.0
+          },
+          "F": {
+            "first_ac": true,
+            "result": 250.0,
+            "submission_id": 74658255,
+            "time": "9:23",
+            "time_consumption": 40,
+            "time_in_seconds": 563.0
+          }
+        },
+        "school": "平顶山学院",
+        "solved": {
+          "solving": 6
+        }
+      },
+      "advanced": false,
+      "contest": 56644516,
+      "created": "2025-01-12T13:06:12.944Z",
+      "global_rating_change": null,
+      "last_activity": "2025-01-12T11:58:55Z",
+      "medal": null,
+      "modified": "2025-03-18T04:38:25.871Z",
+      "n_first_ac": 1,
+      "n_solved": 6,
+      "n_total_solved": 6,
+      "n_upsolved": 0,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "1",
+      "place_as_int": 1,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 166,
+      "skip_in_stats": false,
+      "solving": 825.0,
+      "total_solving": 825.0,
+      "upsolving": 0.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 73312980
+  },
+  {
+    "fields": {
+      "account": 7312562,
+      "addition": {
+        "color_level": 5,
+        "full_score": 825.0,
+        "is_team": false,
+        "name": "牛客99809606号",
+        "penalty": "1:37:53",
+        "problems": {
+          "A": {
+            "result": 50.0,
+            "submission_id": 74656226,
+            "time": "2:50",
+            "time_consumption": 3,
+            "time_in_seconds": 170.0
+          },
+          "B": {
+            "result": 75.0,
+            "submission_id": 74657046,
+            "time": "5:08",
+            "time_consumption": 5,
+            "time_in_seconds": 308.0
+          },
+          "C": {
+            "result": 100.0,
+            "submission_id": 74658159,
+            "time": "9:00",
+            "time_consumption": 22,
+            "time_in_seconds": 540.0
+          },
+          "D": {
+            "result": 150.0,
+            "submission_id": 74660272,
+            "time": "18:24",
+            "time_consumption": 387,
+            "time_in_seconds": 1104.0
+          },
+          "E": {
+            "partial": true,
+            "result": 193.33,
+            "submission_id": 74674768,
+            "time_consumption": 1201
+          },
+          "F": {
+            "result": 250.0,
+            "submission_id": 74671145,
+            "time": "1:16:45",
+            "time_consumption": 159,
+            "time_in_seconds": 4605.0
+          }
+        },
+        "school": "汕头大学",
+        "solved": {
+          "solving": 5
+        }
+      },
+      "advanced": false,
+      "contest": 56644516,
+      "created": "2025-01-12T13:06:14.659Z",
+      "global_rating_change": null,
+      "last_activity": "2025-01-12T12:16:45Z",
+      "medal": null,
+      "modified": "2025-03-18T04:38:25.845Z",
+      "n_first_ac": 0,
+      "n_solved": 5,
+      "n_total_solved": 5,
+      "n_upsolved": 0,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "71",
+      "place_as_int": 71,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 166,
+      "skip_in_stats": false,
+      "solving": 818.33,
+      "total_solving": 818.33,
+      "upsolving": 0.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 73313031
+  },
+  {
+    "fields": {
+      "account": 7290673,
+      "addition": {
+        "color_level": 4,
+        "full_score": 825.0,
+        "is_team": false,
+        "name": "划船2号",
+        "penalty": "1:19:54",
+        "problems": {
+          "A": {
+            "result": 50.0,
+            "submission_id": 74656709,
+            "time": "4:14",
+            "time_consumption": 3,
+            "time_in_seconds": 254.0
+          },
+          "B": {
+            "result": 75.0,
+            "submission_id": 74657443,
+            "time": "6:24",
+            "time_consumption": 8,
+            "time_in_seconds": 384.0
+          },
+          "C": {
+            "result": 100.0,
+            "submission_id": 74658336,
+            "time": "9:43",
+            "time_consumption": 52,
+            "time_in_seconds": 583.0
+          },
+          "D": {
+            "partial": true,
+            "result": 140.0,
+            "submission_id": 74660364,
+            "time_consumption": 375
+          },
+          "E": {
+            "result": 200.0,
+            "submission_id": 74666679,
+            "time": "52:32",
+            "time_consumption": 395,
+            "time_in_seconds": 3152.0
+          },
+          "F": {
+            "result": 250.0,
+            "submission_id": 74671713,
+            "time": "1:19:54",
+            "time_consumption": 109,
+            "time_in_seconds": 4794.0
+          }
+        },
+        "school": "吉林大学",
+        "solved": {
+          "solving": 5
+        }
+      },
+      "advanced": false,
+      "contest": 56644516,
+      "created": "2025-01-12T13:06:14.686Z",
+      "global_rating_change": null,
+      "last_activity": "2025-01-12T12:19:54Z",
+      "medal": null,
+      "modified": "2025-03-18T04:38:25.951Z",
+      "n_first_ac": 0,
+      "n_solved": 5,
+      "n_total_solved": 5,
+      "n_upsolved": 0,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "72",
+      "place_as_int": 72,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 166,
+      "skip_in_stats": false,
+      "solving": 815.0,
+      "total_solving": 815.0,
+      "upsolving": 0.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 73313032
+  },
+  {
+    "fields": {
+      "account": 7826111,
+      "addition": {
+        "color_level": 4,
+        "full_score": 825.0,
+        "is_team": false,
+        "name": "牛客385033556号",
+        "penalty": "1:40:55",
+        "problems": {
+          "A": {
+            "result": 50.0,
+            "submission_id": 74658534,
+            "time": "10:29",
+            "time_consumption": 44,
+            "time_in_seconds": 629.0
+          },
+          "B": {
+            "result": 75.0,
+            "submission_id": 74659655,
+            "time": "15:22",
+            "time_consumption": 177,
+            "time_in_seconds": 922.0
+          },
+          "C": {
+            "result": 100.0,
+            "submission_id": 74660006,
+            "time": "17:05",
+            "time_consumption": 595,
+            "time_in_seconds": 1025.0
+          },
+          "D": {
+            "result": 150.0,
+            "submission_id": 74661539,
+            "time": "25:10",
+            "time_consumption": 2175,
+            "time_in_seconds": 1510.0
+          },
+          "E": {
+            "partial": true,
+            "result": 180.0,
+            "submission_id": 74666769,
+            "time_consumption": 4001
+          },
+          "F": {
+            "partial": true,
+            "result": 225.0,
+            "submission_id": 74675234,
+            "time_consumption": 4001
+          }
+        },
+        "school": "武汉工程大学",
+        "solved": {
+          "solving": 4
+        }
+      },
+      "advanced": false,
+      "contest": 56644516,
+      "created": "2025-01-12T13:06:15.052Z",
+      "global_rating_change": null,
+      "last_activity": "2025-01-12T11:25:10Z",
+      "medal": null,
+      "modified": "2025-03-18T04:38:26.063Z",
+      "n_first_ac": 0,
+      "n_solved": 4,
+      "n_total_solved": 4,
+      "n_upsolved": 0,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "84",
+      "place_as_int": 84,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 166,
+      "skip_in_stats": false,
+      "solving": 780.0,
+      "total_solving": 780.0,
+      "upsolving": 0.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 73313044
+  },
+  {
+    "fields": {
+      "account": 7846289,
+      "addition": {
+        "color_level": 1,
+        "full_score": 825.0,
+        "is_team": false,
+        "name": "耀然慕辰",
+        "penalty": "0:36:33",
+        "problems": {
+          "A": {
+            "result": 50.0,
+            "submission_id": 74658145,
+            "time": "8:58",
+            "time_consumption": 2,
+            "time_in_seconds": 538.0
+          },
+          "B": {
+            "partial": true,
+            "result": 60.0,
+            "submission_id": 74663697,
+            "time_consumption": 1001
+          },
+          "C": {
+            "result": 100.0,
+            "submission_id": 74660002,
+            "time": "17:03",
+            "time_consumption": 55,
+            "time_in_seconds": 1023.0
+          },
+          "D": {
+            "partial": true,
+            "result": 10.0,
+            "submission_id": 74661520,
+            "time_consumption": 67
+          },
+          "E": {
+            "partial": true,
+            "result": 100.0,
+            "submission_id": 74663279,
+            "time_consumption": 365
+          },
+          "F": {
+            "result": 250.0,
+            "submission_id": 74663103,
+            "time": "33:32",
+            "time_consumption": 151,
+            "time_in_seconds": 2012.0
+          }
+        },
+        "school": "中国石油大学（华东）",
+        "solved": {
+          "solving": 3
+        }
+      },
+      "advanced": false,
+      "contest": 56644516,
+      "created": "2025-01-12T13:06:18.706Z",
+      "global_rating_change": null,
+      "last_activity": "2025-01-12T11:33:32Z",
+      "medal": null,
+      "modified": "2025-03-18T04:38:27.039Z",
+      "n_first_ac": 0,
+      "n_solved": 3,
+      "n_total_solved": 3,
+      "n_upsolved": 0,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "205",
+      "place_as_int": 205,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 166,
+      "skip_in_stats": false,
+      "solving": 570.0,
+      "total_solving": 570.0,
+      "upsolving": 0.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 73313165
+  },
+  {
+    "fields": {
+      "account": 7216208,
+      "addition": {
+        "color_level": 3,
+        "full_score": 825.0,
+        "is_team": false,
+        "name": "面筋多加芝麻酱",
+        "penalty": "1:53:47",
+        "problems": {
+          "A": {
+            "result": 50.0,
+            "submission_id": 74656748,
+            "time": "4:19",
+            "time_consumption": 3,
+            "time_in_seconds": 259.0
+          },
+          "B": {
+            "result": 75.0,
+            "submission_id": 74659707,
+            "time": "15:36",
+            "time_consumption": 5,
+            "time_in_seconds": 936.0
+          },
+          "C": {
+            "partial": true,
+            "result": 80.0,
+            "submission_id": 74661699,
+            "time_consumption": 30
+          },
+          "D": {
+            "result": 150.0,
+            "submission_id": 74669617,
+            "time": "1:08:20",
+            "time_consumption": 377,
+            "time_in_seconds": 4100.0
+          },
+          "E": {
+            "result": 200.0,
+            "submission_id": 74677229,
+            "time": "1:53:47",
+            "time_consumption": 671,
+            "time_in_seconds": 6827.0
+          }
+        },
+        "school": "平顶山学院",
+        "solved": {
+          "solving": 4
+        }
+      },
+      "advanced": false,
+      "contest": 56644516,
+      "created": "2025-01-12T13:06:19.212Z",
+      "global_rating_change": null,
+      "last_activity": "2025-01-12T12:53:47Z",
+      "medal": null,
+      "modified": "2025-03-18T04:38:26.595Z",
+      "n_first_ac": 0,
+      "n_solved": 4,
+      "n_total_solved": 4,
+      "n_upsolved": 0,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "217",
+      "place_as_int": 217,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 166,
+      "skip_in_stats": false,
+      "solving": 555.0,
+      "total_solving": 555.0,
+      "upsolving": 0.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 73313182
+  },
+  {
+    "fields": {
+      "account": 7479657,
+      "addition": {
+        "color_level": 2,
+        "full_score": 825.0,
+        "is_team": false,
+        "name": "牛客112131371号",
+        "penalty": "1:23:57",
+        "problems": {
+          "A": {
+            "partial": true,
+            "result": 0.0,
+            "submission_id": 74656104
+          },
+          "B": {
+            "result": 75.0,
+            "submission_id": 74658801,
+            "time": "11:31",
+            "time_consumption": 5,
+            "time_in_seconds": 691.0
+          },
+          "C": {
+            "result": 100.0,
+            "submission_id": 74659575,
+            "time": "14:58",
+            "time_consumption": 55,
+            "time_in_seconds": 898.0
+          },
+          "D": {
+            "partial": true,
+            "result": 10.0,
+            "submission_id": 74661053,
+            "time_consumption": 58
+          },
+          "E": {
+            "partial": true,
+            "result": 153.33,
+            "submission_id": 74667421,
+            "time_consumption": 432
+          },
+          "F": {
+            "partial": true,
+            "result": 50.0,
+            "submission_id": 74672422,
+            "time_consumption": 429
+          }
+        },
+        "school": "小学.",
+        "solved": {
+          "solving": 2
+        }
+      },
+      "advanced": false,
+      "contest": 56644516,
+      "created": "2025-01-12T13:06:26.812Z",
+      "global_rating_change": null,
+      "last_activity": "2025-01-12T11:14:58Z",
+      "medal": null,
+      "modified": "2025-03-18T04:38:27.603Z",
+      "n_first_ac": 0,
+      "n_solved": 2,
+      "n_total_solved": 2,
+      "n_upsolved": 0,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "497",
+      "place_as_int": 497,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 166,
+      "skip_in_stats": false,
+      "solving": 388.33,
+      "total_solving": 388.33,
+      "upsolving": 0.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 73313459
+  },
+  {
+    "fields": {
+      "account": 7216101,
+      "addition": {
+        "color_level": 4,
+        "full_score": 825.0,
+        "is_team": false,
+        "name": "StanMarsh",
+        "penalty": "0:36:54",
+        "problems": {
+          "A": {
+            "first_ac": true,
+            "result": 50.0,
+            "submission_id": 74655637,
+            "time": "19",
+            "time_consumption": 86,
+            "time_in_seconds": 19.0
+          },
+          "B": {
+            "result": 75.0,
+            "submission_id": 74655703,
+            "time": "1:02",
+            "time_consumption": 87,
+            "time_in_seconds": 62.0
+          },
+          "C": {
+            "first_ac": true,
+            "result": 100.0,
+            "submission_id": 74655639,
+            "time": "24",
+            "time_consumption": 161,
+            "time_in_seconds": 24.0
+          },
+          "D": {
+            "partial": true,
+            "result": 60.0,
+            "submission_id": 74662726,
+            "time_consumption": 1855
+          },
+          "E": {
+            "partial": true,
+            "result": 93.33,
+            "submission_id": 74663771,
+            "time_consumption": 4001
+          }
+        },
+        "school": "South Park",
+        "solved": {
+          "solving": 3
+        }
+      },
+      "advanced": false,
+      "contest": 56644516,
+      "created": "2025-01-12T13:06:27.051Z",
+      "global_rating_change": null,
+      "last_activity": "2025-01-12T11:01:02Z",
+      "medal": null,
+      "modified": "2025-03-18T04:38:27.601Z",
+      "n_first_ac": 2,
+      "n_solved": 3,
+      "n_total_solved": 3,
+      "n_upsolved": 0,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "508",
+      "place_as_int": 508,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 166,
+      "skip_in_stats": false,
+      "solving": 378.33,
+      "total_solving": 378.33,
+      "upsolving": 0.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 73313468
+  }
+]

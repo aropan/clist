@@ -1,0 +1,1970 @@
+[
+  {
+    "fields": {
+      "accounts_fields": {
+        "types": {
+          "avatar": [
+            "str"
+          ],
+          "background": [
+            "str"
+          ],
+          "badge": [
+            "NoneType",
+            "str"
+          ],
+          "blog_address": [
+            "NoneType",
+            "str"
+          ],
+          "ccf_level": [
+            "int"
+          ],
+          "color": [
+            "str"
+          ],
+          "elo": [
+            "NoneType"
+          ],
+          "elo_value": [
+            "NoneType",
+            "int"
+          ],
+          "follower_count": [
+            "int"
+          ],
+          "following_count": [
+            "int"
+          ],
+          "introduction": [
+            "str"
+          ],
+          "is_admin": [
+            "bool"
+          ],
+          "is_banned": [
+            "bool"
+          ],
+          "is_root": [
+            "bool"
+          ],
+          "passed_problem_count": [
+            "NoneType",
+            "int"
+          ],
+          "ranking": [
+            "NoneType",
+            "int"
+          ],
+          "register_time": [
+            "int"
+          ],
+          "slogan": [
+            "str"
+          ],
+          "submitted_problem_count": [
+            "NoneType",
+            "int"
+          ],
+          "uid": [
+            "int"
+          ],
+          "xcpc_level": [
+            "int"
+          ]
+        },
+        "verification_fields": [
+          "introduction",
+          "slogan"
+        ]
+      },
+      "allow_delete_archived_statistics": false,
+      "api_url": null,
+      "auto_remove_started": false,
+      "avatar_url": "{info[avatar]}",
+      "avg_rating": 831.0857507703412,
+      "color": "#CC65B5",
+      "contest_update_time": "2026-08-04T10:10:07.293Z",
+      "country_rank_update_time": "2026-08-04T12:00:08.767Z",
+      "created": "2024-05-26T12:56:05.434Z",
+      "default_account_type": 1,
+      "enable": true,
+      "has_account_last_submission": null,
+      "has_account_n_writers": null,
+      "has_account_verification": true,
+      "has_accounts_infos_update": true,
+      "has_country_medal": null,
+      "has_country_place": null,
+      "has_country_rating": false,
+      "has_inherit_medals_to_related": false,
+      "has_multi_account": false,
+      "has_problem_archive": false,
+      "has_problem_rating": true,
+      "has_problem_statistic": true,
+      "has_problem_update": false,
+      "has_rating_history": true,
+      "has_standings_renamed_account": false,
+      "has_statistic_medal": null,
+      "has_statistic_n_first_ac": null,
+      "has_statistic_n_total_solved": null,
+      "has_statistic_place": null,
+      "has_statistic_total_solving": null,
+      "has_submissions_statistics_log": false,
+      "has_upsolving": false,
+      "host": "luogu.com.cn",
+      "icon_file": "resources/luogu_com_cn.png",
+      "icon_updated_at": "2025-12-14T00:02:01.649Z",
+      "icon_url": null,
+      "info": {
+        "accounts": {
+          "limit": 400
+        },
+        "get_events": {
+          "colors": {
+            "darken": "#44163A",
+            "lighten": "#EFD0E8"
+          }
+        },
+        "standings": {
+          "name_instead_key": true
+        },
+        "statistics": {
+          "account_updated_delta": {
+            "minutes": 1
+          },
+          "wait_rating": {
+            "days": 3,
+            "title_re": "\\brated\\b"
+          }
+        }
+      },
+      "modified": "2026-08-04T12:00:08.991Z",
+      "n_accounts": 172610,
+      "n_accounts_to_update": 0,
+      "n_contests": 1346,
+      "n_rating_accounts": 63987,
+      "n_statistics": 835233,
+      "n_team_accounts": 0,
+      "n_university_accounts": 0,
+      "parse_url": null,
+      "path": "./module/luogu.com.cn/index.php",
+      "problem_archive_update_time": null,
+      "problem_rating_predictor": {},
+      "problem_url": "https://www.luogu.com.cn/problem/{key}",
+      "problems_fields": {
+        "types": {
+          "difficulty": [
+            "int"
+          ],
+          "first_ac__accounts": [
+            "list"
+          ],
+          "first_ac__in_seconds": [
+            "float"
+          ],
+          "first_ac__time": [
+            "str"
+          ],
+          "full_score": [
+            "int"
+          ],
+          "type": [
+            "str"
+          ]
+        }
+      },
+      "profile_url": "https://www.luogu.com.cn/user/{account}",
+      "rank_update_time": "2026-07-31T00:30:06.544Z",
+      "rating_prediction": null,
+      "rating_update_time": "2026-08-04T11:14:23.945Z",
+      "ratings": [
+        {
+          "color": "green",
+          "hex_rgb": "#008000",
+          "high": 400,
+          "hsl": [
+            0.33,
+            1,
+            0.25
+          ],
+          "low": -100500,
+          "next": 400
+        },
+        {
+          "color": "cyan",
+          "hex_rgb": "#03A89E",
+          "high": 800,
+          "hsl": [
+            0.49,
+            0.96,
+            0.34
+          ],
+          "low": 400,
+          "next": 800,
+          "prev": 400
+        },
+        {
+          "color": "blue",
+          "hex_rgb": "#0000FF",
+          "high": 1200,
+          "hsl": [
+            0.67,
+            1,
+            0.5
+          ],
+          "low": 800,
+          "next": 1200,
+          "prev": 800
+        },
+        {
+          "color": "yellow",
+          "hex_rgb": "#BBBB00",
+          "high": 1600,
+          "hsl": [
+            0.17,
+            1,
+            0.37
+          ],
+          "low": 1200,
+          "next": 1600,
+          "prev": 1200
+        },
+        {
+          "color": "orange",
+          "hex_rgb": "#FF8C00",
+          "high": 2000,
+          "hsl": [
+            0.09,
+            1,
+            0.5
+          ],
+          "low": 1600,
+          "next": 2000,
+          "prev": 1600
+        },
+        {
+          "color": "red",
+          "hex_rgb": "#FF0000",
+          "high": 2500,
+          "hsl": [
+            0,
+            1,
+            0.5
+          ],
+          "low": 2000,
+          "next": 2500,
+          "prev": 2000
+        },
+        {
+          "color": "red",
+          "hex_rgb": "#FF0000",
+          "high": 100500,
+          "hsl": [
+            0,
+            1,
+            0.375
+          ],
+          "low": 2500,
+          "prev": 2000
+        }
+      ],
+      "regexp": null,
+      "short_host": "luogu",
+      "skip_for_contests_chart": false,
+      "statistics_fields": {
+        "types": {
+          "name": [
+            "str"
+          ],
+          "new_rating": [
+            "int"
+          ],
+          "old_rating": [
+            "int"
+          ],
+          "penalty": [
+            "str",
+            "int"
+          ],
+          "rating_change": [
+            "int"
+          ]
+        }
+      },
+      "timezone": null,
+      "uid": "0db51a70041e98a59a27e1e5bd4f2e050b79dcd12abbe0a075e653993705791a@group.calendar.google.com",
+      "url": "https://www.luogu.com.cn/contest/list"
+    },
+    "model": "clist.resource",
+    "pk": 162
+  },
+  {
+    "fields": {
+      "created": "2024-05-26T18:01:35.892Z",
+      "delay_on_error": "01:00:00",
+      "delay_on_success": "12:00:00",
+      "delay_shortly_after": "00:05:00",
+      "enable": true,
+      "long_contest_divider": 15,
+      "long_contest_idle": "06:00:00",
+      "max_delay_after_end": "5 00:00:00",
+      "min_delay_after_end": "00:10:00",
+      "modified": "2025-11-26T20:04:53.343Z",
+      "path": "ranking/management/modules/luogu",
+      "resource": 162,
+      "shortly_after": "00:30:00"
+    },
+    "model": "ranking.module",
+    "pk": 79
+  },
+  {
+    "fields": {
+      "allow_updating_statistics_for_participants": null,
+      "auto_updated": "2026-08-04T13:12:32Z",
+      "calculate_time": false,
+      "created": "2026-07-17T12:29:43.663Z",
+      "duration_in_secs": 18000,
+      "edit": null,
+      "elimination_tournament_info": {},
+      "end_time": "2026-08-03T10:00:00Z",
+      "finalists_info": {},
+      "has_fixed_rating_prediction_field": null,
+      "has_hidden_results": false,
+      "has_submissions": null,
+      "has_submissions_tests": null,
+      "has_unlimited_statistics": null,
+      "hide_unsolved_standings_problems": null,
+      "host": "luogu.com.cn",
+      "info": {
+        "fields": [
+          "_standings_page",
+          "name",
+          "penalty",
+          "problems"
+        ],
+        "fields_types": {
+          "_standings_page": [
+            "int"
+          ],
+          "name": [
+            "str"
+          ],
+          "penalty": [
+            "int"
+          ],
+          "problems": [
+            "dict"
+          ]
+        },
+        "hidden_fields": [],
+        "parse": {
+          "host": {
+            "id": 1000,
+            "isPremium": true,
+            "name": "洛谷官方团队"
+          },
+          "invitationCodeType": 1,
+          "method": 2,
+          "problemCount": 11,
+          "rated": 1,
+          "rule_type": 2,
+          "squad": true,
+          "visibility": 1
+        },
+        "problems": [
+          {
+            "code": "P17181",
+            "first_ac": {
+              "accounts": [
+                "90706",
+                "27338"
+              ],
+              "in_seconds": 844.0,
+              "time": "0:14"
+            },
+            "n_accepted": 160,
+            "n_failed": 270,
+            "n_submissions": 1205,
+            "n_teams": 430,
+            "n_total": 891,
+            "rating": 1319,
+            "short": "P17181"
+          },
+          {
+            "code": "P17182",
+            "first_ac": {
+              "accounts": [
+                "2211121"
+              ],
+              "in_seconds": 266.0,
+              "time": "0:04"
+            },
+            "n_accepted": 232,
+            "n_failed": 115,
+            "n_submissions": 1012,
+            "n_teams": 347,
+            "n_total": 891,
+            "rating": 1163,
+            "short": "P17182"
+          },
+          {
+            "code": "P17183",
+            "first_ac": {
+              "accounts": [
+                "815094"
+              ],
+              "in_seconds": 710.0,
+              "time": "0:11"
+            },
+            "n_accepted": 77,
+            "n_failed": 14,
+            "n_submissions": 140,
+            "n_teams": 91,
+            "n_total": 891,
+            "rating": 1542,
+            "short": "P17183"
+          },
+          {
+            "code": "P17184",
+            "first_ac": {
+              "accounts": [
+                "2211121"
+              ],
+              "in_seconds": 66.0,
+              "time": "0:01"
+            },
+            "n_accepted": 519,
+            "n_failed": 26,
+            "n_submissions": 686,
+            "n_teams": 545,
+            "n_total": 891,
+            "rating": 690,
+            "short": "P17184"
+          },
+          {
+            "code": "P17185",
+            "first_ac": {
+              "accounts": [
+                "1918881"
+              ],
+              "in_seconds": 39.0,
+              "time": "0:00"
+            },
+            "n_accepted": 497,
+            "n_failed": 19,
+            "n_submissions": 663,
+            "n_teams": 516,
+            "n_total": 891,
+            "rating": 718,
+            "short": "P17185"
+          },
+          {
+            "code": "P17186",
+            "first_ac": {
+              "accounts": [
+                "1882330"
+              ],
+              "in_seconds": 157.0,
+              "time": "0:02"
+            },
+            "n_accepted": 401,
+            "n_failed": 31,
+            "n_submissions": 749,
+            "n_teams": 432,
+            "n_total": 891,
+            "rating": 864,
+            "short": "P17186"
+          },
+          {
+            "code": "P17187",
+            "first_ac": {
+              "accounts": [
+                "2211358"
+              ],
+              "in_seconds": 427.0,
+              "time": "0:07"
+            },
+            "n_accepted": 336,
+            "n_failed": 19,
+            "n_submissions": 424,
+            "n_teams": 355,
+            "n_total": 891,
+            "rating": 983,
+            "short": "P17187"
+          },
+          {
+            "code": "P17188",
+            "first_ac": {
+              "accounts": [
+                "1775314"
+              ],
+              "in_seconds": 3027.0,
+              "time": "0:50"
+            },
+            "n_accepted": 48,
+            "n_failed": 62,
+            "n_submissions": 408,
+            "n_teams": 110,
+            "n_total": 891,
+            "rating": 1646,
+            "short": "P17188"
+          },
+          {
+            "code": "P17189",
+            "first_ac": {
+              "accounts": [
+                "1040519"
+              ],
+              "in_seconds": 556.0,
+              "time": "0:09"
+            },
+            "n_accepted": 117,
+            "n_failed": 40,
+            "n_submissions": 273,
+            "n_teams": 157,
+            "n_total": 891,
+            "rating": 1409,
+            "short": "P17189"
+          },
+          {
+            "code": "P17190",
+            "first_ac": {
+              "accounts": [
+                "2211358"
+              ],
+              "in_seconds": 893.0,
+              "time": "0:14"
+            },
+            "n_accepted": 24,
+            "n_failed": 25,
+            "n_submissions": 84,
+            "n_teams": 49,
+            "n_total": 891,
+            "rating": 1857,
+            "short": "P17190"
+          },
+          {
+            "code": "P17191",
+            "first_ac": {
+              "accounts": [
+                "2211358"
+              ],
+              "in_seconds": 622.0,
+              "time": "0:10"
+            },
+            "n_accepted": 22,
+            "n_failed": 37,
+            "n_submissions": 162,
+            "n_teams": 59,
+            "n_total": 891,
+            "rating": 1879,
+            "short": "P17191"
+          }
+        ]
+      },
+      "invisible": false,
+      "is_auto_added": true,
+      "is_promoted": null,
+      "is_rated": null,
+      "key": "340426",
+      "kind": null,
+      "link_statistic_timing": null,
+      "merging_contests": [],
+      "modified": "2026-07-17T12:29:43.663Z",
+      "n_problems": 11,
+      "n_statistics": 891,
+      "notification_timing": "2026-07-17T12:31:10.859Z",
+      "parsed_percentage": null,
+      "parsed_time": "2026-08-04T10:33:10.915Z",
+      "problem_rating_hash": "30c4bb3a8b7c05073032377ac2ba02454dfd6c927629800434334772fbae0e1b",
+      "problem_rating_update_required": false,
+      "rating_prediction_fields": null,
+      "rating_prediction_hash": null,
+      "rating_prediction_timing": null,
+      "raw_info": {},
+      "registration_url": null,
+      "related": null,
+      "resource": 162,
+      "series": null,
+      "set_matched_coders_to_members": null,
+      "slug": "icpc2017-hong-kong-r-icpc-2017-qu-yu-sai-xiang-gang-zhan-zhong-xian-sai-guzhi-icpc-squad",
+      "standings_kind": "icpc",
+      "standings_url": "https://www.luogu.com.cn/contest/340426#scoreboard",
+      "start_time": "2026-08-03T05:00:00Z",
+      "statistic_timing": "2026-08-04T22:33:10.915Z",
+      "statistics_update_required": false,
+      "submissions_info": {},
+      "title": "[ICPC2017 Hong Kong R] ICPC 2017 区域赛香港站重现赛 [guzhi, icpc, squad]",
+      "title_path": "icpc2017.hong.kong.r.icpc.2017.qu.yu.sai.xiang.gang.zhan.zhong.xian.sai.guzhi.icpc.squad",
+      "trial_standings_url": null,
+      "uid": "0v2jei9uugctp6ksusre08s0c4",
+      "updated": "2026-08-04T13:12:32.861Z",
+      "upload_solved_problems_solutions": null,
+      "upsolving_key": null,
+      "upsolving_url": null,
+      "url": "https://www.luogu.com.cn/contest/340426",
+      "variables": {},
+      "wait_for_successful_update_timing": null,
+      "with_advance": false,
+      "with_medals": false
+    },
+    "model": "clist.contest",
+    "pk": 68919798
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2024-07-27T10:05:51.690Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar": "https://cdn.luogu.com.cn/upload/usericon/1367429.png",
+        "background": "https://cdn.luogu.com.cn/upload/image_hosting/rlo9b5j6.png",
+        "badge": null,
+        "ccf_level": 0,
+        "color": "Red",
+        "elo": null,
+        "elo_value": null,
+        "follower_count": 51,
+        "following_count": 2,
+        "introduction": "[![](https://cfrating.baoshuo.dev/rating?username=Rosabel)](https://codeforces.com/profile/Rosabel)[![](https://atrating.baoshuo.dev/rating?username=Rosabel)](https://atcoder.jp/users/Rosabel)",
+        "is_admin": false,
+        "is_banned": false,
+        "name": "Rosabel",
+        "passed_problem_count": 376,
+        "ranking": 1003,
+        "rating": 2109,
+        "register_time": 1717074248,
+        "slogan": "awa",
+        "submitted_problem_count": 376,
+        "uid": 1367429,
+        "xcpc_level": 0
+      },
+      "key": "1367429",
+      "last_activity": "2026-08-03T07:20:05Z",
+      "last_rating_activity": "2024-10-05T05:00:00Z",
+      "last_submission": null,
+      "modified": "2026-08-04T10:33:45.031Z",
+      "n_bronze": null,
+      "n_contests": 26,
+      "n_first_ac": 0,
+      "n_first_places": 1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 3,
+      "n_second_places": 1,
+      "n_silver": null,
+      "n_solved": 76,
+      "n_subscribers": 0,
+      "n_third_places": 0,
+      "n_top_ten_places": 1,
+      "n_total_solved": 76,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Rosabel",
+      "need_verification": false,
+      "rating": 2109,
+      "rating50": 42,
+      "rating_prediction": null,
+      "rating_update_time": "2024-11-09T17:06:04Z",
+      "related": null,
+      "resource": 162,
+      "resource_rank": 267,
+      "solving": 434.0,
+      "submissions_info": {},
+      "total_solving": 434.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-08-03T23:59:59.999Z",
+      "upsolving": 0.0,
+      "url": "/coder/Lordrosabel/?search=resource:luogu.com.cn"
+    },
+    "model": "ranking.account",
+    "pk": 7184750
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2024-05-27T21:20:21.315Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar": "https://cdn.luogu.com.cn/upload/usericon/1040519.png",
+        "background": "",
+        "badge": null,
+        "ccf_level": 4,
+        "color": "Orange",
+        "elo": null,
+        "elo_value": null,
+        "follower_count": 5,
+        "following_count": 7,
+        "introduction": "",
+        "is_admin": false,
+        "is_banned": false,
+        "name": "lin_mine",
+        "passed_problem_count": 351,
+        "ranking": 3480,
+        "rating": 574,
+        "register_time": 1689342458,
+        "slogan": "我们以苦为乐，我们要与勇者为伴",
+        "submitted_problem_count": 399,
+        "uid": 1040519,
+        "xcpc_level": 0
+      },
+      "key": "1040519",
+      "last_activity": "2026-08-03T08:31:17Z",
+      "last_rating_activity": "2026-07-18T06:00:00Z",
+      "last_submission": null,
+      "modified": "2026-08-04T10:41:29.644Z",
+      "n_bronze": null,
+      "n_contests": 25,
+      "n_first_ac": 1,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 2,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 47,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 2,
+      "n_total_solved": 47,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "lin_mine",
+      "need_verification": false,
+      "rating": 574,
+      "rating50": 11,
+      "rating_prediction": null,
+      "rating_update_time": "2024-12-14T01:48:05Z",
+      "related": null,
+      "resource": 162,
+      "resource_rank": 39424,
+      "solving": 9124.0,
+      "submissions_info": {},
+      "total_solving": 9124.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-08-03T23:59:59.999Z",
+      "upsolving": 0.0,
+      "url": "/account/1040519/resource/luogu.com.cn/"
+    },
+    "model": "ranking.account",
+    "pk": 6945373
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2024-05-27T04:12:30.198Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar": "https://cdn.luogu.com.cn/upload/usericon/90706.png",
+        "background": "",
+        "badge": "27",
+        "ccf_level": 7,
+        "color": "Red",
+        "elo": null,
+        "elo_value": null,
+        "follower_count": 496,
+        "following_count": 86,
+        "is_admin": false,
+        "is_banned": false,
+        "name": "_jimmywang_",
+        "passed_problem_count": 2934,
+        "ranking": 270,
+        "rating": 2078,
+        "register_time": 1520727992,
+        "slogan": "基环内向树，二维前缀和，三碳化四铝，闪电五连鞭",
+        "submitted_problem_count": 3118,
+        "uid": 90706,
+        "xcpc_level": 8
+      },
+      "key": "90706",
+      "last_activity": "2026-08-03T07:37:03Z",
+      "last_rating_activity": "2026-03-01T06:00:00Z",
+      "last_submission": null,
+      "modified": "2026-08-04T10:33:45.544Z",
+      "n_bronze": null,
+      "n_contests": 126,
+      "n_first_ac": 1,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 2,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 86,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 2,
+      "n_total_solved": 86,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "_jimmywang_",
+      "need_verification": false,
+      "rating": 2078,
+      "rating50": 41,
+      "rating_prediction": null,
+      "rating_update_time": "2024-05-30T13:40:04Z",
+      "related": null,
+      "resource": 162,
+      "resource_rank": 317,
+      "solving": 4953.0,
+      "submissions_info": {},
+      "total_solving": 4953.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-08-03T23:59:59.999Z",
+      "upsolving": 0.0,
+      "url": "/coder/jimmyywang/?resource=162"
+    },
+    "model": "ranking.account",
+    "pk": 6923158
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2026-03-27T13:16:36.283Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar": "https://cdn.luogu.com.cn/upload/usericon/1918881.png",
+        "background": "",
+        "badge": null,
+        "ccf_level": 0,
+        "color": "Orange",
+        "elo": null,
+        "elo_value": null,
+        "follower_count": 3,
+        "following_count": 2,
+        "introduction": "",
+        "is_admin": false,
+        "is_banned": false,
+        "name": "ack17",
+        "passed_problem_count": 170,
+        "ranking": 4579,
+        "rating": 1248,
+        "register_time": 1760192534,
+        "slogan": "",
+        "submitted_problem_count": 172,
+        "uid": 1918881,
+        "xcpc_level": 0
+      },
+      "key": "1918881",
+      "last_activity": "2026-08-04T06:00:00Z",
+      "last_rating_activity": "2026-07-11T06:00:00Z",
+      "last_submission": null,
+      "modified": "2026-08-04T11:12:45.790Z",
+      "n_bronze": null,
+      "n_contests": 12,
+      "n_first_ac": 1,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 42,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 42,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "ack17",
+      "need_verification": false,
+      "rating": 1248,
+      "rating50": 24,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 162,
+      "resource_rank": 62155,
+      "solving": 8281.0,
+      "submissions_info": {},
+      "total_solving": 8281.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-08-04T23:59:59.999Z",
+      "upsolving": null,
+      "url": "/account/1918881/resource/luogu.com.cn/"
+    },
+    "model": "ranking.account",
+    "pk": 10376117
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2025-06-07T10:06:41.098Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar": "https://cdn.luogu.com.cn/upload/usericon/1775314.png",
+        "background": "",
+        "badge": null,
+        "ccf_level": 0,
+        "color": "Orange",
+        "elo": null,
+        "elo_value": null,
+        "follower_count": 5,
+        "following_count": 8,
+        "introduction": "",
+        "is_admin": false,
+        "is_banned": false,
+        "name": "jiuli_hejin_cpp",
+        "passed_problem_count": 288,
+        "ranking": 4045,
+        "rating": 1067,
+        "register_time": 1749271335,
+        "slogan": "九狸",
+        "submitted_problem_count": 300,
+        "uid": 1775314,
+        "xcpc_level": 0
+      },
+      "key": "1775314",
+      "last_activity": "2026-08-03T05:50:27Z",
+      "last_rating_activity": "2026-07-17T06:00:00Z",
+      "last_submission": null,
+      "modified": "2026-08-04T10:36:21.551Z",
+      "n_bronze": null,
+      "n_contests": 20,
+      "n_first_ac": 1,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 44,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 44,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "jiuli_hejin_cpp",
+      "need_verification": false,
+      "rating": 1067,
+      "rating50": 21,
+      "rating_prediction": null,
+      "rating_update_time": "2025-10-03T10:00:00Z",
+      "related": null,
+      "resource": 162,
+      "resource_rank": 17043,
+      "solving": 9917.0,
+      "submissions_info": {},
+      "total_solving": 9917.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-08-03T23:59:59.999Z",
+      "upsolving": null,
+      "url": "/account/1775314/resource/luogu.com.cn/"
+    },
+    "model": "ranking.account",
+    "pk": 8405256
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2024-05-28T23:44:39.211Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar": "https://cdn.luogu.com.cn/upload/usericon/815094.png",
+        "background": "",
+        "badge": null,
+        "ccf_level": 0,
+        "color": "Orange",
+        "elo": null,
+        "elo_value": null,
+        "follower_count": 245,
+        "following_count": 297,
+        "introduction": "[原主页](https://www.luogu.com.cn/paste/3fneq002)3525673385985^2-211^2=7891+917813https://virus.cverc.org.cn",
+        "is_admin": false,
+        "is_banned": false,
+        "name": "esgojg",
+        "passed_problem_count": 392,
+        "ranking": 3975,
+        "rating": 1981,
+        "register_time": 1664508780,
+        "slogan": "无勾蒟蒻一只 || Expert水平选手 || 有数学题可以找我qwq",
+        "submitted_problem_count": 458,
+        "uid": 815094,
+        "xcpc_level": 0
+      },
+      "key": "815094",
+      "last_activity": "2026-08-04T06:00:00Z",
+      "last_rating_activity": "2026-03-01T06:00:00Z",
+      "last_submission": null,
+      "modified": "2026-08-04T11:13:07.294Z",
+      "n_bronze": null,
+      "n_contests": 33,
+      "n_first_ac": 1,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 2,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 67,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 2,
+      "n_total_solved": 67,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "esgojg",
+      "need_verification": false,
+      "rating": 1981,
+      "rating50": 39,
+      "rating_prediction": null,
+      "rating_update_time": "2025-11-09T10:00:00Z",
+      "related": null,
+      "resource": 162,
+      "resource_rank": 939,
+      "solving": 7475.0,
+      "submissions_info": {},
+      "total_solving": 7475.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-08-04T23:59:59.999Z",
+      "upsolving": 0.0,
+      "url": "/account/815094/resource/luogu.com.cn/"
+    },
+    "model": "ranking.account",
+    "pk": 6999318
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2026-08-03T10:11:20.366Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar": "https://cdn.luogu.com.cn/upload/usericon/2211121.png",
+        "background": "",
+        "badge": null,
+        "ccf_level": 0,
+        "color": "Cheater",
+        "elo": null,
+        "elo_value": null,
+        "follower_count": 2,
+        "following_count": 0,
+        "introduction": "",
+        "is_admin": false,
+        "is_banned": false,
+        "name": "_mesi",
+        "passed_problem_count": 1,
+        "ranking": 503964,
+        "register_time": 1784345028,
+        "slogan": "",
+        "submitted_problem_count": 1,
+        "uid": 2211121,
+        "xcpc_level": 0
+      },
+      "key": "2211121",
+      "last_activity": "2026-08-03T05:04:26Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-08-04T10:34:01.889Z",
+      "n_bronze": null,
+      "n_contests": 1,
+      "n_first_ac": 2,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 4,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 4,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "_mesi",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 162,
+      "resource_rank": null,
+      "solving": -1.0,
+      "submissions_info": {},
+      "total_solving": -1.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-08-03T23:59:59.999Z",
+      "upsolving": null,
+      "url": "/account/2211121/resource/luogu.com.cn/"
+    },
+    "model": "ranking.account",
+    "pk": 11595340
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2026-02-25T10:11:08.932Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar": "https://cdn.luogu.com.cn/upload/usericon/1882330.png",
+        "background": "https://cdn.luogu.com.cn/upload/image_hosting/2ylkdb91.png",
+        "badge": null,
+        "ccf_level": 0,
+        "color": "Green",
+        "elo": null,
+        "elo_value": null,
+        "follower_count": 17,
+        "following_count": 20,
+        "introduction": "这个人很勤快，所以写了简介。",
+        "is_admin": false,
+        "is_banned": false,
+        "name": "Steven1356",
+        "passed_problem_count": 522,
+        "ranking": 22504,
+        "rating": 490,
+        "register_time": 1758537358,
+        "slogan": "粉丝福利U708239||宣组128306||小号2087776",
+        "submitted_problem_count": 553,
+        "uid": 1882330,
+        "xcpc_level": 0
+      },
+      "key": "1882330",
+      "last_activity": "2026-08-03T05:09:20Z",
+      "last_rating_activity": "2026-07-18T06:00:00Z",
+      "last_submission": null,
+      "modified": "2026-08-04T10:41:50.116Z",
+      "n_bronze": null,
+      "n_contests": 13,
+      "n_first_ac": 1,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 38,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 38,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Steven1356",
+      "need_verification": false,
+      "rating": 490,
+      "rating50": 9,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 162,
+      "resource_rank": 43434,
+      "solving": 7011.0,
+      "submissions_info": {},
+      "total_solving": 7011.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-08-03T23:59:59.999Z",
+      "upsolving": null,
+      "url": "/account/1882330/resource/luogu.com.cn/"
+    },
+    "model": "ranking.account",
+    "pk": 10077642
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2026-07-26T13:16:26.468Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar": "https://cdn.luogu.com.cn/images/banned.png"
+      },
+      "key": "2211358",
+      "last_activity": "2026-08-03T05:23:29Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-08-04T10:41:21.835Z",
+      "n_bronze": null,
+      "n_contests": 4,
+      "n_first_ac": 3,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 19,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 19,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "封禁用户",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 162,
+      "resource_rank": null,
+      "solving": 1174.0,
+      "submissions_info": {},
+      "total_solving": 1174.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-11-11T11:12:07.766Z",
+      "upsolving": null,
+      "url": "/account/2211358/resource/luogu.com.cn/"
+    },
+    "model": "ranking.account",
+    "pk": 11579129
+  },
+  {
+    "fields": {
+      "account": 7184750,
+      "addition": {
+        "_standings_page": 1,
+        "name": "Rosabel",
+        "penalty": 650,
+        "problems": {
+          "P17181": {
+            "result": "+1",
+            "time": "1:00",
+            "time_in_seconds": 3643.0
+          },
+          "P17182": {
+            "result": "+",
+            "time": "0:29",
+            "time_in_seconds": 1764.0
+          },
+          "P17183": {
+            "result": "+",
+            "time": "1:33",
+            "time_in_seconds": 5633.0
+          },
+          "P17184": {
+            "result": "+",
+            "time": "0:09",
+            "time_in_seconds": 565.0
+          },
+          "P17185": {
+            "result": "+",
+            "time": "0:15",
+            "time_in_seconds": 919.0
+          },
+          "P17186": {
+            "result": "+1",
+            "time": "0:46",
+            "time_in_seconds": 2789.0
+          },
+          "P17187": {
+            "result": "+",
+            "time": "0:08",
+            "time_in_seconds": 518.0
+          },
+          "P17188": {
+            "result": "+1",
+            "time": "1:37",
+            "time_in_seconds": 5871.0
+          },
+          "P17189": {
+            "result": "+1",
+            "time": "0:22",
+            "time_in_seconds": 1368.0
+          },
+          "P17190": {
+            "result": "+",
+            "time": "0:45",
+            "time_in_seconds": 2742.0
+          },
+          "P17191": {
+            "result": "+",
+            "time": "2:20",
+            "time_in_seconds": 8405.0
+          }
+        }
+      },
+      "advanced": false,
+      "contest": 68919798,
+      "created": "2026-08-03T10:10:45.236Z",
+      "global_rating_change": null,
+      "last_activity": "2026-08-03T07:20:05Z",
+      "medal": null,
+      "modified": "2026-08-04T10:33:45.086Z",
+      "n_first_ac": 0,
+      "n_solved": 11,
+      "n_total_solved": 11,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 650.0,
+      "place": "1",
+      "place_as_int": 1,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 162,
+      "skip_in_stats": false,
+      "solving": 11.0,
+      "total_solving": 11.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91349977
+  },
+  {
+    "fields": {
+      "account": 6945373,
+      "addition": {
+        "_standings_page": 1,
+        "name": "lin_mine",
+        "penalty": 934,
+        "problems": {
+          "P17181": {
+            "result": "+",
+            "time": "0:19",
+            "time_in_seconds": 1142.0
+          },
+          "P17182": {
+            "result": "+",
+            "time": "0:49",
+            "time_in_seconds": 2946.0
+          },
+          "P17183": {
+            "result": "+",
+            "time": "1:02",
+            "time_in_seconds": 3729.0
+          },
+          "P17184": {
+            "result": "+1",
+            "time": "0:33",
+            "time_in_seconds": 1996.0
+          },
+          "P17185": {
+            "result": "+",
+            "time": "0:36",
+            "time_in_seconds": 2218.0
+          },
+          "P17186": {
+            "result": "+",
+            "time": "1:16",
+            "time_in_seconds": 4563.0
+          },
+          "P17187": {
+            "result": "+",
+            "time": "1:30",
+            "time_in_seconds": 5429.0
+          },
+          "P17188": {
+            "result": "+",
+            "time": "3:31",
+            "time_in_seconds": 12677.0
+          },
+          "P17189": {
+            "first_ac": true,
+            "result": "+",
+            "time": "0:09",
+            "time_in_seconds": 556.0
+          },
+          "P17190": {
+            "result": "+",
+            "time": "2:27",
+            "time_in_seconds": 8830.0
+          },
+          "P17191": {
+            "result": "+",
+            "time": "2:58",
+            "time_in_seconds": 10738.0
+          }
+        }
+      },
+      "advanced": false,
+      "contest": 68919798,
+      "created": "2026-08-03T10:10:45.548Z",
+      "global_rating_change": null,
+      "last_activity": "2026-08-03T08:31:17Z",
+      "medal": null,
+      "modified": "2026-08-04T10:33:45.230Z",
+      "n_first_ac": 1,
+      "n_solved": 11,
+      "n_total_solved": 11,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 934.0,
+      "place": "4",
+      "place_as_int": 4,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 162,
+      "skip_in_stats": false,
+      "solving": 11.0,
+      "total_solving": 11.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91349980
+  },
+  {
+    "fields": {
+      "account": 6923158,
+      "addition": {
+        "_standings_page": 1,
+        "name": "_jimmywang_",
+        "penalty": 563,
+        "problems": {
+          "P17181": {
+            "first_ac": true,
+            "result": "+",
+            "time": "0:14",
+            "time_in_seconds": 844.0
+          },
+          "P17182": {
+            "result": "+",
+            "time": "0:54",
+            "time_in_seconds": 3291.0
+          },
+          "P17183": {
+            "result": "+3",
+            "time": "2:37",
+            "time_in_seconds": 9423.0
+          },
+          "P17184": {
+            "result": "+",
+            "time": "0:23",
+            "time_in_seconds": 1403.0
+          },
+          "P17185": {
+            "result": "+",
+            "time": "0:20",
+            "time_in_seconds": 1208.0
+          },
+          "P17186": {
+            "result": "+",
+            "time": "0:28",
+            "time_in_seconds": 1715.0
+          },
+          "P17187": {
+            "result": "+",
+            "time": "0:33",
+            "time_in_seconds": 2014.0
+          },
+          "P17189": {
+            "result": "+",
+            "time": "0:51",
+            "time_in_seconds": 3068.0
+          },
+          "P17190": {
+            "result": "+",
+            "time": "1:59",
+            "time_in_seconds": 7186.0
+          }
+        }
+      },
+      "advanced": false,
+      "contest": 68919798,
+      "created": "2026-08-03T10:10:46.373Z",
+      "global_rating_change": null,
+      "last_activity": "2026-08-03T07:37:03Z",
+      "medal": null,
+      "modified": "2026-08-04T10:33:45.567Z",
+      "n_first_ac": 1,
+      "n_solved": 9,
+      "n_total_solved": 9,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 563.0,
+      "place": "14",
+      "place_as_int": 14,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 162,
+      "skip_in_stats": false,
+      "solving": 9.0,
+      "total_solving": 9.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91349990
+  },
+  {
+    "fields": {
+      "account": 10376117,
+      "addition": {
+        "_standings_page": 1,
+        "name": "ack17",
+        "penalty": 538,
+        "problems": {
+          "P17181": {
+            "result": "+",
+            "time": "0:21",
+            "time_in_seconds": 1303.0
+          },
+          "P17182": {
+            "result": "+2",
+            "time": "1:22",
+            "time_in_seconds": 4962.0
+          },
+          "P17184": {
+            "result": "+",
+            "time": "0:08",
+            "time_in_seconds": 534.0
+          },
+          "P17185": {
+            "first_ac": true,
+            "result": "+",
+            "time": "0:00",
+            "time_in_seconds": 39.0
+          },
+          "P17186": {
+            "result": "+1",
+            "time": "0:37",
+            "time_in_seconds": 2246.0
+          },
+          "P17187": {
+            "result": "+1",
+            "time": "1:21",
+            "time_in_seconds": 4879.0
+          },
+          "P17188": {
+            "result": "+1",
+            "time": "2:34",
+            "time_in_seconds": 9241.0
+          },
+          "P17189": {
+            "result": "+",
+            "time": "0:51",
+            "time_in_seconds": 3062.0
+          }
+        }
+      },
+      "advanced": false,
+      "contest": 68919798,
+      "created": "2026-08-03T10:10:47.359Z",
+      "global_rating_change": null,
+      "last_activity": "2026-08-03T07:34:01Z",
+      "medal": null,
+      "modified": "2026-08-04T10:33:46.146Z",
+      "n_first_ac": 1,
+      "n_solved": 8,
+      "n_total_solved": 8,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 538.0,
+      "place": "34",
+      "place_as_int": 34,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 162,
+      "skip_in_stats": false,
+      "solving": 8.0,
+      "total_solving": 8.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91350010
+  },
+  {
+    "fields": {
+      "account": 8405256,
+      "addition": {
+        "_standings_page": 2,
+        "name": "jiuli_hejin_cpp",
+        "penalty": 252,
+        "problems": {
+          "P17181": {
+            "result": "+",
+            "time": "0:22",
+            "time_in_seconds": 1357.0
+          },
+          "P17182": {
+            "result": "+",
+            "time": "0:27",
+            "time_in_seconds": 1671.0
+          },
+          "P17183": {
+            "result": "+",
+            "time": "0:31",
+            "time_in_seconds": 1916.0
+          },
+          "P17185": {
+            "result": "+",
+            "time": "0:36",
+            "time_in_seconds": 2218.0
+          },
+          "P17186": {
+            "result": "+",
+            "time": "0:35",
+            "time_in_seconds": 2139.0
+          },
+          "P17187": {
+            "result": "+",
+            "time": "0:46",
+            "time_in_seconds": 2775.0
+          },
+          "P17188": {
+            "first_ac": true,
+            "result": "+",
+            "time": "0:50",
+            "time_in_seconds": 3027.0
+          }
+        }
+      },
+      "advanced": false,
+      "contest": 68919798,
+      "created": "2026-08-03T10:10:48.742Z",
+      "global_rating_change": null,
+      "last_activity": "2026-08-03T05:50:27Z",
+      "medal": null,
+      "modified": "2026-08-04T10:33:46.984Z",
+      "n_first_ac": 1,
+      "n_solved": 7,
+      "n_total_solved": 7,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 252.0,
+      "place": "67",
+      "place_as_int": 67,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 162,
+      "skip_in_stats": false,
+      "solving": 7.0,
+      "total_solving": 7.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91350043
+  },
+  {
+    "fields": {
+      "account": 6999318,
+      "addition": {
+        "_standings_page": 2,
+        "name": "esgojg",
+        "penalty": 558,
+        "problems": {
+          "P17181": {
+            "result": "+2",
+            "time": "0:43",
+            "time_in_seconds": 2630.0
+          },
+          "P17182": {
+            "result": "+2",
+            "time": "0:59",
+            "time_in_seconds": 3558.0
+          },
+          "P17183": {
+            "first_ac": true,
+            "result": "+1",
+            "time": "0:11",
+            "time_in_seconds": 710.0
+          },
+          "P17184": {
+            "result": "+",
+            "time": "1:04",
+            "time_in_seconds": 3858.0
+          },
+          "P17185": {
+            "result": "+",
+            "time": "1:07",
+            "time_in_seconds": 4069.0
+          },
+          "P17186": {
+            "result": "+1",
+            "time": "1:21",
+            "time_in_seconds": 4911.0
+          },
+          "P17187": {
+            "result": "+1",
+            "time": "1:28",
+            "time_in_seconds": 5337.0
+          },
+          "P17189": {
+            "result": "-2"
+          }
+        }
+      },
+      "advanced": false,
+      "contest": 68919798,
+      "created": "2026-08-03T10:10:48.961Z",
+      "global_rating_change": null,
+      "last_activity": "2026-08-03T06:28:57Z",
+      "medal": null,
+      "modified": "2026-08-04T10:33:47.190Z",
+      "n_first_ac": 1,
+      "n_solved": 7,
+      "n_total_solved": 7,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 558.0,
+      "place": "74",
+      "place_as_int": 74,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 162,
+      "skip_in_stats": false,
+      "solving": 7.0,
+      "total_solving": 7.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91350050
+  },
+  {
+    "fields": {
+      "account": 11595340,
+      "addition": {
+        "_standings_page": 18,
+        "name": "_mesi",
+        "penalty": 11,
+        "problems": {
+          "P17182": {
+            "first_ac": true,
+            "result": "+",
+            "time": "0:04",
+            "time_in_seconds": 266.0
+          },
+          "P17184": {
+            "first_ac": true,
+            "result": "+",
+            "time": "0:01",
+            "time_in_seconds": 66.0
+          },
+          "P17185": {
+            "result": "+",
+            "time": "0:02",
+            "time_in_seconds": 135.0
+          },
+          "P17186": {
+            "result": "+",
+            "time": "0:03",
+            "time_in_seconds": 194.0
+          }
+        }
+      },
+      "advanced": false,
+      "contest": 68919798,
+      "created": "2026-08-03T10:11:20.382Z",
+      "global_rating_change": null,
+      "last_activity": "2026-08-03T05:04:26Z",
+      "medal": null,
+      "modified": "2026-08-04T10:34:01.906Z",
+      "n_first_ac": 2,
+      "n_solved": 4,
+      "n_total_solved": 4,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 11.0,
+      "place": "887",
+      "place_as_int": 887,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 162,
+      "skip_in_stats": false,
+      "solving": -1.0,
+      "total_solving": -1.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91350863
+  },
+  {
+    "fields": {
+      "account": 10077642,
+      "addition": {
+        "_standings_page": 18,
+        "name": "Steven1356",
+        "penalty": 20,
+        "problems": {
+          "P17184": {
+            "result": "+",
+            "time": "0:04",
+            "time_in_seconds": 266.0
+          },
+          "P17185": {
+            "result": "+",
+            "time": "0:03",
+            "time_in_seconds": 215.0
+          },
+          "P17186": {
+            "first_ac": true,
+            "result": "+",
+            "time": "0:02",
+            "time_in_seconds": 157.0
+          },
+          "P17187": {
+            "result": "+",
+            "time": "0:09",
+            "time_in_seconds": 560.0
+          },
+          "P17189": {
+            "result": "-4"
+          },
+          "P17190": {
+            "result": "-1"
+          }
+        }
+      },
+      "advanced": false,
+      "contest": 68919798,
+      "created": "2026-08-03T10:11:20.409Z",
+      "global_rating_change": null,
+      "last_activity": "2026-08-03T05:09:20Z",
+      "medal": null,
+      "modified": "2026-08-04T10:34:01.927Z",
+      "n_first_ac": 1,
+      "n_solved": 4,
+      "n_total_solved": 4,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 20.0,
+      "place": "888",
+      "place_as_int": 888,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 162,
+      "skip_in_stats": false,
+      "solving": -1.0,
+      "total_solving": -1.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91350864
+  },
+  {
+    "fields": {
+      "account": 11579129,
+      "addition": {
+        "_standings_page": 18,
+        "name": "封禁用户",
+        "penalty": 81,
+        "problems": {
+          "P17181": {
+            "result": "-2"
+          },
+          "P17182": {
+            "result": "-1"
+          },
+          "P17184": {
+            "result": "+",
+            "time": "0:06",
+            "time_in_seconds": 384.0
+          },
+          "P17186": {
+            "result": "+",
+            "time": "0:23",
+            "time_in_seconds": 1409.0
+          },
+          "P17187": {
+            "first_ac": true,
+            "result": "+",
+            "time": "0:07",
+            "time_in_seconds": 427.0
+          },
+          "P17189": {
+            "result": "+",
+            "time": "0:18",
+            "time_in_seconds": 1111.0
+          },
+          "P17190": {
+            "first_ac": true,
+            "result": "+",
+            "time": "0:14",
+            "time_in_seconds": 893.0
+          },
+          "P17191": {
+            "first_ac": true,
+            "result": "+",
+            "time": "0:10",
+            "time_in_seconds": 622.0
+          }
+        }
+      },
+      "advanced": false,
+      "contest": 68919798,
+      "created": "2026-08-03T10:11:20.445Z",
+      "global_rating_change": null,
+      "last_activity": "2026-08-03T05:23:29Z",
+      "medal": null,
+      "modified": "2026-08-04T10:34:01.946Z",
+      "n_first_ac": 3,
+      "n_solved": 6,
+      "n_total_solved": 6,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 81.0,
+      "place": "889",
+      "place_as_int": 889,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 162,
+      "skip_in_stats": false,
+      "solving": -1.0,
+      "total_solving": -1.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91350865
+  }
+]

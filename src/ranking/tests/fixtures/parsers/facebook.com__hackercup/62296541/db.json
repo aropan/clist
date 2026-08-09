@@ -1,0 +1,1961 @@
+[
+  {
+    "fields": {
+      "accounts_fields": {
+        "types": {
+          "profile_picture": [
+            "NoneType",
+            "str"
+          ]
+        },
+        "verification_fields": []
+      },
+      "allow_delete_archived_statistics": false,
+      "api_url": null,
+      "auto_remove_started": false,
+      "avatar_url": "https://clist.by/media/{info[avatar_relpath_]}",
+      "avg_rating": null,
+      "color": "#C166CC",
+      "contest_update_time": "2025-12-20T18:07:09.568Z",
+      "country_rank_update_time": "2025-12-24T13:40:05.521Z",
+      "created": "2013-02-03T00:00:00Z",
+      "default_account_type": 1,
+      "enable": true,
+      "has_account_last_submission": null,
+      "has_account_n_writers": null,
+      "has_account_verification": false,
+      "has_accounts_infos_update": false,
+      "has_country_medal": null,
+      "has_country_place": null,
+      "has_country_rating": false,
+      "has_inherit_medals_to_related": false,
+      "has_multi_account": true,
+      "has_problem_archive": false,
+      "has_problem_rating": false,
+      "has_problem_statistic": true,
+      "has_problem_update": false,
+      "has_rating_history": false,
+      "has_standings_renamed_account": false,
+      "has_statistic_medal": true,
+      "has_statistic_n_first_ac": true,
+      "has_statistic_n_total_solved": true,
+      "has_statistic_place": true,
+      "has_statistic_total_solving": true,
+      "has_submissions_statistics_log": false,
+      "has_upsolving": false,
+      "host": "facebook.com/hackercup",
+      "icon_file": "resources/facebook_com_hackercup.png",
+      "icon_updated_at": "2025-12-20T18:07:28.340Z",
+      "icon_url": null,
+      "info": {
+        "avatar_url": {
+          "fields": [
+            "profile_picture"
+          ]
+        },
+        "get_events": {
+          "colors": {
+            "darken": "#3F1644",
+            "lighten": "#ECD1EF"
+          }
+        },
+        "parse": {
+          "no_calculate_time": true
+        },
+        "standings": {
+          "download_avatar_checksum_field": "Last-Modified",
+          "name_instead_key": true,
+          "timeline": {
+            "hidden_is_solved": true,
+            "penalty_format": 3,
+            "penalty_rounding": "none",
+            "time_factor": {
+              "1": [
+                1
+              ],
+              "2": [
+                60,
+                1
+              ],
+              "3": [
+                3600,
+                60,
+                1
+              ]
+            }
+          }
+        }
+      },
+      "modified": "2025-12-24T13:40:05.862Z",
+      "n_accounts": 130145,
+      "n_accounts_to_update": null,
+      "n_contests": 76,
+      "n_rating_accounts": null,
+      "n_statistics": 274123,
+      "n_team_accounts": 0,
+      "n_university_accounts": 0,
+      "parse_url": null,
+      "path": "./module/facebook.com/index.php",
+      "problem_archive_update_time": null,
+      "problem_rating_predictor": {},
+      "problem_url": null,
+      "problems_fields": {
+        "types": {
+          "first_ac__accounts": [
+            "list"
+          ],
+          "first_ac__in_seconds": [
+            "int"
+          ],
+          "first_ac__time": [
+            "str"
+          ],
+          "full_score": [
+            "int"
+          ]
+        }
+      },
+      "profile_url": null,
+      "rank_update_time": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "ratings": [],
+      "regexp": null,
+      "short_host": "hackercup",
+      "skip_for_contests_chart": false,
+      "statistics_fields": {
+        "types": {
+          "advanced": [
+            "bool"
+          ],
+          "country": [
+            "str"
+          ],
+          "medal": [
+            "str"
+          ],
+          "name": [
+            "str"
+          ],
+          "penalty": [
+            "str"
+          ]
+        }
+      },
+      "timezone": "America/Los_Angeles",
+      "uid": "3ltlj492190h54fkahtf4mt78g@group.calendar.google.com",
+      "url": "https://facebook.com/codingcompetitions/hacker-cup/"
+    },
+    "model": "clist.resource",
+    "pk": 29
+  },
+  {
+    "fields": {
+      "created": "2020-12-03T10:09:50.982Z",
+      "delay_on_error": "02:00:00",
+      "delay_on_success": "1 00:00:00",
+      "delay_shortly_after": "00:05:00",
+      "enable": true,
+      "long_contest_divider": 15,
+      "long_contest_idle": "06:00:00",
+      "max_delay_after_end": "4 00:00:00",
+      "min_delay_after_end": null,
+      "modified": "2022-10-29T11:36:00.129Z",
+      "path": "ranking/management/modules/facebook",
+      "resource": 29,
+      "shortly_after": "00:30:00"
+    },
+    "model": "ranking.module",
+    "pk": 44
+  },
+  {
+    "fields": {
+      "aliases": [
+        "facebook-hacker-cup",
+        "fhc"
+      ],
+      "created": "2023-03-05T01:20:11.554Z",
+      "modified": "2023-03-11T12:29:53.245Z",
+      "name": "Facebook Hacker Cup",
+      "short": "FHC",
+      "slug": "fhc"
+    },
+    "model": "clist.contestseries",
+    "pk": 1
+  },
+  {
+    "fields": {
+      "allow_updating_statistics_for_participants": null,
+      "auto_updated": "2026-01-20T17:46:47Z",
+      "calculate_time": false,
+      "created": "2025-10-03T23:30:05.893Z",
+      "duration_in_secs": 14400,
+      "edit": null,
+      "elimination_tournament_info": {},
+      "end_time": "2025-12-20T18:00:00Z",
+      "finalists_info": {},
+      "has_fixed_rating_prediction_field": null,
+      "has_hidden_results": false,
+      "has_submissions": null,
+      "has_submissions_tests": null,
+      "has_unlimited_statistics": null,
+      "hide_unsolved_standings_problems": null,
+      "host": "facebook.com/hackercup",
+      "info": {
+        "_paging_offset": 0,
+        "_scoreboard_ids": {
+          "CCEScoreboardQuery": "29543701181942069",
+          "CCEScoreboardRankCellQuery": "9699607680077134",
+          "CCEScoreboardRankedRefetchQuery": "25048104598181070",
+          "CodingCompetitionsConfirmDeleteModalMutation": "9530464603697028",
+          "CodingCompetitionsConfirmUnregisterModalMutation": "9842093542477498",
+          "CodingCompetitionsContestCardPerformanceSummaryQuery": "9990543644329838",
+          "CodingCompetitionsContestClarificationResponseTemplateCreateModalMutation": "9748082115253994",
+          "CodingCompetitionsContestClarificationsQuery": "24734166079538758",
+          "CodingCompetitionsContestClarificationsThreadMessageMutation": "23882405331384737",
+          "CodingCompetitionsContestClarificationsThreadReplyBoxSendReplyMutation": "31830840029897779",
+          "CodingCompetitionsContestCreateClarificationDialogMutation": "24733776052989625",
+          "CodingCompetitionsContestFAQQuery": "9655240531241500",
+          "CodingCompetitionsContestHomeQuery": "24784558214488810",
+          "CodingCompetitionsContestNotificationsQuery": "24849022688133253",
+          "CodingCompetitionsContestProblemQuery": "30469826462602601",
+          "CodingCompetitionsContestProblemSubmissionButtonMutation": "29152148981099751",
+          "CodingCompetitionsContestProblemSubmissionFormModalMarkInputAsDownloadedMutation": "9965369020186047",
+          "CodingCompetitionsContestProblemSubmissionFormModalValidateMutation": "9732709103503543",
+          "CodingCompetitionsContestRootQuery": "10018017581626412",
+          "CodingCompetitionsContestScoreboardQuery": "25020957524240878",
+          "CodingCompetitionsContestSeasonCertificateRootQuery": "9441011779338071",
+          "CodingCompetitionsContestSeasonRootQuery": "9407523369376470",
+          "CodingCompetitionsContestSeriesPastSeasonsQuery": "24424850930449680",
+          "CodingCompetitionsContestSeriesRootQuery": "9858231007627712",
+          "CodingCompetitionsContestSolutionsQuery": "23926224760327629",
+          "CodingCompetitionsHomeRootQuery": "10031502773559931",
+          "CodingCompetitionsPersonalInfoFormUpdateInfoMutation": "29604410119150168",
+          "CodingCompetitionsProfileClaimedPrizesQuery": "9552805298163696",
+          "CodingCompetitionsProfileContestSeasonContestsQuery": "29526204540360185",
+          "CodingCompetitionsProfileRootQuery": "9651563028274277",
+          "CodingCompetitionsProfileUnclaimedPrizesQuery": "9808557019207483",
+          "CodingCompetitionsRegistrationModalIsMinorQuery": "24539156622340880",
+          "CodingCompetitionsRegistrationModalMutation": "24286092911073891",
+          "CodingCompetitionsRegistrationModalQuery": "9928138810570070",
+          "CodingCompetitionsRulesForAITrackRootQuery": "9652862908154030",
+          "CodingCompetitionsTOSRootQuery": "24071011832527429",
+          "CodingProblemsProblemSubmissionResultsFetchRowsQuery": "9751850951528868",
+          "CodingProblemsProblemSubmissionResultsQuery": "9340165509443697",
+          "MMRMPageAdminDataMutation": "9870861566303151",
+          "MediaManagerAllPermissionedPageIDsStoreQuery": "24514834421440607",
+          "MediaManagerInstagramProfilesDataStoreQuery": "10016035598460563",
+          "MediaManagerPermissionedPageIDsStoreQuery": "24015951441345061"
+        },
+        "advance": {},
+        "fields": [
+          "name",
+          "penalty",
+          "country",
+          "problems",
+          "solved",
+          "_n_solved",
+          "medal",
+          "_verdicts"
+        ],
+        "fields_types": {
+          "_n_solved": [
+            "int"
+          ],
+          "_verdicts": [
+            "list"
+          ],
+          "country": [
+            "str"
+          ],
+          "medal": [
+            "str"
+          ],
+          "name": [
+            "str"
+          ],
+          "penalty": [
+            "str"
+          ],
+          "problems": [
+            "dict"
+          ],
+          "solved": [
+            "dict"
+          ]
+        },
+        "hidden_fields": [],
+        "parse": {
+          "advancement_target_contest": null,
+          "coding_contest_status": "CONCLUDED",
+          "contest_season": {
+            "contest_series": {
+              "id": "494527294537932",
+              "series_vanity": "hacker-cup"
+            },
+            "id": "1494566881682274",
+            "season_vanity": "2025"
+          },
+          "contest_vanity": "final-round",
+          "current_or_past_participation_type_for_viewer": null,
+          "duration_text": "4 hours",
+          "has_ended": true,
+          "has_started": true,
+          "id": "806820965168409",
+          "is_viewer_officially_registered": false,
+          "name": "Final Round",
+          "start_time": 1766239200
+        },
+        "problems": [
+          {
+            "code": "739257888650209",
+            "first_ac": {
+              "accounts": [
+                "587805598809428"
+              ],
+              "in_seconds": 410,
+              "time": "0:06:50"
+            },
+            "full_score": 9,
+            "n_accepted": 24,
+            "n_submissions": 24,
+            "n_teams": 24,
+            "n_total": 25,
+            "name": "Supermarket Shifts",
+            "short": "A",
+            "url": "https://facebook.com/codingcompetitions/hacker-cup/2025/final-round/problems/A"
+          },
+          {
+            "code": "9627758874014632",
+            "first_ac": {
+              "accounts": [
+                "262558545194371"
+              ],
+              "in_seconds": 6368,
+              "time": "1:46:08"
+            },
+            "full_score": 18,
+            "n_accepted": 5,
+            "n_failed": 6,
+            "n_submissions": 5,
+            "n_teams": 11,
+            "n_total": 25,
+            "name": "Polishing Problems",
+            "short": "B",
+            "url": "https://facebook.com/codingcompetitions/hacker-cup/2025/final-round/problems/B"
+          },
+          {
+            "code": "25427803796876753",
+            "first_ac": {
+              "accounts": [
+                "569506723717039"
+              ],
+              "in_seconds": 2886,
+              "time": "0:48:06"
+            },
+            "full_score": 8,
+            "n_accepted": 7,
+            "n_failed": 4,
+            "n_submissions": 7,
+            "n_teams": 11,
+            "n_total": 25,
+            "name": "Cube Coloring (Chapter 1)",
+            "short": "C1",
+            "url": "https://facebook.com/codingcompetitions/hacker-cup/2025/final-round/problems/C1"
+          },
+          {
+            "code": "25410954295183433",
+            "first_ac": {
+              "accounts": [
+                "289939578823785"
+              ],
+              "in_seconds": 9222,
+              "time": "2:33:42"
+            },
+            "full_score": 12,
+            "n_accepted": 2,
+            "n_failed": 2,
+            "n_submissions": 2,
+            "n_teams": 4,
+            "n_total": 25,
+            "name": "Cube Coloring (Chapter 2)",
+            "short": "C2",
+            "url": "https://facebook.com/codingcompetitions/hacker-cup/2025/final-round/problems/C2"
+          },
+          {
+            "code": "1893713577924689",
+            "first_ac": {
+              "accounts": [
+                "587805598809428"
+              ],
+              "in_seconds": 7978,
+              "time": "2:12:58"
+            },
+            "full_score": 18,
+            "n_accepted": 8,
+            "n_failed": 3,
+            "n_submissions": 8,
+            "n_teams": 11,
+            "n_total": 25,
+            "name": "Wiring Wreaths",
+            "short": "D",
+            "url": "https://facebook.com/codingcompetitions/hacker-cup/2025/final-round/problems/D"
+          },
+          {
+            "code": "1211835894179804",
+            "first_ac": {
+              "accounts": [
+                "899633380513930"
+              ],
+              "in_seconds": 2107,
+              "time": "0:35:07"
+            },
+            "full_score": 18,
+            "n_accepted": 20,
+            "n_failed": 1,
+            "n_submissions": 20,
+            "n_teams": 21,
+            "n_total": 25,
+            "name": "Lonesome Lookout",
+            "short": "E",
+            "url": "https://facebook.com/codingcompetitions/hacker-cup/2025/final-round/problems/E"
+          },
+          {
+            "code": "833304253039387",
+            "first_ac": {
+              "accounts": [
+                "739599956861289"
+              ],
+              "in_seconds": 7160,
+              "time": "1:59:20"
+            },
+            "full_score": 17,
+            "n_accepted": 1,
+            "n_failed": 4,
+            "n_submissions": 1,
+            "n_teams": 5,
+            "n_total": 25,
+            "name": "Reindeer Rally",
+            "short": "F",
+            "url": "https://facebook.com/codingcompetitions/hacker-cup/2025/final-round/problems/F"
+          }
+        ],
+        "standings": {
+          "medals": [
+            {
+              "count": 1,
+              "name": "gold"
+            },
+            {
+              "count": 1,
+              "name": "silver"
+            },
+            {
+              "count": 1,
+              "name": "bronze"
+            }
+          ]
+        },
+        "verdicts": [
+          "download_expired",
+          "presentation_error",
+          "wrong_answer"
+        ]
+      },
+      "invisible": false,
+      "is_auto_added": true,
+      "is_promoted": true,
+      "is_rated": null,
+      "key": "806820965168409",
+      "kind": null,
+      "link_statistic_timing": null,
+      "merging_contests": [],
+      "modified": "2025-10-29T03:10:54.481Z",
+      "n_problems": 7,
+      "n_statistics": 25,
+      "notification_timing": "2025-10-29T03:12:31.126Z",
+      "parsed_percentage": null,
+      "parsed_time": "2025-12-23T19:53:07.679Z",
+      "problem_rating_hash": null,
+      "problem_rating_update_required": false,
+      "rating_prediction_fields": null,
+      "rating_prediction_hash": null,
+      "rating_prediction_timing": null,
+      "raw_info": {},
+      "registration_url": null,
+      "related": null,
+      "resource": 29,
+      "series": 1,
+      "set_matched_coders_to_members": null,
+      "slug": "final-round-2025",
+      "standings_kind": "icpc",
+      "standings_url": "https://facebook.com/codingcompetitions/hacker-cup/2025/final-round/scoreboard",
+      "start_time": "2025-12-20T14:00:00Z",
+      "statistic_timing": "2025-12-24T19:53:07.679Z",
+      "statistics_update_required": false,
+      "submissions_info": {},
+      "title": "Final Round 2025",
+      "title_path": "final.round.2025",
+      "trial_standings_url": null,
+      "uid": "ksqaj77j9avrqetpm29l59i2fk",
+      "updated": "2026-01-20T17:46:47.518Z",
+      "upload_solved_problems_solutions": null,
+      "upsolving_key": null,
+      "upsolving_url": null,
+      "url": "https://facebook.com/codingcompetitions/hacker-cup/2025/final-round",
+      "variables": {},
+      "wait_for_successful_update_timing": null,
+      "with_advance": false,
+      "with_medals": true
+    },
+    "model": "clist.contest",
+    "pk": 62296541
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2020-07-12T14:09:43.532Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "profile_picture": "https://scontent-hel3-1.xx.fbcdn.net/v/t1.18169-1/cp0/p50x50/1978712_10201668713823376_858018568_n.jpg?_nc_cat=106&ccb=1-5&_nc_sid=7206a8&_nc_ohc=waL7B6gvG1MAX95CU77&_nc_ht=scontent-hel3-1.xx&oh=00_AT97ZgPkcmRdKquO7xjU7hbff-oMHc_Ni62yVQ_ijYuCRA&oe=621337F4"
+      },
+      "key": "2363294937300653",
+      "last_activity": "2025-12-20T14:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-02-09T09:01:08.100Z",
+      "n_bronze": null,
+      "n_contests": 61,
+      "n_first_ac": 38,
+      "n_first_places": 10,
+      "n_gold": 6,
+      "n_listvalues": 0,
+      "n_medals": 6,
+      "n_other_medals": null,
+      "n_places": 33,
+      "n_second_places": 2,
+      "n_silver": null,
+      "n_solved": 484,
+      "n_subscribers": 0,
+      "n_third_places": 3,
+      "n_top_ten_places": 18,
+      "n_total_solved": 484,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Gennady Korotkevich (tourist)",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 29,
+      "resource_rank": null,
+      "solving": 10428.0,
+      "submissions_info": {},
+      "total_solving": 10428.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-02-09T09:01:08.100Z",
+      "upsolving": 0.0,
+      "url": "/coder/tourist/?resource=29"
+    },
+    "model": "ranking.account",
+    "pk": 2079405
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "JP",
+      "created": "2020-07-12T14:29:09.682Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "899633380513930",
+      "last_activity": "2025-12-20T14:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-05-09T04:27:16.362Z",
+      "n_bronze": null,
+      "n_contests": 36,
+      "n_first_ac": 5,
+      "n_first_places": 1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": 2,
+      "n_other_medals": null,
+      "n_places": 15,
+      "n_second_places": 5,
+      "n_silver": 2,
+      "n_solved": 126,
+      "n_subscribers": 0,
+      "n_third_places": 0,
+      "n_top_ten_places": 9,
+      "n_total_solved": 126,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Yui Hosaka (hos.lyric)",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 29,
+      "resource_rank": null,
+      "solving": 4315.0,
+      "submissions_info": {},
+      "total_solving": 4315.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-05-09T04:26:00.471Z",
+      "upsolving": 0.0,
+      "url": "/coder/%E2%88%A83885459/?resource=29"
+    },
+    "model": "ranking.account",
+    "pk": 2080895
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "JP",
+      "created": "2025-10-23T16:02:02.424Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "1397138361842257",
+      "last_activity": "2025-12-20T14:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-12-23T19:53:14.914Z",
+      "n_bronze": null,
+      "n_contests": 4,
+      "n_first_ac": 0,
+      "n_first_places": 0,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 3,
+      "n_second_places": 0,
+      "n_silver": null,
+      "n_solved": 19,
+      "n_subscribers": 0,
+      "n_third_places": 0,
+      "n_top_ten_places": 3,
+      "n_total_solved": 19,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "にしもと まさき (maspy)",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 29,
+      "resource_rank": null,
+      "solving": 339.0,
+      "submissions_info": {},
+      "total_solving": 339.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2025-10-23T16:02:02.424Z",
+      "upsolving": null,
+      "url": "/coder/%E2%88%A87115732/?resource=29"
+    },
+    "model": "ranking.account",
+    "pk": 9607475
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "UA",
+      "created": "2020-07-12T15:09:17.635Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "profile_picture": "https://scontent-hel3-1.xx.fbcdn.net/v/t1.18169-1/cp0/p50x50/25659572_558800757798329_888713319662301084_n.jpg?_nc_cat=103&ccb=1-5&_nc_sid=7206a8&_nc_ohc=dp4JIxqQUZwAX8miqSy&_nc_ht=scontent-hel3-1.xx&oh=adbb2ebd8bd49f0d4a2b12e7fb3d72b7&oe=6189CF97"
+      },
+      "key": "289939578823785",
+      "last_activity": "2025-12-20T14:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-12-23T19:53:15.619Z",
+      "n_bronze": null,
+      "n_contests": 25,
+      "n_first_ac": 1,
+      "n_first_places": 0,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 85,
+      "n_subscribers": 0,
+      "n_third_places": 0,
+      "n_top_ten_places": 1,
+      "n_total_solved": 85,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Anton Trygub (antontrygubO_o)",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 29,
+      "resource_rank": null,
+      "solving": 1430.0,
+      "submissions_info": {},
+      "total_solving": 1430.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2020-07-13T14:28:23.498Z",
+      "upsolving": 0.0,
+      "url": "/coder/trygub/?resource=29"
+    },
+    "model": "ranking.account",
+    "pk": 2122667
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "CA",
+      "created": "2020-07-12T14:09:43.766Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "profile_picture": "https://scontent-hel3-1.xx.fbcdn.net/v/t1.6435-1/cp0/p50x50/88374536_2732148913499803_4073058237170057216_n.jpg?_nc_cat=105&ccb=1-5&_nc_sid=7206a8&_nc_ohc=psIBNZKBTmgAX9JCy3x&tn=vb8VuL_ua0Ph_gDW&_nc_ht=scontent-hel3-1.xx&oh=6a979f68f6883f3a1335a25cc1722386&oe=61DA2939"
+      },
+      "key": "587805598809428",
+      "last_activity": "2025-12-20T14:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-12-23T19:53:16.236Z",
+      "n_bronze": null,
+      "n_contests": 44,
+      "n_first_ac": 6,
+      "n_first_places": 1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 12,
+      "n_second_places": 2,
+      "n_silver": null,
+      "n_solved": 172,
+      "n_subscribers": 0,
+      "n_third_places": 1,
+      "n_top_ten_places": 8,
+      "n_total_solved": 172,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Kevin Sun (ksun48)",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 29,
+      "resource_rank": null,
+      "solving": 3301.0,
+      "submissions_info": {},
+      "total_solving": 3301.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2020-07-13T14:09:40.589Z",
+      "upsolving": 0.0,
+      "url": "/coder/ksun48/?resource=29"
+    },
+    "model": "ranking.account",
+    "pk": 2079423
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "JP",
+      "created": "2020-07-12T14:45:09.223Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "profile_picture": "https://scontent-hel3-1.xx.fbcdn.net/v/t1.18169-1/cp0/p50x50/10443378_702789929834852_7113431231682703409_n.jpg?_nc_cat=103&ccb=1-5&_nc_sid=7206a8&_nc_ohc=dmNHPpvbr_UAX_DBevc&_nc_ht=scontent-hel3-1.xx&oh=00_AT8mF63OxthiTLwvnjxdRZQfjXeV1WzTKpv2RpAylXRAHg&oe=621150CD"
+      },
+      "key": "262558545194371",
+      "last_activity": "2025-12-20T14:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-12-23T19:53:18.168Z",
+      "n_bronze": null,
+      "n_contests": 38,
+      "n_first_ac": 1,
+      "n_first_places": 0,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 2,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 120,
+      "n_subscribers": 0,
+      "n_third_places": 0,
+      "n_top_ten_places": 2,
+      "n_total_solved": 120,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Kohei Morita (yosupo)",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 29,
+      "resource_rank": null,
+      "solving": 2399.0,
+      "submissions_info": {},
+      "total_solving": 2399.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2020-07-13T14:28:23.498Z",
+      "upsolving": 0.0,
+      "url": "/coder/yosupo/?resource=29"
+    },
+    "model": "ranking.account",
+    "pk": 2101163
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2021-08-29T15:23:45.610Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "profile_picture": "https://scontent-hel3-1.xx.fbcdn.net/v/t1.6435-1/cp0/p50x50/240583782_106598245086060_603522923744608703_n.jpg?_nc_cat=110&ccb=1-5&_nc_sid=7206a8&_nc_ohc=-EF9QXqehAMAX-v1axn&_nc_ht=scontent-hel3-1.xx&oh=c6e6a74c3661c355b9f6594b44c45111&oe=618C24DA"
+      },
+      "key": "291326232798801",
+      "last_activity": "2025-12-20T14:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-12-23T19:53:19.459Z",
+      "n_bronze": null,
+      "n_contests": 20,
+      "n_first_ac": 2,
+      "n_first_places": 0,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 5,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 90,
+      "n_subscribers": 0,
+      "n_third_places": 0,
+      "n_top_ten_places": 5,
+      "n_total_solved": 90,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "邓明扬 (Slime)",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 29,
+      "resource_rank": null,
+      "solving": 1569.0,
+      "submissions_info": {},
+      "total_solving": 1569.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2021-08-29T15:23:45.611Z",
+      "upsolving": 0.0,
+      "url": "/coder/%E2%88%A83884820/?resource=29"
+    },
+    "model": "ranking.account",
+    "pk": 3316764
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "JP",
+      "created": "2020-07-27T18:03:27.266Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "profile_picture": "https://scontent-hel3-1.xx.fbcdn.net/v/t1.6435-1/cp0/p50x50/118596952_2739863019579650_5937860873806898796_n.jpg?_nc_cat=109&ccb=1-5&_nc_sid=7206a8&_nc_ohc=u_kcUtV_rHcAX9UPZ1x&_nc_oc=AQkiXbFPvpF3AtZfvv874hEK9UBBnIQHVsu-4UIh58YfdmJ1KBHkOv4iZIbJw1rBieU&tn=PQv9_0vVQX47FEWB&_nc_ht=scontent-hel3-1.xx&oh=c02696d24cb52a809f83af1539e46a81&oe=618A0348"
+      },
+      "key": "569506723717039",
+      "last_activity": "2025-12-20T14:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-12-23T19:53:20.746Z",
+      "n_bronze": null,
+      "n_contests": 24,
+      "n_first_ac": 2,
+      "n_first_places": 0,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 2,
+      "n_second_places": 0,
+      "n_silver": null,
+      "n_solved": 84,
+      "n_subscribers": 0,
+      "n_third_places": 0,
+      "n_top_ten_places": 2,
+      "n_total_solved": 84,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Kentaro  Matsushita (noimi)",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 29,
+      "resource_rank": null,
+      "solving": 1338.0,
+      "submissions_info": {},
+      "total_solving": 1338.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2022-06-16T13:25:44.618Z",
+      "upsolving": 0.0,
+      "url": "/coder/noimi/?resource=29"
+    },
+    "model": "ranking.account",
+    "pk": 2200725
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "US",
+      "created": "2020-07-12T14:09:43.603Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "profile_picture": "https://scontent-hel3-1.xx.fbcdn.net/v/t31.18172-1/cp0/p50x50/18527209_1880990015483136_4590696800889794542_o.jpg?_nc_cat=105&ccb=1-5&_nc_sid=7206a8&_nc_ohc=UCGmIYz6-REAX8URJkM&tn=vb8VuL_ua0Ph_gDW&_nc_ht=scontent-hel3-1.xx&oh=00_AT8E7vRpUZFfwzATx38tz6AktyF_nEgxGnMsb8GTh5GTeQ&oe=62127442"
+      },
+      "key": "1189053654761094",
+      "last_activity": "2025-12-20T14:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-12-23T19:53:22.565Z",
+      "n_bronze": 2,
+      "n_contests": 44,
+      "n_first_ac": 7,
+      "n_first_places": 2,
+      "n_gold": 1,
+      "n_listvalues": 0,
+      "n_medals": 3,
+      "n_other_medals": null,
+      "n_places": 17,
+      "n_second_places": 2,
+      "n_silver": null,
+      "n_solved": 182,
+      "n_subscribers": 0,
+      "n_third_places": 4,
+      "n_top_ten_places": 9,
+      "n_total_solved": 182,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Andrew He (ecnerwala)",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 29,
+      "resource_rank": null,
+      "solving": 3620.0,
+      "submissions_info": {},
+      "total_solving": 3620.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2020-07-13T14:09:40.589Z",
+      "upsolving": 0.0,
+      "url": "/coder/ecnerwala/?resource=29"
+    },
+    "model": "ranking.account",
+    "pk": 2079410
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "UM",
+      "created": "2020-07-26T04:08:05.423Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "profile_picture": "https://scontent.frix7-1.fna.fbcdn.net/v/t1.6435-1/cp0/c0.0.50.50a/p50x50/70225386_365003011118880_6351510062388740096_n.jpg?_nc_cat=111&ccb=1-5&_nc_sid=7206a8&_nc_ohc=opuAoPhra_UAX-FKGzl&_nc_ht=scontent.frix7-1.fna&oh=e455168102fc6abc2a23c6bca4894630&oe=6189064A"
+      },
+      "key": "739599956861289",
+      "last_activity": "2025-12-20T14:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-12-23T19:53:26.340Z",
+      "n_bronze": null,
+      "n_contests": 13,
+      "n_first_ac": 1,
+      "n_first_places": 0,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 0,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 30,
+      "n_subscribers": 0,
+      "n_third_places": 0,
+      "n_top_ten_places": 0,
+      "n_total_solved": 30,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Dilhan Salgado",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 29,
+      "resource_rank": null,
+      "solving": 487.0,
+      "submissions_info": {},
+      "total_solving": 487.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2020-07-27T04:02:16.046Z",
+      "upsolving": 0.0,
+      "url": "/coder/dnialh/?resource=29"
+    },
+    "model": "ranking.account",
+    "pk": 2173589
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "KR",
+      "created": "2020-07-12T14:38:37.965Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "1121077348273432",
+      "last_activity": "2025-12-20T14:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-12-23T19:53:27.610Z",
+      "n_bronze": null,
+      "n_contests": 35,
+      "n_first_ac": 0,
+      "n_first_places": 0,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 0,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 113,
+      "n_subscribers": 0,
+      "n_third_places": 0,
+      "n_top_ten_places": 0,
+      "n_total_solved": 113,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "최석환 (gs12117)",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 29,
+      "resource_rank": null,
+      "solving": 2025.0,
+      "submissions_info": {},
+      "total_solving": 2025.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2020-07-13T14:28:23.498Z",
+      "upsolving": 0.0,
+      "url": "/coder/%E2%88%A83885452/?resource=29"
+    },
+    "model": "ranking.account",
+    "pk": 2092401
+  },
+  {
+    "fields": {
+      "account": 2079405,
+      "addition": {
+        "_n_solved": 5,
+        "_verdicts": [
+          "download_expired"
+        ],
+        "medal": "gold",
+        "name": "Gennady Korotkevich (tourist)",
+        "penalty": "11:37:07",
+        "problems": {
+          "A": {
+            "binary": true,
+            "external_solution": true,
+            "result": "+",
+            "time": "0:18:25",
+            "time_in_seconds": 1105,
+            "url": "https://www.facebook.com/async/codingproblems/download/submission/source_code/?submission_id=854922247126091"
+          },
+          "B": {
+            "binary": true,
+            "external_solution": true,
+            "result": "+",
+            "time": "3:09:28",
+            "time_in_seconds": 11368,
+            "url": "https://www.facebook.com/async/codingproblems/download/submission/source_code/?submission_id=1327146749100818"
+          },
+          "C1": {
+            "binary": true,
+            "external_solution": true,
+            "result": "+",
+            "time": "3:29:21",
+            "time_in_seconds": 12561,
+            "url": "https://www.facebook.com/async/codingproblems/download/submission/source_code/?submission_id=1404883341648718"
+          },
+          "C2": {
+            "binary": false,
+            "icon": "<i class=\"fas fa-hourglass-half\"></i>",
+            "result": "-",
+            "verdict": "download_expired"
+          },
+          "D": {
+            "binary": true,
+            "external_solution": true,
+            "result": "+",
+            "time": "3:41:43",
+            "time_in_seconds": 13303,
+            "url": "https://www.facebook.com/async/codingproblems/download/submission/source_code/?submission_id=1188650626206013"
+          },
+          "E": {
+            "binary": true,
+            "external_solution": true,
+            "result": "+",
+            "time": "0:58:10",
+            "time_in_seconds": 3490,
+            "url": "https://www.facebook.com/async/codingproblems/download/submission/source_code/?submission_id=846109361530013"
+          }
+        },
+        "solved": {
+          "solving": 5
+        }
+      },
+      "advanced": false,
+      "contest": 62296541,
+      "created": "2025-12-20T14:00:49.926Z",
+      "global_rating_change": null,
+      "last_activity": "2025-12-20T17:41:43Z",
+      "medal": "gold",
+      "modified": "2025-12-23T19:53:12.953Z",
+      "n_first_ac": 0,
+      "n_solved": 5,
+      "n_total_solved": 5,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "1",
+      "place_as_int": 1,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 29,
+      "skip_in_stats": false,
+      "solving": 71.0,
+      "total_solving": 71.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 83907279
+  },
+  {
+    "fields": {
+      "account": 2080895,
+      "addition": {
+        "_n_solved": 4,
+        "_verdicts": [
+          "wrong_answer"
+        ],
+        "country": "JP",
+        "medal": "silver",
+        "name": "Yui Hosaka (hos.lyric)",
+        "penalty": "6:12:37",
+        "problems": {
+          "A": {
+            "binary": true,
+            "external_solution": true,
+            "result": "+",
+            "time": "0:08:09",
+            "time_in_seconds": 489,
+            "url": "https://www.facebook.com/async/codingproblems/download/submission/source_code/?submission_id=1567937691069982"
+          },
+          "B": {
+            "binary": true,
+            "external_solution": true,
+            "result": "+",
+            "time": "2:02:19",
+            "time_in_seconds": 7339,
+            "url": "https://www.facebook.com/async/codingproblems/download/submission/source_code/?submission_id=1592521438436867"
+          },
+          "C1": {
+            "binary": false,
+            "external_solution": true,
+            "result": "-",
+            "time": "3:59:20",
+            "time_in_seconds": 14360,
+            "url": "https://www.facebook.com/async/codingproblems/download/submission/source_code/?submission_id=25771235029127580",
+            "verdict": "wrong_answer"
+          },
+          "D": {
+            "binary": true,
+            "external_solution": true,
+            "result": "+",
+            "time": "3:27:02",
+            "time_in_seconds": 12422,
+            "url": "https://www.facebook.com/async/codingproblems/download/submission/source_code/?submission_id=1389044412861047"
+          },
+          "E": {
+            "binary": true,
+            "external_solution": true,
+            "first_ac": true,
+            "result": "+",
+            "time": "0:35:07",
+            "time_in_seconds": 2107,
+            "url": "https://www.facebook.com/async/codingproblems/download/submission/source_code/?submission_id=909552014786350"
+          }
+        },
+        "solved": {
+          "solving": 4
+        }
+      },
+      "advanced": false,
+      "contest": 62296541,
+      "created": "2025-12-20T14:00:55.504Z",
+      "global_rating_change": null,
+      "last_activity": "2025-12-20T17:27:02Z",
+      "medal": "silver",
+      "modified": "2025-12-23T19:53:13.584Z",
+      "n_first_ac": 1,
+      "n_solved": 4,
+      "n_total_solved": 4,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "2",
+      "place_as_int": 2,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 29,
+      "skip_in_stats": false,
+      "solving": 63.0,
+      "total_solving": 63.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 83907304
+  },
+  {
+    "fields": {
+      "account": 9607475,
+      "addition": {
+        "_n_solved": 4,
+        "_verdicts": [
+          "wrong_answer"
+        ],
+        "country": "JP",
+        "name": "にしもと まさき (maspy)",
+        "penalty": "9:26:30",
+        "problems": {
+          "A": {
+            "binary": true,
+            "external_solution": true,
+            "result": "+",
+            "time": "1:18:55",
+            "time_in_seconds": 4735,
+            "url": "https://www.facebook.com/async/codingproblems/download/submission/source_code/?submission_id=1173567484973350"
+          },
+          "B": {
+            "binary": false,
+            "external_solution": true,
+            "result": "-",
+            "time": "2:14:48",
+            "time_in_seconds": 8088,
+            "url": "https://www.facebook.com/async/codingproblems/download/submission/source_code/?submission_id=1247938870511050",
+            "verdict": "wrong_answer"
+          },
+          "C1": {
+            "binary": true,
+            "external_solution": true,
+            "result": "+",
+            "time": "3:03:07",
+            "time_in_seconds": 10987,
+            "url": "https://www.facebook.com/async/codingproblems/download/submission/source_code/?submission_id=873474538593476"
+          },
+          "D": {
+            "binary": true,
+            "external_solution": true,
+            "result": "+",
+            "time": "3:58:00",
+            "time_in_seconds": 14280,
+            "url": "https://www.facebook.com/async/codingproblems/download/submission/source_code/?submission_id=1518136462776427"
+          },
+          "E": {
+            "binary": true,
+            "external_solution": true,
+            "result": "+",
+            "time": "1:06:28",
+            "time_in_seconds": 3988,
+            "url": "https://www.facebook.com/async/codingproblems/download/submission/source_code/?submission_id=655064347596153"
+          }
+        },
+        "solved": {
+          "solving": 4
+        }
+      },
+      "advanced": false,
+      "contest": 62296541,
+      "created": "2025-12-20T14:00:45.450Z",
+      "global_rating_change": null,
+      "last_activity": "2025-12-20T17:58:00Z",
+      "medal": null,
+      "modified": "2025-12-23T19:53:14.944Z",
+      "n_first_ac": 0,
+      "n_solved": 4,
+      "n_total_solved": 4,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "4",
+      "place_as_int": 4,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 29,
+      "skip_in_stats": false,
+      "solving": 53.0,
+      "total_solving": 53.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 83907271
+  },
+  {
+    "fields": {
+      "account": 2122667,
+      "addition": {
+        "_n_solved": 4,
+        "country": "UA",
+        "name": "Anton Trygub (antontrygubO_o)",
+        "penalty": "7:53:42",
+        "problems": {
+          "A": {
+            "binary": true,
+            "external_solution": true,
+            "result": "+",
+            "time": "0:09:37",
+            "time_in_seconds": 577,
+            "url": "https://www.facebook.com/async/codingproblems/download/submission/source_code/?submission_id=2232012187291855"
+          },
+          "C1": {
+            "binary": true,
+            "external_solution": true,
+            "result": "+",
+            "time": "1:15:00",
+            "time_in_seconds": 4500,
+            "url": "https://www.facebook.com/async/codingproblems/download/submission/source_code/?submission_id=724586570698243"
+          },
+          "C2": {
+            "binary": true,
+            "external_solution": true,
+            "first_ac": true,
+            "result": "+",
+            "time": "2:33:42",
+            "time_in_seconds": 9222,
+            "url": "https://www.facebook.com/async/codingproblems/download/submission/source_code/?submission_id=1591932562234943"
+          },
+          "E": {
+            "binary": true,
+            "external_solution": true,
+            "result": "+",
+            "time": "3:55:23",
+            "time_in_seconds": 14123,
+            "url": "https://www.facebook.com/async/codingproblems/download/submission/source_code/?submission_id=814635734945530"
+          }
+        },
+        "solved": {
+          "solving": 4
+        }
+      },
+      "advanced": false,
+      "contest": 62296541,
+      "created": "2025-12-20T14:00:43.701Z",
+      "global_rating_change": null,
+      "last_activity": "2025-12-20T17:55:23Z",
+      "medal": null,
+      "modified": "2025-12-23T19:53:15.644Z",
+      "n_first_ac": 1,
+      "n_solved": 4,
+      "n_total_solved": 4,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "5",
+      "place_as_int": 5,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 29,
+      "skip_in_stats": false,
+      "solving": 47.0,
+      "total_solving": 47.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 83907268
+  },
+  {
+    "fields": {
+      "account": 2079423,
+      "addition": {
+        "_n_solved": 3,
+        "_verdicts": [
+          "download_expired"
+        ],
+        "country": "CA",
+        "name": "Kevin Sun (ksun48)",
+        "penalty": "3:32:12",
+        "problems": {
+          "A": {
+            "binary": true,
+            "external_solution": true,
+            "first_ac": true,
+            "result": "+",
+            "time": "0:06:50",
+            "time_in_seconds": 410,
+            "url": "https://www.facebook.com/async/codingproblems/download/submission/source_code/?submission_id=1175920304519115"
+          },
+          "D": {
+            "binary": true,
+            "external_solution": true,
+            "first_ac": true,
+            "result": "+",
+            "time": "2:12:58",
+            "time_in_seconds": 7978,
+            "url": "https://www.facebook.com/async/codingproblems/download/submission/source_code/?submission_id=4254547894860589"
+          },
+          "E": {
+            "binary": true,
+            "external_solution": true,
+            "result": "+",
+            "time": "1:12:24",
+            "time_in_seconds": 4344,
+            "url": "https://www.facebook.com/async/codingproblems/download/submission/source_code/?submission_id=1533919817890979"
+          },
+          "F": {
+            "binary": false,
+            "icon": "<i class=\"fas fa-hourglass-half\"></i>",
+            "result": "-",
+            "verdict": "download_expired"
+          }
+        },
+        "solved": {
+          "solving": 3
+        }
+      },
+      "advanced": false,
+      "contest": 62296541,
+      "created": "2025-12-20T14:00:52.162Z",
+      "global_rating_change": null,
+      "last_activity": "2025-12-20T16:12:58Z",
+      "medal": null,
+      "modified": "2025-12-23T19:53:16.258Z",
+      "n_first_ac": 2,
+      "n_solved": 3,
+      "n_total_solved": 3,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "6",
+      "place_as_int": 6,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 29,
+      "skip_in_stats": false,
+      "solving": 45.0,
+      "total_solving": 45.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 83907283
+  },
+  {
+    "fields": {
+      "account": 2101163,
+      "addition": {
+        "_n_solved": 3,
+        "country": "JP",
+        "name": "Kohei Morita (yosupo)",
+        "penalty": "5:14:27",
+        "problems": {
+          "A": {
+            "binary": true,
+            "external_solution": true,
+            "result": "+",
+            "time": "0:19:12",
+            "time_in_seconds": 1152,
+            "url": "https://www.facebook.com/async/codingproblems/download/submission/source_code/?submission_id=1782547542408514"
+          },
+          "B": {
+            "binary": true,
+            "external_solution": true,
+            "first_ac": true,
+            "result": "+",
+            "time": "1:46:08",
+            "time_in_seconds": 6368,
+            "url": "https://www.facebook.com/async/codingproblems/download/submission/source_code/?submission_id=1413674397063970"
+          },
+          "E": {
+            "binary": true,
+            "external_solution": true,
+            "result": "+",
+            "time": "3:09:07",
+            "time_in_seconds": 11347,
+            "url": "https://www.facebook.com/async/codingproblems/download/submission/source_code/?submission_id=1236703884985981"
+          }
+        },
+        "solved": {
+          "solving": 3
+        }
+      },
+      "advanced": false,
+      "contest": 62296541,
+      "created": "2025-12-20T14:00:52.719Z",
+      "global_rating_change": null,
+      "last_activity": "2025-12-20T17:09:07Z",
+      "medal": null,
+      "modified": "2025-12-23T19:53:18.187Z",
+      "n_first_ac": 1,
+      "n_solved": 3,
+      "n_total_solved": 3,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "9",
+      "place_as_int": 9,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 29,
+      "skip_in_stats": false,
+      "solving": 45.0,
+      "total_solving": 45.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 83907284
+  },
+  {
+    "fields": {
+      "account": 3316764,
+      "addition": {
+        "_n_solved": 3,
+        "_verdicts": [
+          "download_expired",
+          "wrong_answer"
+        ],
+        "name": "邓明扬 (Slime)",
+        "penalty": "8:30:46",
+        "problems": {
+          "A": {
+            "binary": true,
+            "external_solution": true,
+            "result": "+",
+            "time": "3:20:53",
+            "time_in_seconds": 12053,
+            "url": "https://www.facebook.com/async/codingproblems/download/submission/source_code/?submission_id=720325531125024"
+          },
+          "B": {
+            "binary": false,
+            "icon": "<i class=\"fas fa-hourglass-half\"></i>",
+            "result": "-",
+            "verdict": "download_expired"
+          },
+          "D": {
+            "binary": true,
+            "external_solution": true,
+            "result": "+",
+            "time": "3:05:59",
+            "time_in_seconds": 11159,
+            "url": "https://www.facebook.com/async/codingproblems/download/submission/source_code/?submission_id=1718815872425416"
+          },
+          "E": {
+            "binary": true,
+            "external_solution": true,
+            "result": "+",
+            "time": "2:03:54",
+            "time_in_seconds": 7434,
+            "url": "https://www.facebook.com/async/codingproblems/download/submission/source_code/?submission_id=1188835756121043"
+          },
+          "F": {
+            "binary": false,
+            "external_solution": true,
+            "result": "-",
+            "time": "3:56:46",
+            "time_in_seconds": 14206,
+            "url": "https://www.facebook.com/async/codingproblems/download/submission/source_code/?submission_id=860585953232954",
+            "verdict": "wrong_answer"
+          }
+        },
+        "solved": {
+          "solving": 3
+        }
+      },
+      "advanced": false,
+      "contest": 62296541,
+      "created": "2025-12-20T14:00:48.797Z",
+      "global_rating_change": null,
+      "last_activity": "2025-12-20T17:20:53Z",
+      "medal": null,
+      "modified": "2025-12-23T19:53:19.476Z",
+      "n_first_ac": 0,
+      "n_solved": 3,
+      "n_total_solved": 3,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "11",
+      "place_as_int": 11,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 29,
+      "skip_in_stats": false,
+      "solving": 45.0,
+      "total_solving": 45.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 83907277
+  },
+  {
+    "fields": {
+      "account": 2200725,
+      "addition": {
+        "_n_solved": 3,
+        "_verdicts": [
+          "download_expired"
+        ],
+        "country": "JP",
+        "name": "Kentaro  Matsushita (noimi)",
+        "penalty": "2:26:36",
+        "problems": {
+          "A": {
+            "binary": true,
+            "external_solution": true,
+            "result": "+",
+            "time": "0:09:41",
+            "time_in_seconds": 581,
+            "url": "https://www.facebook.com/async/codingproblems/download/submission/source_code/?submission_id=2440681249680706"
+          },
+          "C1": {
+            "binary": true,
+            "external_solution": true,
+            "first_ac": true,
+            "result": "+",
+            "time": "0:48:06",
+            "time_in_seconds": 2886,
+            "url": "https://www.facebook.com/async/codingproblems/download/submission/source_code/?submission_id=833567422837378"
+          },
+          "D": {
+            "binary": false,
+            "icon": "<i class=\"fas fa-hourglass-half\"></i>",
+            "result": "-",
+            "verdict": "download_expired"
+          },
+          "E": {
+            "binary": true,
+            "external_solution": true,
+            "result": "+",
+            "time": "1:28:49",
+            "time_in_seconds": 5329,
+            "url": "https://www.facebook.com/async/codingproblems/download/submission/source_code/?submission_id=703962785875443"
+          }
+        },
+        "solved": {
+          "solving": 3
+        }
+      },
+      "advanced": false,
+      "contest": 62296541,
+      "created": "2025-12-20T14:00:51.017Z",
+      "global_rating_change": null,
+      "last_activity": "2025-12-20T15:28:49Z",
+      "medal": null,
+      "modified": "2025-12-23T19:53:20.761Z",
+      "n_first_ac": 1,
+      "n_solved": 3,
+      "n_total_solved": 3,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "13",
+      "place_as_int": 13,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 29,
+      "skip_in_stats": false,
+      "solving": 35.0,
+      "total_solving": 35.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 83907281
+  },
+  {
+    "fields": {
+      "account": 2079410,
+      "addition": {
+        "_n_solved": 2,
+        "_verdicts": [
+          "download_expired",
+          "wrong_answer"
+        ],
+        "country": "US",
+        "name": "Andrew He (ecnerwala)",
+        "penalty": "1:09:58",
+        "problems": {
+          "A": {
+            "binary": true,
+            "external_solution": true,
+            "result": "+",
+            "time": "0:07:47",
+            "time_in_seconds": 467,
+            "url": "https://www.facebook.com/async/codingproblems/download/submission/source_code/?submission_id=729702709725111"
+          },
+          "B": {
+            "binary": false,
+            "external_solution": true,
+            "result": "-",
+            "time": "3:59:30",
+            "time_in_seconds": 14370,
+            "url": "https://www.facebook.com/async/codingproblems/download/submission/source_code/?submission_id=702320552702183",
+            "verdict": "wrong_answer"
+          },
+          "C1": {
+            "binary": false,
+            "icon": "<i class=\"fas fa-hourglass-half\"></i>",
+            "result": "-",
+            "verdict": "download_expired"
+          },
+          "D": {
+            "binary": false,
+            "external_solution": true,
+            "result": "-",
+            "time": "2:54:58",
+            "time_in_seconds": 10498,
+            "url": "https://www.facebook.com/async/codingproblems/download/submission/source_code/?submission_id=2701713746836356",
+            "verdict": "wrong_answer"
+          },
+          "E": {
+            "binary": true,
+            "external_solution": true,
+            "result": "+",
+            "time": "1:02:11",
+            "time_in_seconds": 3731,
+            "url": "https://www.facebook.com/async/codingproblems/download/submission/source_code/?submission_id=1972991086593319"
+          }
+        },
+        "solved": {
+          "solving": 2
+        }
+      },
+      "advanced": false,
+      "contest": 62296541,
+      "created": "2025-12-20T14:00:43.119Z",
+      "global_rating_change": null,
+      "last_activity": "2025-12-20T15:02:11Z",
+      "medal": null,
+      "modified": "2025-12-23T19:53:22.585Z",
+      "n_first_ac": 0,
+      "n_solved": 2,
+      "n_total_solved": 2,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "16",
+      "place_as_int": 16,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 29,
+      "skip_in_stats": false,
+      "solving": 27.0,
+      "total_solving": 27.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 83907267
+  },
+  {
+    "fields": {
+      "account": 2173589,
+      "addition": {
+        "_n_solved": 2,
+        "country": "UM",
+        "name": "Dilhan Salgado",
+        "penalty": "2:44:19",
+        "problems": {
+          "A": {
+            "binary": true,
+            "external_solution": true,
+            "result": "+",
+            "time": "0:44:59",
+            "time_in_seconds": 2699,
+            "url": "https://www.facebook.com/async/codingproblems/download/submission/source_code/?submission_id=861963773223349"
+          },
+          "F": {
+            "binary": true,
+            "external_solution": true,
+            "first_ac": true,
+            "result": "+",
+            "time": "1:59:20",
+            "time_in_seconds": 7160,
+            "url": "https://www.facebook.com/async/codingproblems/download/submission/source_code/?submission_id=1294484756009603"
+          }
+        },
+        "solved": {
+          "solving": 2
+        }
+      },
+      "advanced": false,
+      "contest": 62296541,
+      "created": "2025-12-20T14:00:46.566Z",
+      "global_rating_change": null,
+      "last_activity": "2025-12-20T15:59:20Z",
+      "medal": null,
+      "modified": "2025-12-23T19:53:26.359Z",
+      "n_first_ac": 1,
+      "n_solved": 2,
+      "n_total_solved": 2,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "22",
+      "place_as_int": 22,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 29,
+      "skip_in_stats": false,
+      "solving": 26.0,
+      "total_solving": 26.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 83907273
+  },
+  {
+    "fields": {
+      "account": 2092401,
+      "addition": {
+        "_n_solved": 1,
+        "_verdicts": [
+          "download_expired"
+        ],
+        "country": "KR",
+        "name": "최석환 (gs12117)",
+        "penalty": "0:23:50",
+        "problems": {
+          "A": {
+            "binary": true,
+            "external_solution": true,
+            "result": "+",
+            "time": "0:23:50",
+            "time_in_seconds": 1430,
+            "url": "https://www.facebook.com/async/codingproblems/download/submission/source_code/?submission_id=838745405804657"
+          },
+          "E": {
+            "binary": false,
+            "icon": "<i class=\"fas fa-hourglass-half\"></i>",
+            "result": "-",
+            "verdict": "download_expired"
+          }
+        },
+        "solved": {
+          "solving": 1
+        }
+      },
+      "advanced": false,
+      "contest": 62296541,
+      "created": "2025-12-20T14:00:50.472Z",
+      "global_rating_change": null,
+      "last_activity": "2025-12-20T14:23:50Z",
+      "medal": null,
+      "modified": "2025-12-23T19:53:27.624Z",
+      "n_first_ac": 0,
+      "n_solved": 1,
+      "n_total_solved": 1,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "24",
+      "place_as_int": 24,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 29,
+      "skip_in_stats": false,
+      "solving": 9.0,
+      "total_solving": 9.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 83907280
+  }
+]

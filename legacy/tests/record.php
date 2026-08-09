@@ -116,13 +116,28 @@ file_put_contents($tmp_dir . '/expected_contests.json', $stdout);
 
 try {
     fixture_validate_recording($tmp_dir);
+    $n_responses = count(glob($tmp_dir . '/httpcache/*.html')) + count(glob($tmp_dir . '/httpcache/*.html.gz'));
+    fixture_pack_http_cache($tmp_dir . '/httpcache', fixture_http_cache_archive_path($tmp_dir));
+    fixture_rmdir_recursive($tmp_dir . '/httpcache');
+    fixture_validate_recording($tmp_dir);
 } catch (RuntimeException $e) {
     fixture_remove_temporary_recording($tmp_dir);
     fixture_fail($e->getMessage() . ' (temporary recording removed)');
 }
 
 echo "verifying offline replay...\n";
-$code = fixture_exec_child(fixture_module_command($tmp_dir, 'replay', true), $replay_stdout, $replay_stderr);
+try {
+    $replay_cache_dir = fixture_materialize_http_cache($tmp_dir);
+} catch (RuntimeException $e) {
+    fixture_remove_temporary_recording($tmp_dir);
+    fixture_fail($e->getMessage() . ' (temporary recording removed)');
+}
+$code = fixture_exec_child(
+    fixture_module_command($tmp_dir, 'replay', true, $replay_cache_dir),
+    $replay_stdout,
+    $replay_stderr,
+);
+fixture_rmdir_recursive($replay_cache_dir);
 if ($code !== 0) {
     fwrite(STDERR, $replay_stderr);
     fixture_fail("replay verification failed with exit code $code (temp dir kept: $tmp_dir)");
@@ -145,5 +160,4 @@ if (!rename($tmp_dir, $fixture_dir)) {
 fixture_remove_temporary_recording($tmp_dir);
 fixture_chown_recursive(dirname($fixture_dir), fileowner(__DIR__), filegroup(__DIR__));
 
-$n_responses = count(glob($fixture_dir . '/httpcache/*.html.gz'));
 echo "recorded $host: " . count($contests) . " contests, $n_responses responses -> $fixture_dir\n";

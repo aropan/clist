@@ -1,0 +1,87 @@
+[
+    {
+        "duration": "05:00",
+        "host": "nerc.itmo.ru/school",
+        "ignore_times_after_start": true,
+        "info": {
+            "series": "vkoshp"
+        },
+        "key": "2023-2024-vkoshp",
+        "rid": 11,
+        "standings_url": "https://nerc.itmo.ru/school/archive/2023-2024/ru-olymp-team-russia-2023-standings.html",
+        "start_time": "12.12.2023",
+        "timezone": "Europe/Moscow",
+        "title": "Двадцать четвертая открытая Всероссийская командная олимпиада школьников по программированию",
+        "url": "https://nerc.itmo.ru/school/russia-team/archive.html"
+    },
+    {
+        "duration": "05:00",
+        "host": "nerc.itmo.ru/school",
+        "ignore_times_after_start": true,
+        "info": {
+            "series": "vkoshp"
+        },
+        "key": "2024-2025-vkoshp",
+        "rid": 11,
+        "standings_url": "https://nerc.itmo.ru/school/archive/2024-2025/ru-olymp-team-russia-2024-standings.html",
+        "start_time": "14.12.2024",
+        "timezone": "Europe/Moscow",
+        "title": "Двадцать пятая открытая Всероссийская командная олимпиада школьников по программированию",
+        "url": "https://nerc.itmo.ru/school/russia-team/archive.html"
+    },
+    {
+        "duration": "05:00",
+        "host": "nerc.itmo.ru/school",
+        "key": "20260201",
+        "rid": 11,
+        "start_time": "1.02.2026 13:00",
+        "timezone": "Europe/Moscow",
+        "title": "Интернет-олимпиада",
+        "url": "https://nerc.itmo.ru/school/io/"
+    },
+    {
+        "duration": "05:00",
+        "host": "nerc.itmo.ru/school",
+        "key": "20260215",
+        "rid": 11,
+        "start_time": "15.02.2026 13:00",
+        "timezone": "Europe/Moscow",
+        "title": "Интернет-олимпиада",
+        "url": "https://nerc.itmo.ru/school/io/"
+    },
+    {
+        "duration": "05:00",
+        "host": "nerc.itmo.ru/school",
+        "key": "20260228",
+        "rid": 11,
+        "start_time": "28.02.2026 15:00",
+        "timezone": "Europe/Moscow",
+        "title": "Интернет-олимпиада",
+        "url": "https://nerc.itmo.ru/school/io/"
+    },
+    {
+        "duration": "05:00",
+        "host": "nerc.itmo.ru/school",
+        "key": "20260321",
+        "rid": 11,
+        "start_time": "21.03.2026 15:00",
+        "timezone": "Europe/Moscow",
+        "title": "Интернет-олимпиада",
+        "url": "https://nerc.itmo.ru/school/io/"
+    },
+    {
+        "end_time": "16.12.2025 15:00",
+        "host": "nerc.itmo.ru/school",
+        "ignore_times_after_start": true,
+        "info": {
+            "series": "vkoshp"
+        },
+        "key": "2025-2026-vkoshp",
+        "rid": 11,
+        "standings_url": "https://nerc.itmo.ru/school/archive/2025-2026/ru-olymp-team-russia-2025-standings.html",
+        "start_time": "16.12.2025 10:00",
+        "timezone": "Europe/Moscow",
+        "title": "Двадцать шестая открытая всероссийская командная олимпиада школьников по программированию",
+        "url": "https://nerc.itmo.ru/school/russia-team/index.html"
+    }
+]

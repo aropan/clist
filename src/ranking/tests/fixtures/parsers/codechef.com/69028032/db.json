@@ -1,0 +1,3023 @@
+[
+  {
+    "fields": {
+      "accounts_fields": {
+        "types": {
+          "about_me": [
+            "str"
+          ],
+          "avatar_url": [
+            "str"
+          ],
+          "compile_error": [
+            "str"
+          ],
+          "institution": [
+            "str"
+          ],
+          "link": [
+            "str"
+          ],
+          "members": [
+            "list"
+          ],
+          "motto": [
+            "str"
+          ],
+          "organisation": [
+            "str"
+          ],
+          "problems_solved": [
+            "str"
+          ],
+          "runtime_error": [
+            "str"
+          ],
+          "solutions_accepted": [
+            "str"
+          ],
+          "solutions_submitted": [
+            "str"
+          ],
+          "student/professional": [
+            "str"
+          ],
+          "time_limit_exceeded": [
+            "str"
+          ],
+          "username": [
+            "str"
+          ],
+          "wrong_answer": [
+            "str"
+          ]
+        },
+        "verification_fields": [
+          "name",
+          "student/professional"
+        ]
+      },
+      "allow_delete_archived_statistics": false,
+      "api_url": null,
+      "auto_remove_started": false,
+      "avatar_url": "{info[avatar_url]}",
+      "avg_rating": 1267.361387153706,
+      "color": "#CC669E",
+      "contest_update_time": "2026-07-29T17:11:42.805Z",
+      "country_rank_update_time": "2026-08-02T12:20:06.672Z",
+      "created": "2013-02-03T00:00:00Z",
+      "default_account_type": 1,
+      "enable": true,
+      "has_account_last_submission": true,
+      "has_account_n_writers": true,
+      "has_account_verification": true,
+      "has_accounts_infos_update": true,
+      "has_country_medal": null,
+      "has_country_place": null,
+      "has_country_rating": true,
+      "has_inherit_medals_to_related": false,
+      "has_multi_account": true,
+      "has_problem_archive": false,
+      "has_problem_rating": true,
+      "has_problem_statistic": true,
+      "has_problem_update": true,
+      "has_rating_history": true,
+      "has_standings_renamed_account": false,
+      "has_statistic_medal": null,
+      "has_statistic_n_first_ac": null,
+      "has_statistic_n_total_solved": null,
+      "has_statistic_place": null,
+      "has_statistic_total_solving": null,
+      "has_submissions_statistics_log": false,
+      "has_upsolving": true,
+      "host": "codechef.com",
+      "icon_file": "resources/codechef_com.png",
+      "icon_updated_at": "2025-12-14T00:27:40.071Z",
+      "icon_url": null,
+      "info": {
+        "accounts": {
+          "limit": 300
+        },
+        "default_variables": {
+          "min_n_participations": "10"
+        },
+        "get_events": {
+          "colors": {
+            "darken": "#441630",
+            "lighten": "#EFD1E1"
+          }
+        },
+        "ratings": {
+          "problems": {
+            "ignore_missing_account": true
+          }
+        },
+        "standings": {
+          "avg_problem_width": true,
+          "timeline": {
+            "attempt_penalty": 1200,
+            "penalty_format": 3,
+            "penalty_more": 0,
+            "penalty_more_selector": ".addition-penalty-cell",
+            "penalty_rounding": "none",
+            "penalty_selector": ".addition-time-cell",
+            "time_factor": {
+              "1": [
+                1
+              ],
+              "2": [
+                60,
+                1
+              ],
+              "3": [
+                3600,
+                60,
+                1
+              ]
+            }
+          }
+        },
+        "statistics": {
+          "wait_rating": {
+            "days": 2
+          }
+        }
+      },
+      "modified": "2026-08-02T16:43:47.621Z",
+      "n_accounts": 1116255,
+      "n_accounts_to_update": 0,
+      "n_contests": 2243,
+      "n_rating_accounts": 923358,
+      "n_statistics": 7370715,
+      "n_team_accounts": 82102,
+      "n_university_accounts": 0,
+      "parse_url": null,
+      "path": "./module/codechef.com/index.php",
+      "problem_archive_update_time": null,
+      "problem_rating_predictor": {},
+      "problem_url": null,
+      "problems_fields": {
+        "fixed_fields": [
+          "native_rating"
+        ],
+        "types": {
+          "best_tag": [
+            "str"
+          ],
+          "category_name": [
+            "str"
+          ],
+          "contest_key": [
+            "str"
+          ],
+          "editorial_url": [
+            "str"
+          ],
+          "first_ac__accounts": [
+            "list"
+          ],
+          "first_ac__in_seconds": [
+            "int"
+          ],
+          "first_ac__time": [
+            "str"
+          ],
+          "hints": [
+            "list"
+          ],
+          "is_challenge": [
+            "bool"
+          ],
+          "languages_supported": [
+            "list"
+          ],
+          "max_score": [
+            "int"
+          ],
+          "max_timelimit": [
+            "str"
+          ],
+          "native_rating": [
+            "int"
+          ],
+          "source_sizelimit": [
+            "str"
+          ],
+          "video_editorial_url": [
+            "str"
+          ],
+          "writers": [
+            "list"
+          ]
+        }
+      },
+      "profile_url": "https://www.codechef.com/users/{account}",
+      "rank_update_time": "2026-08-01T10:00:07.968Z",
+      "rating_prediction": null,
+      "rating_update_time": "2026-08-02T16:43:47.617Z",
+      "ratings": [
+        {
+          "color": "gray",
+          "hex_rgb": "#808080",
+          "high": 1400,
+          "hsl": [
+            0,
+            0,
+            0.5
+          ],
+          "low": -100500,
+          "name": "★",
+          "next": 1400,
+          "prev": -100500
+        },
+        {
+          "color": "green",
+          "hex_rgb": "#008000",
+          "high": 1600,
+          "hsl": [
+            0.33,
+            1,
+            0.25
+          ],
+          "low": 1400,
+          "name": "★★",
+          "next": 1600,
+          "prev": 1400
+        },
+        {
+          "color": "blue",
+          "hex_rgb": "#0000FF",
+          "high": 1800,
+          "hsl": [
+            0.67,
+            1,
+            0.5
+          ],
+          "low": 1600,
+          "name": "★★★",
+          "next": 1800,
+          "prev": 1600
+        },
+        {
+          "color": "violet",
+          "hex_rgb": "#AA00AA",
+          "high": 2000,
+          "hsl": [
+            0.83,
+            1,
+            0.33
+          ],
+          "low": 1800,
+          "name": "★★★★",
+          "next": 2000,
+          "prev": 1800
+        },
+        {
+          "color": "yellow",
+          "hex_rgb": "#BBBB00",
+          "high": 2200,
+          "hsl": [
+            0.17,
+            1,
+            0.37
+          ],
+          "low": 2000,
+          "name": "★★★★★",
+          "next": 2200,
+          "prev": 2000
+        },
+        {
+          "color": "orange",
+          "hex_rgb": "#FF8C00",
+          "high": 2500,
+          "hsl": [
+            0.09,
+            1,
+            0.5
+          ],
+          "low": 2200,
+          "name": "★★★★★★",
+          "next": 2500,
+          "prev": 2200
+        },
+        {
+          "color": "red",
+          "hex_rgb": "#FF0000",
+          "high": 3000,
+          "hsl": [
+            0,
+            1,
+            0.5
+          ],
+          "low": 2500,
+          "name": "★★★★★★★",
+          "next": 3000,
+          "prev": 2500
+        },
+        {
+          "color": "red",
+          "hex_rgb": "#FF0000",
+          "high": 100500,
+          "hsl": [
+            0.0,
+            1.0,
+            0.375
+          ],
+          "low": 3000,
+          "name": "★★★★★★★",
+          "prev": 2500
+        }
+      ],
+      "regexp": null,
+      "short_host": "cc",
+      "skip_for_contests_chart": false,
+      "statistics_fields": {
+        "types": {
+          "advanced": [
+            "bool"
+          ],
+          "country": [
+            "str"
+          ],
+          "division": [
+            "str"
+          ],
+          "institution": [
+            "NoneType",
+            "str"
+          ],
+          "institution_type": [
+            "NoneType",
+            "str"
+          ],
+          "is_user_premium": [
+            "bool"
+          ],
+          "medal": [
+            "str"
+          ],
+          "name": [
+            "NoneType",
+            "str"
+          ],
+          "new_rating": [
+            "int"
+          ],
+          "old_rating": [
+            "int"
+          ],
+          "penalty": [
+            "int"
+          ],
+          "rating": [
+            "str"
+          ],
+          "rating_change": [
+            "str",
+            "int"
+          ],
+          "time": [
+            "str"
+          ],
+          "total_time": [
+            "str"
+          ],
+          "user_gender": [
+            "NoneType",
+            "str"
+          ]
+        }
+      },
+      "timezone": "Asia/Calcutta",
+      "uid": "ogc7qt4hlg454ggkj9o6ttqnq8@group.calendar.google.com",
+      "url": "https://www.codechef.com/contests"
+    },
+    "model": "clist.resource",
+    "pk": 2
+  },
+  {
+    "fields": {
+      "created": "2019-05-08T23:44:51.688Z",
+      "delay_on_error": "01:00:00",
+      "delay_on_success": "08:00:00",
+      "delay_shortly_after": "00:05:00",
+      "enable": true,
+      "long_contest_divider": 15,
+      "long_contest_idle": "06:00:00",
+      "max_delay_after_end": "2 00:00:00",
+      "min_delay_after_end": null,
+      "modified": "2022-10-29T11:23:26.769Z",
+      "path": "ranking/management/modules/codechef",
+      "resource": 2,
+      "shortly_after": "00:30:00"
+    },
+    "model": "ranking.module",
+    "pk": 16
+  },
+  {
+    "fields": {
+      "allow_updating_statistics_for_participants": null,
+      "auto_updated": "2026-08-02T19:30:26Z",
+      "calculate_time": false,
+      "created": "2026-07-22T10:11:56.883Z",
+      "duration_in_secs": 10800,
+      "edit": null,
+      "elimination_tournament_info": {},
+      "end_time": "2026-07-27T16:30:00Z",
+      "finalists_info": {},
+      "has_fixed_rating_prediction_field": null,
+      "has_hidden_results": false,
+      "has_submissions": null,
+      "has_submissions_tests": null,
+      "has_unlimited_statistics": null,
+      "hide_unsolved_standings_problems": null,
+      "host": "codechef.com",
+      "info": {
+        "fields": [
+          "time",
+          "problems",
+          "solved",
+          "old_rating",
+          "name",
+          "country",
+          "institution",
+          "institution_type",
+          "user_gender",
+          "is_user_premium"
+        ],
+        "fields_types": {
+          "country": [
+            "str"
+          ],
+          "institution": [
+            "str"
+          ],
+          "institution_type": [
+            "str",
+            "NoneType"
+          ],
+          "is_user_premium": [
+            "bool"
+          ],
+          "name": [
+            "str"
+          ],
+          "old_rating": [
+            "int"
+          ],
+          "problems": [
+            "dict"
+          ],
+          "solved": [
+            "dict"
+          ],
+          "time": [
+            "str"
+          ],
+          "user_gender": [
+            "NoneType",
+            "str"
+          ]
+        },
+        "hidden_fields": [
+          "is_user_premium",
+          "name",
+          "institution",
+          "user_gender",
+          "institution_type",
+          "country",
+          "old_rating"
+        ],
+        "problems": [
+          {
+            "category_name": "easy",
+            "code": "UTNL",
+            "contest_key": "DSAMONDAY013",
+            "is_challenge": false,
+            "languages_supported": [
+              "CPP20",
+              "PYTH 3",
+              "C",
+              "JAVA",
+              "NODEJS"
+            ],
+            "max_score": 100,
+            "max_timelimit": "1",
+            "n_accepted": 8119,
+            "n_partial": 166,
+            "n_teams": 8285,
+            "n_total": 8363,
+            "name": "Unlock the Next Level",
+            "rating": 351,
+            "short": "UTNL",
+            "source_sizelimit": "50000",
+            "tags": [
+              "major_oasis_27"
+            ],
+            "url": "https://www.codechef.com/problems/UTNL",
+            "writers": [
+              "major_oasis_27"
+            ]
+          },
+          {
+            "category_name": "easy",
+            "code": "ARCO",
+            "contest_key": "DSAMONDAY013",
+            "is_challenge": false,
+            "languages_supported": [
+              "CPP20",
+              "PYTH 3",
+              "C",
+              "JAVA",
+              "PYP3",
+              "CS2",
+              "NODEJS",
+              "GO",
+              "TS",
+              "PHP",
+              "kotlin",
+              "rust",
+              "R",
+              "SQL",
+              "CAML",
+              "OracleDB",
+              "HTML",
+              "CSS",
+              "PyScript"
+            ],
+            "max_score": 100,
+            "max_timelimit": "1",
+            "n_accepted": 6819,
+            "n_partial": 498,
+            "n_teams": 7317,
+            "n_total": 8363,
+            "name": "Array Compression",
+            "native_rating": 940,
+            "rating": 782,
+            "short": "ARCO",
+            "source_sizelimit": "50000",
+            "tags": [
+              "string",
+              "data-structures"
+            ],
+            "url": "https://www.codechef.com/problems/ARCO",
+            "writers": [
+              "major_oasis_27"
+            ]
+          },
+          {
+            "category_name": "medium",
+            "code": "VACDI",
+            "contest_key": "DSAMONDAY013",
+            "is_challenge": false,
+            "languages_supported": [
+              "CPP20",
+              "PYTH 3",
+              "C",
+              "JAVA",
+              "NODEJS"
+            ],
+            "max_score": 100,
+            "max_timelimit": "1",
+            "n_accepted": 5500,
+            "n_partial": 538,
+            "n_teams": 6038,
+            "n_total": 8363,
+            "name": "Vaccine Distribution",
+            "rating": 996,
+            "short": "VACDI",
+            "source_sizelimit": "50000",
+            "tags": [
+              "major_oasis_27"
+            ],
+            "url": "https://www.codechef.com/problems/VACDI",
+            "writers": [
+              "major_oasis_27"
+            ]
+          },
+          {
+            "category_name": "medium",
+            "code": "PRCO",
+            "contest_key": "DSAMONDAY013",
+            "is_challenge": false,
+            "languages_supported": [
+              "CPP20",
+              "PYTH 3",
+              "C",
+              "JAVA",
+              "NODEJS"
+            ],
+            "max_score": 100,
+            "max_timelimit": "1",
+            "n_accepted": 1785,
+            "n_partial": 408,
+            "n_teams": 2193,
+            "n_total": 8363,
+            "name": "Palindrome Counter",
+            "rating": 1497,
+            "short": "PRCO",
+            "source_sizelimit": "50000",
+            "tags": [
+              "major_oasis_27"
+            ],
+            "url": "https://www.codechef.com/problems/PRCO",
+            "writers": [
+              "major_oasis_27"
+            ]
+          },
+          {
+            "category_name": "hard",
+            "code": "SMSWP",
+            "contest_key": "DSAMONDAY013",
+            "is_challenge": false,
+            "languages_supported": [
+              "CPP20",
+              "PYTH 3",
+              "C",
+              "JAVA",
+              "NODEJS"
+            ],
+            "max_score": 100,
+            "max_timelimit": "1",
+            "n_accepted": 1195,
+            "n_partial": 642,
+            "n_teams": 1837,
+            "n_total": 8363,
+            "name": "Smart Swap",
+            "rating": 1618,
+            "short": "SMSWP",
+            "source_sizelimit": "50000",
+            "tags": [
+              "major_oasis_27"
+            ],
+            "url": "https://www.codechef.com/problems/SMSWP",
+            "writers": [
+              "major_oasis_27"
+            ]
+          },
+          {
+            "category_name": "hard",
+            "code": "ROCU",
+            "contest_key": "DSAMONDAY013",
+            "is_challenge": false,
+            "languages_supported": [
+              "CPP20",
+              "PYTH 3",
+              "C",
+              "JAVA",
+              "NODEJS"
+            ],
+            "max_score": 100,
+            "max_timelimit": "1",
+            "n_accepted": 3224,
+            "n_partial": 415,
+            "n_teams": 3639,
+            "n_total": 8363,
+            "name": "Maximize Wood Value",
+            "rating": 1284,
+            "short": "ROCU",
+            "source_sizelimit": "50000",
+            "tags": [
+              "major_oasis_27"
+            ],
+            "url": "https://www.codechef.com/problems/ROCU",
+            "writers": [
+              "major_oasis_27"
+            ]
+          }
+        ],
+        "writers": [
+          "major_oasis_27"
+        ]
+      },
+      "invisible": false,
+      "is_auto_added": true,
+      "is_promoted": null,
+      "is_rated": null,
+      "key": "DSAMONDAY013",
+      "kind": null,
+      "link_statistic_timing": null,
+      "merging_contests": [],
+      "modified": "2026-07-22T10:11:56.883Z",
+      "n_problems": 6,
+      "n_statistics": 8363,
+      "notification_timing": "2026-07-22T10:13:21.681Z",
+      "parsed_percentage": null,
+      "parsed_time": "2026-07-29T09:17:06.200Z",
+      "problem_rating_hash": "97e928d209a18a6ae7ac327a71b19aa64651a868313416855583c0831decfc70",
+      "problem_rating_update_required": false,
+      "rating_prediction_fields": null,
+      "rating_prediction_hash": null,
+      "rating_prediction_timing": null,
+      "raw_info": {
+        "_outdated": {
+          "partial_scores": {
+            "ARCO": [
+              {
+                "count": "57",
+                "score": "10"
+              },
+              {
+                "count": "16",
+                "score": "20"
+              },
+              {
+                "count": "13",
+                "score": "30"
+              },
+              {
+                "count": "79",
+                "score": "40"
+              },
+              {
+                "count": "30",
+                "score": "50"
+              },
+              {
+                "count": "53",
+                "score": "60"
+              },
+              {
+                "count": "97",
+                "score": "70"
+              },
+              {
+                "count": "35",
+                "score": "80"
+              },
+              {
+                "count": "118",
+                "score": "90"
+              },
+              {
+                "count": "6819",
+                "score": "100"
+              }
+            ],
+            "PRCO": [
+              {
+                "count": "48",
+                "score": "10"
+              },
+              {
+                "count": "114",
+                "score": "20"
+              },
+              {
+                "count": "11",
+                "score": "30"
+              },
+              {
+                "count": "15",
+                "score": "40"
+              },
+              {
+                "count": "3",
+                "score": "50"
+              },
+              {
+                "count": "141",
+                "score": "60"
+              },
+              {
+                "count": "44",
+                "score": "70"
+              },
+              {
+                "count": "11",
+                "score": "80"
+              },
+              {
+                "count": "21",
+                "score": "90"
+              },
+              {
+                "count": "1785",
+                "score": "100"
+              }
+            ],
+            "ROCU": [
+              {
+                "count": "62",
+                "score": "10"
+              },
+              {
+                "count": "65",
+                "score": "20"
+              },
+              {
+                "count": "9",
+                "score": "30"
+              },
+              {
+                "count": "52",
+                "score": "40"
+              },
+              {
+                "count": "5",
+                "score": "50"
+              },
+              {
+                "count": "14",
+                "score": "60"
+              },
+              {
+                "count": "49",
+                "score": "70"
+              },
+              {
+                "count": "120",
+                "score": "80"
+              },
+              {
+                "count": "39",
+                "score": "90"
+              },
+              {
+                "count": "3224",
+                "score": "100"
+              }
+            ],
+            "SMSWP": [
+              {
+                "count": "44",
+                "score": "11"
+              },
+              {
+                "count": "5",
+                "score": "12"
+              },
+              {
+                "count": "6",
+                "score": "22"
+              },
+              {
+                "count": "2",
+                "score": "23"
+              },
+              {
+                "count": "28",
+                "score": "33"
+              },
+              {
+                "count": "2",
+                "score": "34"
+              },
+              {
+                "count": "6",
+                "score": "44"
+              },
+              {
+                "count": "12",
+                "score": "45"
+              },
+              {
+                "count": "17",
+                "score": "55"
+              },
+              {
+                "count": "25",
+                "score": "56"
+              },
+              {
+                "count": "14",
+                "score": "66"
+              },
+              {
+                "count": "49",
+                "score": "67"
+              },
+              {
+                "count": "2",
+                "score": "77"
+              },
+              {
+                "count": "390",
+                "score": "78"
+              },
+              {
+                "count": "40",
+                "score": "89"
+              },
+              {
+                "count": "1195",
+                "score": "100"
+              }
+            ],
+            "UTNL": [
+              {
+                "count": "4",
+                "score": "10"
+              },
+              {
+                "count": "11",
+                "score": "20"
+              },
+              {
+                "count": "1",
+                "score": "30"
+              },
+              {
+                "count": "42",
+                "score": "40"
+              },
+              {
+                "count": "2",
+                "score": "50"
+              },
+              {
+                "count": "33",
+                "score": "60"
+              },
+              {
+                "count": "1",
+                "score": "70"
+              },
+              {
+                "count": "72",
+                "score": "80"
+              },
+              {
+                "count": "8119",
+                "score": "100"
+              }
+            ],
+            "VACDI": [
+              {
+                "count": "12",
+                "score": "7"
+              },
+              {
+                "count": "10",
+                "score": "14"
+              },
+              {
+                "count": "5",
+                "score": "19"
+              },
+              {
+                "count": "2",
+                "score": "25"
+              },
+              {
+                "count": "1",
+                "score": "26"
+              },
+              {
+                "count": "1",
+                "score": "31"
+              },
+              {
+                "count": "7",
+                "score": "32"
+              },
+              {
+                "count": "1",
+                "score": "33"
+              },
+              {
+                "count": "1",
+                "score": "36"
+              },
+              {
+                "count": "1",
+                "score": "37"
+              },
+              {
+                "count": "32",
+                "score": "38"
+              },
+              {
+                "count": "2",
+                "score": "39"
+              },
+              {
+                "count": "10",
+                "score": "43"
+              },
+              {
+                "count": "4",
+                "score": "44"
+              },
+              {
+                "count": "11",
+                "score": "45"
+              },
+              {
+                "count": "1",
+                "score": "46"
+              },
+              {
+                "count": "3",
+                "score": "49"
+              },
+              {
+                "count": "115",
+                "score": "50"
+              },
+              {
+                "count": "5",
+                "score": "51"
+              },
+              {
+                "count": "22",
+                "score": "56"
+              },
+              {
+                "count": "6",
+                "score": "57"
+              },
+              {
+                "count": "2",
+                "score": "61"
+              },
+              {
+                "count": "69",
+                "score": "62"
+              },
+              {
+                "count": "4",
+                "score": "63"
+              },
+              {
+                "count": "22",
+                "score": "64"
+              },
+              {
+                "count": "1",
+                "score": "68"
+              },
+              {
+                "count": "86",
+                "score": "69"
+              },
+              {
+                "count": "6",
+                "score": "70"
+              },
+              {
+                "count": "8",
+                "score": "75"
+              },
+              {
+                "count": "4",
+                "score": "76"
+              },
+              {
+                "count": "5",
+                "score": "81"
+              },
+              {
+                "count": "27",
+                "score": "82"
+              },
+              {
+                "count": "2",
+                "score": "86"
+              },
+              {
+                "count": "35",
+                "score": "87"
+              },
+              {
+                "count": "8",
+                "score": "88"
+              },
+              {
+                "count": "1",
+                "score": "93"
+              },
+              {
+                "count": "6",
+                "score": "94"
+              },
+              {
+                "count": "5500",
+                "score": "100"
+              }
+            ]
+          },
+          "problems": {
+            "ARCO": {
+              "accuracy": 69.87,
+              "allow_submission": false,
+              "category_name": "main",
+              "code": "ARCO",
+              "is_added_to_practice": true,
+              "is_direct_submittable": false,
+              "name": "Array Compression",
+              "problem_url": "/problems/ARCO",
+              "status_url": "/status/ARCO",
+              "submit_url": "/problems/ARCO",
+              "successful_submissions": "6819",
+              "total_submissions": "10866",
+              "type": "3"
+            },
+            "PRCO": {
+              "accuracy": 54.62,
+              "allow_submission": false,
+              "category_name": "main",
+              "code": "PRCO",
+              "is_added_to_practice": true,
+              "is_direct_submittable": false,
+              "name": "Palindrome Counter",
+              "problem_url": "/problems/PRCO",
+              "status_url": "/status/PRCO",
+              "submit_url": "/problems/PRCO",
+              "successful_submissions": "1785",
+              "total_submissions": "3638",
+              "type": "3"
+            },
+            "ROCU": {
+              "accuracy": 67.33,
+              "allow_submission": false,
+              "category_name": "main",
+              "code": "ROCU",
+              "is_added_to_practice": true,
+              "is_direct_submittable": false,
+              "name": "Maximize Wood Value",
+              "problem_url": "/problems/ROCU",
+              "status_url": "/status/ROCU",
+              "submit_url": "/problems/ROCU",
+              "successful_submissions": "3224",
+              "total_submissions": "5264",
+              "type": "3"
+            },
+            "SMSWP": {
+              "accuracy": 39.28,
+              "allow_submission": false,
+              "category_name": "main",
+              "code": "SMSWP",
+              "is_added_to_practice": true,
+              "is_direct_submittable": false,
+              "name": "Smart Swap",
+              "problem_url": "/problems/SMSWP",
+              "status_url": "/status/SMSWP",
+              "submit_url": "/problems/SMSWP",
+              "successful_submissions": "1195",
+              "total_submissions": "3564",
+              "type": "3"
+            },
+            "UTNL": {
+              "accuracy": 78.96,
+              "allow_submission": false,
+              "category_name": "main",
+              "code": "UTNL",
+              "is_added_to_practice": true,
+              "is_direct_submittable": false,
+              "name": "Unlock the Next Level",
+              "problem_url": "/problems/UTNL",
+              "status_url": "/status/UTNL",
+              "submit_url": "/problems/UTNL",
+              "successful_submissions": "8119",
+              "total_submissions": "11851",
+              "type": "3"
+            },
+            "VACDI": {
+              "accuracy": 57.54,
+              "allow_submission": false,
+              "category_name": "main",
+              "code": "VACDI",
+              "is_added_to_practice": true,
+              "is_direct_submittable": false,
+              "name": "Vaccine Distribution",
+              "problem_url": "/problems/VACDI",
+              "status_url": "/status/VACDI",
+              "submit_url": "/problems/VACDI",
+              "successful_submissions": "5500",
+              "total_submissions": "10591",
+              "type": "3"
+            }
+          },
+          "time": {
+            "current": 1785287770,
+            "end": 1785169800,
+            "freezing": 0,
+            "start": 1785159000
+          }
+        },
+        "announcements": "<p>This is our <strong>RATED</strong> contest of our <strong>Monday Munch DSA Challenge Series. </strong>You will need to attempt <strong>6 DSA problems this week</strong>.</p>\n<p>There will be:</p>\n<ul>\n<li>2 Easy</li>\n<li>2 Medium</li>\n<li>2 Hard</li>\n</ul>\n<p>This Monday’s Munch contains problems from the topics:</p>\n<ul>\n<li>Array</li>\n<li>Greedy </li>\n<li>Dynamic Programming</li>\n</ul>\n<p><strong>Contest rules</strong> - This is <strong>RATED</strong> contest. <strong>Note: DSA rating will be separate from your Competitive programming rating.</strong></p>\n<ul>\n<li>Use this as an opportunity to <strong>test and improve your DSA knowledge</strong>.</li>\n<li>The use of <strong>AI tools is strictly prohibited</strong> for solving problems. Please refer to CodeChef's <a href=\"../codeofconduct\">Code of Conduct</a></li>\n<li>Cheating is strictly prohibited during the test </li>\n</ul>\n<p>For feedback on problems, suggestions for future topics, or improvement ideas, feel free to reach out at <strong><a class=\"decorated-link cursor-pointer\" href=\"mailto:<redacted-email>\"><redacted-email> </a><br /></strong></p>",
+        "autoRefresh": false,
+        "banner": "https://cdn.codechef.com/download/small-banner/DSAMONDAY013/1784714511.jpg",
+        "code": "DSAMONDAY013",
+        "contest_editorials": "",
+        "contest_introduction": "",
+        "contest_video_editorials": "",
+        "custom_contest_page_meta_desc": "",
+        "custom_contest_page_title": "",
+        "division_generation": 3,
+        "duration": "180",
+        "ip": "152.53.187.243",
+        "isAssessmentContest": false,
+        "isParentContestRated": "0",
+        "isRanklistFrozen": false,
+        "isRatedContest": "1",
+        "is_OTP_required": false,
+        "is_a_parent_contest": false,
+        "is_contest_elements_visible": true,
+        "is_flexi_time_contest": false,
+        "is_linked_problems_contest": "0",
+        "is_older_rating_based_division_system": false,
+        "is_proctored": false,
+        "is_registration_enabled_contest": false,
+        "name": "Monday Munch - DSA Challenge 013 (Rated)",
+        "partial_scores": {
+          "ARCO": [
+            {
+              "count": "57",
+              "score": "10"
+            },
+            {
+              "count": "16",
+              "score": "20"
+            },
+            {
+              "count": "12",
+              "score": "30"
+            },
+            {
+              "count": "75",
+              "score": "40"
+            },
+            {
+              "count": "30",
+              "score": "50"
+            },
+            {
+              "count": "53",
+              "score": "60"
+            },
+            {
+              "count": "96",
+              "score": "70"
+            },
+            {
+              "count": "33",
+              "score": "80"
+            },
+            {
+              "count": "113",
+              "score": "90"
+            },
+            {
+              "count": "6370",
+              "score": "100"
+            }
+          ],
+          "PRCO": [
+            {
+              "count": "45",
+              "score": "10"
+            },
+            {
+              "count": "111",
+              "score": "20"
+            },
+            {
+              "count": "11",
+              "score": "30"
+            },
+            {
+              "count": "13",
+              "score": "40"
+            },
+            {
+              "count": "3",
+              "score": "50"
+            },
+            {
+              "count": "139",
+              "score": "60"
+            },
+            {
+              "count": "41",
+              "score": "70"
+            },
+            {
+              "count": "11",
+              "score": "80"
+            },
+            {
+              "count": "20",
+              "score": "90"
+            },
+            {
+              "count": "1405",
+              "score": "100"
+            }
+          ],
+          "ROCU": [
+            {
+              "count": "60",
+              "score": "10"
+            },
+            {
+              "count": "61",
+              "score": "20"
+            },
+            {
+              "count": "9",
+              "score": "30"
+            },
+            {
+              "count": "51",
+              "score": "40"
+            },
+            {
+              "count": "4",
+              "score": "50"
+            },
+            {
+              "count": "14",
+              "score": "60"
+            },
+            {
+              "count": "46",
+              "score": "70"
+            },
+            {
+              "count": "117",
+              "score": "80"
+            },
+            {
+              "count": "39",
+              "score": "90"
+            },
+            {
+              "count": "2833",
+              "score": "100"
+            }
+          ],
+          "SMSWP": [
+            {
+              "count": "38",
+              "score": "11"
+            },
+            {
+              "count": "5",
+              "score": "12"
+            },
+            {
+              "count": "6",
+              "score": "22"
+            },
+            {
+              "count": "2",
+              "score": "23"
+            },
+            {
+              "count": "27",
+              "score": "33"
+            },
+            {
+              "count": "2",
+              "score": "34"
+            },
+            {
+              "count": "5",
+              "score": "44"
+            },
+            {
+              "count": "12",
+              "score": "45"
+            },
+            {
+              "count": "17",
+              "score": "55"
+            },
+            {
+              "count": "24",
+              "score": "56"
+            },
+            {
+              "count": "14",
+              "score": "66"
+            },
+            {
+              "count": "48",
+              "score": "67"
+            },
+            {
+              "count": "2",
+              "score": "77"
+            },
+            {
+              "count": "338",
+              "score": "78"
+            },
+            {
+              "count": "38",
+              "score": "89"
+            },
+            {
+              "count": "938",
+              "score": "100"
+            }
+          ],
+          "UTNL": [
+            {
+              "count": "4",
+              "score": "10"
+            },
+            {
+              "count": "10",
+              "score": "20"
+            },
+            {
+              "count": "1",
+              "score": "30"
+            },
+            {
+              "count": "42",
+              "score": "40"
+            },
+            {
+              "count": "2",
+              "score": "50"
+            },
+            {
+              "count": "31",
+              "score": "60"
+            },
+            {
+              "count": "1",
+              "score": "70"
+            },
+            {
+              "count": "67",
+              "score": "80"
+            },
+            {
+              "count": "7666",
+              "score": "100"
+            }
+          ],
+          "VACDI": [
+            {
+              "count": "11",
+              "score": "7"
+            },
+            {
+              "count": "10",
+              "score": "14"
+            },
+            {
+              "count": "5",
+              "score": "19"
+            },
+            {
+              "count": "2",
+              "score": "25"
+            },
+            {
+              "count": "1",
+              "score": "26"
+            },
+            {
+              "count": "1",
+              "score": "31"
+            },
+            {
+              "count": "7",
+              "score": "32"
+            },
+            {
+              "count": "1",
+              "score": "33"
+            },
+            {
+              "count": "1",
+              "score": "36"
+            },
+            {
+              "count": "1",
+              "score": "37"
+            },
+            {
+              "count": "32",
+              "score": "38"
+            },
+            {
+              "count": "2",
+              "score": "39"
+            },
+            {
+              "count": "9",
+              "score": "43"
+            },
+            {
+              "count": "4",
+              "score": "44"
+            },
+            {
+              "count": "11",
+              "score": "45"
+            },
+            {
+              "count": "1",
+              "score": "46"
+            },
+            {
+              "count": "3",
+              "score": "49"
+            },
+            {
+              "count": "115",
+              "score": "50"
+            },
+            {
+              "count": "4",
+              "score": "51"
+            },
+            {
+              "count": "22",
+              "score": "56"
+            },
+            {
+              "count": "6",
+              "score": "57"
+            },
+            {
+              "count": "68",
+              "score": "62"
+            },
+            {
+              "count": "4",
+              "score": "63"
+            },
+            {
+              "count": "22",
+              "score": "64"
+            },
+            {
+              "count": "1",
+              "score": "68"
+            },
+            {
+              "count": "86",
+              "score": "69"
+            },
+            {
+              "count": "6",
+              "score": "70"
+            },
+            {
+              "count": "8",
+              "score": "75"
+            },
+            {
+              "count": "4",
+              "score": "76"
+            },
+            {
+              "count": "5",
+              "score": "81"
+            },
+            {
+              "count": "26",
+              "score": "82"
+            },
+            {
+              "count": "2",
+              "score": "86"
+            },
+            {
+              "count": "34",
+              "score": "87"
+            },
+            {
+              "count": "8",
+              "score": "88"
+            },
+            {
+              "count": "1",
+              "score": "93"
+            },
+            {
+              "count": "6",
+              "score": "94"
+            },
+            {
+              "count": "5055",
+              "score": "100"
+            }
+          ]
+        },
+        "penalisedUsersCount": 327,
+        "problems": {
+          "ARCO": {
+            "accuracy": 68.9,
+            "allow_submission": false,
+            "category_name": "main",
+            "code": "ARCO",
+            "is_added_to_practice": true,
+            "is_direct_submittable": false,
+            "name": "Array Compression",
+            "problem_url": "/problems/ARCO",
+            "status_url": "/status/ARCO",
+            "submit_url": "/problems/ARCO",
+            "successful_submissions": "6370",
+            "total_submissions": "10271",
+            "type": "3"
+          },
+          "PRCO": {
+            "accuracy": 49.56,
+            "allow_submission": false,
+            "category_name": "main",
+            "code": "PRCO",
+            "is_added_to_practice": true,
+            "is_direct_submittable": false,
+            "name": "Palindrome Counter",
+            "problem_url": "/problems/PRCO",
+            "status_url": "/status/PRCO",
+            "submit_url": "/problems/PRCO",
+            "successful_submissions": "1405",
+            "total_submissions": "3178",
+            "type": "3"
+          },
+          "ROCU": {
+            "accuracy": 64.9,
+            "allow_submission": false,
+            "category_name": "main",
+            "code": "ROCU",
+            "is_added_to_practice": true,
+            "is_direct_submittable": false,
+            "name": "Maximize Wood Value",
+            "problem_url": "/problems/ROCU",
+            "status_url": "/status/ROCU",
+            "submit_url": "/problems/ROCU",
+            "successful_submissions": "2833",
+            "total_submissions": "4778",
+            "type": "3"
+          },
+          "SMSWP": {
+            "accuracy": 35.23,
+            "allow_submission": false,
+            "category_name": "main",
+            "code": "SMSWP",
+            "is_added_to_practice": true,
+            "is_direct_submittable": false,
+            "name": "Smart Swap",
+            "problem_url": "/problems/SMSWP",
+            "status_url": "/status/SMSWP",
+            "submit_url": "/problems/SMSWP",
+            "successful_submissions": "938",
+            "total_submissions": "3114",
+            "type": "3"
+          },
+          "UTNL": {
+            "accuracy": 78.24,
+            "allow_submission": false,
+            "category_name": "main",
+            "code": "UTNL",
+            "is_added_to_practice": true,
+            "is_direct_submittable": false,
+            "name": "Unlock the Next Level",
+            "problem_url": "/problems/UTNL",
+            "status_url": "/status/UTNL",
+            "submit_url": "/problems/UTNL",
+            "successful_submissions": "7666",
+            "total_submissions": "11226",
+            "type": "3"
+          },
+          "VACDI": {
+            "accuracy": 56.07,
+            "allow_submission": false,
+            "category_name": "main",
+            "code": "VACDI",
+            "is_added_to_practice": true,
+            "is_direct_submittable": false,
+            "name": "Vaccine Distribution",
+            "problem_url": "/problems/VACDI",
+            "status_url": "/status/VACDI",
+            "submit_url": "/problems/VACDI",
+            "successful_submissions": "5055",
+            "total_submissions": "9951",
+            "type": "3"
+          }
+        },
+        "problemsstats": {
+          "attempted": [],
+          "locked": [],
+          "partially_solved": [],
+          "solved": []
+        },
+        "rank_and_score": {
+          "rank": "NA",
+          "score": "NA"
+        },
+        "rules": "<h4>CodeChef: A Platform for Aspiring Programmers</h4>\n<p class=\"last\">CodeChef was created as a platform to help programmers make it big in the world of algorithms, computer programming, and programming contests. At CodeChef, our dedicated efforts are aimed at reviving the inner geek within you, as we proudly host a thrilling programming (coding) contest every Wednesday.</p>\n<h4>Contest Details:</h4>\n<ul class=\"last\">\n<li><strong>D</strong><strong>uration: </strong> 3.00 hours </li>\n<li><strong>Start Date: </strong>Monday, 27th July, 2026 at 19:00 HRS (IST)</li>\n<li><strong>End Date: </strong>Monday, 27th July, 2026 at 22:00 HRS (IST)</li>\n<li>Check your timezone <a href=\"https://www.timeanddate.com/worldclock/fixedtime.html?msg=DSA+Monday+Munch+13&amp;iso=20260727T19&amp;p1=44&amp;ah=3\" target=\"_blank\" rel=\"nofollow noreferrer noopener\">here</a>.</li>\n</ul>\n<h4>Eligibility Criteria: Anyone with a knack for programming</h4>\n<p class=\"last\">Our contests are open to all programmers across the globe.</p>\n<h4>What's in it for you?</h4>\n<p>The idea behind these programming contests is that we want you to learn while competing. Also, we believe that it is alright to refer to tutorials, books, and other materials, learn a concept, and then apply the same to solve a problem during a contest. But it is <strong>not alright to copy other people's solutions or seek other people's help to solve a problem. </strong>All the participants are expected to abide to <a class=\"button blue\" href=\"../codeofconduct\">CodeChef's Code Of Conduct</a>.</p>\n<h4>Rules and Regulations:</h4>\n<ul>\n<li>This is an IOI-style contest. This means that the problems will be partially graded. You will get the score for passing certain test data.</li>\n<li>The details of the failed test cases will also be visible on your solution page.</li>\n<li>You can submit solutions as many times as you'd like, there are no penalties for incorrect submissions. Only your best correct submission will be considered.</li>\n<li>Those who achieve the score first will be placed higher in the ranklist in case of a tie.</li>\n<li><strong>We have removed all the Institutions that we could not identify from our database. We request you to update your institutions once again by going to your profile page.</strong></li>\n<li>You can also send in your queries in an email to <a href=\"mailto:<redacted-email>\" target=\"_blank\" rel=\"noreferrer noopener\"><redacted-email></a>, during the contest.</li>\n<li>Please do not discuss strategy, suggestions, or tips in the comments during a live contest. Posting questions clarifying the problem statement is ok. If you are unsure, email us at <a href=\"mailto:<redacted-email>\" target=\"_blank\" rel=\"noreferrer noopener\"> <redacted-email></a>.</li>\n<li>Discussing CodeChef's problems or any aspect of a problem, on any other platform on the web, on identification, could lead to the disabling of the respective account and banning from the community.</li>\n</ul>\n<p><strong>Note: You can now \"Code, Compile, and Run\" your codes on our <a href=\"../ide\">Online IDE</a>.</strong></p>\n<p>However, if you are using any other online development environment, make sure that other contestants don't have access to your code. As a contestant, you are responsible for making sure others don't access the code that you submit. If you use Ideone, make sure to mark your submission \"private\" (not secret)\".</p>",
+        "stats": null,
+        "status": "success",
+        "time": {
+          "current": 1785316631,
+          "end": 1785169800,
+          "freezing": 0,
+          "start": 1785159000
+        },
+        "todos": [],
+        "ttl": 60,
+        "user": {
+          "username": null
+        },
+        "user_live_ratings_update_frequency": 15,
+        "visitedContests": []
+      },
+      "registration_url": null,
+      "related": null,
+      "resource": 2,
+      "series": null,
+      "set_matched_coders_to_members": null,
+      "slug": "monday-munch-dsa-challenge-013-rated",
+      "standings_kind": "scoring",
+      "standings_url": "https://www.codechef.com/DSAMONDAY013",
+      "start_time": "2026-07-27T13:30:00Z",
+      "statistic_timing": "2026-07-29T17:17:06.200Z",
+      "statistics_update_required": false,
+      "submissions_info": {},
+      "title": "Monday Munch - DSA Challenge 013 (Rated)",
+      "title_path": "monday.munch.dsa.challenge.013.rated",
+      "trial_standings_url": null,
+      "uid": "k17u3c95dl6ajk9f0ruj129l84",
+      "updated": "2026-08-02T19:30:26.739Z",
+      "upload_solved_problems_solutions": null,
+      "upsolving_key": null,
+      "upsolving_url": null,
+      "url": "https://www.codechef.com/DSAMONDAY013",
+      "variables": {},
+      "wait_for_successful_update_timing": null,
+      "with_advance": false,
+      "with_medals": false
+    },
+    "model": "clist.contest",
+    "pk": 69028032
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "IN",
+      "created": "2026-06-24T16:18:49.023Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar_url": "https://cdn.codechef.com/sites/default/files/uploads/pictures/e77ca4d4038cb526a6d85f05d38cfac1.jpg",
+        "name": "Utkarsh Gupta",
+        "rating": 1525,
+        "student/professional": "Other"
+      },
+      "key": "utkarshabes",
+      "last_activity": "2026-07-29T14:30:00Z",
+      "last_rating_activity": "2026-07-29T14:30:00Z",
+      "last_submission": null,
+      "modified": "2026-07-30T10:56:32.498Z",
+      "n_bronze": null,
+      "n_contests": 4,
+      "n_first_ac": 0,
+      "n_first_places": 2,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 2,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 26,
+      "n_subscribers": 0,
+      "n_third_places": 0,
+      "n_top_ten_places": 0,
+      "n_total_solved": 26,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Utkarsh Gupta",
+      "need_verification": false,
+      "rating": 1525,
+      "rating50": 30,
+      "rating_prediction": null,
+      "rating_update_time": "2026-07-29T17:00:00Z",
+      "related": null,
+      "resource": 2,
+      "resource_rank": 142056,
+      "solving": 2600.0,
+      "submissions_info": {},
+      "total_solving": 2600.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-07-30T23:59:59.999Z",
+      "upsolving": null,
+      "url": "/account/utkarshabes/resource/codechef.com/"
+    },
+    "model": "ranking.account",
+    "pk": 11266409
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "IN",
+      "created": "2026-06-08T12:42:36.983Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "name": "Mishika Sardana",
+        "rating": 2126,
+        "student/professional": "Other"
+      },
+      "key": "brisk_yarn_01",
+      "last_activity": "2026-07-29T14:30:00Z",
+      "last_rating_activity": "2026-07-29T14:30:00Z",
+      "last_submission": null,
+      "modified": "2026-07-31T11:59:02.224Z",
+      "n_bronze": null,
+      "n_contests": 6,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 2,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 38,
+      "n_subscribers": 0,
+      "n_third_places": 1,
+      "n_top_ten_places": 1,
+      "n_total_solved": 38,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Mishika Sardana",
+      "need_verification": false,
+      "rating": 2126,
+      "rating50": 42,
+      "rating_prediction": null,
+      "rating_update_time": "2026-07-29T17:00:00Z",
+      "related": null,
+      "resource": 2,
+      "resource_rank": 3636,
+      "solving": 3800.0,
+      "submissions_info": {},
+      "total_solving": 3800.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-07-31T23:59:59.999Z",
+      "upsolving": null,
+      "url": "/account/brisk_yarn_01/resource/codechef.com/"
+    },
+    "model": "ranking.account",
+    "pk": 11103152
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "IN",
+      "created": "2026-02-11T16:05:16.597Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "institution": "Vasireddy Venkatadri Institute of Technology, Nambur Guntur, Andhra Pradesh, India",
+        "name": "MEDA HARIKA",
+        "rating": 1296,
+        "student/professional": "Student"
+      },
+      "key": "vvit24bq5a6109",
+      "last_activity": "2026-07-29T14:30:00Z",
+      "last_rating_activity": "2026-07-29T14:30:00Z",
+      "last_submission": null,
+      "modified": "2026-07-30T18:58:21.407Z",
+      "n_bronze": null,
+      "n_contests": 24,
+      "n_first_ac": 0,
+      "n_first_places": 3,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 3,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 89,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 89,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "MEDA HARIKA",
+      "need_verification": false,
+      "rating": 1296,
+      "rating50": 25,
+      "rating_prediction": null,
+      "rating_update_time": "2026-07-29T17:00:00Z",
+      "related": null,
+      "resource": 2,
+      "resource_rank": 339887,
+      "solving": 9175.0,
+      "submissions_info": {},
+      "total_solving": 9175.0,
+      "try_fill_missed_ranks_time": "2026-02-26T17:48:57.233Z",
+      "try_renaming_check_time": "2026-02-26T17:48:57.108Z",
+      "updated": "2027-07-30T23:59:59.999Z",
+      "upsolving": null,
+      "url": "/account/vvit24bq5a6109/resource/codechef.com/"
+    },
+    "model": "ranking.account",
+    "pk": 9994142
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "IN",
+      "created": "2026-07-27T14:36:45.819Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "name": "DHARANI V K 717825F310",
+        "student/professional": "Other",
+        "username": "rapid_vivid_97"
+      },
+      "key": "rapid_vivid_97",
+      "last_activity": "2026-07-27T13:30:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-07-27T17:45:20.782Z",
+      "n_bronze": null,
+      "n_contests": 1,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 5,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 5,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "DHARANI V K 717825F310",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 2,
+      "resource_rank": null,
+      "solving": 590.0,
+      "submissions_info": {},
+      "total_solving": 590.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-07-27T23:59:59.999Z",
+      "upsolving": null,
+      "url": "/account/rapid_vivid_97/resource/codechef.com/"
+    },
+    "model": "ranking.account",
+    "pk": 11580412
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "IN",
+      "created": "2026-07-27T15:16:20.990Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "name": "Sai Akshath Bongi",
+        "student/professional": "Other",
+        "username": "akshath_bongi"
+      },
+      "key": "akshath_bongi",
+      "last_activity": "2026-07-27T13:30:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-07-27T17:49:09.701Z",
+      "n_bronze": null,
+      "n_contests": 1,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 5,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 5,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Sai Akshath Bongi",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 2,
+      "resource_rank": null,
+      "solving": 590.0,
+      "submissions_info": {},
+      "total_solving": 590.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-07-27T23:59:59.999Z",
+      "upsolving": null,
+      "url": "/account/akshath_bongi/resource/codechef.com/"
+    },
+    "model": "ranking.account",
+    "pk": 11580540
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "IN",
+      "created": "2026-07-18T16:59:43.266Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "institution": "Aditya Degree College Visakhapatnam, Andhra Pradesh, India",
+        "name": "Karri Mahesh",
+        "rating": 1139,
+        "student/professional": "Student"
+      },
+      "key": "mahi_karri_722",
+      "last_activity": "2026-07-29T14:30:00Z",
+      "last_rating_activity": "2026-07-29T14:30:00Z",
+      "last_submission": null,
+      "modified": "2026-07-31T20:14:22.452Z",
+      "n_bronze": null,
+      "n_contests": 6,
+      "n_first_ac": 0,
+      "n_first_places": 2,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 2,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 37,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 37,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Karri Mahesh",
+      "need_verification": false,
+      "rating": 1139,
+      "rating50": 22,
+      "rating_prediction": null,
+      "rating_update_time": "2026-07-29T17:00:00Z",
+      "related": null,
+      "resource": 2,
+      "resource_rank": 515165,
+      "solving": 3857.0,
+      "submissions_info": {},
+      "total_solving": 3857.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-07-31T23:59:59.999Z",
+      "upsolving": null,
+      "url": "/account/mahi_karri_722/resource/codechef.com/"
+    },
+    "model": "ranking.account",
+    "pk": 11524084
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "IN",
+      "created": "2026-02-18T15:48:09.330Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "institution": "Vasireddy Venkatadri Institute of Technology, Nambur Guntur, Andhra Pradesh, India",
+        "name": "SHAIK VAASIFA",
+        "rating": 1727,
+        "student/professional": "Student"
+      },
+      "key": "vvit24bq1a12g1",
+      "last_activity": "2026-07-29T14:30:00Z",
+      "last_rating_activity": "2026-07-29T14:30:00Z",
+      "last_submission": null,
+      "modified": "2026-07-31T11:59:13.032Z",
+      "n_bronze": null,
+      "n_contests": 21,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 83,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 98,
+      "n_upsolved": 15,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "SHAIK VAASIFA",
+      "need_verification": false,
+      "rating": 1727,
+      "rating50": 34,
+      "rating_prediction": null,
+      "rating_update_time": "2026-07-29T17:00:00Z",
+      "related": null,
+      "resource": 2,
+      "resource_rank": 46084,
+      "solving": 8380.0,
+      "submissions_info": {},
+      "total_solving": 9880.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-07-31T23:59:59.999Z",
+      "upsolving": 1500.0,
+      "url": "/account/vvit24bq1a12g1/resource/codechef.com/"
+    },
+    "model": "ranking.account",
+    "pk": 10026284
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "IN",
+      "created": "2026-07-26T05:51:39.732Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "name": "Sajitha Vivekanandan",
+        "rating": 971,
+        "student/professional": "Other"
+      },
+      "key": "purplelemon26",
+      "last_activity": "2026-07-29T14:30:00Z",
+      "last_rating_activity": "2026-07-29T14:30:00Z",
+      "last_submission": null,
+      "modified": "2026-07-31T12:03:04.392Z",
+      "n_bronze": null,
+      "n_contests": 4,
+      "n_first_ac": 0,
+      "n_first_places": 1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 18,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 18,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Sajitha Vivekanandan",
+      "need_verification": false,
+      "rating": 971,
+      "rating50": 19,
+      "rating_prediction": null,
+      "rating_update_time": "2026-07-29T17:00:00Z",
+      "related": null,
+      "resource": 2,
+      "resource_rank": 711183,
+      "solving": 1965.0,
+      "submissions_info": {},
+      "total_solving": 1965.0,
+      "try_fill_missed_ranks_time": "2026-07-26T05:54:19.330Z",
+      "try_renaming_check_time": "2026-07-26T05:54:19.186Z",
+      "updated": "2027-07-31T23:59:59.999Z",
+      "upsolving": null,
+      "url": "/account/purplelemon26/resource/codechef.com/"
+    },
+    "model": "ranking.account",
+    "pk": 11577551
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "US",
+      "created": "2026-07-27T13:43:02.852Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar_url": "https://cdn.codechef.com/sites/default/files/uploads/pictures/eede47d0f1c3b4a5aa5530f578fcf351.jpg",
+        "institution": "Michigan State University",
+        "name": "阪本",
+        "rating": 925,
+        "student/professional": "Student"
+      },
+      "key": "sakamotosan",
+      "last_activity": "2026-07-29T14:30:00Z",
+      "last_rating_activity": "2026-07-29T14:30:00Z",
+      "last_submission": "2026-07-27T14:30:11.991Z",
+      "modified": "2026-07-31T12:12:13.783Z",
+      "n_bronze": null,
+      "n_contests": 2,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 4,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 4,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "阪本",
+      "need_verification": false,
+      "rating": 925,
+      "rating50": 18,
+      "rating_prediction": null,
+      "rating_update_time": "2026-07-29T17:00:00Z",
+      "related": null,
+      "resource": 2,
+      "resource_rank": 758382,
+      "solving": 623.0,
+      "submissions_info": {
+        "count": 4,
+        "last_submission_id": 1321986024,
+        "last_submission_time": "2026-07-29T15:25:27.614228+00:00"
+      },
+      "total_solving": 623.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-08-08T23:59:59.999Z",
+      "upsolving": null,
+      "url": "/coder/sakamotosan/?resource=2"
+    },
+    "model": "ranking.account",
+    "pk": 11580059
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "IN",
+      "created": "2024-10-09T14:45:02.159Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar_url": "https://cdn.codechef.com/sites/default/files/uploads/pictures/4a435f808d9ace3dbfb8d823629cb0c8.jpg",
+        "name": "yallavamsipavan",
+        "rating": 1464,
+        "student/professional": "Other"
+      },
+      "key": "yvamsipavan",
+      "last_activity": "2026-07-29T14:30:00Z",
+      "last_rating_activity": "2026-07-29T14:30:00Z",
+      "last_submission": "2026-07-28T07:14:00Z",
+      "modified": "2026-07-30T10:55:33.614Z",
+      "n_bronze": null,
+      "n_contests": 28,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 0,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 89,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 0,
+      "n_total_solved": 161,
+      "n_upsolved": 72,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "yallavamsipavan",
+      "need_verification": false,
+      "rating": 1464,
+      "rating50": 29,
+      "rating_prediction": null,
+      "rating_update_time": "2026-07-29T17:00:00Z",
+      "related": null,
+      "resource": 2,
+      "resource_rank": 185012,
+      "solving": 8900.0,
+      "submissions_info": {
+        "count": 71,
+        "last_submission_id": 1322184282,
+        "last_submission_time": "2026-07-29T16:06:19.006076+00:00"
+      },
+      "total_solving": 16051.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-08-02T23:59:59.999Z",
+      "upsolving": 7151.0,
+      "url": "/coder/yallavamsipavan/?resource=2"
+    },
+    "model": "ranking.account",
+    "pk": 7575202
+  },
+  {
+    "fields": {
+      "account": 11266409,
+      "addition": {
+        "country": "IN",
+        "institution": "",
+        "institution_type": null,
+        "is_user_premium": false,
+        "name": "Utkarsh Gupta",
+        "old_rating": 1382,
+        "problems": {
+          "ARCO": {
+            "result": 100
+          },
+          "PRCO": {
+            "result": 100
+          },
+          "ROCU": {
+            "result": 100
+          },
+          "SMSWP": {
+            "result": 100
+          },
+          "UTNL": {
+            "result": 100
+          },
+          "VACDI": {
+            "result": 100
+          }
+        },
+        "time": "00:07:00",
+        "user_gender": "Male"
+      },
+      "advanced": false,
+      "contest": 69028032,
+      "created": "2026-07-27T13:42:45.955Z",
+      "global_rating_change": null,
+      "last_activity": "2026-07-27T13:30:00Z",
+      "medal": null,
+      "modified": "2026-07-29T09:22:17.121Z",
+      "n_first_ac": 0,
+      "n_solved": 6,
+      "n_total_solved": 6,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "1",
+      "place_as_int": 1,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 2,
+      "skip_in_stats": false,
+      "solving": 600.0,
+      "total_solving": 600.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91182340
+  },
+  {
+    "fields": {
+      "account": 11103152,
+      "addition": {
+        "country": "IN",
+        "institution": "",
+        "institution_type": null,
+        "is_user_premium": false,
+        "name": "Mishika Sardana",
+        "old_rating": 1766,
+        "problems": {
+          "ARCO": {
+            "result": 100
+          },
+          "PRCO": {
+            "result": 100
+          },
+          "ROCU": {
+            "result": 100
+          },
+          "SMSWP": {
+            "result": 100
+          },
+          "UTNL": {
+            "result": 100
+          },
+          "VACDI": {
+            "result": 100
+          }
+        },
+        "solved": {
+          "solving": 6,
+          "upsolving": 0
+        },
+        "time": "00:07:14",
+        "user_gender": ""
+      },
+      "advanced": false,
+      "contest": 69028032,
+      "created": "2026-07-27T13:42:46.133Z",
+      "global_rating_change": null,
+      "last_activity": "2026-07-27T13:30:00Z",
+      "medal": null,
+      "modified": "2026-07-29T09:22:17.172Z",
+      "n_first_ac": 0,
+      "n_solved": 6,
+      "n_total_solved": 6,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "3",
+      "place_as_int": 3,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 2,
+      "skip_in_stats": false,
+      "solving": 600.0,
+      "total_solving": 600.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91182342
+  },
+  {
+    "fields": {
+      "account": 9994142,
+      "addition": {
+        "country": "IN",
+        "institution": "Vasireddy Venkatadri Institute of Technology, Nambur",
+        "institution_type": "College",
+        "is_user_premium": true,
+        "name": "MEDA HARIKA",
+        "old_rating": 1302,
+        "problems": {
+          "ARCO": {
+            "result": 100
+          },
+          "PRCO": {
+            "partial": true,
+            "result": 90
+          },
+          "ROCU": {
+            "result": 100
+          },
+          "SMSWP": {
+            "result": 100
+          },
+          "UTNL": {
+            "result": 100
+          },
+          "VACDI": {
+            "result": 100
+          }
+        },
+        "solved": {
+          "solving": 6,
+          "upsolving": 0
+        },
+        "time": "01:05:39",
+        "user_gender": "Other"
+      },
+      "advanced": false,
+      "contest": 69028032,
+      "created": "2026-07-27T13:43:24.441Z",
+      "global_rating_change": null,
+      "last_activity": "2026-07-27T13:30:00Z",
+      "medal": null,
+      "modified": "2026-07-29T09:22:26.887Z",
+      "n_first_ac": 0,
+      "n_solved": 5,
+      "n_total_solved": 5,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "881",
+      "place_as_int": 881,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 2,
+      "skip_in_stats": false,
+      "solving": 590.0,
+      "total_solving": 590.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91183251
+  },
+  {
+    "fields": {
+      "account": 11580412,
+      "addition": {
+        "country": "IN",
+        "institution": "",
+        "institution_type": null,
+        "is_user_premium": false,
+        "name": "DHARANI V K 717825F310",
+        "problems": {
+          "ARCO": {
+            "partial": true,
+            "result": 90
+          },
+          "PRCO": {
+            "result": 100
+          },
+          "ROCU": {
+            "result": 100
+          },
+          "SMSWP": {
+            "result": 100
+          },
+          "UTNL": {
+            "result": 100
+          },
+          "VACDI": {
+            "result": 100
+          }
+        },
+        "solved": {
+          "solving": 6,
+          "upsolving": 0
+        },
+        "time": "01:17:36",
+        "user_gender": "Female"
+      },
+      "advanced": false,
+      "contest": 69028032,
+      "created": "2026-07-27T14:36:45.835Z",
+      "global_rating_change": null,
+      "last_activity": "2026-07-27T13:30:00Z",
+      "medal": null,
+      "modified": "2026-07-29T09:22:26.897Z",
+      "n_first_ac": 0,
+      "n_solved": 5,
+      "n_total_solved": 5,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "882",
+      "place_as_int": 882,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 2,
+      "skip_in_stats": false,
+      "solving": 590.0,
+      "total_solving": 590.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91186276
+  },
+  {
+    "fields": {
+      "account": 11580540,
+      "addition": {
+        "country": "IN",
+        "institution": "",
+        "institution_type": null,
+        "is_user_premium": false,
+        "name": "Sai Akshath Bongi",
+        "problems": {
+          "ARCO": {
+            "result": 100
+          },
+          "PRCO": {
+            "result": 100
+          },
+          "ROCU": {
+            "partial": true,
+            "result": 90
+          },
+          "SMSWP": {
+            "result": 100
+          },
+          "UTNL": {
+            "result": 100
+          },
+          "VACDI": {
+            "result": 100
+          }
+        },
+        "solved": {
+          "solving": 6,
+          "upsolving": 0
+        },
+        "time": "03:00:00",
+        "user_gender": ""
+      },
+      "advanced": false,
+      "contest": 69028032,
+      "created": "2026-07-27T15:16:21.014Z",
+      "global_rating_change": null,
+      "last_activity": "2026-07-27T13:30:00Z",
+      "medal": null,
+      "modified": "2026-07-29T09:22:26.986Z",
+      "n_first_ac": 0,
+      "n_solved": 5,
+      "n_total_solved": 5,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "890",
+      "place_as_int": 890,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 2,
+      "skip_in_stats": false,
+      "solving": 590.0,
+      "total_solving": 590.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91187785
+  },
+  {
+    "fields": {
+      "account": 11524084,
+      "addition": {
+        "country": "IN",
+        "institution": "Aditya Degree College",
+        "institution_type": "College",
+        "is_user_premium": false,
+        "name": "Karri Mahesh",
+        "problems": {
+          "ARCO": {
+            "result": 100
+          },
+          "PRCO": {
+            "result": 100
+          },
+          "ROCU": {
+            "result": 100
+          },
+          "SMSWP": {
+            "partial": true,
+            "result": 89
+          },
+          "UTNL": {
+            "result": 100
+          },
+          "VACDI": {
+            "result": 100
+          }
+        },
+        "solved": {
+          "solving": 6,
+          "upsolving": 0
+        },
+        "time": "00:08:53",
+        "user_gender": "Male"
+      },
+      "advanced": false,
+      "contest": 69028032,
+      "created": "2026-07-27T13:42:46.600Z",
+      "global_rating_change": null,
+      "last_activity": "2026-07-27T13:30:00Z",
+      "medal": null,
+      "modified": "2026-07-29T09:22:26.996Z",
+      "n_first_ac": 0,
+      "n_solved": 5,
+      "n_total_solved": 5,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "891",
+      "place_as_int": 891,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 2,
+      "skip_in_stats": false,
+      "solving": 589.0,
+      "total_solving": 589.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91182350
+  },
+  {
+    "fields": {
+      "account": 10026284,
+      "addition": {
+        "country": "IN",
+        "institution": "Vasireddy Venkatadri Institute of Technology, Nambur",
+        "institution_type": "College",
+        "is_user_premium": true,
+        "name": "SHAIK VAASIFA",
+        "old_rating": 1744,
+        "problems": {
+          "ARCO": {
+            "result": 100
+          },
+          "PRCO": {
+            "result": 100
+          },
+          "ROCU": {
+            "result": 100
+          },
+          "SMSWP": {
+            "result": 100
+          },
+          "UTNL": {
+            "partial": true,
+            "result": 80
+          },
+          "VACDI": {
+            "result": 100
+          }
+        },
+        "time": "00:41:02",
+        "user_gender": "Female"
+      },
+      "advanced": false,
+      "contest": 69028032,
+      "created": "2026-07-27T14:22:50.327Z",
+      "global_rating_change": null,
+      "last_activity": "2026-07-27T13:30:00Z",
+      "medal": null,
+      "modified": "2026-07-29T09:22:27.176Z",
+      "n_first_ac": 0,
+      "n_solved": 5,
+      "n_total_solved": 5,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "907",
+      "place_as_int": 907,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 2,
+      "skip_in_stats": false,
+      "solving": 580.0,
+      "total_solving": 580.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91185183
+  },
+  {
+    "fields": {
+      "account": 11577551,
+      "addition": {
+        "country": "IN",
+        "institution": "",
+        "institution_type": null,
+        "is_user_premium": true,
+        "name": "Sajitha Vivekanandan",
+        "old_rating": 837,
+        "problems": {
+          "ARCO": {
+            "result": 100
+          },
+          "PRCO": {
+            "result": 100
+          },
+          "ROCU": {
+            "result": 100
+          },
+          "SMSWP": {
+            "partial": true,
+            "result": 77
+          },
+          "UTNL": {
+            "result": 100
+          },
+          "VACDI": {
+            "partial": true,
+            "result": 88
+          }
+        },
+        "solved": {
+          "solving": 6,
+          "upsolving": 0
+        },
+        "time": "02:33:50",
+        "user_gender": "Female"
+      },
+      "advanced": false,
+      "contest": 69028032,
+      "created": "2026-07-27T16:21:23.442Z",
+      "global_rating_change": null,
+      "last_activity": "2026-07-27T13:30:00Z",
+      "medal": null,
+      "modified": "2026-07-29T09:22:29.641Z",
+      "n_first_ac": 0,
+      "n_solved": 4,
+      "n_total_solved": 4,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "1130",
+      "place_as_int": 1130,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 2,
+      "skip_in_stats": false,
+      "solving": 565.0,
+      "total_solving": 565.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91190512
+  },
+  {
+    "fields": {
+      "account": 11580059,
+      "addition": {
+        "country": "US",
+        "institution": "Michigan State University",
+        "institution_type": "College",
+        "is_user_premium": false,
+        "name": "阪本",
+        "problems": {
+          "ARCO": {
+            "partial": true,
+            "result": 80,
+            "upsolving": {
+              "id": 1319354089,
+              "language": "PYTH 3",
+              "partial": true,
+              "result": 70,
+              "submission_time": 1785162611.991348,
+              "url": "https://www.codechef.com/viewsolution/1319354089",
+              "verdict": "PA"
+            }
+          },
+          "PRCO": {
+            "partial": true,
+            "result": 60
+          },
+          "ROCU": {
+            "partial": true,
+            "result": 60,
+            "upsolving": {
+              "id": 1319387164,
+              "language": "PYTH 3",
+              "partial": true,
+              "result": 20,
+              "submission_time": 1785162611.971062,
+              "url": "https://www.codechef.com/viewsolution/1319387164",
+              "verdict": "PA"
+            }
+          },
+          "SMSWP": {
+            "partial": true,
+            "result": 23
+          },
+          "UTNL": {
+            "result": 100
+          },
+          "VACDI": {
+            "result": 100
+          }
+        },
+        "solved": {
+          "solving": 6,
+          "upsolving": 0
+        },
+        "time": "01:41:00",
+        "user_gender": "Male"
+      },
+      "advanced": false,
+      "contest": 69028032,
+      "created": "2026-07-27T13:43:02.884Z",
+      "global_rating_change": null,
+      "last_activity": "2026-07-27T13:30:00Z",
+      "medal": null,
+      "modified": "2026-07-29T09:22:39.075Z",
+      "n_first_ac": 0,
+      "n_solved": 2,
+      "n_total_solved": 2,
+      "n_upsolved": 0,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "2011",
+      "place_as_int": 2011,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 2,
+      "skip_in_stats": false,
+      "solving": 423.0,
+      "total_solving": 423.0,
+      "upsolving": 0.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91182725
+  },
+  {
+    "fields": {
+      "account": 7575202,
+      "addition": {
+        "_no_update_n_contests": true,
+        "name": "yallavamsipavan",
+        "problems": {
+          "ARCO": {
+            "upsolving": {
+              "id": 1320283471,
+              "language": "JAVA",
+              "partial": false,
+              "result": 100,
+              "submission_time": 1785221640.0,
+              "url": "https://www.codechef.com/viewsolution/1320283471",
+              "verdict": "AC"
+            }
+          },
+          "ROCU": {
+            "upsolving": {
+              "id": 1320302512,
+              "language": "JAVA",
+              "partial": false,
+              "result": 100,
+              "submission_time": 1785222840.0,
+              "url": "https://www.codechef.com/viewsolution/1320302512",
+              "verdict": "AC"
+            }
+          },
+          "UTNL": {
+            "upsolving": {
+              "id": 1320278612,
+              "language": "JAVA",
+              "partial": false,
+              "result": 100,
+              "submission_time": 1785221400.0,
+              "url": "https://www.codechef.com/viewsolution/1320278612",
+              "verdict": "AC"
+            }
+          },
+          "VACDI": {
+            "upsolving": {
+              "id": 1320288507,
+              "language": "JAVA",
+              "partial": false,
+              "result": 100,
+              "submission_time": 1785221940.0,
+              "url": "https://www.codechef.com/viewsolution/1320288507",
+              "verdict": "AC"
+            }
+          }
+        }
+      },
+      "advanced": false,
+      "contest": 69028032,
+      "created": "2026-07-30T03:06:19.054Z",
+      "global_rating_change": null,
+      "last_activity": null,
+      "medal": null,
+      "modified": "2026-07-30T03:06:19.124Z",
+      "n_first_ac": 0,
+      "n_solved": 0,
+      "n_total_solved": 0,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": null,
+      "place_as_int": null,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 2,
+      "skip_in_stats": true,
+      "solving": 0.0,
+      "total_solving": 0.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91232231
+  }
+]

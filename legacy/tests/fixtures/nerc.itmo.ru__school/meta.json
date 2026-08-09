@@ -1,0 +1,39 @@
+{
+    "host": "nerc.itmo.ru/school",
+    "rid": 11,
+    "path": "./module/nerc.itmo.ru_school/index.php",
+    "url": "https://nerc.itmo.ru/school/io/",
+    "parse_url": "https://nerc.itmo.ru/school/io/",
+    "timezone": "Europe/Moscow",
+    "api_url": null,
+    "info": {
+        "standings": {
+            "subname": "(?P<value>\\([^\\(]*\\))(?:\\s*[0-9]+-[0-9]+)?$",
+            "timeline": {
+                "time_factor": {
+                    "1": [
+                        60
+                    ],
+                    "2": [
+                        60,
+                        1
+                    ],
+                    "3": [
+                        3600,
+                        60,
+                        1
+                    ]
+                }
+            },
+            "skip_country": true
+        },
+        "get_events": {
+            "colors": {
+                "darken": "#3E4416",
+                "lighten": "#EBEFD1"
+            }
+        }
+    },
+    "parse_full_list": false,
+    "recorded_at": "2026-08-08 17:02:03"
+}

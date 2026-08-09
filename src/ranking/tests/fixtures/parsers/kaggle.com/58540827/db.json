@@ -1,0 +1,2005 @@
+[
+  {
+    "fields": {
+      "accounts_fields": {
+        "types": {
+          "@wf": [
+            "str"
+          ],
+          "achievementSummaries": [
+            "list"
+          ],
+          "activePane": [
+            "str"
+          ],
+          "activePaneTier": [
+            "str"
+          ],
+          "badges": [
+            "list"
+          ],
+          "bio": [
+            "str"
+          ],
+          "canCreateDatasets": [
+            "bool"
+          ],
+          "canSeeAtMentions": [
+            "bool"
+          ],
+          "canSeeCallToAction": [
+            "bool"
+          ],
+          "canSeeNotifications": [
+            "bool"
+          ],
+          "city": [
+            "str"
+          ],
+          "competitionsSummary.rankCurrent": [
+            "int"
+          ],
+          "competitionsSummary.rankHighest": [
+            "int"
+          ],
+          "competitionsSummary.rankOutOf": [
+            "int"
+          ],
+          "competitionsSummary.rankPercentage": [
+            "float"
+          ],
+          "competitionsSummary.summaryType": [
+            "str"
+          ],
+          "competitionsSummary.tier": [
+            "str"
+          ],
+          "competitionsSummary.totalBronzeMedals": [
+            "int"
+          ],
+          "competitionsSummary.totalGoldMedals": [
+            "int"
+          ],
+          "competitionsSummary.totalResults": [
+            "int"
+          ],
+          "competitionsSummary.totalSilverMedals": [
+            "int"
+          ],
+          "datasetsSummary.rankCurrent": [
+            "int"
+          ],
+          "datasetsSummary.rankHighest": [
+            "int"
+          ],
+          "datasetsSummary.rankOutOf": [
+            "int"
+          ],
+          "datasetsSummary.rankPercentage": [
+            "float"
+          ],
+          "datasetsSummary.summaryType": [
+            "str"
+          ],
+          "datasetsSummary.tier": [
+            "str"
+          ],
+          "datasetsSummary.totalBronzeMedals": [
+            "int"
+          ],
+          "datasetsSummary.totalGoldMedals": [
+            "int"
+          ],
+          "datasetsSummary.totalResults": [
+            "int"
+          ],
+          "datasetsSummary.totalSilverMedals": [
+            "int"
+          ],
+          "discussionsSummary.rankCurrent": [
+            "int"
+          ],
+          "discussionsSummary.rankHighest": [
+            "int"
+          ],
+          "discussionsSummary.rankOutOf": [
+            "int"
+          ],
+          "discussionsSummary.rankPercentage": [
+            "float"
+          ],
+          "discussionsSummary.summaryType": [
+            "str"
+          ],
+          "discussionsSummary.tier": [
+            "str"
+          ],
+          "discussionsSummary.totalBronzeMedals": [
+            "int"
+          ],
+          "discussionsSummary.totalGoldMedals": [
+            "int"
+          ],
+          "discussionsSummary.totalResults": [
+            "int"
+          ],
+          "discussionsSummary.totalSilverMedals": [
+            "int"
+          ],
+          "followers": [
+            "int"
+          ],
+          "followers.count": [
+            "int"
+          ],
+          "followers.type": [
+            "str"
+          ],
+          "following": [
+            "int"
+          ],
+          "following.count": [
+            "int"
+          ],
+          "following.type": [
+            "str"
+          ],
+          "gitHubUserName": [
+            "str"
+          ],
+          "linkedInUrl": [
+            "str"
+          ],
+          "locationSharingOptOut": [
+            "bool"
+          ],
+          "occupation": [
+            "str"
+          ],
+          "organization": [
+            "str"
+          ],
+          "organizations": [
+            "list"
+          ],
+          "performanceTier": [
+            "str"
+          ],
+          "performanceTierCategory": [
+            "str"
+          ],
+          "progressionOptOut": [
+            "bool"
+          ],
+          "pronouns": [
+            "str"
+          ],
+          "region": [
+            "str"
+          ],
+          "scriptsSummary.rankCurrent": [
+            "int"
+          ],
+          "scriptsSummary.rankHighest": [
+            "int"
+          ],
+          "scriptsSummary.rankOutOf": [
+            "int"
+          ],
+          "scriptsSummary.rankPercentage": [
+            "float"
+          ],
+          "scriptsSummary.summaryType": [
+            "str"
+          ],
+          "scriptsSummary.tier": [
+            "str"
+          ],
+          "scriptsSummary.totalBronzeMedals": [
+            "int"
+          ],
+          "scriptsSummary.totalGoldMedals": [
+            "int"
+          ],
+          "scriptsSummary.totalResults": [
+            "int"
+          ],
+          "scriptsSummary.totalSilverMedals": [
+            "int"
+          ],
+          "tagline": [
+            "str"
+          ],
+          "totalActiveCompetitions": [
+            "int"
+          ],
+          "totalCompetitions": [
+            "int"
+          ],
+          "totalDatasets": [
+            "int"
+          ],
+          "totalDiscussions": [
+            "int"
+          ],
+          "totalGrandmasterLevel": [
+            "int"
+          ],
+          "totalHostedCompetitions": [
+            "int"
+          ],
+          "totalKernels": [
+            "int"
+          ],
+          "totalModels": [
+            "int"
+          ],
+          "totalScripts": [
+            "int"
+          ],
+          "totalUsersFollowingMe": [
+            "int"
+          ],
+          "totalUsersIFollow": [
+            "int"
+          ],
+          "totalWriteUps": [
+            "int"
+          ],
+          "twitterUserName": [
+            "str"
+          ],
+          "userAllowsUserMessages": [
+            "bool"
+          ],
+          "userAvatarUrl": [
+            "str"
+          ],
+          "userId": [
+            "int"
+          ],
+          "userJoinDate": [
+            "str"
+          ],
+          "userLastActive": [
+            "str"
+          ],
+          "userName": [
+            "str"
+          ],
+          "userUrl": [
+            "str"
+          ],
+          "visibilitySettings__hiddenAchievementTypes": [
+            "list"
+          ],
+          "visibilitySettings__hiddenBadgeIds": [
+            "list"
+          ],
+          "visibilitySettings__hiddenSections": [
+            "list"
+          ],
+          "websiteUrl": [
+            "str"
+          ]
+        },
+        "verification_fields": [
+          "name",
+          "occupation",
+          "organization",
+          "bio"
+        ]
+      },
+      "allow_delete_archived_statistics": false,
+      "api_url": null,
+      "auto_remove_started": false,
+      "avatar_url": "{info[userAvatarUrl]}",
+      "avg_rating": null,
+      "color": "#7466CC",
+      "contest_update_time": "2026-08-04T11:06:30.382Z",
+      "country_rank_update_time": "2026-08-04T11:20:06.070Z",
+      "created": "2014-12-21T18:03:00Z",
+      "default_account_type": 1,
+      "enable": true,
+      "has_account_last_submission": null,
+      "has_account_n_writers": null,
+      "has_account_verification": true,
+      "has_accounts_infos_update": true,
+      "has_country_medal": null,
+      "has_country_place": null,
+      "has_country_rating": false,
+      "has_inherit_medals_to_related": false,
+      "has_multi_account": false,
+      "has_problem_archive": false,
+      "has_problem_rating": false,
+      "has_problem_statistic": false,
+      "has_problem_update": false,
+      "has_rating_history": false,
+      "has_standings_renamed_account": false,
+      "has_statistic_medal": null,
+      "has_statistic_n_first_ac": null,
+      "has_statistic_n_total_solved": null,
+      "has_statistic_place": null,
+      "has_statistic_total_solving": null,
+      "has_submissions_statistics_log": false,
+      "has_upsolving": false,
+      "host": "kaggle.com",
+      "icon_file": "resources/kaggle_com.png",
+      "icon_updated_at": "2025-12-14T00:15:26.794Z",
+      "icon_url": null,
+      "info": {
+        "accounts": {
+          "limit": 300
+        },
+        "get_events": {
+          "colors": {
+            "darken": "#1D1644",
+            "lighten": "#D5D1EF"
+          }
+        }
+      },
+      "modified": "2026-08-04T13:24:08.365Z",
+      "n_accounts": 374435,
+      "n_accounts_to_update": 65692,
+      "n_contests": 741,
+      "n_rating_accounts": null,
+      "n_statistics": 790872,
+      "n_team_accounts": 0,
+      "n_university_accounts": 0,
+      "parse_url": null,
+      "path": "./module/kaggle.com/index.php",
+      "problem_archive_update_time": null,
+      "problem_rating_predictor": {},
+      "problem_url": null,
+      "problems_fields": {
+        "types": {}
+      },
+      "profile_url": "https://www.kaggle.com/{account}",
+      "rank_update_time": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "ratings": [],
+      "regexp": null,
+      "short_host": "kaggle",
+      "skip_for_contests_chart": false,
+      "statistics_fields": {
+        "types": {
+          "delta_rank": [
+            "delta",
+            "int"
+          ],
+          "delta_score": [
+            "float",
+            "int"
+          ],
+          "is_benchmark": [
+            "bool"
+          ],
+          "last_submission": [
+            "timestamp",
+            "float"
+          ],
+          "medal": [
+            "str"
+          ],
+          "name": [
+            "str"
+          ],
+          "public_rank": [
+            "int"
+          ],
+          "public_score": [
+            "float",
+            "int"
+          ],
+          "solution_write_up_url": [
+            "str"
+          ],
+          "submission_count": [
+            "int"
+          ],
+          "team_id": [
+            "int"
+          ],
+          "team_leader_id": [
+            "int"
+          ],
+          "team_up_enabled": [
+            "bool"
+          ],
+          "team_up_info": [
+            "dict"
+          ],
+          "team_up_intro": [
+            "str"
+          ],
+          "write_up_forum_topic_id": [
+            "int"
+          ]
+        }
+      },
+      "timezone": "UTC",
+      "uid": "seeboovo90q71dq60scm4k8qks@group.calendar.google.com",
+      "url": "https://www.kaggle.com/competitions/"
+    },
+    "model": "clist.resource",
+    "pk": 74
+  },
+  {
+    "fields": {
+      "created": "2022-11-02T01:22:55.616Z",
+      "delay_on_error": "04:00:00",
+      "delay_on_success": "1 00:00:00",
+      "delay_shortly_after": "00:05:00",
+      "enable": true,
+      "long_contest_divider": 100,
+      "long_contest_idle": "06:00:00",
+      "max_delay_after_end": "7 00:00:00",
+      "min_delay_after_end": "00:30:00",
+      "modified": "2023-10-18T20:02:21.255Z",
+      "path": "ranking/management/modules/kaggle",
+      "resource": 74,
+      "shortly_after": "00:30:00"
+    },
+    "model": "ranking.module",
+    "pk": 71
+  },
+  {
+    "fields": {
+      "allow_updating_statistics_for_participants": null,
+      "auto_updated": "2025-12-04T23:46:11Z",
+      "calculate_time": false,
+      "created": "2025-03-26T17:10:47.010Z",
+      "duration_in_secs": 19205962,
+      "edit": null,
+      "elimination_tournament_info": {},
+      "end_time": "2025-11-03T23:59:00Z",
+      "finalists_info": {},
+      "has_fixed_rating_prediction_field": null,
+      "has_hidden_results": false,
+      "has_submissions": null,
+      "has_submissions_tests": null,
+      "has_unlimited_statistics": null,
+      "hide_unsolved_standings_problems": null,
+      "host": "kaggle.com",
+      "info": {
+        "fields": [
+          "medal",
+          "name",
+          "team_id",
+          "last_submission",
+          "_members",
+          "submission_count",
+          "team_up_info"
+        ],
+        "fields_types": {
+          "_members": [
+            "list"
+          ],
+          "delta_rank": [
+            "delta"
+          ],
+          "last_submission": [
+            "float",
+            "timestamp"
+          ],
+          "medal": [
+            "str"
+          ],
+          "name": [
+            "str"
+          ],
+          "submission_count": [
+            "int"
+          ],
+          "team_id": [
+            "int"
+          ],
+          "team_up_info": [
+            "dict"
+          ]
+        },
+        "grouped_team": true,
+        "hidden_fields": [
+          "submission_count",
+          "team_up_info"
+        ]
+      },
+      "invisible": false,
+      "is_auto_added": true,
+      "is_promoted": null,
+      "is_rated": null,
+      "key": "91496",
+      "kind": null,
+      "link_statistic_timing": null,
+      "merging_contests": [],
+      "modified": "2025-03-26T17:10:47.010Z",
+      "n_problems": null,
+      "n_statistics": 1456,
+      "notification_timing": null,
+      "parsed_percentage": null,
+      "parsed_time": "2025-11-10T00:56:06.751Z",
+      "problem_rating_hash": null,
+      "problem_rating_update_required": false,
+      "rating_prediction_fields": null,
+      "rating_prediction_hash": null,
+      "rating_prediction_timing": null,
+      "raw_info": {},
+      "registration_url": null,
+      "related": null,
+      "resource": 74,
+      "series": null,
+      "set_matched_coders_to_members": null,
+      "slug": "arc-prize-2025-artificial-intelligence-custom-metric",
+      "standings_kind": null,
+      "standings_url": "https://www.kaggle.com/competitions/arc-prize-2025/leaderboard",
+      "start_time": "2025-03-26T16:59:38Z",
+      "statistic_timing": "2025-11-11T00:56:06.751Z",
+      "statistics_update_required": false,
+      "submissions_info": {},
+      "title": "ARC Prize 2025 [artificial intelligence, custom metric]",
+      "title_path": "arc.prize.2025.artificial.intelligence.custom.metric",
+      "trial_standings_url": null,
+      "uid": "fdb3hgvthgm8qllj0r6vmrbg5c",
+      "updated": "2025-12-04T23:46:11.997Z",
+      "upload_solved_problems_solutions": null,
+      "upsolving_key": null,
+      "upsolving_url": null,
+      "url": "https://www.kaggle.com/competitions/arc-prize-2025",
+      "variables": {},
+      "wait_for_successful_update_timing": null,
+      "with_advance": false,
+      "with_medals": true
+    },
+    "model": "clist.contest",
+    "pk": 58540827
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "FR",
+      "created": "2022-11-02T01:58:47.403Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "achievementSummaries": [
+          {
+            "rankCurrent": 33,
+            "rankHighest": 6,
+            "rankOutOf": 202839,
+            "rankPercentage": 0.0001626906,
+            "summaryType": "USER_ACHIEVEMENT_TYPE_COMPETITIONS",
+            "tier": "GRANDMASTER",
+            "totalBronzeMedals": 4,
+            "totalGoldMedals": 28,
+            "totalSilverMedals": 36
+          },
+          {
+            "rankCurrent": 984,
+            "rankHighest": 94,
+            "rankOutOf": 8611,
+            "rankPercentage": 0.114272445,
+            "summaryType": "USER_ACHIEVEMENT_TYPE_DATASETS",
+            "tier": "EXPERT",
+            "totalBronzeMedals": 5,
+            "totalSilverMedals": 1
+          },
+          {
+            "rankCurrent": 341,
+            "rankHighest": 12,
+            "rankOutOf": 52017,
+            "rankPercentage": 0.0065555493,
+            "summaryType": "USER_ACHIEVEMENT_TYPE_NOTEBOOKS",
+            "tier": "GRANDMASTER",
+            "totalBronzeMedals": 24,
+            "totalGoldMedals": 17,
+            "totalSilverMedals": 17
+          }
+        ],
+        "badges": [
+          {
+            "achievedTime": "2024-09-10T16:35:01.818181400Z",
+            "badge": {
+              "badgeId": 49,
+              "badgeType": "REGULAR",
+              "description": "Active on Kaggle for more than 1 year.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F163e0f27360ae958da99dde2a68f7e00%2FBadge-46.svg?generation=1727468408101916&alt=media",
+              "issuedUserCount": 5742290,
+              "name": "1 Year on Kaggle"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-09-10T16:38:01.143605500Z",
+            "badge": {
+              "badgeId": 50,
+              "badgeType": "REGULAR",
+              "description": "Active on Kaggle for more than 2 years.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F17276c55ce13e85b658e1f49c608eba6%2FBadge-47.svg?generation=1727468428193735&alt=media",
+              "issuedUserCount": 3171307,
+              "name": "2 Years on Kaggle"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-09-10T16:35:01.453195400Z",
+            "badge": {
+              "badgeId": 51,
+              "badgeType": "REGULAR",
+              "description": "Active on Kaggle for more than 5 years.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F67ef0b5ce92c52f5ead19d2008c795de%2FBadge-48.svg?generation=1727468442673351&alt=media",
+              "issuedUserCount": 1018312,
+              "name": "5 Years on Kaggle"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-08-16T01:51:12.015457600Z",
+            "badge": {
+              "badgeId": 52,
+              "badgeType": "REGULAR",
+              "description": "Active on Kaggle for more than 10 years.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2Fc0c34ce79203dfc03ee7efdf00bd3d6c%2FBadge-49.svg?generation=1727468465608195&alt=media",
+              "issuedUserCount": 51617,
+              "name": "10 Years on Kaggle"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-09-10T17:11:02.249096700Z",
+            "badge": {
+              "badgeId": 5,
+              "badgeType": "REGULAR",
+              "description": "Made a submission to a Kaggle competition that is eligible for points or medals. These competitions are full-scale machine learning challenges which pose difficult real world prediction problems.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2Fb05e17f63f2eead904a1f04d05bb51a6%2FBadge.svg?generation=1727458564383731&alt=media",
+              "issuedUserCount": 253955,
+              "name": "Competitor"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-09-10T16:11:08.043960500Z",
+            "badge": {
+              "badgeId": 7,
+              "badgeType": "REGULAR",
+              "description": "Made a submission to a Research competition. Research competitions feature problems which are more experimental, may not have a clean or easy solution, and which are integral to a specific domain.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F33a465e5bfb87721b4d97d899c717eb4%2FBadge-3.svg?generation=1727462497490072&alt=media",
+              "issuedUserCount": 90853,
+              "name": "Research Competitor"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-09-10T16:14:02.707098300Z",
+            "badge": {
+              "badgeId": 8,
+              "badgeType": "REGULAR",
+              "description": "Made a submission to a Community competition. These competitions are created by other Kagglers including educators, researchers, companies, meetup groups, or hackathon hosts.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F06808571894d065a64243d6ba468be2b%2FBadge-4.svg?generation=1727462524641424&alt=media",
+              "issuedUserCount": 895203,
+              "name": "Community Competitor"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-09-10T16:17:01.066134700Z",
+            "badge": {
+              "badgeId": 9,
+              "badgeType": "REGULAR",
+              "description": "Made a submission to a Playground competition. Playground competitions are a “for fun” type of Kaggle competition that is one step above Getting Started in difficulty. They are great for learning.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F45be693e46c3d59a48e65f903aad246b%2FBadge-5.svg?generation=1727462562515977&alt=media",
+              "issuedUserCount": 115206,
+              "name": "Playground Competitor"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-11-19T23:40:38.811453400Z",
+            "badge": {
+              "badgeId": 10,
+              "badgeType": "REGULAR",
+              "description": "Made a submission to a Simulation competition. These competitions challenge participants to create intelligent agents which compete in unique game environments.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2Ff0f20d998814e06ca1be06984a5186b1%2FBadge-2.svg?generation=1727462594476185&alt=media",
+              "issuedUserCount": 19826,
+              "name": "Simulation Competitor"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-09-10T16:23:04.618612400Z",
+            "badge": {
+              "badgeId": 11,
+              "badgeType": "REGULAR",
+              "description": "Made a submission to a Santa competition. Santa competitions are Kaggle's annual tradition of hosting a holiday competition focussed on optimization problems.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F5bc0c196b63d99070952c565a043d5f9%2FBadge-6.svg?generation=1727462611923837&alt=media",
+              "issuedUserCount": 8030,
+              "name": "Santa Competitor"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-09-10T16:29:00.741452500Z",
+            "badge": {
+              "badgeId": 13,
+              "badgeType": "REGULAR",
+              "description": "Made a submission to a code competition. These competitions require the submission of a reproducible bundle of code rather than a simple file of predictions.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F08aa345b8928ae96e21ee3586021500e%2FBadge-8.svg?generation=1727462754402917&alt=media",
+              "issuedUserCount": 149143,
+              "name": "Code Submitter"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-09-10T16:32:03.426467600Z",
+            "badge": {
+              "badgeId": 14,
+              "badgeType": "REGULAR",
+              "description": "Submitted to a competition for 7 days in a row.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2Fbf8eabe8bd49d1077784449433957e2d%2FBadge-9.svg?generation=1727462822691956&alt=media",
+              "issuedUserCount": 75117,
+              "name": "Submission Streak"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-09-10T16:35:02.764033300Z",
+            "badge": {
+              "badgeId": 15,
+              "badgeType": "REGULAR",
+              "description": "Submitted to a competition for 30 days in a row.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2Fe984a3bc05464225e3dbe645a278bef3%2FBadge-10.svg?generation=1727462842751264&alt=media",
+              "issuedUserCount": 2878,
+              "name": "Super Submission Streak"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-09-10T16:20:07.509000800Z",
+            "badge": {
+              "badgeId": 30,
+              "badgeType": "REGULAR",
+              "description": "Created a python notebook. Python is one of the most popular general purpose programming languages and has gained widespread use in the machine learning community.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F09e1f99bdf3222934ad7769409ec3f6d%2FBadge-26.svg?generation=1727468059623106&alt=media",
+              "issuedUserCount": 7262675,
+              "name": "Python Coder"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-09-10T16:23:09.129339900Z",
+            "badge": {
+              "badgeId": 31,
+              "badgeType": "REGULAR",
+              "description": "Created an R notebook. R is a programming language for statistical computing and data visualization, it has a long history of use in the sciences.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2Fc3120a3eaa99efb354dd8f13fa488ab3%2FBadge-27.svg?generation=1727468079059480&alt=media",
+              "issuedUserCount": 630675,
+              "name": "R Coder"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-09-12T17:20:29.011454500Z",
+            "badge": {
+              "badgeId": 83,
+              "badgeType": "AWARD",
+              "description": "Climbed into the top 10 places on the Kaggle competition rankings. Ranking points are earned by achieving high places across many competitions. This is one of the most prestigious awards on Kaggle.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F304806%2Fac061173ad98f84380dc7290ff87123d%2FAward%20Image-19.svg?generation=1726517800535668&alt=media",
+              "issuedUserCount": 148,
+              "name": "Challenger"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-09-12T01:47:23.140155100Z",
+            "badge": {
+              "badgeId": 33,
+              "badgeType": "REGULAR",
+              "description": "Uploaded a notebook. With the import feature you can upload notebook files to Kaggle. This allows you to work on your local machine and upload your work when you are ready to share or submit it.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F1e4546d427340e1495b9ee02261e2dc6%2FBadge-34.svg?generation=1727468126171650&alt=media",
+              "issuedUserCount": 697915,
+              "name": "Code Uploader"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-09-12T17:17:28.928482100Z",
+            "badge": {
+              "badgeId": 82,
+              "badgeType": "AWARD",
+              "description": "Climbed into the top 100 places on the Kaggle competition rankings. Ranking points are earned by achieving high places across many competitions. This is an incredibly difficult award to earn.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F304806%2F2904e2b1e8acbde8d5ad13443579dfda%2FAward%20Image-18.svg?generation=1726517780511342&alt=media",
+              "issuedUserCount": 1017,
+              "name": "Contender"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-09-12T01:59:22.006101700Z",
+            "badge": {
+              "badgeId": 37,
+              "badgeType": "REGULAR",
+              "description": "Added tags to a notebook. Tagging a notebook makes it more discoverable across Kaggle.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F453e2017576218001d5bbff451800de8%2FBadge-36.svg?generation=1727468194325199&alt=media",
+              "issuedUserCount": 89705,
+              "name": "Code Tagger"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-09-10T16:44:03.981154Z",
+            "badge": {
+              "badgeId": 38,
+              "badgeType": "REGULAR",
+              "description": "Copied a notebook and made changes to it. Copying a notebook (also known as 'forking' a notebook) is a great way to save time, allowing you to quickly build on top of publicly shared work.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F7567026dd0c594f1193b49a98a976056%2FBadge-35.svg?generation=1727468213893504&alt=media",
+              "issuedUserCount": 887926,
+              "name": "Code Forker"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-09-12T02:05:24.135440900Z",
+            "badge": {
+              "badgeId": 39,
+              "badgeType": "REGULAR",
+              "description": "Used a model in a notebook. Pretrained models from the Kaggle Model Hub are powerful tools for taking your work to the next level.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F2df508502fba7fc8937f3847e46b8ec4%2FBadge-29.svg?generation=1727468233931525&alt=media",
+              "issuedUserCount": 246625,
+              "name": "Notebook Modeler"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-09-12T02:08:22.953222100Z",
+            "badge": {
+              "badgeId": 40,
+              "badgeType": "REGULAR",
+              "description": "Created a utility script. You can set a script on Kaggle to a utility script from the file menu. Then you can import it into any other notebook, using the functions from it whenever you like.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2Fbbea4ea1fc82b501878a17a12611d63a%2FBadge-30.svg?generation=1727468250800009&alt=media",
+              "issuedUserCount": 27824,
+              "name": "Utility Scripter"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-09-10T16:41:00.839630200Z",
+            "badge": {
+              "badgeId": 17,
+              "badgeType": "REGULAR",
+              "description": "Created a dataset. It’s easy to create a dataset on Kaggle and doing so is a great way to start a data science portfolio, share reproducible research, or work with collaborators on a project.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F28e0e70842ce6972f4d68f5b6ecd549a%2FBadge-12.svg?generation=1727462988946700&alt=media",
+              "issuedUserCount": 1327176,
+              "name": "Dataset Creator"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-08-22T21:01:13.327869100Z",
+            "badge": {
+              "badgeId": 18,
+              "badgeType": "REGULAR",
+              "description": "Created a dataset from notebook output. Creating a dataset from a notebook’s output files will let you create reproducible data pipelines. This can also be used to automatically update datasets.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F6e606810b30ccf3326b799d816978216%2FBadge-13.svg?generation=1727463097079415&alt=media",
+              "issuedUserCount": 40850,
+              "name": "Dataset Pipeline Creator"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-09-10T16:50:02.349758Z",
+            "badge": {
+              "badgeId": 20,
+              "badgeType": "REGULAR",
+              "description": "Created a dataset using the Kaggle API. Use the Kaggle API for convenience or as part of an automated workflow.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F4bcf6474cdf3503864419523d22b6019%2FBadge-15.svg?generation=1727463114221819&alt=media",
+              "issuedUserCount": 12917,
+              "name": "API Dataset Creator"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-09-12T01:35:24.414548900Z",
+            "badge": {
+              "badgeId": 29,
+              "badgeType": "REGULAR",
+              "description": "Used a model in a competition notebook. Pretrained models are powerful tools for taking your competition submissions to the next level.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2Feb028e2f7e6b3e2bef2b3682f6919224%2FBadge-25.svg?generation=1727468044501552&alt=media",
+              "issuedUserCount": 74005,
+              "name": "Competition Modeler"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2025-07-07T22:41:05.347497200Z",
+            "badge": {
+              "badgeId": 99,
+              "badgeType": "AWARD",
+              "customFieldName": "Highest Rank Achieved",
+              "description": "Achieved the Grandmaster tier in the Discussions track before it was removed. From 2016-2025 Kaggle had a Discussions progression track that rewarded outstanding community contributions in our forums.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F304806%2Faf77c6364e3c4f8c6da99dd6cb541128%2FDiscussions-grandmaster.svg?generation=1747184678761141&alt=media",
+              "issuedUserCount": 115,
+              "name": "Discussions Legacy Grandmaster"
+            },
+            "count": 1,
+            "customFieldValue": "1"
+          },
+          {
+            "achievedTime": "2024-12-16T01:02:52.256934100Z",
+            "badge": {
+              "badgeId": 44,
+              "badgeType": "REGULAR",
+              "description": "Turned on the Kaggle dark theme. You can make this change under settings. Dark mode is a popular alternative color scheme for the site which many people find easier on the eyes.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F059c9b5e8bad980032971b42cb35cb10%2FBadge-44.svg?generation=1727468322667890&alt=media",
+              "issuedUserCount": 834135,
+              "name": "Vampire"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-09-10T17:05:00.699051500Z",
+            "badge": {
+              "badgeId": 45,
+              "badgeType": "REGULAR",
+              "description": "Joined the Kaggle Discord and linked your account. Discord is a popular chatroom platform that is more casual than traditional forums. You can join the Kaggle server here: discord.gg/kaggle",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F0b96fc543a2faf02467b3dcd5833feff%2FBadge-45.svg?generation=1727468334875991&alt=media",
+              "issuedUserCount": 49438,
+              "name": "Agent of Discord"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-09-18T00:32:17.814423300Z",
+            "badge": {
+              "badgeId": 67,
+              "badgeType": "AWARD",
+              "customFieldName": "Winning Events",
+              "description": "Placed in the top 3 teams at a Kaggle Days competition. Kaggle Days were a series of in-person Kaggle meetups run from 2018-2022. These events hosted very competitive single day competitions.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F304806%2F17311551c2744c9f82778716cdaae1b0%2FAward%20Image.svg?generation=1727205030158047&alt=media",
+              "issuedUserCount": 112,
+              "name": "Kaggle Days Competition Winner"
+            },
+            "count": 1,
+            "customFieldValue": "Beijing 2022<br>Tokyo 2022<br>New York 2022<br>Paris 2022"
+          },
+          {
+            "achievedTime": "2024-09-12T00:40:33.868533200Z",
+            "badge": {
+              "badgeId": 72,
+              "badgeType": "AWARD",
+              "customFieldName": "Solution Writeup",
+              "description": "Winner of a Best Solution Writeup Award. This award was given to the authors of the best competition solution writeups in 2023. Winners were chosen by judges who reviewed all writeups written in 2023.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F304806%2F930ef089f18813eae3d12e72cc6c4ae7%2FAward%20Image-7.svg?generation=1726100346527595&alt=media",
+              "issuedUserCount": 17,
+              "name": "Best Solution Writeup Award"
+            },
+            "count": 1,
+            "customFieldValue": "[Predict Student Performance from Game Play - 1st Place Solution](https://www.kaggle.com/competitions/predict-student-performance-from-game-play/discussion/420217)"
+          },
+          {
+            "achievedTime": "2024-09-10T16:38:00.434699100Z",
+            "badge": {
+              "badgeId": 56,
+              "badgeType": "REGULAR",
+              "description": "Logged in to Kaggle 7 days in a row.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F6e139e7278fc9c33210e39baf918967f%2FBadge-53.svg?generation=1727468684057299&alt=media",
+              "issuedUserCount": 599638,
+              "name": "7 Day Login Streak"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-09-10T16:41:00.522340Z",
+            "badge": {
+              "badgeId": 57,
+              "badgeType": "REGULAR",
+              "description": "Logged in to Kaggle 30 days in a row.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F9c1a2c875c722bba1ce1b0b1db3167f6%2FBadge-54.svg?generation=1727468701840873&alt=media",
+              "issuedUserCount": 36045,
+              "name": "30 Day Login Streak"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-09-10T16:44:01.111329600Z",
+            "badge": {
+              "badgeId": 58,
+              "badgeType": "REGULAR",
+              "description": "Logged in to Kaggle 100 days in a row.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F48e340e2f9017ee9ca792d4dee295aff%2FBadge-55.svg?generation=1727468713732610&alt=media",
+              "issuedUserCount": 3584,
+              "name": "100 Day Login Streak"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-09-10T16:47:00.244596700Z",
+            "badge": {
+              "badgeId": 59,
+              "badgeType": "REGULAR",
+              "description": "Logged in to Kaggle 365 days in a row.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2Fec040166fefd880a1fb2714a60bc5602%2FBadge-56.svg?generation=1727468726760883&alt=media",
+              "issuedUserCount": 324,
+              "name": "Year Long Login Streak",
+              "rarityIndex": 5
+            },
+            "count": 1
+          }
+        ],
+        "bio": "Got a PhD in machine learning in a previous millennium, ML was very different from now, and therefore this PhD is useless... Worked on constraint programming and mathematical optimization since then until few years ago where I came back to ML.  Entered my first competition on Kaggle in May 2016, and never stopped competing since then.  Now at NVIDIA.",
+        "city": "France",
+        "country": "",
+        "followers": 7846,
+        "following": 0,
+        "gitHubUserName": "jfpuget",
+        "linkedInUrl": "https://www.linkedin.com/in/jfpuget/",
+        "locationSharingOptOut": false,
+        "name": "CPMP",
+        "occupation": "Director competitive ML, KGMON team lead ",
+        "organization": "NVIDIA",
+        "organizations": [
+          {
+            "id": 5141,
+            "name": "NVIDIA",
+            "slug": "nvidia"
+          }
+        ],
+        "performanceTier": "GRANDMASTER",
+        "performanceTierCategory": "USER_ACHIEVEMENT_TYPE_COMPETITIONS",
+        "progressionOptOut": false,
+        "pronouns": "he/him",
+        "region": "",
+        "tagline": "Kaggle is a legal drug.",
+        "totalActiveCompetitions": 1,
+        "totalCompetitions": 109,
+        "totalDatasets": 56,
+        "totalDiscussions": 11905,
+        "totalGrandmasterLevel": 6,
+        "totalKernels": 95,
+        "totalWriteUps": 47,
+        "twitterUserName": "JFPuget",
+        "userAvatarUrl": "https://storage.googleapis.com/kaggle-avatars/images/75976-gr.jpg",
+        "userId": 75976,
+        "userJoinDate": "2012-12-16T12:03:05.527Z",
+        "userLastActive": "2025-11-04T05:22:35.553Z",
+        "userName": "cpmpml",
+        "visibilitySettings": {},
+        "websiteUrl": "https://nvidia.com"
+      },
+      "key": "cpmpml",
+      "last_activity": "2025-07-23T17:37:04Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-11-04T12:43:10.064Z",
+      "n_bronze": 0,
+      "n_contests": 101,
+      "n_first_ac": 0,
+      "n_first_places": 1,
+      "n_gold": 1,
+      "n_listvalues": 0,
+      "n_medals": 4,
+      "n_other_medals": null,
+      "n_places": 2,
+      "n_second_places": null,
+      "n_silver": 3,
+      "n_solved": 0,
+      "n_subscribers": 0,
+      "n_third_places": 0,
+      "n_top_ten_places": 1,
+      "n_total_solved": 0,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "CPMP",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 74,
+      "resource_rank": null,
+      "solving": -103.06246699999988,
+      "submissions_info": {},
+      "total_solving": -103.06246699999988,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-11-04T23:59:59.999Z",
+      "upsolving": 0.0,
+      "url": "/account/cpmpml/resource/kaggle.com/"
+    },
+    "model": "ranking.account",
+    "pk": 4840700
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2022-11-02T04:05:11.621Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "achievementSummaries": [
+          {
+            "rankOutOf": 202837,
+            "summaryType": "USER_ACHIEVEMENT_TYPE_COMPETITIONS",
+            "tier": "CONTRIBUTOR",
+            "totalBronzeMedals": 1
+          },
+          {
+            "rankOutOf": 8611,
+            "summaryType": "USER_ACHIEVEMENT_TYPE_DATASETS",
+            "tier": "CONTRIBUTOR"
+          },
+          {
+            "rankOutOf": 52073,
+            "summaryType": "USER_ACHIEVEMENT_TYPE_NOTEBOOKS",
+            "tier": "CONTRIBUTOR"
+          }
+        ],
+        "badges": [
+          {
+            "achievedTime": "2024-09-10T16:35:01.639985300Z",
+            "badge": {
+              "badgeId": 49,
+              "badgeType": "REGULAR",
+              "description": "Active on Kaggle for more than 1 year.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F163e0f27360ae958da99dde2a68f7e00%2FBadge-46.svg?generation=1727468408101916&alt=media",
+              "issuedUserCount": 5743212,
+              "name": "1 Year on Kaggle"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-09-10T16:35:01.124074500Z",
+            "badge": {
+              "badgeId": 50,
+              "badgeType": "REGULAR",
+              "description": "Active on Kaggle for more than 2 years.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F17276c55ce13e85b658e1f49c608eba6%2FBadge-47.svg?generation=1727468428193735&alt=media",
+              "issuedUserCount": 3171804,
+              "name": "2 Years on Kaggle"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-09-10T16:35:01.279587200Z",
+            "badge": {
+              "badgeId": 51,
+              "badgeType": "REGULAR",
+              "description": "Active on Kaggle for more than 5 years.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F67ef0b5ce92c52f5ead19d2008c795de%2FBadge-48.svg?generation=1727468442673351&alt=media",
+              "issuedUserCount": 1018450,
+              "name": "5 Years on Kaggle"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-08-16T01:51:08.390849Z",
+            "badge": {
+              "badgeId": 52,
+              "badgeType": "REGULAR",
+              "description": "Active on Kaggle for more than 10 years.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2Fc0c34ce79203dfc03ee7efdf00bd3d6c%2FBadge-49.svg?generation=1727468465608195&alt=media",
+              "issuedUserCount": 51627,
+              "name": "10 Years on Kaggle"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-09-10T17:11:02.181110300Z",
+            "badge": {
+              "badgeId": 5,
+              "badgeType": "REGULAR",
+              "description": "Made a submission to a Kaggle competition that is eligible for points or medals. These competitions are full-scale machine learning challenges which pose difficult real world prediction problems.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2Fb05e17f63f2eead904a1f04d05bb51a6%2FBadge.svg?generation=1727458564383731&alt=media",
+              "issuedUserCount": 253969,
+              "name": "Competitor"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-09-10T16:29:00.738973800Z",
+            "badge": {
+              "badgeId": 13,
+              "badgeType": "REGULAR",
+              "description": "Made a submission to a code competition. These competitions require the submission of a reproducible bundle of code rather than a simple file of predictions.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F08aa345b8928ae96e21ee3586021500e%2FBadge-8.svg?generation=1727462754402917&alt=media",
+              "issuedUserCount": 149159,
+              "name": "Code Submitter"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-09-10T16:32:03.423365800Z",
+            "badge": {
+              "badgeId": 14,
+              "badgeType": "REGULAR",
+              "description": "Submitted to a competition for 7 days in a row.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2Fbf8eabe8bd49d1077784449433957e2d%2FBadge-9.svg?generation=1727462822691956&alt=media",
+              "issuedUserCount": 75127,
+              "name": "Submission Streak"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-09-12T01:41:26.414598700Z",
+            "badge": {
+              "badgeId": 30,
+              "badgeType": "REGULAR",
+              "description": "Created a python notebook. Python is one of the most popular general purpose programming languages and has gained widespread use in the machine learning community.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F09e1f99bdf3222934ad7769409ec3f6d%2FBadge-26.svg?generation=1727468059623106&alt=media",
+              "issuedUserCount": 7263868,
+              "name": "Python Coder"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-09-12T02:02:25.304572700Z",
+            "badge": {
+              "badgeId": 38,
+              "badgeType": "REGULAR",
+              "description": "Copied a notebook and made changes to it. Copying a notebook (also known as 'forking' a notebook) is a great way to save time, allowing you to quickly build on top of publicly shared work.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F7567026dd0c594f1193b49a98a976056%2FBadge-35.svg?generation=1727468213893504&alt=media",
+              "issuedUserCount": 888009,
+              "name": "Code Forker"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-09-12T02:05:24.134089Z",
+            "badge": {
+              "badgeId": 39,
+              "badgeType": "REGULAR",
+              "description": "Used a model in a notebook. Pretrained models from the Kaggle Model Hub are powerful tools for taking your work to the next level.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F2df508502fba7fc8937f3847e46b8ec4%2FBadge-29.svg?generation=1727468233931525&alt=media",
+              "issuedUserCount": 246704,
+              "name": "Notebook Modeler"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-09-24T17:44:15.088244200Z",
+            "badge": {
+              "badgeId": 17,
+              "badgeType": "REGULAR",
+              "description": "Created a dataset. It’s easy to create a dataset on Kaggle and doing so is a great way to start a data science portfolio, share reproducible research, or work with collaborators on a project.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F28e0e70842ce6972f4d68f5b6ecd549a%2FBadge-12.svg?generation=1727462988946700&alt=media",
+              "issuedUserCount": 1327405,
+              "name": "Dataset Creator"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2025-06-29T14:33:16.947487900Z",
+            "badge": {
+              "badgeId": 18,
+              "badgeType": "REGULAR",
+              "description": "Created a dataset from notebook output. Creating a dataset from a notebook’s output files will let you create reproducible data pipelines. This can also be used to automatically update datasets.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F6e606810b30ccf3326b799d816978216%2FBadge-13.svg?generation=1727463097079415&alt=media",
+              "issuedUserCount": 40856,
+              "name": "Dataset Pipeline Creator"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2025-05-16T22:23:30.927181200Z",
+            "badge": {
+              "badgeId": 23,
+              "badgeType": "REGULAR",
+              "description": "Created a model. Kaggle Models is a repository of pre-trained models that are deeply integrated with Kaggle's platform, making them easy to use in Kaggle Competitions and Notebooks. ",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F9ca07715376e5949f99c842605c3ee60%2FBadge-18.svg?generation=1727467872971674&alt=media",
+              "issuedUserCount": 137017,
+              "name": "Model Creator"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2025-05-24T10:25:26.882923400Z",
+            "badge": {
+              "badgeId": 25,
+              "badgeType": "REGULAR",
+              "description": "Created a model from a link to a remote URL, Github repository, or Google Cloud Storage bucket. This can be much quicker than uploading from your local machine.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F525c42374b51a206c1974b65915b5fde%2FBadge-20.svg?generation=1727467942922370&alt=media",
+              "issuedUserCount": 4993,
+              "name": "Linked Model Creator"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2025-10-12T14:31:13.102338300Z",
+            "badge": {
+              "badgeId": 26,
+              "badgeType": "REGULAR",
+              "description": "Created a model from the Kaggle API. Use the Kaggle API for convenience or as part of an automated workflow.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2Fdfbdb8aeff30c471dd7c65e5a6e7d44f%2FBadge-19.svg?generation=1727467957087941&alt=media",
+              "issuedUserCount": 1621,
+              "name": "API Model Creator"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-09-12T01:35:24.414230700Z",
+            "badge": {
+              "badgeId": 29,
+              "badgeType": "REGULAR",
+              "description": "Used a model in a competition notebook. Pretrained models are powerful tools for taking your competition submissions to the next level.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2Feb028e2f7e6b3e2bef2b3682f6919224%2FBadge-25.svg?generation=1727468044501552&alt=media",
+              "issuedUserCount": 74025,
+              "name": "Competition Modeler"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2025-09-30T18:36:15.313322900Z",
+            "badge": {
+              "badgeId": 45,
+              "badgeType": "REGULAR",
+              "description": "Joined the Kaggle Discord and linked your account. Discord is a popular chatroom platform that is more casual than traditional forums. You can join the Kaggle server here: discord.gg/kaggle",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F0b96fc543a2faf02467b3dcd5833feff%2FBadge-45.svg?generation=1727468334875991&alt=media",
+              "issuedUserCount": 49473,
+              "name": "Agent of Discord"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-09-10T16:38:00.431714800Z",
+            "badge": {
+              "badgeId": 56,
+              "badgeType": "REGULAR",
+              "description": "Logged in to Kaggle 7 days in a row.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F6e139e7278fc9c33210e39baf918967f%2FBadge-53.svg?generation=1727468684057299&alt=media",
+              "issuedUserCount": 599716,
+              "name": "7 Day Login Streak"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-09-10T16:41:00.521073Z",
+            "badge": {
+              "badgeId": 57,
+              "badgeType": "REGULAR",
+              "description": "Logged in to Kaggle 30 days in a row.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F9c1a2c875c722bba1ce1b0b1db3167f6%2FBadge-54.svg?generation=1727468701840873&alt=media",
+              "issuedUserCount": 36050,
+              "name": "30 Day Login Streak"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-10-26T11:17:02.167771Z",
+            "badge": {
+              "badgeId": 58,
+              "badgeType": "REGULAR",
+              "description": "Logged in to Kaggle 100 days in a row.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F48e340e2f9017ee9ca792d4dee295aff%2FBadge-55.svg?generation=1727468713732610&alt=media",
+              "issuedUserCount": 3587,
+              "name": "100 Day Login Streak"
+            },
+            "count": 1
+          }
+        ],
+        "bio": "",
+        "city": "",
+        "country": "",
+        "followers": 16,
+        "following": 0,
+        "gitHubUserName": "richemslie",
+        "linkedInUrl": "https://www.linkedin.com/in/richardemslie/",
+        "locationSharingOptOut": false,
+        "name": "rxe",
+        "occupation": "",
+        "organization": "",
+        "performanceTier": "CONTRIBUTOR",
+        "performanceTierCategory": "USER_ACHIEVEMENT_TYPE_COMPETITIONS",
+        "progressionOptOut": false,
+        "pronouns": "",
+        "region": "",
+        "tagline": "",
+        "totalActiveCompetitions": 1,
+        "totalCompetitions": 1,
+        "totalDiscussions": 16,
+        "totalKernels": 1,
+        "twitterUserName": "",
+        "userAvatarUrl": "https://storage.googleapis.com/kaggle-avatars/images/72200-kg.jpg?t=2025-04-23-14-17-19",
+        "userId": 72200,
+        "userJoinDate": "2012-12-02T18:19:17.237Z",
+        "userLastActive": "2025-11-04T11:39:46.293Z",
+        "userName": "albartrose",
+        "visibilitySettings": {},
+        "websiteUrl": ""
+      },
+      "key": "albartrose",
+      "last_activity": "2025-11-17T18:25:29Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-11-26T04:26:09.681Z",
+      "n_bronze": 1,
+      "n_contests": 4,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": 1,
+      "n_listvalues": 0,
+      "n_medals": 2,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": null,
+      "n_silver": 0,
+      "n_solved": 0,
+      "n_subscribers": 0,
+      "n_third_places": 0,
+      "n_top_ten_places": 1,
+      "n_total_solved": 0,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "rxe",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 74,
+      "resource_rank": null,
+      "solving": 84.99223387167599,
+      "submissions_info": {},
+      "total_solving": 84.99223387167599,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-11-04T23:59:59.999Z",
+      "upsolving": 0.0,
+      "url": "/account/albartrose/resource/kaggle.com/"
+    },
+    "model": "ranking.account",
+    "pk": 5068058
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2025-02-01T11:29:18.941Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "achievementSummaries": [
+          {
+            "rankOutOf": 202837,
+            "summaryType": "USER_ACHIEVEMENT_TYPE_COMPETITIONS",
+            "tier": "CONTRIBUTOR"
+          },
+          {
+            "rankOutOf": 8611,
+            "summaryType": "USER_ACHIEVEMENT_TYPE_DATASETS",
+            "tier": "CONTRIBUTOR"
+          },
+          {
+            "rankOutOf": 52073,
+            "summaryType": "USER_ACHIEVEMENT_TYPE_NOTEBOOKS",
+            "tier": "CONTRIBUTOR",
+            "totalBronzeMedals": 2
+          }
+        ],
+        "badges": [
+          {
+            "achievedTime": "2025-01-27T08:47:34.256959100Z",
+            "badge": {
+              "badgeId": 49,
+              "badgeType": "REGULAR",
+              "description": "Active on Kaggle for more than 1 year.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F163e0f27360ae958da99dde2a68f7e00%2FBadge-46.svg?generation=1727468408101916&alt=media",
+              "issuedUserCount": 5743212,
+              "name": "1 Year on Kaggle"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2025-01-27T09:29:35.107032600Z",
+            "badge": {
+              "badgeId": 5,
+              "badgeType": "REGULAR",
+              "description": "Made a submission to a Kaggle competition that is eligible for points or medals. These competitions are full-scale machine learning challenges which pose difficult real world prediction problems.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2Fb05e17f63f2eead904a1f04d05bb51a6%2FBadge.svg?generation=1727458564383731&alt=media",
+              "issuedUserCount": 253969,
+              "name": "Competitor"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2025-04-25T19:00:25.919388600Z",
+            "badge": {
+              "badgeId": 7,
+              "badgeType": "REGULAR",
+              "description": "Made a submission to a Research competition. Research competitions feature problems which are more experimental, may not have a clean or easy solution, and which are integral to a specific domain.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F33a465e5bfb87721b4d97d899c717eb4%2FBadge-3.svg?generation=1727462497490072&alt=media",
+              "issuedUserCount": 90865,
+              "name": "Research Competitor"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2025-01-27T08:53:36.916318200Z",
+            "badge": {
+              "badgeId": 13,
+              "badgeType": "REGULAR",
+              "description": "Made a submission to a code competition. These competitions require the submission of a reproducible bundle of code rather than a simple file of predictions.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F08aa345b8928ae96e21ee3586021500e%2FBadge-8.svg?generation=1727462754402917&alt=media",
+              "issuedUserCount": 149159,
+              "name": "Code Submitter"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2025-02-07T13:15:57.538569900Z",
+            "badge": {
+              "badgeId": 14,
+              "badgeType": "REGULAR",
+              "description": "Submitted to a competition for 7 days in a row.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2Fbf8eabe8bd49d1077784449433957e2d%2FBadge-9.svg?generation=1727462822691956&alt=media",
+              "issuedUserCount": 75127,
+              "name": "Submission Streak"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-09-13T20:33:29.206603100Z",
+            "badge": {
+              "badgeId": 30,
+              "badgeType": "REGULAR",
+              "description": "Created a python notebook. Python is one of the most popular general purpose programming languages and has gained widespread use in the machine learning community.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F09e1f99bdf3222934ad7769409ec3f6d%2FBadge-26.svg?generation=1727468059623106&alt=media",
+              "issuedUserCount": 7263868,
+              "name": "Python Coder"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2024-10-31T13:20:58.267658300Z",
+            "badge": {
+              "badgeId": 33,
+              "badgeType": "REGULAR",
+              "description": "Uploaded a notebook. With the import feature you can upload notebook files to Kaggle. This allows you to work on your local machine and upload your work when you are ready to share or submit it.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F1e4546d427340e1495b9ee02261e2dc6%2FBadge-34.svg?generation=1727468126171650&alt=media",
+              "issuedUserCount": 697992,
+              "name": "Code Uploader"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2025-02-14T11:48:54.941648700Z",
+            "badge": {
+              "badgeId": 37,
+              "badgeType": "REGULAR",
+              "description": "Added tags to a notebook. Tagging a notebook makes it more discoverable across Kaggle.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F453e2017576218001d5bbff451800de8%2FBadge-36.svg?generation=1727468194325199&alt=media",
+              "issuedUserCount": 89712,
+              "name": "Code Tagger"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2025-02-04T03:18:49.804994400Z",
+            "badge": {
+              "badgeId": 38,
+              "badgeType": "REGULAR",
+              "description": "Copied a notebook and made changes to it. Copying a notebook (also known as 'forking' a notebook) is a great way to save time, allowing you to quickly build on top of publicly shared work.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F7567026dd0c594f1193b49a98a976056%2FBadge-35.svg?generation=1727468213893504&alt=media",
+              "issuedUserCount": 888009,
+              "name": "Code Forker"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2025-01-27T09:11:35.740796200Z",
+            "badge": {
+              "badgeId": 39,
+              "badgeType": "REGULAR",
+              "description": "Used a model in a notebook. Pretrained models from the Kaggle Model Hub are powerful tools for taking your work to the next level.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F2df508502fba7fc8937f3847e46b8ec4%2FBadge-29.svg?generation=1727468233931525&alt=media",
+              "issuedUserCount": 246678,
+              "name": "Notebook Modeler"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2025-02-14T10:57:54.240574200Z",
+            "badge": {
+              "badgeId": 40,
+              "badgeType": "REGULAR",
+              "description": "Created a utility script. You can set a script on Kaggle to a utility script from the file menu. Then you can import it into any other notebook, using the functions from it whenever you like.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2Fbbea4ea1fc82b501878a17a12611d63a%2FBadge-30.svg?generation=1727468250800009&alt=media",
+              "issuedUserCount": 27829,
+              "name": "Utility Scripter"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2025-02-16T10:52:43.764711700Z",
+            "badge": {
+              "badgeId": 17,
+              "badgeType": "REGULAR",
+              "description": "Created a dataset. It’s easy to create a dataset on Kaggle and doing so is a great way to start a data science portfolio, share reproducible research, or work with collaborators on a project.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F28e0e70842ce6972f4d68f5b6ecd549a%2FBadge-12.svg?generation=1727462988946700&alt=media",
+              "issuedUserCount": 1327405,
+              "name": "Dataset Creator"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2025-03-24T07:39:15.511816200Z",
+            "badge": {
+              "badgeId": 18,
+              "badgeType": "REGULAR",
+              "description": "Created a dataset from notebook output. Creating a dataset from a notebook’s output files will let you create reproducible data pipelines. This can also be used to automatically update datasets.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F6e606810b30ccf3326b799d816978216%2FBadge-13.svg?generation=1727463097079415&alt=media",
+              "issuedUserCount": 40856,
+              "name": "Dataset Pipeline Creator"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2025-02-14T14:57:56.179973200Z",
+            "badge": {
+              "badgeId": 20,
+              "badgeType": "REGULAR",
+              "description": "Created a dataset using the Kaggle API. Use the Kaggle API for convenience or as part of an automated workflow.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F4bcf6474cdf3503864419523d22b6019%2FBadge-15.svg?generation=1727463114221819&alt=media",
+              "issuedUserCount": 12921,
+              "name": "API Dataset Creator"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2025-04-01T14:29:18.806946700Z",
+            "badge": {
+              "badgeId": 22,
+              "badgeType": "REGULAR",
+              "description": "Added tags to a dataset. Tagging a dataset makes it more discoverable across Kaggle.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F5d31f6794c65cc3ed7e29768cd541a53%2FBadge-17.svg?generation=1727463142252997&alt=media",
+              "issuedUserCount": 54433,
+              "name": "Dataset Tagger"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2025-01-27T08:41:36.363647300Z",
+            "badge": {
+              "badgeId": 29,
+              "badgeType": "REGULAR",
+              "description": "Used a model in a competition notebook. Pretrained models are powerful tools for taking your competition submissions to the next level.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2Feb028e2f7e6b3e2bef2b3682f6919224%2FBadge-25.svg?generation=1727468044501552&alt=media",
+              "issuedUserCount": 74025,
+              "name": "Competition Modeler"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2025-07-07T22:51:41.279935600Z",
+            "badge": {
+              "badgeId": 97,
+              "badgeType": "AWARD",
+              "customFieldName": "Highest Rank Achieved",
+              "description": "Achieved the Expert tier in the Discussions track before it was removed. From 2016-2025 Kaggle had a Discussions progression track that rewarded outstanding community contributions in our forums.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F304806%2F05436079184b2837c8d91d6877fb5e08%2FDiscussions-expert.svg?generation=1747184416188774&alt=media",
+              "issuedUserCount": 4560,
+              "name": "Discussions Legacy Expert"
+            },
+            "count": 1,
+            "customFieldValue": "593"
+          },
+          {
+            "achievedTime": "2025-02-04T04:33:48.826521Z",
+            "badge": {
+              "badgeId": 43,
+              "badgeType": "REGULAR",
+              "description": "Bookmarked something on Kaggle. Most things on Kaggle can be bookmarked. You can view your bookmarks in the sidebar or the 'Your Work' section to quickly get back to them.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2Fe06d05ebef3630403946b71cbdc11665%2FBadge-42.svg?generation=1727468309615075&alt=media",
+              "issuedUserCount": 652156,
+              "name": "Bookmarker"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2025-01-27T12:26:35.144062800Z",
+            "badge": {
+              "badgeId": 44,
+              "badgeType": "REGULAR",
+              "description": "Turned on the Kaggle dark theme. You can make this change under settings. Dark mode is a popular alternative color scheme for the site which many people find easier on the eyes.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F059c9b5e8bad980032971b42cb35cb10%2FBadge-44.svg?generation=1727468322667890&alt=media",
+              "issuedUserCount": 834476,
+              "name": "Vampire"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2025-02-02T02:59:36.727120Z",
+            "badge": {
+              "badgeId": 56,
+              "badgeType": "REGULAR",
+              "description": "Logged in to Kaggle 7 days in a row.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F6e139e7278fc9c33210e39baf918967f%2FBadge-53.svg?generation=1727468684057299&alt=media",
+              "issuedUserCount": 599716,
+              "name": "7 Day Login Streak"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2025-02-25T04:18:26.801207800Z",
+            "badge": {
+              "badgeId": 57,
+              "badgeType": "REGULAR",
+              "description": "Logged in to Kaggle 30 days in a row.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F9c1a2c875c722bba1ce1b0b1db3167f6%2FBadge-54.svg?generation=1727468701840873&alt=media",
+              "issuedUserCount": 36050,
+              "name": "30 Day Login Streak"
+            },
+            "count": 1
+          },
+          {
+            "achievedTime": "2025-05-06T11:07:36.750897Z",
+            "badge": {
+              "badgeId": 58,
+              "badgeType": "REGULAR",
+              "description": "Logged in to Kaggle 100 days in a row.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F48e340e2f9017ee9ca792d4dee295aff%2FBadge-55.svg?generation=1727468713732610&alt=media",
+              "issuedUserCount": 3587,
+              "name": "100 Day Login Streak"
+            },
+            "count": 1
+          }
+        ],
+        "bio": "",
+        "city": "",
+        "country": "",
+        "followers": 3,
+        "following": 0,
+        "gitHubUserName": "",
+        "linkedInUrl": "",
+        "locationSharingOptOut": false,
+        "name": "Aneesh",
+        "occupation": "Research Intern",
+        "organization": "...............",
+        "performanceTier": "EXPERT",
+        "performanceTierCategory": "USER_ACHIEVEMENT_TYPE_DISCUSSION",
+        "progressionOptOut": false,
+        "pronouns": "",
+        "region": "",
+        "tagline": "I make GPUs go brrrr",
+        "totalActiveCompetitions": 1,
+        "totalDatasets": 26,
+        "totalDiscussions": 126,
+        "totalKernels": 22,
+        "totalWriteUps": 1,
+        "twitterUserName": "",
+        "userAvatarUrl": "https://storage.googleapis.com/kaggle-avatars/images/18445905-kg.jpeg?t=2025-05-12-17-38-43",
+        "userId": 18445905,
+        "userJoinDate": "2024-01-03T13:45:28.533Z",
+        "userLastActive": "2025-11-04T09:31:24.110Z",
+        "userName": "aneeshmukkamala",
+        "visibilitySettings": {},
+        "websiteUrl": ""
+      },
+      "key": "aneeshmukkamala",
+      "last_activity": "2025-11-20T15:00:23Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-11-22T08:09:09.797Z",
+      "n_bronze": 0,
+      "n_contests": 4,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": 2,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": 2,
+      "n_solved": 0,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 0,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Aneesh",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 74,
+      "resource_rank": null,
+      "solving": 121.65599999999999,
+      "submissions_info": {},
+      "total_solving": 121.65599999999999,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-11-04T23:59:59.999Z",
+      "upsolving": null,
+      "url": "/account/aneeshmukkamala/resource/kaggle.com/"
+    },
+    "model": "ranking.account",
+    "pk": 8051094
+  },
+  {
+    "fields": {
+      "account": 4840700,
+      "addition": {
+        "_members": [
+          {
+            "account": "cpmpml"
+          },
+          {
+            "account": "sorokin"
+          }
+        ],
+        "last_submission": 1762165183.49,
+        "medal": "gold",
+        "name": "NVARC",
+        "submission_count": 90,
+        "team_id": 14425518,
+        "team_up_info": {
+          "teamLeader": {
+            "displayName": "ivan",
+            "id": 502311,
+            "isPhoneVerified": true,
+            "performanceTier": "GRANDMASTER",
+            "profileUrl": "/sorokin",
+            "progressionOptOut": false,
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/502311-kg.png",
+            "tier": "GRANDMASTER",
+            "url": "/sorokin",
+            "userId": 502311,
+            "userName": "sorokin"
+          }
+        }
+      },
+      "advanced": false,
+      "contest": 58540827,
+      "created": "2025-03-31T09:44:12.377Z",
+      "global_rating_change": null,
+      "last_activity": "2025-03-26T16:59:38Z",
+      "medal": "gold",
+      "modified": "2025-11-10T00:56:13.653Z",
+      "n_first_ac": 0,
+      "n_solved": 0,
+      "n_total_solved": 0,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "1",
+      "place_as_int": 1,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 74,
+      "skip_in_stats": false,
+      "solving": 27.64,
+      "total_solving": 27.64,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 76165929
+  },
+  {
+    "fields": {
+      "account": 5068058,
+      "addition": {
+        "_members": [
+          {
+            "account": "albartrose"
+          }
+        ],
+        "last_submission": 1762160022.36,
+        "medal": "gold",
+        "name": "rxe",
+        "submission_count": 102,
+        "team_id": 13558918,
+        "team_up_info": {
+          "intro": "",
+          "teamLeader": {
+            "displayName": "rxe",
+            "id": 72200,
+            "isPhoneVerified": true,
+            "performanceTier": "CONTRIBUTOR",
+            "profileUrl": "/albartrose",
+            "progressionOptOut": false,
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/72200-kg.jpg?t=2025-04-23-14-17-19",
+            "tier": "CONTRIBUTOR",
+            "url": "/albartrose",
+            "userId": 72200,
+            "userName": "albartrose"
+          }
+        }
+      },
+      "advanced": false,
+      "contest": 58540827,
+      "created": "2025-04-02T15:06:09.933Z",
+      "global_rating_change": null,
+      "last_activity": "2025-03-26T16:59:38Z",
+      "medal": "gold",
+      "modified": "2025-11-10T00:56:14.168Z",
+      "n_first_ac": 0,
+      "n_solved": 0,
+      "n_total_solved": 0,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "7",
+      "place_as_int": 7,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 74,
+      "skip_in_stats": false,
+      "solving": 10.42,
+      "total_solving": 10.42,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 76216968
+  },
+  {
+    "fields": {
+      "account": 8051094,
+      "addition": {
+        "_members": [
+          {
+            "account": "aneeshmukkamala"
+          }
+        ],
+        "last_submission": 1762173084.383333,
+        "medal": "silver",
+        "name": "Aneesh",
+        "submission_count": 23,
+        "team_id": 13570789,
+        "team_up_info": {
+          "enabled": true,
+          "teamLeader": {
+            "displayName": "Aneesh",
+            "id": 18445905,
+            "isPhoneVerified": true,
+            "performanceTier": "EXPERT",
+            "profileUrl": "/aneeshmukkamala",
+            "progressionOptOut": false,
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/18445905-kg.jpeg?t=2025-05-12-17-38-43",
+            "tier": "EXPERT",
+            "url": "/aneeshmukkamala",
+            "userId": 18445905,
+            "userName": "aneeshmukkamala"
+          }
+        }
+      },
+      "advanced": false,
+      "contest": 58540827,
+      "created": "2025-08-22T22:26:22.661Z",
+      "global_rating_change": null,
+      "last_activity": "2025-03-26T16:59:38Z",
+      "medal": "silver",
+      "modified": "2025-11-10T00:56:15.340Z",
+      "n_first_ac": 0,
+      "n_solved": 0,
+      "n_total_solved": 0,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "40",
+      "place_as_int": 40,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 74,
+      "skip_in_stats": false,
+      "solving": 7.08,
+      "total_solving": 7.08,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 79725040
+  }
+]

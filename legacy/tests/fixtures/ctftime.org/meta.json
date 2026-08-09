@@ -1,0 +1,22 @@
+{
+    "host": "ctftime.org",
+    "rid": 70,
+    "path": "./module/ctftime.org/index.php",
+    "url": "https://ctftime.org/",
+    "parse_url": "https://ctftime.org/",
+    "timezone": "UTC",
+    "api_url": null,
+    "info": {
+        "standings": {
+            "name_instead_key": true
+        },
+        "get_events": {
+            "colors": {
+                "darken": "#16443D",
+                "lighten": "#D1EFEA"
+            }
+        }
+    },
+    "parse_full_list": false,
+    "recorded_at": "2026-08-08 17:02:13"
+}

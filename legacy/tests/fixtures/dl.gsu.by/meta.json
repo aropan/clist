@@ -1,0 +1,97 @@
+{
+    "host": "dl.gsu.by",
+    "rid": 4,
+    "path": "./module/dl.gsu.by/index.php",
+    "url": "https://dl.gsu.by/LC.jsp?Type=-1&lng=ru",
+    "parse_url": "https://dl.gsu.by/LC.jsp?Type=-1&lng=ru",
+    "timezone": "Europe/Minsk",
+    "api_url": null,
+    "info": {
+        "parse": {
+            "last_standings_data": {
+                "1186": {
+                    "url": "http://dl.gsu.by/restable.jsp?hid=172455058&hd=3&obid=172455058&pi=7&pi=4&pi=10&u.a&hd=3&u.c=1186&lng=rus",
+                    "date": "2021-06-19",
+                    "title": "\u041a \u0433\u043e\u0440\u043e\u0434\u0443 (\u043e\u0441\u0435\u043d\u044c 2021)/\u041e\u0431\u043b\u0430\u0441\u0442\u044c, 3 \u043c\u0430\u044f 2013"
+                },
+                "1208": {
+                    "url": "http://dl.gsu.by/restable.jsp?hid=173640423&hd=1&obid=173640423&u.a&c.l=4&c.n=2&c.s=2&c.s=7&lng=rus",
+                    "date": "2021-12-05",
+                    "title": "19_Rup1"
+                },
+                "1228": {
+                    "url": "http://dl.gsu.by/restable.jsp?hid=174094805&hd=3&obid=174094805&pi=7&pi=4&pi=10&u.a&hd=3&u.c=1228&lng=rus",
+                    "date": "2022-03-27",
+                    "title": "\u0417\u0438\u043c\u043d\u0438\u0439 \u041a\u0443\u0431\u043e\u043a 2021-2022/\u041a \u0440\u0435\u0441\u043f\u0443\u0431\u043b\u0438\u043a\u0435/16_NN"
+                },
+                "1229": {
+                    "url": "http://dl.gsu.by/restable.jsp?hid=173354476&hd=2&obid=173354476&hd=2&u.c=1229&pi=6&pi=7&pi=4&pi=10&u.a&lng=rus",
+                    "date": "2021-09-04",
+                    "title": "1-10/1"
+                },
+                "1258": {
+                    "url": "http://dl.gsu.by/restable.jsp?hid=174665652&hd=1&obid=174665652&u.a&c.l=4&c.n=2&c.s=2&c.s=7&lng=rus",
+                    "date": "2022-11-27",
+                    "title": "\u041e\u0441\u0435\u043d\u043d\u0438\u0439 \u041a\u0443\u0431\u043e\u043a 2022/21_Rup3"
+                },
+                "1272": {
+                    "url": "http://dl.gsu.by/restable.jsp?hid=174924416&hd=3&obid=174924416&pi=7&pi=4&pi=10&u.a&hd=3&lng=rus",
+                    "date": "2023-03-26",
+                    "title": "\u0417\u0438\u043c\u043d\u0438\u0439 \u041a\u0443\u0431\u043e\u043a 2022-2023/\u041a \u0440\u0435\u0441\u043f\u0443\u0431\u043b\u0438\u043a\u0435/\u0412\u043e\u0441\u043a\u0440\u0435\u0441\u043d\u044b\u0435 \u043c\u0435\u0436\u0434\u0443 \u0441\u0431\u043e\u0440\u0430\u043c\u0438/23_COCI3_Jan"
+                },
+                "1304": {
+                    "url": "http://dl.gsu.by/restable.jsp?hid=176005959&hd=1&obid=176005959&u.a&c.l=4&c.n=2&c.s=2&c.s=7&lng=rus",
+                    "date": "2023-11-26",
+                    "title": "\u041e\u0441\u0435\u043d\u043d\u0438\u0439 \u041a\u0443\u0431\u043e\u043a 2023/2012"
+                },
+                "1322": {
+                    "url": "http://dl.gsu.by/restable.jsp?hid=176485061&hd=3&obid=176485061&pi=7&pi=4&pi=10&u.a&hd=3&lng=rus",
+                    "date": "2024-02-11",
+                    "title": "\u0417\u0438\u043c\u043d\u0438\u0439 \u041a\u0443\u0431\u043e\u043a 2023-2024/\u041a \u0440\u0435\u0441\u043f\u0443\u0431\u043b\u0438\u043a\u0435/\u0412\u043e\u0441\u043a\u0440\u0435\u0441\u043d\u044b\u0435 \u043c\u0435\u0436\u0434\u0443 \u0441\u0431\u043e\u0440\u0430\u043c\u0438/23_COCI5_Mar"
+                },
+                "1353": {
+                    "url": "http://dl.gsu.by/restable.jsp?hid=177128961&hd=1&obid=177128961&u.a&c.l=4&c.n=2&c.s=2&c.s=7&lng=rus",
+                    "date": "2024-10-13",
+                    "title": "\u041e\u0441\u0435\u043d\u043d\u0438\u0439 \u041a\u0443\u0431\u043e\u043a 2024 (Nee4n)/2021"
+                },
+                "1367": {
+                    "url": "http://dl.gsu.by/restable.jsp?hid=177695175&hd=3&obid=177695175&pi=7&pi=4&pi=10&u.a&hd=3&lng=rus",
+                    "date": "2025-01-26",
+                    "title": "\u0417\u0438\u043c\u043d\u0438\u0439 \u041a\u0443\u0431\u043e\u043a 2024-2025/\u041a \u0440\u0435\u0441\u043f\u0443\u0431\u043b\u0438\u043a\u0435/\u0412\u043e\u0441\u043a\u0440\u0435\u0441\u043d\u044b\u0435 \u0434\u043e \u0441\u0431\u043e\u0440\u043e\u0432/20_Rui3"
+                },
+                "1390": {
+                    "url": "http://dl.gsu.by/restable.jsp?hid=179024387&hd=1&obid=179024387&u.a&c.l=4&c.n=2&c.s=2&c.s=7&lng=rus",
+                    "date": "2025-11-23",
+                    "title": "\u041e\u0441\u0435\u043d\u043d\u0438\u0439 \u041a\u0443\u0431\u043e\u043a 2025 (Nee4n)/2017"
+                },
+                "1422": {
+                    "url": "http://dl.gsu.by/restable.jsp?hid=179403361&hd=3&obid=179403361&pi=7&pi=4&pi=10&u.a&hd=3&lng=rus",
+                    "date": "2026-02-10",
+                    "title": "\u041a \u0440\u0435\u0441\u043f\u0443\u0431\u043b\u0438\u043a\u0435/\u0421\u0431\u043e\u0440\u044b 1/2017/Day 2"
+                },
+                "1435": {
+                    "url": "http://dl.gsu.by/restable.jsp?hid=179710923&hd=1&obid=179710923&u.a&c.l=4&c.n=2&c.s=2&c.s=7&lng=rus",
+                    "date": "2026-05-31",
+                    "title": "\u0412\u0435\u0441\u0435\u043d\u043d\u0438\u0439 \u041a\u0443\u0431\u043e\u043a 2026/SPbt/2025"
+                },
+                "1449": {
+                    "url": "http://dl.gsu.by/restable.jsp?hid=179936580&hd=3&obid=179936580&pi=7&pi=4&pi=10&u.a&hd=3&lng=rus",
+                    "date": "2026-06-03",
+                    "title": "SPbt/2025"
+                }
+            }
+        },
+        "standings": {
+            "name_instead_key": true,
+            "avg_problem_width": true
+        },
+        "get_events": {
+            "colors": {
+                "darken": "#1F1644",
+                "lighten": "#D6D0EF"
+            }
+        }
+    },
+    "parse_full_list": false,
+    "recorded_at": "2026-08-08 17:04:09"
+}

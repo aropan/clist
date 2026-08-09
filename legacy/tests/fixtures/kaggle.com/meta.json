@@ -1,0 +1,22 @@
+{
+    "host": "kaggle.com",
+    "rid": 74,
+    "path": "./module/kaggle.com/index.php",
+    "url": "https://www.kaggle.com/competitions/",
+    "parse_url": "https://www.kaggle.com/competitions/",
+    "timezone": "UTC",
+    "api_url": null,
+    "info": {
+        "accounts": {
+            "limit": 300
+        },
+        "get_events": {
+            "colors": {
+                "darken": "#1D1644",
+                "lighten": "#D5D1EF"
+            }
+        }
+    },
+    "parse_full_list": false,
+    "recorded_at": "2026-08-08 17:04:03"
+}

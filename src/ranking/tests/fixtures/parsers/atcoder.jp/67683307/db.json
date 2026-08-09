@@ -1,0 +1,1166 @@
+[
+  {
+    "fields": {
+      "accounts_fields": {
+        "types": {
+          "Affiliation": [
+            "str"
+          ],
+          "Codeforces ID": [
+            "str"
+          ],
+          "Country/Region": [
+            "str"
+          ],
+          "Highest Rating": [
+            "str"
+          ],
+          "Last Competed": [
+            "str"
+          ],
+          "Rank": [
+            "str"
+          ],
+          "Rating": [
+            "str"
+          ],
+          "TopCoder ID": [
+            "str"
+          ],
+          "Twitter ID": [
+            "str"
+          ],
+          "X(Twitter) ID": [
+            "str"
+          ],
+          "avatar": [
+            "str"
+          ]
+        },
+        "verification_fields": [
+          "Affiliation"
+        ]
+      },
+      "allow_delete_archived_statistics": false,
+      "api_url": null,
+      "auto_remove_started": false,
+      "avatar_url": "{info[avatar]}",
+      "avg_rating": 750.7858060888425,
+      "color": "#CC9766",
+      "contest_update_time": "2026-08-04T12:04:08.034Z",
+      "country_rank_update_time": "2026-08-03T18:00:08.889Z",
+      "created": "2016-07-24T17:06:58.587Z",
+      "default_account_type": 1,
+      "enable": true,
+      "has_account_last_submission": true,
+      "has_account_n_writers": true,
+      "has_account_verification": true,
+      "has_accounts_infos_update": true,
+      "has_country_medal": null,
+      "has_country_place": null,
+      "has_country_rating": true,
+      "has_inherit_medals_to_related": false,
+      "has_multi_account": false,
+      "has_problem_archive": false,
+      "has_problem_rating": true,
+      "has_problem_statistic": true,
+      "has_problem_update": false,
+      "has_rating_history": true,
+      "has_standings_renamed_account": false,
+      "has_statistic_medal": null,
+      "has_statistic_n_first_ac": null,
+      "has_statistic_n_total_solved": null,
+      "has_statistic_place": null,
+      "has_statistic_total_solving": null,
+      "has_submissions_statistics_log": false,
+      "has_upsolving": true,
+      "host": "atcoder.jp",
+      "icon_file": "resources/atcoder_jp.png",
+      "icon_updated_at": "2025-12-14T00:16:13.143Z",
+      "icon_url": null,
+      "info": {
+        "default_variables": {
+          "min_n_participations": "10"
+        },
+        "get_events": {
+          "colors": {
+            "darken": "#442D16",
+            "lighten": "#EFDFD1"
+          }
+        },
+        "major_kinds": [
+          "algorithm"
+        ],
+        "ratings": {
+          "adjustment": {
+            "deltas": [
+              1200,
+              745,
+              545,
+              427,
+              347,
+              289,
+              244,
+              209,
+              180,
+              157,
+              137,
+              120,
+              106,
+              94,
+              83,
+              74,
+              66,
+              58,
+              52,
+              46,
+              41,
+              37,
+              33,
+              30,
+              27,
+              24,
+              21,
+              19,
+              17,
+              15,
+              14,
+              12,
+              11,
+              10,
+              9,
+              8,
+              7,
+              7,
+              6,
+              5,
+              5,
+              4,
+              4,
+              3,
+              3,
+              3,
+              3,
+              2,
+              2,
+              2,
+              2,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "standings": {
+          "timeline": {
+            "penalty_aggregate": "max",
+            "penalty_format": 2,
+            "penalty_more": 300,
+            "penalty_rounding": "none",
+            "time_factor": {
+              "1": [
+                1
+              ],
+              "2": [
+                60,
+                1
+              ],
+              "3": [
+                3600,
+                60,
+                1
+              ]
+            }
+          }
+        }
+      },
+      "modified": "2026-08-04T12:05:47.625Z",
+      "n_accounts": 431871,
+      "n_accounts_to_update": 0,
+      "n_contests": 2030,
+      "n_rating_accounts": 346104,
+      "n_statistics": 5445520,
+      "n_team_accounts": 0,
+      "n_university_accounts": 0,
+      "parse_url": null,
+      "path": "./module/atcoder.jp/index.php",
+      "problem_archive_update_time": null,
+      "problem_rating_predictor": {},
+      "problem_url": null,
+      "problems_fields": {
+        "types": {
+          "first_ac__accounts": [
+            "list"
+          ],
+          "first_ac__in_seconds": [
+            "int"
+          ],
+          "first_ac__time": [
+            "str"
+          ],
+          "full_score": [
+            "int"
+          ]
+        }
+      },
+      "profile_url": "https://atcoder.jp/users/{account}",
+      "rank_update_time": "2026-08-04T03:00:07.408Z",
+      "rating_prediction": null,
+      "rating_update_time": "2026-08-04T11:25:12.833Z",
+      "ratings": [
+        {
+          "color": "gray",
+          "hex_rgb": "#808080",
+          "high": 400,
+          "hsl": [
+            0.0,
+            0.0,
+            0.5
+          ],
+          "low": -100500,
+          "next": 400,
+          "prev": -100500
+        },
+        {
+          "color": "brown",
+          "hex_rgb": "#A52A2A",
+          "high": 800,
+          "hsl": [
+            0.0,
+            0.59,
+            0.41
+          ],
+          "low": 400,
+          "next": 800,
+          "prev": 400
+        },
+        {
+          "color": "green",
+          "hex_rgb": "#008000",
+          "high": 1200,
+          "hsl": [
+            0.33,
+            1.0,
+            0.25
+          ],
+          "low": 800,
+          "next": 1200,
+          "prev": 800
+        },
+        {
+          "color": "cyan",
+          "hex_rgb": "#03A89E",
+          "high": 1600,
+          "hsl": [
+            0.49,
+            0.96,
+            0.34
+          ],
+          "low": 1200,
+          "next": 1600,
+          "prev": 1200
+        },
+        {
+          "color": "blue",
+          "hex_rgb": "#0000FF",
+          "high": 2000,
+          "hsl": [
+            0.67,
+            1.0,
+            0.5
+          ],
+          "low": 1600,
+          "next": 2000,
+          "prev": 1600
+        },
+        {
+          "color": "yellow",
+          "hex_rgb": "#BBBB00",
+          "high": 2400,
+          "hsl": [
+            0.17,
+            1.0,
+            0.37
+          ],
+          "low": 2000,
+          "next": 2400,
+          "prev": 2000
+        },
+        {
+          "color": "orange",
+          "hex_rgb": "#FF8C00",
+          "high": 2800,
+          "hsl": [
+            0.09,
+            1.0,
+            0.5
+          ],
+          "low": 2400,
+          "next": 2800,
+          "prev": 2400
+        },
+        {
+          "color": "red",
+          "hex_rgb": "#FF0000",
+          "high": 3200,
+          "hsl": [
+            0.0,
+            1.0,
+            0.5
+          ],
+          "low": 2800,
+          "next": 3600,
+          "prev": 2800
+        },
+        {
+          "color": "red",
+          "hex_rgb": "#FF0000",
+          "high": 3600,
+          "hsl": [
+            0.0,
+            1.0,
+            0.375
+          ],
+          "low": 3200,
+          "next": 3600,
+          "prev": 2800
+        },
+        {
+          "color": "red",
+          "hex_rgb": "#FF0000",
+          "high": 100500,
+          "hsl": [
+            0.0,
+            1.0,
+            0.28125
+          ],
+          "low": 3600,
+          "prev": 2800
+        }
+      ],
+      "regexp": null,
+      "short_host": "ac",
+      "skip_for_contests_chart": false,
+      "statistics_fields": {
+        "types": {
+          "affiliation": [
+            "str"
+          ],
+          "atcoder_rank": [
+            "int"
+          ],
+          "competitions": [
+            "int"
+          ],
+          "country": [
+            "str"
+          ],
+          "finals_advancements": [
+            "int"
+          ],
+          "is_rated": [
+            "bool"
+          ],
+          "is_team": [
+            "bool"
+          ],
+          "medal": [
+            "str"
+          ],
+          "name": [
+            "str"
+          ],
+          "new_rating": [
+            "int"
+          ],
+          "old_rating": [
+            "int"
+          ],
+          "penalty": [
+            "str"
+          ],
+          "performance": [
+            "int"
+          ],
+          "rating_change": [
+            "str",
+            "int"
+          ],
+          "score": [
+            "float"
+          ],
+          "team_id": [
+            "str"
+          ]
+        }
+      },
+      "timezone": "JST",
+      "uid": "vdobhfoodrv59522b684lhfs7c@group.calendar.google.com",
+      "url": "https://atcoder.jp/contests/"
+    },
+    "model": "clist.resource",
+    "pk": 93
+  },
+  {
+    "fields": {
+      "created": "2017-09-23T23:38:25.732Z",
+      "delay_on_error": "01:00:00",
+      "delay_on_success": "10:00:00",
+      "delay_shortly_after": "00:05:00",
+      "enable": true,
+      "long_contest_divider": 15,
+      "long_contest_idle": "06:00:00",
+      "max_delay_after_end": "4 00:00:00",
+      "min_delay_after_end": null,
+      "modified": "2024-12-19T15:37:12.318Z",
+      "path": "ranking/management/modules/atcoder",
+      "resource": 93,
+      "shortly_after": "00:30:00"
+    },
+    "model": "ranking.module",
+    "pk": 7
+  },
+  {
+    "fields": {
+      "allow_updating_statistics_for_participants": null,
+      "auto_updated": "2026-06-22T12:44:53Z",
+      "calculate_time": false,
+      "created": "2026-05-15T07:45:36.906Z",
+      "duration_in_secs": 7200,
+      "edit": null,
+      "elimination_tournament_info": {},
+      "end_time": "2026-05-22T13:00:00Z",
+      "finalists_info": {},
+      "has_fixed_rating_prediction_field": null,
+      "has_hidden_results": false,
+      "has_submissions": null,
+      "has_submissions_tests": null,
+      "has_unlimited_statistics": null,
+      "hide_unsolved_standings_problems": null,
+      "host": "atcoder.jp?lang=ja",
+      "info": {
+        "_submissions_info": {
+          "last_submission_time": 1779626175.0
+        },
+        "fields": [
+          "_no_update_n_contests",
+          "penalty",
+          "country",
+          "name",
+          "problems",
+          "solved",
+          "is_team",
+          "affiliation",
+          "atcoder_rank",
+          "competitions",
+          "is_rated",
+          "team_id",
+          "_members",
+          "url",
+          "_languages",
+          "_verdicts"
+        ],
+        "fields_types": {
+          "_languages": [
+            "list"
+          ],
+          "_members": [
+            "list"
+          ],
+          "_no_update_n_contests": [
+            "bool"
+          ],
+          "_verdicts": [
+            "list"
+          ],
+          "affiliation": [
+            "str"
+          ],
+          "atcoder_rank": [
+            "int"
+          ],
+          "competitions": [
+            "int"
+          ],
+          "country": [
+            "str"
+          ],
+          "is_rated": [
+            "bool"
+          ],
+          "is_team": [
+            "bool"
+          ],
+          "name": [
+            "str"
+          ],
+          "penalty": [
+            "str"
+          ],
+          "problems": [
+            "dict"
+          ],
+          "solved": [
+            "dict"
+          ],
+          "team_id": [
+            "str"
+          ],
+          "url": [
+            "str"
+          ]
+        },
+        "hidden_fields": [
+          "affiliation",
+          "atcoder_rank",
+          "competitions",
+          "is_rated",
+          "is_team"
+        ],
+        "languages": [
+          "C++23 (Clang 21.1.0)",
+          "C++23 (GCC 15.2.0)",
+          "C23 (GCC 14.2.0)",
+          "Java24 (OpenJDK 24.0.2)",
+          "Python (Codon 0.19.3)",
+          "Python (PyPy 3.11-v7.3.20)",
+          "Rust (rustc 1.89.0)",
+          "SQL (DuckDB 1.3.2)",
+          "Text (cat 9.4)"
+        ],
+        "problems": [
+          {
+            "code": "c_league2026_1_a",
+            "first_ac": {
+              "accounts": [
+                "nekoti"
+              ],
+              "in_seconds": 818,
+              "time": "13:38"
+            },
+            "n_accepted": 50,
+            "n_failed": 3,
+            "n_submissions": 3,
+            "n_teams": 53,
+            "n_total": 53,
+            "name": "Polish and Slide",
+            "short": "A",
+            "url": "https://atcoder.jp/contests/c-league2026-1-open/tasks/c_league2026_1_a"
+          }
+        ],
+        "verdicts": [
+          "AC",
+          "WA"
+        ],
+        "writers": []
+      },
+      "invisible": false,
+      "is_auto_added": true,
+      "is_promoted": null,
+      "is_rated": null,
+      "key": "c-league2026-1-open",
+      "kind": "heuristic",
+      "link_statistic_timing": null,
+      "merging_contests": [],
+      "modified": "2026-05-15T07:45:36.906Z",
+      "n_problems": 1,
+      "n_statistics": 53,
+      "notification_timing": "2026-05-15T07:47:00.860Z",
+      "parsed_percentage": null,
+      "parsed_time": "2026-05-25T12:13:06.085Z",
+      "problem_rating_hash": null,
+      "problem_rating_update_required": false,
+      "rating_prediction_fields": null,
+      "rating_prediction_hash": null,
+      "rating_prediction_timing": null,
+      "raw_info": {},
+      "registration_url": null,
+      "related": null,
+      "resource": 93,
+      "series": null,
+      "set_matched_coders_to_members": null,
+      "slug": "atcoder-qi-ye-dui-kang-ri-gu-2026-di-1zhan-o-punkontesuto",
+      "standings_kind": "scoring",
+      "standings_url": "https://atcoder.jp/contests/c-league2026-1-open/standings/team",
+      "start_time": "2026-05-22T11:00:00Z",
+      "statistic_timing": "2026-05-25T22:13:06.085Z",
+      "statistics_update_required": false,
+      "submissions_info": {},
+      "title": "AtCoder 企業対抗リーグ 2026 第1戦(オープンコンテスト)",
+      "title_path": "atcoder.qi.ye.dui.kang.ri.gu.2026.di.1zhan.o.punkontesuto",
+      "trial_standings_url": null,
+      "uid": "id02jcfntuhbiqg0mvt4o4c88s",
+      "updated": "2026-06-22T12:44:53.685Z",
+      "upload_solved_problems_solutions": null,
+      "upsolving_key": null,
+      "upsolving_url": null,
+      "url": "https://atcoder.jp/contests/c-league2026-1-open",
+      "variables": {},
+      "wait_for_successful_update_timing": null,
+      "with_advance": false,
+      "with_medals": false
+    },
+    "model": "clist.contest",
+    "pk": 67683307
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "JP",
+      "created": "2017-09-23T23:39:20.085Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "Affiliation": "株式会社 ALGO ARTIS",
+        "Codeforces ID": "mtsd",
+        "Country/Region": "Japan",
+        "Highest Rating": "2876",
+        "Last Competed": "2026/07/19",
+        "Rank": "161st",
+        "Rating": "2635",
+        "TopCoder ID": "mtsd",
+        "X(Twitter) ID": "@soiya_ksk",
+        "rating": 2635
+      },
+      "key": "mtsd",
+      "last_activity": "2026-07-31T10:00:00Z",
+      "last_rating_activity": "2026-07-19T12:51:00Z",
+      "last_submission": "2026-05-17T15:03:47Z",
+      "modified": "2026-08-04T00:19:50.032Z",
+      "n_bronze": null,
+      "n_contests": 553,
+      "n_first_ac": 0,
+      "n_first_places": 0,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 4,
+      "n_second_places": 1,
+      "n_silver": null,
+      "n_solved": 219,
+      "n_subscribers": 0,
+      "n_third_places": 0,
+      "n_top_ten_places": 3,
+      "n_total_solved": 257,
+      "n_upsolved": 38,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "mtsd",
+      "need_verification": false,
+      "rating": 2635,
+      "rating50": 52,
+      "rating_prediction": null,
+      "rating_update_time": "2026-07-19T14:00:00Z",
+      "related": null,
+      "resource": 93,
+      "resource_rank": 404,
+      "solving": 97274.0,
+      "submissions_info": {},
+      "total_solving": 131124.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-11-25T23:59:59.999Z",
+      "upsolving": 33850.0,
+      "url": "/coder/%E2%88%A83887278/?search=resource:atcoder.jp"
+    },
+    "model": "ranking.account",
+    "pk": 110356
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "JP",
+      "created": "2021-03-20T13:56:01.200Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "Affiliation": "Nagoya University",
+        "Codeforces ID": "Levixi",
+        "Country/Region": "Japan",
+        "Highest Rating": "2060",
+        "Last Competed": "2026/07/12",
+        "Rank": "1350th",
+        "Rating": "2028",
+        "X(Twitter) ID": "@levi_kyopro",
+        "rating": 2028
+      },
+      "key": "Levixi",
+      "last_activity": "2026-07-31T10:00:18Z",
+      "last_rating_activity": "2026-07-12T13:12:20Z",
+      "last_submission": null,
+      "modified": "2026-08-04T00:19:37.497Z",
+      "n_bronze": null,
+      "n_contests": 275,
+      "n_first_ac": 0,
+      "n_first_places": 0,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 0,
+      "n_second_places": 0,
+      "n_silver": null,
+      "n_solved": 328,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 0,
+      "n_total_solved": 330,
+      "n_upsolved": 2,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Levixi",
+      "need_verification": false,
+      "rating": 2028,
+      "rating50": 40,
+      "rating_prediction": null,
+      "rating_update_time": "2026-07-12T14:00:00Z",
+      "related": null,
+      "resource": 93,
+      "resource_rank": 3058,
+      "solving": 110035.0,
+      "submissions_info": {},
+      "total_solving": 110885.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-07-18T23:59:59.999Z",
+      "upsolving": 850.0,
+      "url": "/account/Levixi/resource/atcoder.jp/"
+    },
+    "model": "ranking.account",
+    "pk": 2832300
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "JP",
+      "created": "2021-12-25T13:56:17.976Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "Affiliation": "ここが10丁目です。(創作サークル)",
+        "Country/Region": "Japan",
+        "Highest Rating": "732",
+        "Last Competed": "2026/07/25",
+        "Rank": "25584th",
+        "Rating": "698",
+        "X(Twitter) ID": "@nekoti10chome",
+        "avatar": "https://img.atcoder.jp/icons/fa5b4dd3e39b5f19e4443d36fe0b65d3.jpg",
+        "rating": 722
+      },
+      "key": "nekoti",
+      "last_activity": "2026-08-01T12:06:05Z",
+      "last_rating_activity": "2026-07-25T13:39:19Z",
+      "last_submission": null,
+      "modified": "2026-08-04T04:47:28.084Z",
+      "n_bronze": null,
+      "n_contests": 310,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 260,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 273,
+      "n_upsolved": 13,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "nekoti",
+      "need_verification": false,
+      "rating": 722,
+      "rating50": 14,
+      "rating_prediction": null,
+      "rating_update_time": "2026-08-01T13:40:00Z",
+      "related": null,
+      "resource": 93,
+      "resource_rank": 51322,
+      "solving": 55748.0,
+      "submissions_info": {},
+      "total_solving": 58225.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-11-10T02:14:03.139Z",
+      "upsolving": 2477.0,
+      "url": "/account/nekoti/resource/atcoder.jp/"
+    },
+    "model": "ranking.account",
+    "pk": 3917029
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "JP",
+      "created": "2026-04-05T16:23:43.729Z",
+      "deleted": true,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "Country/Region": "Japan",
+        "Highest Rating": "496",
+        "Last Competed": "2026/06/27",
+        "Rank": "33410th",
+        "Rating": "496",
+        "rating": 496
+      },
+      "key": "shoki_z",
+      "last_activity": "2026-07-31T10:00:00Z",
+      "last_rating_activity": "2026-06-27T12:27:12Z",
+      "last_submission": "2026-06-20T09:24:57Z",
+      "modified": "2026-08-04T00:20:05.913Z",
+      "n_bronze": null,
+      "n_contests": 25,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 38,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 384,
+      "n_upsolved": 346,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "nyoki_",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": "2026-06-27T13:40:00Z",
+      "related": null,
+      "resource": 93,
+      "resource_rank": null,
+      "solving": 7716.0,
+      "submissions_info": {},
+      "total_solving": 44440.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-07-18T22:09:12.422Z",
+      "upsolving": 36724.0,
+      "url": "/coder/shoki_z/?resource=93"
+    },
+    "model": "ranking.account",
+    "pk": 10467291
+  },
+  {
+    "fields": {
+      "account": 110356,
+      "addition": {
+        "_languages": [
+          "C++23 (GCC 15.2.0)"
+        ],
+        "_verdicts": [
+          "AC"
+        ],
+        "affiliation": "株式会社 ALGO ARTIS",
+        "atcoder_rank": 25,
+        "competitions": 59,
+        "country": "JP",
+        "is_rated": false,
+        "is_team": false,
+        "name": "mtsd",
+        "penalty": "119:28",
+        "problems": {
+          "A": {
+            "code_size": "18137 Byte",
+            "exec_time": "1952 ms",
+            "external_solution": true,
+            "language": "C++23 (GCC 15.2.0)",
+            "memory": "3984 KiB",
+            "penalty": 1,
+            "result": 932248.0,
+            "submission_time": 1779454768.0,
+            "time": "119:28",
+            "time_in_seconds": 7168,
+            "upsolving": {
+              "code_size": "34116 Byte",
+              "exec_time": "1953 ms",
+              "external_solution": true,
+              "language": "C++23 (GCC 15.2.0)",
+              "memory": "4436 KiB",
+              "result": 932668.0,
+              "submission_time": 1779463808.0,
+              "url": "https://atcoder.jp/contests/c-league2026-1-open/submissions/76010530",
+              "verdict": "AC"
+            },
+            "url": "https://atcoder.jp/contests/c-league2026-1-open/submissions/76008281",
+            "verdict": "AC"
+          }
+        },
+        "solved": {
+          "solving": 1
+        },
+        "url": "https://atcoder.jp/contests/c-league2026-1-open/submissions?f.User=mtsd"
+      },
+      "advanced": false,
+      "contest": 67683307,
+      "created": "2026-05-22T12:54:14.119Z",
+      "global_rating_change": null,
+      "last_activity": "2026-05-22T12:59:28Z",
+      "medal": null,
+      "modified": "2026-05-25T12:13:16.105Z",
+      "n_first_ac": 0,
+      "n_solved": 1,
+      "n_total_solved": 1,
+      "n_upsolved": 0,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "1",
+      "place_as_int": 1,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 93,
+      "skip_in_stats": false,
+      "solving": 932248.0,
+      "total_solving": 932668.0,
+      "upsolving": 420.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 88771997
+  },
+  {
+    "fields": {
+      "account": 2832300,
+      "addition": {
+        "_members": [
+          {
+            "account": "Levixi"
+          },
+          {
+            "account": "hirakuuuu"
+          },
+          {
+            "account": "mono_1729"
+          },
+          {
+            "account": "syndrome"
+          },
+          {
+            "account": "Jinapetto"
+          },
+          {
+            "account": "tour2st"
+          }
+        ],
+        "country": "JP",
+        "is_team": true,
+        "name": "名古屋最適化大学",
+        "penalty": "119:18",
+        "problems": {
+          "A": {
+            "penalty": 22,
+            "result": 929708.0,
+            "time": "119:18",
+            "time_in_seconds": 7158
+          }
+        },
+        "solved": {
+          "solving": 1
+        },
+        "team_id": "名古屋最適化大学",
+        "url": "https://atcoder.jp/contests/c-league2026-1-open/submissions?f.User=Levixi"
+      },
+      "advanced": false,
+      "contest": 67683307,
+      "created": "2026-05-22T11:09:31.403Z",
+      "global_rating_change": null,
+      "last_activity": "2026-05-22T12:59:18Z",
+      "medal": null,
+      "modified": "2026-05-25T12:13:17.133Z",
+      "n_first_ac": 0,
+      "n_solved": 1,
+      "n_total_solved": 1,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "3",
+      "place_as_int": 3,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 93,
+      "skip_in_stats": false,
+      "solving": 929708.0,
+      "total_solving": 929708.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 88771041
+  },
+  {
+    "fields": {
+      "account": 3917029,
+      "addition": {
+        "_languages": [
+          "C23 (GCC 14.2.0)"
+        ],
+        "_verdicts": [
+          "AC"
+        ],
+        "affiliation": "ここが10丁目です。(創作サークル)",
+        "atcoder_rank": 867,
+        "competitions": 52,
+        "country": "JP",
+        "is_rated": false,
+        "is_team": false,
+        "name": "nekoti",
+        "penalty": "13:38",
+        "problems": {
+          "A": {
+            "code_size": "1393 Byte",
+            "exec_time": "1 ms",
+            "external_solution": true,
+            "first_ac": true,
+            "language": "C23 (GCC 14.2.0)",
+            "memory": "1664 KiB",
+            "result": 868425.0,
+            "submission_time": 1779448418.0,
+            "time": "13:38",
+            "time_in_seconds": 818,
+            "url": "https://atcoder.jp/contests/c-league2026-1-open/submissions/76005701",
+            "verdict": "AC"
+          }
+        },
+        "solved": {
+          "solving": 1
+        },
+        "url": "https://atcoder.jp/contests/c-league2026-1-open/submissions?f.User=nekoti"
+      },
+      "advanced": false,
+      "contest": 67683307,
+      "created": "2026-05-22T11:41:54.486Z",
+      "global_rating_change": null,
+      "last_activity": "2026-05-22T11:13:38Z",
+      "medal": null,
+      "modified": "2026-05-25T12:13:16.852Z",
+      "n_first_ac": 1,
+      "n_solved": 1,
+      "n_total_solved": 1,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "35",
+      "place_as_int": 35,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 93,
+      "skip_in_stats": false,
+      "solving": 868425.0,
+      "total_solving": 868425.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 88771342
+  },
+  {
+    "fields": {
+      "account": 10467291,
+      "addition": {
+        "_no_update_n_contests": true,
+        "problems": {
+          "A": {
+            "upsolving": {
+              "code_size": "888 Byte",
+              "exec_time": "1 ms",
+              "external_solution": true,
+              "language": "C++23 (GCC 15.2.0)",
+              "memory": "3632 KiB",
+              "result": 868425.0,
+              "submission_time": 1779456181.0,
+              "url": "https://atcoder.jp/contests/c-league2026-1-open/submissions/76008721",
+              "verdict": "AC"
+            }
+          }
+        },
+        "url": "https://atcoder.jp/contests/c-league2026-1-open/submissions?f.User=shoki_z"
+      },
+      "advanced": false,
+      "contest": 67683307,
+      "created": "2026-05-22T13:24:18.904Z",
+      "global_rating_change": null,
+      "last_activity": "2026-05-22T11:00:00Z",
+      "medal": null,
+      "modified": "2026-05-22T13:24:18.904Z",
+      "n_first_ac": 0,
+      "n_solved": 0,
+      "n_total_solved": 1,
+      "n_upsolved": 1,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": null,
+      "place_as_int": null,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 93,
+      "skip_in_stats": true,
+      "solving": 0.0,
+      "total_solving": 868425.0,
+      "upsolving": 868425.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 88772344
+  }
+]

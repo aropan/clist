@@ -1,0 +1,59 @@
+{
+    "host": "kattis.com",
+    "rid": 168,
+    "path": "./module/kattis.com/index.php",
+    "url": "https://kattis.com/",
+    "parse_url": "https://kattis.com/",
+    "timezone": null,
+    "api_url": null,
+    "info": {
+        "update": {
+            "subdomains": [
+                "rmc{YY}",
+                "ncna{YY}",
+                "mcpc{YY}",
+                "nsachallenge{YY}",
+                "ccpc{YY}",
+                "acpc{YY}",
+                "nasouth{YY}",
+                "napc{YY}",
+                "uapc{YY}",
+                "ncpc{YY}",
+                "egoi{YY}",
+                "naq{YY}",
+                "naeast{YY}",
+                "noi{YY}"
+            ]
+        },
+        "standings": {
+            "timeline": {
+                "time_factor": {
+                    "1": [
+                        60
+                    ],
+                    "2": [
+                        3600,
+                        60
+                    ],
+                    "3": [
+                        86400,
+                        3600,
+                        60
+                    ]
+                }
+            },
+            "name_instead_key": true
+        },
+        "get_events": {
+            "colors": {
+                "darken": "#164144",
+                "lighten": "#D0EDEF"
+            }
+        },
+        "statistics": {
+            "split_team": false
+        }
+    },
+    "parse_full_list": false,
+    "recorded_at": "2026-08-06 18:00:49"
+}

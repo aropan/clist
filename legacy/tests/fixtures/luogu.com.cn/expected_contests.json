@@ -1,0 +1,542 @@
+[
+    {
+        "end_time": 1783764000,
+        "host": "luogu.com.cn",
+        "info": {
+            "parse": {
+                "host": {
+                    "id": 1000,
+                    "isPremium": true,
+                    "name": "洛谷官方团队"
+                },
+                "invitationCodeType": 1,
+                "method": 4,
+                "problemCount": 4,
+                "rated": 65539,
+                "rule_type": 4,
+                "squad": false,
+                "visibility": 1
+            }
+        },
+        "key": 297106,
+        "rid": 162,
+        "standings_kind": "scoring",
+        "start_time": 1783749600,
+        "timezone": null,
+        "title": "【LGR-288-Div.2】洛谷 7 月月赛 I & lnOI Round 1 [ioi]",
+        "url": "https://www.luogu.com.cn/contest/297106"
+    },
+    {
+        "end_time": 1783850400,
+        "host": "luogu.com.cn",
+        "info": {
+            "parse": {
+                "host": {
+                    "id": 1000,
+                    "isPremium": true,
+                    "name": "洛谷官方团队"
+                },
+                "invitationCodeType": 1,
+                "method": 2,
+                "problemCount": 11,
+                "rated": 1,
+                "rule_type": 2,
+                "squad": true,
+                "visibility": 1
+            }
+        },
+        "key": 334256,
+        "rid": 162,
+        "standings_kind": "icpc",
+        "start_time": 1783832400,
+        "timezone": null,
+        "title": "[ICPC2017 Qingdao R] ICPC 2017 区域赛青岛站重现赛 [guzhi, icpc, squad]",
+        "url": "https://www.luogu.com.cn/contest/334256"
+    },
+    {
+        "end_time": 1783861200,
+        "host": "luogu.com.cn",
+        "info": {
+            "parse": {
+                "host": {
+                    "id": 1000,
+                    "isPremium": true,
+                    "name": "洛谷官方团队"
+                },
+                "invitationCodeType": 1,
+                "method": 4,
+                "problemCount": 6,
+                "rated": 65539,
+                "rule_type": 4,
+                "squad": false,
+                "visibility": 1
+            }
+        },
+        "key": 332884,
+        "rid": 162,
+        "standings_kind": "scoring",
+        "start_time": 1783854000,
+        "timezone": null,
+        "title": "【LGR-290-Div.4】洛谷入门赛 #49 [ioi]",
+        "url": "https://www.luogu.com.cn/contest/332884"
+    },
+    {
+        "end_time": 1784282400,
+        "host": "luogu.com.cn",
+        "info": {
+            "parse": {
+                "host": {
+                    "id": 115742,
+                    "isPremium": false,
+                    "name": "FAOI 出题组"
+                },
+                "invitationCodeType": 1,
+                "method": 4,
+                "problemCount": 4,
+                "rated": 65539,
+                "rule_type": 4,
+                "squad": false,
+                "visibility": 2
+            }
+        },
+        "key": 332970,
+        "rid": 162,
+        "standings_kind": "scoring",
+        "start_time": 1784268000,
+        "timezone": null,
+        "title": "「FAOI」Round 13 [ioi]",
+        "url": "https://www.luogu.com.cn/contest/332970"
+    },
+    {
+        "end_time": 1784368800,
+        "host": "luogu.com.cn",
+        "info": {
+            "parse": {
+                "host": {
+                    "id": 91385,
+                    "isPremium": true,
+                    "name": "Algo Beat Contest 出题组"
+                },
+                "invitationCodeType": 1,
+                "method": 4,
+                "problemCount": 8,
+                "rated": 65539,
+                "rule_type": 4,
+                "squad": false,
+                "visibility": 2
+            }
+        },
+        "key": 326863,
+        "rid": 162,
+        "standings_kind": "scoring",
+        "start_time": 1784354400,
+        "timezone": null,
+        "title": "Algo Beat Contest 009 &「MROI」Round 1 [ioi]",
+        "url": "https://www.luogu.com.cn/contest/326863"
+    },
+    {
+        "end_time": 1784455200,
+        "host": "luogu.com.cn",
+        "info": {
+            "parse": {
+                "host": {
+                    "id": 1000,
+                    "isPremium": true,
+                    "name": "洛谷官方团队"
+                },
+                "invitationCodeType": 1,
+                "method": 2,
+                "problemCount": 13,
+                "rated": 1,
+                "rule_type": 2,
+                "squad": true,
+                "visibility": 1
+            }
+        },
+        "key": 335418,
+        "rid": 162,
+        "standings_kind": "icpc",
+        "start_time": 1784437200,
+        "timezone": null,
+        "title": "[ICPC 2025 Shanghai R] ICPC 2025 区域赛上海站重现赛 [guzhi, icpc, squad]",
+        "url": "https://www.luogu.com.cn/contest/335418"
+    },
+    {
+        "end_time": 1785060000,
+        "host": "luogu.com.cn",
+        "info": {
+            "parse": {
+                "host": {
+                    "id": 1000,
+                    "isPremium": true,
+                    "name": "洛谷官方团队"
+                },
+                "invitationCodeType": 1,
+                "method": 2,
+                "problemCount": 11,
+                "rated": 1,
+                "rule_type": 2,
+                "squad": true,
+                "visibility": 1
+            }
+        },
+        "key": 339238,
+        "rid": 162,
+        "standings_kind": "icpc",
+        "start_time": 1785042000,
+        "timezone": null,
+        "title": "[ICPC2017 Xi' an R] ICPC 2017 区域赛西安站重现赛 [guzhi, icpc, squad]",
+        "url": "https://www.luogu.com.cn/contest/339238"
+    },
+    {
+        "end_time": 1785070800,
+        "host": "luogu.com.cn",
+        "info": {
+            "parse": {
+                "host": {
+                    "id": 1000,
+                    "isPremium": true,
+                    "name": "洛谷官方团队"
+                },
+                "invitationCodeType": 1,
+                "method": 4,
+                "problemCount": 6,
+                "rated": 65539,
+                "rule_type": 4,
+                "squad": false,
+                "visibility": 1
+            }
+        },
+        "key": 338569,
+        "rid": 162,
+        "standings_kind": "scoring",
+        "start_time": 1785063600,
+        "timezone": null,
+        "title": "【LGR-294-Div.4】洛谷入门赛 #50 [ioi]",
+        "url": "https://www.luogu.com.cn/contest/338569"
+    },
+    {
+        "end_time": 1785492000,
+        "host": "luogu.com.cn",
+        "info": {
+            "parse": {
+                "host": {
+                    "id": 1000,
+                    "isPremium": true,
+                    "name": "洛谷官方团队"
+                },
+                "invitationCodeType": 2,
+                "method": 4,
+                "problemCount": 4,
+                "rated": 65539,
+                "rule_type": 4,
+                "squad": false,
+                "visibility": 1
+            }
+        },
+        "key": 330173,
+        "rid": 162,
+        "standings_kind": "scoring",
+        "start_time": 1785477600,
+        "timezone": null,
+        "title": "【LGR-295-Div.2】洛谷 7 月月赛 III & FDOI Round 2 - 泠 [ioi]",
+        "url": "https://www.luogu.com.cn/contest/330173"
+    },
+    {
+        "end_time": 1785576600,
+        "host": "luogu.com.cn",
+        "info": {
+            "parse": {
+                "host": {
+                    "id": 1000,
+                    "isPremium": true,
+                    "name": "洛谷官方团队"
+                },
+                "invitationCodeType": 1,
+                "method": 4,
+                "problemCount": 4,
+                "rated": 65539,
+                "rule_type": 4,
+                "squad": false,
+                "visibility": 1
+            }
+        },
+        "key": 325521,
+        "rid": 162,
+        "standings_kind": "scoring",
+        "start_time": 1785564000,
+        "timezone": null,
+        "title": "【LGR-292-Div.3】洛谷基础赛 #37 & MSOI Round 1 [ioi]",
+        "url": "https://www.luogu.com.cn/contest/325521"
+    },
+    {
+        "end_time": 1785664800,
+        "host": "luogu.com.cn",
+        "info": {
+            "parse": {
+                "host": {
+                    "id": 1000,
+                    "isPremium": true,
+                    "name": "洛谷官方团队"
+                },
+                "invitationCodeType": 1,
+                "method": 4,
+                "problemCount": 4,
+                "rated": 3,
+                "rule_type": 4,
+                "squad": false,
+                "visibility": 1
+            }
+        },
+        "key": 290490,
+        "rid": 162,
+        "standings_kind": "scoring",
+        "start_time": 1785650400,
+        "timezone": null,
+        "title": "【LGR-293-Div.2】洛谷 8 月月赛 I & CJLOI Round 2 [rated, ioi]",
+        "url": "https://www.luogu.com.cn/contest/290490"
+    },
+    {
+        "end_time": 1785751200,
+        "host": "luogu.com.cn",
+        "info": {
+            "parse": {
+                "host": {
+                    "id": 1000,
+                    "isPremium": true,
+                    "name": "洛谷官方团队"
+                },
+                "invitationCodeType": 1,
+                "method": 2,
+                "problemCount": 11,
+                "rated": 1,
+                "rule_type": 2,
+                "squad": true,
+                "visibility": 1
+            }
+        },
+        "key": 340426,
+        "rid": 162,
+        "standings_kind": "icpc",
+        "start_time": 1785733200,
+        "timezone": null,
+        "title": "[ICPC2017 Hong Kong R] ICPC 2017 区域赛香港站重现赛 [guzhi, icpc, squad]",
+        "url": "https://www.luogu.com.cn/contest/340426"
+    },
+    {
+        "end_time": 1785837600,
+        "host": "luogu.com.cn",
+        "info": {
+            "parse": {
+                "host": {
+                    "id": 130012,
+                    "isPremium": true,
+                    "name": "DKM OI"
+                },
+                "invitationCodeType": 1,
+                "method": 4,
+                "problemCount": 4,
+                "rated": 3,
+                "rule_type": 4,
+                "squad": false,
+                "visibility": 2
+            }
+        },
+        "key": 344729,
+        "rid": 162,
+        "standings_kind": "scoring",
+        "start_time": 1785823200,
+        "timezone": null,
+        "title": "DKM-OI Round 1 [rated, ioi]",
+        "url": "https://www.luogu.com.cn/contest/344729"
+    },
+    {
+        "end_time": 1786186800,
+        "host": "luogu.com.cn",
+        "info": {
+            "parse": {
+                "host": {
+                    "id": 93406,
+                    "isPremium": false,
+                    "name": "DLESS 出题组"
+                },
+                "invitationCodeType": 1,
+                "method": 4,
+                "problemCount": 6,
+                "rated": 3,
+                "rule_type": 4,
+                "squad": false,
+                "visibility": 2
+            }
+        },
+        "key": 340305,
+        "rid": 162,
+        "standings_kind": "scoring",
+        "start_time": 1786165200,
+        "timezone": null,
+        "title": "DLESS Round 6：Edu Round（Prize!） [rated, ioi]",
+        "url": "https://www.luogu.com.cn/contest/340305"
+    },
+    {
+        "end_time": 1786246200,
+        "host": "luogu.com.cn",
+        "info": {
+            "parse": {
+                "host": {
+                    "id": 1000,
+                    "isPremium": true,
+                    "name": "洛谷官方团队"
+                },
+                "invitationCodeType": 1,
+                "method": 1,
+                "problemCount": 3,
+                "rated": 1,
+                "rule_type": 1,
+                "squad": false,
+                "visibility": 1
+            }
+        },
+        "key": 341589,
+        "rid": 162,
+        "standings_kind": "scoring",
+        "start_time": 1786239000,
+        "timezone": null,
+        "title": "【LGR-(-29)】SCP 2026 第一轮（初赛 J 组）模拟 [guzhi, oi]",
+        "url": "https://www.luogu.com.cn/contest/341589"
+    },
+    {
+        "end_time": 1786269600,
+        "host": "luogu.com.cn",
+        "info": {
+            "parse": {
+                "host": {
+                    "id": 1000,
+                    "isPremium": true,
+                    "name": "洛谷官方团队"
+                },
+                "invitationCodeType": 1,
+                "method": 2,
+                "problemCount": 13,
+                "rated": 1,
+                "rule_type": 2,
+                "squad": true,
+                "visibility": 1
+            }
+        },
+        "key": 344657,
+        "rid": 162,
+        "standings_kind": "icpc",
+        "start_time": 1786251600,
+        "timezone": null,
+        "title": "[ICPC2017 Nanning R] ICPC 2017 区域赛南宁站重现赛 [guzhi, icpc, squad]",
+        "url": "https://www.luogu.com.cn/contest/344657"
+    },
+    {
+        "end_time": 1786275000,
+        "host": "luogu.com.cn",
+        "info": {
+            "parse": {
+                "host": {
+                    "id": 125531,
+                    "isPremium": false,
+                    "name": "「魔女の理」出题组"
+                },
+                "invitationCodeType": 1,
+                "method": 4,
+                "problemCount": 7,
+                "rated": 3,
+                "rule_type": 4,
+                "squad": false,
+                "visibility": 2
+            }
+        },
+        "key": 315863,
+        "rid": 162,
+        "standings_kind": "scoring",
+        "start_time": 1786188600,
+        "timezone": null,
+        "title": "Math×Girl² [rated, ioi]",
+        "url": "https://www.luogu.com.cn/contest/315863"
+    },
+    {
+        "end_time": 1786354200,
+        "host": "luogu.com.cn",
+        "info": {
+            "parse": {
+                "host": {
+                    "id": 1000,
+                    "isPremium": true,
+                    "name": "洛谷官方团队"
+                },
+                "invitationCodeType": 1,
+                "method": 4,
+                "problemCount": 4,
+                "rated": 3,
+                "rule_type": 4,
+                "squad": false,
+                "visibility": 1
+            }
+        },
+        "key": 333459,
+        "rid": 162,
+        "standings_kind": "scoring",
+        "start_time": 1786341600,
+        "timezone": null,
+        "title": "【LGR-296-Div.3】洛谷基础赛 #38 & Algo Beat Contest 017 [rated, ioi]",
+        "url": "https://www.luogu.com.cn/contest/333459"
+    },
+    {
+        "end_time": 1786528800,
+        "host": "luogu.com.cn",
+        "info": {
+            "parse": {
+                "host": {
+                    "id": 113842,
+                    "isPremium": true,
+                    "name": "Gensokyo OI 出题团队"
+                },
+                "invitationCodeType": 1,
+                "method": 4,
+                "problemCount": 4,
+                "rated": 3,
+                "rule_type": 4,
+                "squad": false,
+                "visibility": 2
+            }
+        },
+        "key": 304154,
+        "rid": 162,
+        "standings_kind": "scoring",
+        "start_time": 1786514400,
+        "timezone": null,
+        "title": "【Gensokyo OI Round 2】故园的残风 [rated, ioi]",
+        "url": "https://www.luogu.com.cn/contest/304154"
+    },
+    {
+        "end_time": 1786869000,
+        "host": "luogu.com.cn",
+        "info": {
+            "parse": {
+                "host": {
+                    "id": 1000,
+                    "isPremium": true,
+                    "name": "洛谷官方团队"
+                },
+                "invitationCodeType": 1,
+                "method": 1,
+                "problemCount": 0,
+                "rated": 1,
+                "rule_type": 1,
+                "squad": false,
+                "visibility": 1
+            }
+        },
+        "key": 341590,
+        "rid": 162,
+        "standings_kind": "scoring",
+        "start_time": 1786861800,
+        "timezone": null,
+        "title": "【LGR-(-30)】SCP 2026 第一轮（初赛 S 组）模拟 [guzhi, oi]",
+        "url": "https://www.luogu.com.cn/contest/341590"
+    }
+]

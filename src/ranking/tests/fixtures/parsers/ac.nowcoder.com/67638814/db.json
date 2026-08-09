@@ -1,0 +1,2055 @@
+[
+  {
+    "fields": {
+      "accounts_fields": {
+        "types": {
+          "rank": [
+            "int"
+          ],
+          "rank_str": [
+            "str"
+          ]
+        }
+      },
+      "allow_delete_archived_statistics": false,
+      "api_url": null,
+      "auto_remove_started": false,
+      "avatar_url": null,
+      "avg_rating": 1162.7205281358063,
+      "color": "#C565CC",
+      "contest_update_time": "2026-08-02T13:05:09.134Z",
+      "country_rank_update_time": "2026-08-03T15:40:06.983Z",
+      "created": "2024-08-04T13:05:59.505Z",
+      "default_account_type": 1,
+      "enable": true,
+      "has_account_last_submission": null,
+      "has_account_n_writers": null,
+      "has_account_verification": false,
+      "has_accounts_infos_update": true,
+      "has_country_medal": null,
+      "has_country_place": null,
+      "has_country_rating": false,
+      "has_inherit_medals_to_related": false,
+      "has_multi_account": true,
+      "has_problem_archive": false,
+      "has_problem_rating": true,
+      "has_problem_statistic": true,
+      "has_problem_update": false,
+      "has_rating_history": true,
+      "has_standings_renamed_account": false,
+      "has_statistic_medal": null,
+      "has_statistic_n_first_ac": null,
+      "has_statistic_n_total_solved": null,
+      "has_statistic_place": true,
+      "has_statistic_total_solving": null,
+      "has_submissions_statistics_log": false,
+      "has_upsolving": false,
+      "host": "ac.nowcoder.com",
+      "icon_file": "resources/ac_nowcoder.png",
+      "icon_updated_at": "2025-12-14T00:06:36.738Z",
+      "icon_url": null,
+      "info": {
+        "get_events": {
+          "colors": {
+            "darken": "#411644",
+            "lighten": "#EDD0EF"
+          }
+        },
+        "standings": {
+          "name_instead_key": true
+        }
+      },
+      "modified": "2026-08-04T00:16:47.029Z",
+      "n_accounts": 145447,
+      "n_accounts_to_update": 0,
+      "n_contests": 1321,
+      "n_rating_accounts": 101192,
+      "n_statistics": 766091,
+      "n_team_accounts": 15108,
+      "n_university_accounts": 0,
+      "parse_url": null,
+      "path": "./module/ac.nowcoder.com/index.php",
+      "problem_archive_update_time": null,
+      "problem_rating_predictor": {},
+      "problem_url": null,
+      "problems_fields": {
+        "types": {
+          "accepted_count": [
+            "int"
+          ],
+          "first_ac__accounts": [
+            "list"
+          ],
+          "first_ac__in_seconds": [
+            "float"
+          ],
+          "first_ac__time": [
+            "str"
+          ],
+          "full_score": [
+            "int"
+          ],
+          "submit_count": [
+            "int"
+          ]
+        }
+      },
+      "profile_url": "https://ac.nowcoder.com/acm/contest/profile/{account}",
+      "rank_update_time": "2026-08-01T21:45:06.642Z",
+      "rating_prediction": null,
+      "rating_update_time": "2026-08-04T00:16:47.029Z",
+      "ratings": [
+        {
+          "color": "gray",
+          "hex_rgb": "#808080",
+          "high": 700,
+          "hsl": [
+            0,
+            0,
+            0.5
+          ],
+          "low": -100500,
+          "next": 700,
+          "prev": -100500
+        },
+        {
+          "color": "violet",
+          "hex_rgb": "#AA00AA",
+          "high": 1100,
+          "hsl": [
+            0.83,
+            1.0,
+            0.33
+          ],
+          "low": 700,
+          "next": 1100,
+          "prev": 700
+        },
+        {
+          "color": "blue",
+          "hex_rgb": "#0000FF",
+          "high": 1500,
+          "hsl": [
+            0.67,
+            1.0,
+            0.5
+          ],
+          "low": 1100,
+          "next": 1500,
+          "prev": 1100
+        },
+        {
+          "color": "green",
+          "hex_rgb": "#008000",
+          "high": 2000,
+          "hsl": [
+            0.33,
+            1.0,
+            0.25
+          ],
+          "low": 1500,
+          "next": 2000,
+          "prev": 1500
+        },
+        {
+          "color": "yellow",
+          "hex_rgb": "#BBBB00",
+          "high": 2400,
+          "hsl": [
+            0.17,
+            1.0,
+            0.37
+          ],
+          "low": 2000,
+          "next": 2400,
+          "prev": 2000
+        },
+        {
+          "color": "orange",
+          "hex_rgb": "#FF8C00",
+          "high": 2800,
+          "hsl": [
+            0.09,
+            1,
+            0.5
+          ],
+          "low": 2400,
+          "next": 2800,
+          "prev": 2400
+        },
+        {
+          "color": "red",
+          "hex_rgb": "#FF0000",
+          "high": 3200,
+          "hsl": [
+            0.0,
+            1.0,
+            0.5
+          ],
+          "low": 2800,
+          "next": 3200,
+          "prev": 2800
+        },
+        {
+          "color": "legendary",
+          "hex_rgb": "#FF0000",
+          "high": 100500,
+          "hsl": [
+            0.0,
+            1.0,
+            0.375
+          ],
+          "low": 3200,
+          "prev": 2800
+        }
+      ],
+      "regexp": null,
+      "short_host": "nc",
+      "skip_for_contests_chart": false,
+      "statistics_fields": {
+        "types": {
+          "color_level": [
+            "int"
+          ],
+          "full_score": [
+            "float"
+          ],
+          "is_team": [
+            "bool"
+          ],
+          "name": [
+            "str"
+          ],
+          "penalty": [
+            "str"
+          ],
+          "school": [
+            "str"
+          ],
+          "total_score": [
+            "float"
+          ]
+        }
+      },
+      "timezone": null,
+      "uid": "9855349b963d3785f6a2531a43341a20727aa7d8b4f22c7f2ea8b0a28355e6fe@group.calendar.google.com",
+      "url": "https://ac.nowcoder.com/acm/contest/vip-index"
+    },
+    "model": "clist.resource",
+    "pk": 166
+  },
+  {
+    "fields": {
+      "created": "2024-08-06T11:03:54.011Z",
+      "delay_on_error": "01:00:00",
+      "delay_on_success": "08:00:00",
+      "delay_shortly_after": "00:05:00",
+      "enable": true,
+      "long_contest_divider": 15,
+      "long_contest_idle": "06:00:00",
+      "max_delay_after_end": "2 00:00:00",
+      "min_delay_after_end": "00:05:00",
+      "modified": "2025-11-01T13:45:35.359Z",
+      "path": "ranking/management/modules/ac_nowcoder",
+      "resource": 166,
+      "shortly_after": "00:30:00"
+    },
+    "model": "ranking.module",
+    "pk": 84
+  },
+  {
+    "fields": {
+      "allow_updating_statistics_for_participants": null,
+      "auto_updated": "2026-07-02T12:45:10Z",
+      "calculate_time": false,
+      "created": "2026-05-13T10:28:37.236Z",
+      "duration_in_secs": 7200,
+      "edit": null,
+      "elimination_tournament_info": {},
+      "end_time": "2026-06-01T13:00:00Z",
+      "finalists_info": {},
+      "has_fixed_rating_prediction_field": null,
+      "has_hidden_results": false,
+      "has_submissions": null,
+      "has_submissions_tests": null,
+      "has_unlimited_statistics": null,
+      "hide_unsolved_standings_problems": null,
+      "host": "ac.nowcoder.com",
+      "info": {
+        "fields": [
+          "name",
+          "solved",
+          "penalty",
+          "is_team",
+          "color_level",
+          "full_score",
+          "school",
+          "team_member_uids",
+          "total_score",
+          "problems"
+        ],
+        "fields_types": {
+          "color_level": [
+            "int"
+          ],
+          "full_score": [
+            "float"
+          ],
+          "is_team": [
+            "bool"
+          ],
+          "name": [
+            "str"
+          ],
+          "penalty": [
+            "str"
+          ],
+          "problems": [
+            "dict"
+          ],
+          "school": [
+            "str"
+          ],
+          "solved": [
+            "dict"
+          ],
+          "team_member_uids": [
+            "list"
+          ],
+          "total_score": [
+            "float"
+          ]
+        },
+        "hidden_fields": [
+          "team_member_uids",
+          "school",
+          "is_team",
+          "full_score",
+          "color_level",
+          "total_score"
+        ],
+        "parse": {
+          "contestSignUpEndTime": 1780318800000,
+          "contestSignUpStartTime": 1778637600000,
+          "countDownTime": -2684685448,
+          "creatorId": 999991351,
+          "creatorName": "王清楚",
+          "filledPassword": false,
+          "isManager": false,
+          "isSignUp": false,
+          "isTeamSignUp": false,
+          "settingInfo": {
+            "allowMessage": true,
+            "allowTeamSignUp": true,
+            "excitationStatus": "Finished",
+            "forceOnlyMyStatusFilter": true,
+            "isProblemAutoOpen": true,
+            "logoUrl": "https://uploadfiles.nowcoder.com/images/20230519/999991351_1684490821933/CEBF29E5AA0528121816CBB69121F74A",
+            "managerList": [
+              999991351,
+              8582211,
+              374967423,
+              654602760,
+              919247,
+              214360960,
+              892989701
+            ],
+            "nbCount": 5,
+            "needCharge": false,
+            "needPassword": false,
+            "needRankFrozen": true,
+            "needRatingUpperLimit": false,
+            "needSignUpField": false,
+            "needSignUpRedirect": false,
+            "needUserNameFormat": false,
+            "organizerName": "nowcoder.com",
+            "problemOriginal": true,
+            "rankEndFrozenMillisecond": 0,
+            "rankEndFrozenMinute": 0,
+            "rankFrozenMillisecond": 1200000,
+            "rankFrozenMinute": 20,
+            "rankSaveStatus": "Finished",
+            "ratingStatus": "No",
+            "sameEndTimeAsSignUpEnd": true
+          },
+          "signUpCount": 962,
+          "signUpCountDownTime": -4358685448,
+          "signUpEndCountDownTime": -2677485448,
+          "teamId": 0,
+          "teamName": "",
+          "topCategoryId": 13,
+          "type": 0,
+          "userLevel": 8
+        },
+        "problems": [
+          {
+            "accepted_count": 462,
+            "code": 317929,
+            "first_ac": {
+              "accounts": [
+                "657965524"
+              ],
+              "in_seconds": 42.0,
+              "time": "0"
+            },
+            "n_accepted": 461,
+            "n_failed": 78,
+            "n_submissions": 1659,
+            "n_teams": 539,
+            "n_total": 595,
+            "name": "六一儿童节快乐！",
+            "rating": 842,
+            "short": "A",
+            "submit_count": 1725,
+            "url": "https://ac.nowcoder.com/acm/contest/135295/A"
+          },
+          {
+            "accepted_count": 365,
+            "code": 318254,
+            "first_ac": {
+              "accounts": [
+                "779874201"
+              ],
+              "in_seconds": 40.0,
+              "time": "0"
+            },
+            "n_accepted": 364,
+            "n_failed": 172,
+            "n_submissions": 6664,
+            "n_teams": 536,
+            "n_total": 595,
+            "name": "牛魔牛魔王牛魔牛魔王",
+            "rating": 1073,
+            "short": "B",
+            "submit_count": 6713,
+            "url": "https://ac.nowcoder.com/acm/contest/135295/B"
+          },
+          {
+            "accepted_count": 80,
+            "code": 318639,
+            "first_ac": {
+              "accounts": [
+                "225356426"
+              ],
+              "in_seconds": 904.0,
+              "time": "15"
+            },
+            "n_accepted": 80,
+            "n_failed": 32,
+            "n_submissions": 368,
+            "n_teams": 112,
+            "n_total": 595,
+            "name": "玩具分类",
+            "rating": 1912,
+            "short": "C",
+            "submit_count": 376,
+            "url": "https://ac.nowcoder.com/acm/contest/135295/C"
+          },
+          {
+            "accepted_count": 259,
+            "code": 318643,
+            "first_ac": {
+              "accounts": [
+                "226800108"
+              ],
+              "in_seconds": 309.0,
+              "time": "5"
+            },
+            "n_accepted": 258,
+            "n_failed": 15,
+            "n_submissions": 450,
+            "n_teams": 273,
+            "n_total": 595,
+            "name": "熊孩子什么的最讨厌了",
+            "rating": 1301,
+            "short": "D",
+            "submit_count": 462,
+            "url": "https://ac.nowcoder.com/acm/contest/135295/D"
+          },
+          {
+            "accepted_count": 63,
+            "code": 318488,
+            "first_ac": {
+              "accounts": [
+                "923626790"
+              ],
+              "in_seconds": 723.0,
+              "time": "12"
+            },
+            "n_accepted": 63,
+            "n_failed": 81,
+            "n_submissions": 427,
+            "n_teams": 144,
+            "n_total": 595,
+            "name": "数鸭子",
+            "rating": 1969,
+            "short": "E",
+            "submit_count": 430,
+            "url": "https://ac.nowcoder.com/acm/contest/135295/E"
+          },
+          {
+            "accepted_count": 1,
+            "code": 318133,
+            "first_ac": {
+              "accounts": [
+                "141102580"
+              ],
+              "in_seconds": 6362.0,
+              "time": "106"
+            },
+            "n_accepted": 1,
+            "n_failed": 93,
+            "n_submissions": 786,
+            "n_teams": 94,
+            "n_total": 595,
+            "name": "小朋友的投递箱",
+            "rating": 3024,
+            "short": "F",
+            "submit_count": 795,
+            "url": "https://ac.nowcoder.com/acm/contest/135295/F"
+          },
+          {
+            "accepted_count": 6,
+            "code": 318424,
+            "first_ac": {
+              "accounts": [
+                "831643110"
+              ],
+              "in_seconds": 3763.0,
+              "time": "62"
+            },
+            "n_accepted": 6,
+            "n_failed": 63,
+            "n_submissions": 432,
+            "n_teams": 69,
+            "n_total": 595,
+            "name": "小红的简谱识别",
+            "rating": 2710,
+            "short": "G",
+            "submit_count": 438,
+            "url": "https://ac.nowcoder.com/acm/contest/135295/G"
+          },
+          {
+            "accepted_count": 306,
+            "code": 318430,
+            "first_ac": {
+              "accounts": [
+                "657965524"
+              ],
+              "in_seconds": 88.0,
+              "time": "1"
+            },
+            "n_accepted": 305,
+            "n_failed": 56,
+            "n_submissions": 3885,
+            "n_teams": 361,
+            "n_total": 595,
+            "name": "小红的围棋题",
+            "rating": 1196,
+            "short": "H",
+            "submit_count": 3915,
+            "url": "https://ac.nowcoder.com/acm/contest/135295/H"
+          },
+          {
+            "accepted_count": 339,
+            "code": 317933,
+            "first_ac": {
+              "accounts": [
+                "779874201"
+              ],
+              "in_seconds": 128.0,
+              "time": "2"
+            },
+            "n_accepted": 338,
+            "n_failed": 28,
+            "n_submissions": 917,
+            "n_teams": 366,
+            "n_total": 595,
+            "name": "4399小游戏",
+            "rating": 1143,
+            "short": "I",
+            "submit_count": 934,
+            "url": "https://ac.nowcoder.com/acm/contest/135295/I"
+          },
+          {
+            "accepted_count": 420,
+            "code": 318635,
+            "first_ac": {
+              "accounts": [
+                "149340566"
+              ],
+              "in_seconds": 31.0,
+              "time": "0"
+            },
+            "n_accepted": 419,
+            "n_failed": 5,
+            "n_submissions": 716,
+            "n_teams": 424,
+            "n_total": 595,
+            "name": "我想过儿童节",
+            "rating": 922,
+            "short": "J",
+            "submit_count": 748,
+            "url": "https://ac.nowcoder.com/acm/contest/135295/J"
+          }
+        ]
+      },
+      "invisible": false,
+      "is_auto_added": true,
+      "is_promoted": null,
+      "is_rated": null,
+      "key": "135295",
+      "kind": null,
+      "link_statistic_timing": null,
+      "merging_contests": [],
+      "modified": "2026-05-13T10:28:37.236Z",
+      "n_problems": 10,
+      "n_statistics": 595,
+      "notification_timing": "2026-05-13T10:29:58.387Z",
+      "parsed_percentage": null,
+      "parsed_time": "2026-07-12T23:37:12.086Z",
+      "problem_rating_hash": "927632d11c000575e3d158f85d633b16e1e9e79974a3b1ed6310d6db1aa2b65a",
+      "problem_rating_update_required": false,
+      "rating_prediction_fields": null,
+      "rating_prediction_hash": null,
+      "rating_prediction_timing": null,
+      "raw_info": {},
+      "registration_url": null,
+      "related": null,
+      "resource": 166,
+      "series": null,
+      "set_matched_coders_to_members": null,
+      "slug": "niu-ke-2026nian-er-tong-jie-bi-sai-acm",
+      "standings_kind": "icpc",
+      "standings_url": "https://ac.nowcoder.com/acm/contest/135295#rank",
+      "start_time": "2026-06-01T11:00:00Z",
+      "statistic_timing": "2026-07-13T07:37:12.086Z",
+      "statistics_update_required": false,
+      "submissions_info": {},
+      "title": "牛客2026年儿童节比赛 [ACM]",
+      "title_path": "niu.ke.2026nian.er.tong.jie.bi.sai.acm",
+      "trial_standings_url": null,
+      "uid": "sck76cf2afgbldekfq6jau1id0",
+      "updated": "2026-07-12T23:37:42.649Z",
+      "upload_solved_problems_solutions": null,
+      "upsolving_key": null,
+      "upsolving_url": null,
+      "url": "https://ac.nowcoder.com/acm/contest/135295",
+      "variables": {},
+      "wait_for_successful_update_timing": null,
+      "with_advance": false,
+      "with_medals": false
+    },
+    "model": "clist.contest",
+    "pk": 67638814
+  },
+  {
+    "fields": {
+      "account_type": 3,
+      "country": null,
+      "created": "2026-02-16T17:05:12.207Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "is_team": true,
+        "rank_str": "暂无"
+      },
+      "key": "854418391",
+      "last_activity": "2026-06-01T12:30:26Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-07-12T23:37:30.300Z",
+      "n_bronze": null,
+      "n_contests": 3,
+      "n_first_ac": 1,
+      "n_first_places": 1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 3,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 26,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 2,
+      "n_total_solved": 26,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "女孩子们之间真是好啊",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 166,
+      "resource_rank": null,
+      "solving": 26.0,
+      "submissions_info": {},
+      "total_solving": 26.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-06-02T23:59:59.999Z",
+      "upsolving": null,
+      "url": "/account/854418391/resource/ac.nowcoder.com/"
+    },
+    "model": "ranking.account",
+    "pk": 10018892
+  },
+  {
+    "fields": {
+      "account_type": 3,
+      "country": null,
+      "created": "2026-06-01T13:05:33.121Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "is_team": true,
+        "rank_str": "暂无"
+      },
+      "key": "149340566",
+      "last_activity": "2026-06-01T12:36:20Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-07-12T23:37:30.371Z",
+      "n_bronze": null,
+      "n_contests": 1,
+      "n_first_ac": 1,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": 1,
+      "n_silver": null,
+      "n_solved": 9,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 9,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "小茵粉丝团",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 166,
+      "resource_rank": null,
+      "solving": 9.0,
+      "submissions_info": {},
+      "total_solving": 9.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-06-01T23:59:59.999Z",
+      "upsolving": null,
+      "url": "/account/149340566/resource/ac.nowcoder.com/"
+    },
+    "model": "ranking.account",
+    "pk": 11033859
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2024-08-09T17:13:56.108Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "is_team": false,
+        "rank": 198,
+        "rating": 2420
+      },
+      "key": "831643110",
+      "last_activity": "2026-08-02T12:23:44Z",
+      "last_rating_activity": "2026-06-12T11:04:20Z",
+      "last_submission": null,
+      "modified": "2026-08-04T05:30:47.683Z",
+      "n_bronze": null,
+      "n_contests": 60,
+      "n_first_ac": 29,
+      "n_first_places": 18,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 45,
+      "n_second_places": 7,
+      "n_silver": null,
+      "n_solved": 329,
+      "n_subscribers": 0,
+      "n_third_places": 4,
+      "n_top_ten_places": 16,
+      "n_total_solved": 329,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "小男娘",
+      "need_verification": false,
+      "rating": 2420,
+      "rating50": 48,
+      "rating_prediction": null,
+      "rating_update_time": "2024-08-12T23:55:05Z",
+      "related": null,
+      "resource": 166,
+      "resource_rank": 336,
+      "solving": 36341.0,
+      "submissions_info": {},
+      "total_solving": 36341.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-08-03T23:59:59.999Z",
+      "upsolving": 0.0,
+      "url": "/account/831643110/resource/ac.nowcoder.com/"
+    },
+    "model": "ranking.account",
+    "pk": 7302432
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2024-11-08T13:06:18.791Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "is_team": false,
+        "rank": 262,
+        "rating": 2376
+      },
+      "key": "226800108",
+      "last_activity": "2026-08-02T11:28:15Z",
+      "last_rating_activity": "2026-02-13T08:41:37Z",
+      "last_submission": null,
+      "modified": "2026-08-04T05:31:05.758Z",
+      "n_bronze": null,
+      "n_contests": 95,
+      "n_first_ac": 10,
+      "n_first_places": 20,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 24,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 391,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 4,
+      "n_total_solved": 391,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "FZANOTFOUND",
+      "need_verification": false,
+      "rating": 2376,
+      "rating50": 47,
+      "rating_prediction": null,
+      "rating_update_time": "2024-12-23T01:21:05Z",
+      "related": null,
+      "resource": 166,
+      "resource_rank": 429,
+      "solving": 44352.26,
+      "submissions_info": {},
+      "total_solving": 44352.26,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-08-03T23:59:59.999Z",
+      "upsolving": 0.0,
+      "url": "/account/226800108/resource/ac.nowcoder.com/"
+    },
+    "model": "ranking.account",
+    "pk": 7642349
+  },
+  {
+    "fields": {
+      "account_type": 3,
+      "country": null,
+      "created": "2026-06-01T13:05:33.385Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "is_team": true,
+        "rank_str": "暂无"
+      },
+      "key": "657965524",
+      "last_activity": "2026-06-01T12:56:03Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-07-12T23:37:30.534Z",
+      "n_bronze": null,
+      "n_contests": 1,
+      "n_first_ac": 2,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 8,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 1,
+      "n_total_solved": 8,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "AC之炼金术师",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 166,
+      "resource_rank": null,
+      "solving": 8.0,
+      "submissions_info": {},
+      "total_solving": 8.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-06-01T23:59:59.999Z",
+      "upsolving": null,
+      "url": "/account/657965524/resource/ac.nowcoder.com/"
+    },
+    "model": "ranking.account",
+    "pk": 11033860
+  },
+  {
+    "fields": {
+      "account_type": 3,
+      "country": null,
+      "created": "2026-06-01T13:05:34.033Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "is_team": true,
+        "rank_str": "暂无"
+      },
+      "key": "923626790",
+      "last_activity": "2026-06-01T12:28:02Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-07-12T23:37:30.844Z",
+      "n_bronze": null,
+      "n_contests": 1,
+      "n_first_ac": 1,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 8,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 8,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "我是小宝宝",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 166,
+      "resource_rank": null,
+      "solving": 8.0,
+      "submissions_info": {},
+      "total_solving": 8.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-06-01T23:59:59.999Z",
+      "upsolving": null,
+      "url": "/account/923626790/resource/ac.nowcoder.com/"
+    },
+    "model": "ranking.account",
+    "pk": 11033863
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2024-10-11T13:06:27.613Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "is_team": false,
+        "rank": 1762,
+        "rating": 1879
+      },
+      "key": "141102580",
+      "last_activity": "2026-06-01T12:55:35Z",
+      "last_rating_activity": "2025-11-21T11:34:36Z",
+      "last_submission": null,
+      "modified": "2026-07-12T23:37:31.231Z",
+      "n_bronze": null,
+      "n_contests": 21,
+      "n_first_ac": 1,
+      "n_first_places": 1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 39,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 39,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "TRfirst",
+      "need_verification": false,
+      "rating": 1879,
+      "rating50": 37,
+      "rating_prediction": null,
+      "rating_update_time": "2024-12-07T01:33:05Z",
+      "related": null,
+      "resource": 166,
+      "resource_rank": 2823,
+      "solving": 1749.0,
+      "submissions_info": {},
+      "total_solving": 1749.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-06-02T23:59:59.999Z",
+      "upsolving": 0.0,
+      "url": "/account/141102580/resource/ac.nowcoder.com/"
+    },
+    "model": "ranking.account",
+    "pk": 7579188
+  },
+  {
+    "fields": {
+      "account_type": 3,
+      "country": null,
+      "created": "2026-06-01T13:05:35.113Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "is_team": true,
+        "rank_str": "暂无"
+      },
+      "key": "779874201",
+      "last_activity": "2026-06-01T11:45:47Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-07-12T23:37:31.404Z",
+      "n_bronze": null,
+      "n_contests": 1,
+      "n_first_ac": 2,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 7,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 7,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "原神崩铁鸣潮",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 166,
+      "resource_rank": null,
+      "solving": 7.0,
+      "submissions_info": {},
+      "total_solving": 7.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-06-01T23:59:59.999Z",
+      "upsolving": null,
+      "url": "/account/779874201/resource/ac.nowcoder.com/"
+    },
+    "model": "ranking.account",
+    "pk": 11033869
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2026-02-15T13:05:24.019Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "is_team": false,
+        "rank": 1177,
+        "rating": 2008
+      },
+      "key": "225356426",
+      "last_activity": "2026-08-02T11:41:26Z",
+      "last_rating_activity": "2026-04-24T13:07:53Z",
+      "last_submission": null,
+      "modified": "2026-08-04T05:30:48.025Z",
+      "n_bronze": null,
+      "n_contests": 10,
+      "n_first_ac": 2,
+      "n_first_places": 1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 3,
+      "n_second_places": 1,
+      "n_silver": null,
+      "n_solved": 51,
+      "n_subscribers": 0,
+      "n_third_places": 1,
+      "n_top_ten_places": null,
+      "n_total_solved": 51,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "eolienne",
+      "need_verification": false,
+      "rating": 2008,
+      "rating50": 40,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 166,
+      "resource_rank": 1858,
+      "solving": 5896.55,
+      "submissions_info": {},
+      "total_solving": 5896.55,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-08-03T23:59:59.999Z",
+      "upsolving": null,
+      "url": "/account/225356426/resource/ac.nowcoder.com/"
+    },
+    "model": "ranking.account",
+    "pk": 10012441
+  },
+  {
+    "fields": {
+      "account": 10018892,
+      "addition": {
+        "color_level": 1,
+        "full_score": 0.0,
+        "is_team": true,
+        "name": "女孩子们之间真是好啊",
+        "penalty": "337",
+        "problems": {
+          "A": {
+            "result": "+",
+            "submission_id": 83764100,
+            "time": "4",
+            "time_in_seconds": 257.0
+          },
+          "B": {
+            "result": "+3",
+            "submission_id": 83764618,
+            "time": "6",
+            "time_in_seconds": 399.0
+          },
+          "C": {
+            "result": "+",
+            "submission_id": 83768913,
+            "time": "23",
+            "time_in_seconds": 1410.0
+          },
+          "D": {
+            "result": "+",
+            "submission_id": 83765047,
+            "time": "8",
+            "time_in_seconds": 497.0
+          },
+          "E": {
+            "result": "+",
+            "submission_id": 83768310,
+            "time": "21",
+            "time_in_seconds": 1273.0
+          },
+          "F": {
+            "result": "-37"
+          },
+          "G": {
+            "result": "+4",
+            "submission_id": 83779308,
+            "time": "90",
+            "time_in_seconds": 5426.0
+          },
+          "H": {
+            "result": "+",
+            "submission_id": 83766334,
+            "time": "12",
+            "time_in_seconds": 761.0
+          },
+          "I": {
+            "result": "+1",
+            "submission_id": 83765096,
+            "time": "8",
+            "time_in_seconds": 508.0
+          },
+          "J": {
+            "result": "+",
+            "submission_id": 83763626,
+            "time": "2",
+            "time_in_seconds": 121.0
+          }
+        },
+        "school": "因循村",
+        "solved": {
+          "solving": 9
+        },
+        "team_member_uids": [
+          115253116,
+          485009177,
+          816616611
+        ],
+        "total_score": 0.0
+      },
+      "advanced": false,
+      "contest": 67638814,
+      "created": "2026-06-01T13:05:32.988Z",
+      "global_rating_change": null,
+      "last_activity": "2026-06-01T12:30:26Z",
+      "medal": null,
+      "modified": "2026-07-12T23:37:30.356Z",
+      "n_first_ac": 0,
+      "n_solved": 9,
+      "n_total_solved": 9,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 337.0,
+      "place": "1",
+      "place_as_int": 1,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 166,
+      "skip_in_stats": false,
+      "solving": 9.0,
+      "total_solving": 9.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 89148631
+  },
+  {
+    "fields": {
+      "account": 11033859,
+      "addition": {
+        "color_level": 1,
+        "full_score": 0.0,
+        "is_team": true,
+        "name": "小茵粉丝团",
+        "penalty": "417",
+        "problems": {
+          "A": {
+            "result": "+",
+            "submission_id": 83764409,
+            "time": "5",
+            "time_in_seconds": 343.0
+          },
+          "B": {
+            "result": "+9",
+            "submission_id": 83763426,
+            "time": "1",
+            "time_in_seconds": 64.0
+          },
+          "C": {
+            "result": "+1",
+            "submission_id": 83770745,
+            "time": "31",
+            "time_in_seconds": 1874.0
+          },
+          "D": {
+            "result": "+",
+            "submission_id": 83767961,
+            "time": "19",
+            "time_in_seconds": 1188.0
+          },
+          "E": {
+            "result": "+",
+            "submission_id": 83768437,
+            "time": "21",
+            "time_in_seconds": 1304.0
+          },
+          "F": {
+            "result": "-28"
+          },
+          "G": {
+            "result": "+1",
+            "submission_id": 83779791,
+            "time": "96",
+            "time_in_seconds": 5780.0
+          },
+          "H": {
+            "result": "+",
+            "submission_id": 83766182,
+            "time": "12",
+            "time_in_seconds": 735.0
+          },
+          "I": {
+            "result": "+",
+            "submission_id": 83765137,
+            "time": "8",
+            "time_in_seconds": 517.0
+          },
+          "J": {
+            "first_ac": true,
+            "result": "+",
+            "submission_id": 83763318,
+            "time": "0",
+            "time_in_seconds": 31.0
+          }
+        },
+        "school": "青岛市城阳第一高级中学",
+        "solved": {
+          "solving": 9
+        },
+        "team_member_uids": [
+          269480873,
+          584540469,
+          638127182
+        ],
+        "total_score": 0.0
+      },
+      "advanced": false,
+      "contest": 67638814,
+      "created": "2026-06-01T13:05:33.166Z",
+      "global_rating_change": null,
+      "last_activity": "2026-06-01T12:36:20Z",
+      "medal": null,
+      "modified": "2026-07-12T23:37:30.404Z",
+      "n_first_ac": 1,
+      "n_solved": 9,
+      "n_total_solved": 9,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 417.0,
+      "place": "2",
+      "place_as_int": 2,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 166,
+      "skip_in_stats": false,
+      "solving": 9.0,
+      "total_solving": 9.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 89148632
+  },
+  {
+    "fields": {
+      "account": 7302432,
+      "addition": {
+        "color_level": 6,
+        "full_score": 0.0,
+        "is_team": false,
+        "name": "小男娘",
+        "penalty": "505",
+        "problems": {
+          "A": {
+            "result": "+",
+            "submission_id": 83764369,
+            "time": "5",
+            "time_in_seconds": 332.0
+          },
+          "B": {
+            "result": "+1",
+            "submission_id": 83770391,
+            "time": "29",
+            "time_in_seconds": 1775.0
+          },
+          "C": {
+            "result": "+1",
+            "submission_id": 83778218,
+            "time": "80",
+            "time_in_seconds": 4824.0
+          },
+          "D": {
+            "result": "+",
+            "submission_id": 83772672,
+            "time": "40",
+            "time_in_seconds": 2426.0
+          },
+          "E": {
+            "result": "+4",
+            "submission_id": 83780815,
+            "time": "110",
+            "time_in_seconds": 6630.0
+          },
+          "F": {
+            "result": "-2"
+          },
+          "G": {
+            "first_ac": true,
+            "result": "+",
+            "submission_id": 83776313,
+            "time": "62",
+            "time_in_seconds": 3763.0
+          },
+          "H": {
+            "result": "+",
+            "submission_id": 83769625,
+            "time": "26",
+            "time_in_seconds": 1564.0
+          },
+          "I": {
+            "result": "+",
+            "submission_id": 83763972,
+            "time": "3",
+            "time_in_seconds": 219.0
+          },
+          "J": {
+            "result": "+",
+            "submission_id": 83769780,
+            "time": "26",
+            "time_in_seconds": 1603.0
+          }
+        },
+        "school": "上海纽约大学",
+        "solved": {
+          "solving": 9
+        },
+        "total_score": 0.0
+      },
+      "advanced": false,
+      "contest": 67638814,
+      "created": "2026-06-01T13:05:33.237Z",
+      "global_rating_change": null,
+      "last_activity": "2026-06-01T12:50:30Z",
+      "medal": null,
+      "modified": "2026-07-12T23:37:30.442Z",
+      "n_first_ac": 1,
+      "n_solved": 9,
+      "n_total_solved": 9,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 505.0,
+      "place": "3",
+      "place_as_int": 3,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 166,
+      "skip_in_stats": false,
+      "solving": 9.0,
+      "total_solving": 9.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 89148633
+  },
+  {
+    "fields": {
+      "account": 7642349,
+      "addition": {
+        "color_level": 5,
+        "full_score": 0.0,
+        "is_team": false,
+        "name": "FZANOTFOUND",
+        "penalty": "181",
+        "problems": {
+          "A": {
+            "result": "+2",
+            "submission_id": 83763558,
+            "time": "1",
+            "time_in_seconds": 104.0
+          },
+          "B": {
+            "result": "+1",
+            "submission_id": 83763878,
+            "time": "3",
+            "time_in_seconds": 198.0
+          },
+          "C": {
+            "result": "+1",
+            "submission_id": 83772565,
+            "time": "39",
+            "time_in_seconds": 2392.0
+          },
+          "D": {
+            "first_ac": true,
+            "result": "+",
+            "submission_id": 83764285,
+            "time": "5",
+            "time_in_seconds": 309.0
+          },
+          "E": {
+            "result": "+",
+            "submission_id": 83766797,
+            "time": "14",
+            "time_in_seconds": 886.0
+          },
+          "F": {
+            "result": "-52"
+          },
+          "H": {
+            "result": "+",
+            "submission_id": 83767389,
+            "time": "17",
+            "time_in_seconds": 1046.0
+          },
+          "I": {
+            "result": "+",
+            "submission_id": 83765593,
+            "time": "10",
+            "time_in_seconds": 616.0
+          },
+          "J": {
+            "result": "+",
+            "submission_id": 83765320,
+            "time": "9",
+            "time_in_seconds": 552.0
+          }
+        },
+        "school": "宁波大学",
+        "solved": {
+          "solving": 8
+        },
+        "total_score": 0.0
+      },
+      "advanced": false,
+      "contest": 67638814,
+      "created": "2026-06-01T13:05:33.337Z",
+      "global_rating_change": null,
+      "last_activity": "2026-06-01T11:39:52Z",
+      "medal": null,
+      "modified": "2026-07-12T23:37:30.503Z",
+      "n_first_ac": 1,
+      "n_solved": 8,
+      "n_total_solved": 8,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 181.0,
+      "place": "5",
+      "place_as_int": 5,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 166,
+      "skip_in_stats": false,
+      "solving": 8.0,
+      "total_solving": 8.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 89148635
+  },
+  {
+    "fields": {
+      "account": 11033860,
+      "addition": {
+        "color_level": 1,
+        "full_score": 0.0,
+        "is_team": true,
+        "name": "AC之炼金术师",
+        "penalty": "365",
+        "problems": {
+          "A": {
+            "first_ac": true,
+            "result": "+",
+            "submission_id": 83763356,
+            "time": "0",
+            "time_in_seconds": 42.0
+          },
+          "B": {
+            "result": "+6",
+            "submission_id": 83767057,
+            "time": "15",
+            "time_in_seconds": 954.0
+          },
+          "C": {
+            "result": "+",
+            "submission_id": 83776445,
+            "time": "63",
+            "time_in_seconds": 3835.0
+          },
+          "D": {
+            "result": "+",
+            "submission_id": 83768351,
+            "time": "21",
+            "time_in_seconds": 1281.0
+          },
+          "E": {
+            "result": "+",
+            "submission_id": 83781148,
+            "time": "116",
+            "time_in_seconds": 6963.0
+          },
+          "F": {
+            "result": "-25"
+          },
+          "G": {
+            "result": "-2"
+          },
+          "H": {
+            "first_ac": true,
+            "result": "+",
+            "submission_id": 83763509,
+            "time": "1",
+            "time_in_seconds": 88.0
+          },
+          "I": {
+            "result": "+",
+            "submission_id": 83765386,
+            "time": "9",
+            "time_in_seconds": 565.0
+          },
+          "J": {
+            "result": "+",
+            "submission_id": 83767225,
+            "time": "16",
+            "time_in_seconds": 999.0
+          }
+        },
+        "school": "北京信息科技大学",
+        "solved": {
+          "solving": 8
+        },
+        "team_member_uids": [
+          59696516,
+          125888939,
+          290294382
+        ],
+        "total_score": 0.0
+      },
+      "advanced": false,
+      "contest": 67638814,
+      "created": "2026-06-01T13:05:33.402Z",
+      "global_rating_change": null,
+      "last_activity": "2026-06-01T12:56:03Z",
+      "medal": null,
+      "modified": "2026-07-12T23:37:30.544Z",
+      "n_first_ac": 2,
+      "n_solved": 8,
+      "n_total_solved": 8,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 365.0,
+      "place": "7",
+      "place_as_int": 7,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 166,
+      "skip_in_stats": false,
+      "solving": 8.0,
+      "total_solving": 8.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 89148637
+  },
+  {
+    "fields": {
+      "account": 11033863,
+      "addition": {
+        "color_level": 1,
+        "full_score": 0.0,
+        "is_team": true,
+        "name": "我是小宝宝",
+        "penalty": "671",
+        "problems": {
+          "A": {
+            "result": "+3",
+            "submission_id": 83767009,
+            "time": "15",
+            "time_in_seconds": 943.0
+          },
+          "B": {
+            "result": "+21",
+            "submission_id": 83768870,
+            "time": "23",
+            "time_in_seconds": 1399.0
+          },
+          "C": {
+            "result": "+",
+            "submission_id": 83779093,
+            "time": "88",
+            "time_in_seconds": 5282.0
+          },
+          "D": {
+            "result": "+",
+            "submission_id": 83767717,
+            "time": "18",
+            "time_in_seconds": 1121.0
+          },
+          "E": {
+            "first_ac": true,
+            "result": "+",
+            "submission_id": 83766112,
+            "time": "12",
+            "time_in_seconds": 723.0
+          },
+          "F": {
+            "result": "-30"
+          },
+          "G": {
+            "result": "-4"
+          },
+          "H": {
+            "result": "+",
+            "submission_id": 83764327,
+            "time": "5",
+            "time_in_seconds": 321.0
+          },
+          "I": {
+            "result": "+",
+            "submission_id": 83768982,
+            "time": "23",
+            "time_in_seconds": 1425.0
+          },
+          "J": {
+            "result": "+",
+            "submission_id": 83764099,
+            "time": "4",
+            "time_in_seconds": 257.0
+          }
+        },
+        "school": "北京电子科技学院",
+        "solved": {
+          "solving": 8
+        },
+        "team_member_uids": [
+          597860121,
+          873245456
+        ],
+        "total_score": 0.0
+      },
+      "advanced": false,
+      "contest": 67638814,
+      "created": "2026-06-01T13:05:34.053Z",
+      "global_rating_change": null,
+      "last_activity": "2026-06-01T12:28:02Z",
+      "medal": null,
+      "modified": "2026-07-12T23:37:30.853Z",
+      "n_first_ac": 1,
+      "n_solved": 8,
+      "n_total_solved": 8,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 671.0,
+      "place": "22",
+      "place_as_int": 22,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 166,
+      "skip_in_stats": false,
+      "solving": 8.0,
+      "total_solving": 8.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 89148652
+  },
+  {
+    "fields": {
+      "account": 7579188,
+      "addition": {
+        "color_level": 4,
+        "full_score": 0.0,
+        "is_team": false,
+        "name": "TRfirst",
+        "penalty": "1770",
+        "problems": {
+          "A": {
+            "result": "+",
+            "submission_id": 83769975,
+            "time": "27",
+            "time_in_seconds": 1658.0
+          },
+          "B": {
+            "result": "+",
+            "submission_id": 83769692,
+            "time": "26",
+            "time_in_seconds": 1578.0
+          },
+          "D": {
+            "result": "+",
+            "submission_id": 83773833,
+            "time": "46",
+            "time_in_seconds": 2805.0
+          },
+          "E": {
+            "result": "+",
+            "submission_id": 83771397,
+            "time": "34",
+            "time_in_seconds": 2061.0
+          },
+          "F": {
+            "first_ac": true,
+            "result": "+40",
+            "submission_id": 83780538,
+            "time": "106",
+            "time_in_seconds": 6362.0
+          },
+          "H": {
+            "result": "+22",
+            "submission_id": 83770646,
+            "time": "30",
+            "time_in_seconds": 1844.0
+          },
+          "I": {
+            "result": "+4",
+            "submission_id": 83781111,
+            "time": "115",
+            "time_in_seconds": 6935.0
+          },
+          "J": {
+            "result": "+1",
+            "submission_id": 83773165,
+            "time": "42",
+            "time_in_seconds": 2570.0
+          }
+        },
+        "school": "dremlory_fan",
+        "solved": {
+          "solving": 8
+        },
+        "total_score": 0.0
+      },
+      "advanced": false,
+      "contest": 67638814,
+      "created": "2026-06-01T13:05:34.758Z",
+      "global_rating_change": null,
+      "last_activity": "2026-06-01T12:55:35Z",
+      "medal": null,
+      "modified": "2026-07-12T23:37:31.247Z",
+      "n_first_ac": 1,
+      "n_solved": 8,
+      "n_total_solved": 8,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 1770.0,
+      "place": "39",
+      "place_as_int": 39,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 166,
+      "skip_in_stats": false,
+      "solving": 8.0,
+      "total_solving": 8.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 89148669
+  },
+  {
+    "fields": {
+      "account": 11033869,
+      "addition": {
+        "color_level": 1,
+        "full_score": 0.0,
+        "is_team": true,
+        "name": "原神崩铁鸣潮",
+        "penalty": "312",
+        "problems": {
+          "A": {
+            "result": "+",
+            "submission_id": 83764952,
+            "time": "7",
+            "time_in_seconds": 476.0
+          },
+          "B": {
+            "first_ac": true,
+            "result": "+10",
+            "submission_id": 83763350,
+            "time": "0",
+            "time_in_seconds": 40.0
+          },
+          "D": {
+            "result": "+",
+            "submission_id": 83768984,
+            "time": "23",
+            "time_in_seconds": 1426.0
+          },
+          "E": {
+            "result": "+",
+            "submission_id": 83773685,
+            "time": "45",
+            "time_in_seconds": 2747.0
+          },
+          "H": {
+            "result": "+",
+            "submission_id": 83765600,
+            "time": "10",
+            "time_in_seconds": 617.0
+          },
+          "I": {
+            "first_ac": true,
+            "result": "+1",
+            "submission_id": 83763654,
+            "time": "2",
+            "time_in_seconds": 128.0
+          },
+          "J": {
+            "result": "+",
+            "submission_id": 83763635,
+            "time": "2",
+            "time_in_seconds": 123.0
+          }
+        },
+        "school": "济南小学",
+        "solved": {
+          "solving": 7
+        },
+        "team_member_uids": [
+          195640080,
+          423680665,
+          793490999
+        ],
+        "total_score": 0.0
+      },
+      "advanced": false,
+      "contest": 67638814,
+      "created": "2026-06-01T13:05:35.140Z",
+      "global_rating_change": null,
+      "last_activity": "2026-06-01T11:45:47Z",
+      "medal": null,
+      "modified": "2026-07-12T23:37:31.414Z",
+      "n_first_ac": 2,
+      "n_solved": 7,
+      "n_total_solved": 7,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 312.0,
+      "place": "48",
+      "place_as_int": 48,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 166,
+      "skip_in_stats": false,
+      "solving": 7.0,
+      "total_solving": 7.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 89148678
+  },
+  {
+    "fields": {
+      "account": 10012441,
+      "addition": {
+        "color_level": 5,
+        "full_score": 0.0,
+        "is_team": false,
+        "name": "eolienne",
+        "penalty": "276",
+        "problems": {
+          "A": {
+            "result": "+4",
+            "submission_id": 83764353,
+            "time": "5",
+            "time_in_seconds": 327.0
+          },
+          "B": {
+            "result": "-12"
+          },
+          "C": {
+            "first_ac": true,
+            "result": "+",
+            "submission_id": 83766856,
+            "time": "15",
+            "time_in_seconds": 904.0
+          },
+          "D": {
+            "result": "+",
+            "submission_id": 83776009,
+            "time": "60",
+            "time_in_seconds": 3630.0
+          },
+          "E": {
+            "result": "-1"
+          },
+          "F": {
+            "result": "-9"
+          },
+          "H": {
+            "result": "-7"
+          },
+          "I": {
+            "result": "+1",
+            "submission_id": 83774008,
+            "time": "47",
+            "time_in_seconds": 2858.0
+          },
+          "J": {
+            "result": "+",
+            "submission_id": 83774128,
+            "time": "48",
+            "time_in_seconds": 2896.0
+          }
+        },
+        "school": "University of Edinburgh",
+        "solved": {
+          "solving": 5
+        },
+        "total_score": 0.0
+      },
+      "advanced": false,
+      "contest": 67638814,
+      "created": "2026-06-01T13:05:41.462Z",
+      "global_rating_change": null,
+      "last_activity": "2026-06-01T12:00:30Z",
+      "medal": null,
+      "modified": "2026-07-12T23:37:34.429Z",
+      "n_first_ac": 1,
+      "n_solved": 5,
+      "n_total_solved": 5,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 276.0,
+      "place": "227",
+      "place_as_int": 227,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 166,
+      "skip_in_stats": false,
+      "solving": 5.0,
+      "total_solving": 5.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 89148858
+  }
+]

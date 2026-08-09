@@ -40,7 +40,8 @@ one directory (`nerc.itmo.ru/school` becomes `nerc.itmo.ru__school`). Each fixtu
 - `db.json` — the `Resource`, `Module`, `Contest`, any directly required
   `ContestSeries`, and the selected `Account`/`Statistics` rows used to limit
   parser replay;
-- `httpcache/` — requester response bodies and response metadata;
+- `httpcache.json.gz` — one deterministic archive containing requester response
+  bodies and response metadata;
 - `expected_standings.json` or `expected_standings.json.gz` — normalized
   `result`, `problems`, and `options.medals` for the selected users.
 
@@ -77,7 +78,8 @@ existing offline cache:
 docker compose exec dev ./manage.py dump_parser_fixture -r codeforces.com -c 1755 --update
 ```
 
-Review `db.json`, `expected_standings.json`, and the cache diff before committing.
+Review `db.json`, `expected_standings.json`, and the decompressed
+`httpcache.json.gz` diff before committing.
 Never add cookies, tokens, API keys, or private standings. Dynamic POST bodies whose
 cache key contains a timestamp or nonce may not replay; use a stable
 `md5_file_cache` in the parser or leave that parser uncovered until the request can be
@@ -152,9 +154,10 @@ as standings fixtures (`/` becomes `__`, while a literal `_` becomes `%5F`):
 
 - `meta.json` — resolved resource globals (`rid`, `path`, `parse_url` with the raw
   `${YEAR}` placeholder, timezone, info) plus `recorded_at`;
-- `httpcache/` — one deterministic gzipped raw response per request (`*.html.gz`, Git LFS) plus a
-  plain `*.meta.json` sidecar (`method`, `url`, `effective_url`, `response_code`), keyed by
-  HTTP method + url + postfields, so HEAD and POST/GraphQL parsers replay too;
+- `httpcache.json.gz` — one deterministic Git LFS archive containing every raw
+  response and its metadata (`method`, `url`, `effective_url`,
+  `response_code`), keyed by HTTP method + URL + postfields, so HEAD and
+  POST/GraphQL parsers replay too;
 - `expected_contests.json` — normalized golden snapshot (plain JSON, reviewable).
 
 Replay is strictly offline: URL stream wrappers are disabled, schedule modules are

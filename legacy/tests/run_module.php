@@ -3,7 +3,7 @@
 // Child process for schedule parser fixtures: runs one legacy/module parser
 // against a fixture dir and prints the normalized $contests JSON to stdout.
 // Module echoes are forwarded to stderr. Mode comes from the environment:
-//   CURLEXEC_CACHE_MODE=record|replay CURLEXEC_CACHE_DIR=<fixture>/httpcache \
+//   CURLEXEC_CACHE_MODE=record|replay CURLEXEC_CACHE_DIR=<materialized-cache> \
 //     php tests/run_module.php <fixture_dir>
 
 if (!in_array(getenv('CURLEXEC_CACHE_MODE'), ['record', 'replay'])) {

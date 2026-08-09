@@ -1,0 +1,38 @@
+{
+    "host": "my.newtonschool.co",
+    "rid": 130,
+    "path": "./module/my.newtonschool.co/index.php",
+    "url": "https://my.newtonschool.co/contest/all/",
+    "parse_url": "https://my.newtonschool.co/contest/all/",
+    "timezone": null,
+    "api_url": null,
+    "info": {
+        "standings": {
+            "timeline": {
+                "time_factor": {
+                    "1": [
+                        60
+                    ],
+                    "2": [
+                        3600,
+                        60
+                    ],
+                    "3": [
+                        86400,
+                        3600,
+                        60
+                    ]
+                },
+                "attempt_penalty": 600
+            }
+        },
+        "get_events": {
+            "colors": {
+                "darken": "#404416",
+                "lighten": "#ECEFD0"
+            }
+        }
+    },
+    "parse_full_list": false,
+    "recorded_at": "2026-08-08 17:01:47"
+}

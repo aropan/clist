@@ -1,0 +1,857 @@
+[
+  {
+    "fields": {
+      "accounts_fields": {
+        "types": {
+          "@wf": [
+            "str"
+          ],
+          "achievementSummaries": [
+            "list"
+          ],
+          "activePane": [
+            "str"
+          ],
+          "activePaneTier": [
+            "str"
+          ],
+          "badges": [
+            "list"
+          ],
+          "bio": [
+            "str"
+          ],
+          "canCreateDatasets": [
+            "bool"
+          ],
+          "canSeeAtMentions": [
+            "bool"
+          ],
+          "canSeeCallToAction": [
+            "bool"
+          ],
+          "canSeeNotifications": [
+            "bool"
+          ],
+          "city": [
+            "str"
+          ],
+          "competitionsSummary.rankCurrent": [
+            "int"
+          ],
+          "competitionsSummary.rankHighest": [
+            "int"
+          ],
+          "competitionsSummary.rankOutOf": [
+            "int"
+          ],
+          "competitionsSummary.rankPercentage": [
+            "float"
+          ],
+          "competitionsSummary.summaryType": [
+            "str"
+          ],
+          "competitionsSummary.tier": [
+            "str"
+          ],
+          "competitionsSummary.totalBronzeMedals": [
+            "int"
+          ],
+          "competitionsSummary.totalGoldMedals": [
+            "int"
+          ],
+          "competitionsSummary.totalResults": [
+            "int"
+          ],
+          "competitionsSummary.totalSilverMedals": [
+            "int"
+          ],
+          "datasetsSummary.rankCurrent": [
+            "int"
+          ],
+          "datasetsSummary.rankHighest": [
+            "int"
+          ],
+          "datasetsSummary.rankOutOf": [
+            "int"
+          ],
+          "datasetsSummary.rankPercentage": [
+            "float"
+          ],
+          "datasetsSummary.summaryType": [
+            "str"
+          ],
+          "datasetsSummary.tier": [
+            "str"
+          ],
+          "datasetsSummary.totalBronzeMedals": [
+            "int"
+          ],
+          "datasetsSummary.totalGoldMedals": [
+            "int"
+          ],
+          "datasetsSummary.totalResults": [
+            "int"
+          ],
+          "datasetsSummary.totalSilverMedals": [
+            "int"
+          ],
+          "discussionsSummary.rankCurrent": [
+            "int"
+          ],
+          "discussionsSummary.rankHighest": [
+            "int"
+          ],
+          "discussionsSummary.rankOutOf": [
+            "int"
+          ],
+          "discussionsSummary.rankPercentage": [
+            "float"
+          ],
+          "discussionsSummary.summaryType": [
+            "str"
+          ],
+          "discussionsSummary.tier": [
+            "str"
+          ],
+          "discussionsSummary.totalBronzeMedals": [
+            "int"
+          ],
+          "discussionsSummary.totalGoldMedals": [
+            "int"
+          ],
+          "discussionsSummary.totalResults": [
+            "int"
+          ],
+          "discussionsSummary.totalSilverMedals": [
+            "int"
+          ],
+          "followers": [
+            "int"
+          ],
+          "followers.count": [
+            "int"
+          ],
+          "followers.type": [
+            "str"
+          ],
+          "following": [
+            "int"
+          ],
+          "following.count": [
+            "int"
+          ],
+          "following.type": [
+            "str"
+          ],
+          "gitHubUserName": [
+            "str"
+          ],
+          "linkedInUrl": [
+            "str"
+          ],
+          "locationSharingOptOut": [
+            "bool"
+          ],
+          "occupation": [
+            "str"
+          ],
+          "organization": [
+            "str"
+          ],
+          "organizations": [
+            "list"
+          ],
+          "performanceTier": [
+            "str"
+          ],
+          "performanceTierCategory": [
+            "str"
+          ],
+          "progressionOptOut": [
+            "bool"
+          ],
+          "pronouns": [
+            "str"
+          ],
+          "region": [
+            "str"
+          ],
+          "scriptsSummary.rankCurrent": [
+            "int"
+          ],
+          "scriptsSummary.rankHighest": [
+            "int"
+          ],
+          "scriptsSummary.rankOutOf": [
+            "int"
+          ],
+          "scriptsSummary.rankPercentage": [
+            "float"
+          ],
+          "scriptsSummary.summaryType": [
+            "str"
+          ],
+          "scriptsSummary.tier": [
+            "str"
+          ],
+          "scriptsSummary.totalBronzeMedals": [
+            "int"
+          ],
+          "scriptsSummary.totalGoldMedals": [
+            "int"
+          ],
+          "scriptsSummary.totalResults": [
+            "int"
+          ],
+          "scriptsSummary.totalSilverMedals": [
+            "int"
+          ],
+          "tagline": [
+            "str"
+          ],
+          "totalActiveCompetitions": [
+            "int"
+          ],
+          "totalCompetitions": [
+            "int"
+          ],
+          "totalDatasets": [
+            "int"
+          ],
+          "totalDiscussions": [
+            "int"
+          ],
+          "totalGrandmasterLevel": [
+            "int"
+          ],
+          "totalHostedCompetitions": [
+            "int"
+          ],
+          "totalKernels": [
+            "int"
+          ],
+          "totalModels": [
+            "int"
+          ],
+          "totalScripts": [
+            "int"
+          ],
+          "totalUsersFollowingMe": [
+            "int"
+          ],
+          "totalUsersIFollow": [
+            "int"
+          ],
+          "totalWriteUps": [
+            "int"
+          ],
+          "twitterUserName": [
+            "str"
+          ],
+          "userAllowsUserMessages": [
+            "bool"
+          ],
+          "userAvatarUrl": [
+            "str"
+          ],
+          "userId": [
+            "int"
+          ],
+          "userJoinDate": [
+            "str"
+          ],
+          "userLastActive": [
+            "str"
+          ],
+          "userName": [
+            "str"
+          ],
+          "userUrl": [
+            "str"
+          ],
+          "visibilitySettings__hiddenAchievementTypes": [
+            "list"
+          ],
+          "visibilitySettings__hiddenBadgeIds": [
+            "list"
+          ],
+          "visibilitySettings__hiddenSections": [
+            "list"
+          ],
+          "websiteUrl": [
+            "str"
+          ]
+        },
+        "verification_fields": [
+          "name",
+          "occupation",
+          "organization",
+          "bio"
+        ]
+      },
+      "allow_delete_archived_statistics": false,
+      "api_url": null,
+      "auto_remove_started": false,
+      "avatar_url": "{info[userAvatarUrl]}",
+      "avg_rating": null,
+      "color": "#7466CC",
+      "contest_update_time": "2026-08-04T11:06:30.382Z",
+      "country_rank_update_time": "2026-08-04T11:20:06.070Z",
+      "created": "2014-12-21T18:03:00Z",
+      "default_account_type": 1,
+      "enable": true,
+      "has_account_last_submission": null,
+      "has_account_n_writers": null,
+      "has_account_verification": true,
+      "has_accounts_infos_update": true,
+      "has_country_medal": null,
+      "has_country_place": null,
+      "has_country_rating": false,
+      "has_inherit_medals_to_related": false,
+      "has_multi_account": false,
+      "has_problem_archive": false,
+      "has_problem_rating": false,
+      "has_problem_statistic": false,
+      "has_problem_update": false,
+      "has_rating_history": false,
+      "has_standings_renamed_account": false,
+      "has_statistic_medal": null,
+      "has_statistic_n_first_ac": null,
+      "has_statistic_n_total_solved": null,
+      "has_statistic_place": null,
+      "has_statistic_total_solving": null,
+      "has_submissions_statistics_log": false,
+      "has_upsolving": false,
+      "host": "kaggle.com",
+      "icon_file": "resources/kaggle_com.png",
+      "icon_updated_at": "2025-12-14T00:15:26.794Z",
+      "icon_url": null,
+      "info": {
+        "accounts": {
+          "limit": 300
+        },
+        "get_events": {
+          "colors": {
+            "darken": "#1D1644",
+            "lighten": "#D5D1EF"
+          }
+        }
+      },
+      "modified": "2026-08-04T13:24:08.365Z",
+      "n_accounts": 374435,
+      "n_accounts_to_update": 65692,
+      "n_contests": 741,
+      "n_rating_accounts": null,
+      "n_statistics": 790872,
+      "n_team_accounts": 0,
+      "n_university_accounts": 0,
+      "parse_url": null,
+      "path": "./module/kaggle.com/index.php",
+      "problem_archive_update_time": null,
+      "problem_rating_predictor": {},
+      "problem_url": null,
+      "problems_fields": {
+        "types": {}
+      },
+      "profile_url": "https://www.kaggle.com/{account}",
+      "rank_update_time": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "ratings": [],
+      "regexp": null,
+      "short_host": "kaggle",
+      "skip_for_contests_chart": false,
+      "statistics_fields": {
+        "types": {
+          "delta_rank": [
+            "delta",
+            "int"
+          ],
+          "delta_score": [
+            "float",
+            "int"
+          ],
+          "is_benchmark": [
+            "bool"
+          ],
+          "last_submission": [
+            "timestamp",
+            "float"
+          ],
+          "medal": [
+            "str"
+          ],
+          "name": [
+            "str"
+          ],
+          "public_rank": [
+            "int"
+          ],
+          "public_score": [
+            "float",
+            "int"
+          ],
+          "solution_write_up_url": [
+            "str"
+          ],
+          "submission_count": [
+            "int"
+          ],
+          "team_id": [
+            "int"
+          ],
+          "team_leader_id": [
+            "int"
+          ],
+          "team_up_enabled": [
+            "bool"
+          ],
+          "team_up_info": [
+            "dict"
+          ],
+          "team_up_intro": [
+            "str"
+          ],
+          "write_up_forum_topic_id": [
+            "int"
+          ]
+        }
+      },
+      "timezone": "UTC",
+      "uid": "seeboovo90q71dq60scm4k8qks@group.calendar.google.com",
+      "url": "https://www.kaggle.com/competitions/"
+    },
+    "model": "clist.resource",
+    "pk": 74
+  },
+  {
+    "fields": {
+      "created": "2022-11-02T01:22:55.616Z",
+      "delay_on_error": "04:00:00",
+      "delay_on_success": "1 00:00:00",
+      "delay_shortly_after": "00:05:00",
+      "enable": true,
+      "long_contest_divider": 100,
+      "long_contest_idle": "06:00:00",
+      "max_delay_after_end": "7 00:00:00",
+      "min_delay_after_end": "00:30:00",
+      "modified": "2023-10-18T20:02:21.255Z",
+      "path": "ranking/management/modules/kaggle",
+      "resource": 74,
+      "shortly_after": "00:30:00"
+    },
+    "model": "ranking.module",
+    "pk": 71
+  },
+  {
+    "fields": {
+      "allow_updating_statistics_for_participants": null,
+      "auto_updated": "2026-08-04T13:12:33Z",
+      "calculate_time": false,
+      "created": "2026-07-01T00:10:18.011Z",
+      "duration_in_secs": 2678340,
+      "edit": null,
+      "elimination_tournament_info": {},
+      "end_time": "2026-07-31T23:59:00Z",
+      "finalists_info": {},
+      "has_fixed_rating_prediction_field": null,
+      "has_hidden_results": false,
+      "has_submissions": null,
+      "has_submissions_tests": null,
+      "has_unlimited_statistics": null,
+      "hide_unsolved_standings_problems": null,
+      "host": "kaggle.com",
+      "info": {
+        "fields": [
+          "name",
+          "team_id",
+          "last_submission",
+          "_members",
+          "submission_count",
+          "team_up_info",
+          "write_up_forum_topic_id",
+          "solution_write_up_url",
+          "public_rank",
+          "delta_rank",
+          "public_score",
+          "delta_score"
+        ],
+        "fields_types": {
+          "_members": [
+            "list"
+          ],
+          "delta_rank": [
+            "int",
+            "delta"
+          ],
+          "delta_score": [
+            "float"
+          ],
+          "last_submission": [
+            "float",
+            "timestamp"
+          ],
+          "name": [
+            "str"
+          ],
+          "public_rank": [
+            "int"
+          ],
+          "public_score": [
+            "float"
+          ],
+          "solution_write_up_url": [
+            "str"
+          ],
+          "submission_count": [
+            "int"
+          ],
+          "team_id": [
+            "int"
+          ],
+          "team_up_info": [
+            "dict"
+          ],
+          "write_up_forum_topic_id": [
+            "int"
+          ]
+        },
+        "grouped_team": true,
+        "hidden_fields": [
+          "public_score",
+          "submission_count",
+          "solution_write_up_url",
+          "team_up_info",
+          "write_up_forum_topic_id",
+          "public_rank"
+        ]
+      },
+      "invisible": false,
+      "is_auto_added": true,
+      "is_promoted": null,
+      "is_rated": null,
+      "key": "125223",
+      "kind": null,
+      "link_statistic_timing": null,
+      "merging_contests": [],
+      "modified": "2026-07-01T00:10:18.011Z",
+      "n_problems": null,
+      "n_statistics": 3353,
+      "notification_timing": null,
+      "parsed_percentage": null,
+      "parsed_time": "2026-08-04T11:06:30.382Z",
+      "problem_rating_hash": null,
+      "problem_rating_update_required": false,
+      "rating_prediction_fields": null,
+      "rating_prediction_hash": null,
+      "rating_prediction_timing": null,
+      "raw_info": {},
+      "registration_url": null,
+      "related": null,
+      "resource": 74,
+      "series": null,
+      "set_matched_coders_to_members": null,
+      "slug": "predicting-student-health-risk-beginner-tabular-balanced-accuracy-score",
+      "standings_kind": null,
+      "standings_url": "https://www.kaggle.com/competitions/playground-series-s6e7/leaderboard",
+      "start_time": "2026-07-01T00:00:00Z",
+      "statistic_timing": "2026-08-05T11:06:30.382Z",
+      "statistics_update_required": false,
+      "submissions_info": {},
+      "title": "Predicting Student Health Risk [beginner, tabular, balanced accuracy score]",
+      "title_path": "predicting.student.health.risk.beginner.tabular.balanced.accuracy.score",
+      "trial_standings_url": null,
+      "uid": "g3tn3nojr3qopeputtvclm436g",
+      "updated": "2026-08-04T13:12:33.249Z",
+      "upload_solved_problems_solutions": null,
+      "upsolving_key": null,
+      "upsolving_url": null,
+      "url": "https://www.kaggle.com/competitions/playground-series-s6e7",
+      "variables": {},
+      "wait_for_successful_update_timing": null,
+      "with_advance": false,
+      "with_medals": false
+    },
+    "model": "clist.contest",
+    "pk": 68584574
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2022-11-02T04:07:49.531Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "achievementSummaries": [
+          {
+            "rankOutOf": 202375,
+            "summaryType": "USER_ACHIEVEMENT_TYPE_COMPETITIONS"
+          },
+          {
+            "rankOutOf": 14672,
+            "summaryType": "USER_ACHIEVEMENT_TYPE_DATASETS"
+          },
+          {
+            "rankOutOf": 59532,
+            "summaryType": "USER_ACHIEVEMENT_TYPE_NOTEBOOKS"
+          },
+          {
+            "rankOutOf": 28516,
+            "summaryType": "USER_ACHIEVEMENT_TYPE_DISCUSSION"
+          }
+        ],
+        "badges": [
+          {
+            "badge": {
+              "badgeId": 49,
+              "badgeType": "REGULAR",
+              "description": "Active on Kaggle for more than 1 year.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F163e0f27360ae958da99dde2a68f7e00%2FBadge-46.svg?generation=1727468408101916&alt=media",
+              "name": "1 Year on Kaggle"
+            },
+            "count": 1
+          },
+          {
+            "badge": {
+              "badgeId": 9,
+              "badgeType": "REGULAR",
+              "description": "Made a submission to a Playground competition. Playground competitions are a “for fun” type of Kaggle competition that is one step above Getting Started in difficulty. They are great for learning.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F45be693e46c3d59a48e65f903aad246b%2FBadge-5.svg?generation=1727462562515977&alt=media",
+              "name": "Playground Competitor"
+            },
+            "count": 1
+          },
+          {
+            "badge": {
+              "badgeId": 30,
+              "badgeType": "REGULAR",
+              "description": "Created a python notebook. Python is one of the most popular general purpose programming languages and has gained widespread use in the machine learning community.",
+              "imageUrl": "https://www.googleapis.com/download/storage/v1/b/kaggle-user-content/o/inbox%2F1488634%2F09e1f99bdf3222934ad7769409ec3f6d%2FBadge-26.svg?generation=1727468059623106&alt=media",
+              "name": "Python Coder"
+            },
+            "count": 1
+          }
+        ],
+        "bio": "",
+        "city": "",
+        "country": "",
+        "followers": 0,
+        "following": 0,
+        "gitHubUserName": "",
+        "linkedInUrl": "",
+        "name": "Shantanu Chopra",
+        "occupation": "",
+        "organization": "",
+        "performanceTierCategory": "USER_ACHIEVEMENT_TYPE_COMPETITIONS",
+        "progressionOptOut": false,
+        "pronouns": "",
+        "region": "",
+        "tagline": "",
+        "totalCompetitions": 1,
+        "twitterUserName": "",
+        "userAvatarUrl": "https://storage.googleapis.com/kaggle-avatars/images/2416090-gr.jpg",
+        "userId": 2416090,
+        "userJoinDate": "2018-10-27T20:43:47.020Z",
+        "userLastActive": "2019-09-13T18:56:17.703Z",
+        "userName": "shanchp",
+        "visibilitySettings": {},
+        "websiteUrl": ""
+      },
+      "key": "shanchp",
+      "last_activity": "2026-07-01T00:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-08-04T11:06:33.462Z",
+      "n_bronze": null,
+      "n_contests": 3,
+      "n_first_ac": 0,
+      "n_first_places": 1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 0,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 0,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Shantanu Chopra",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 74,
+      "resource_rank": null,
+      "solving": 1.8771399999999998,
+      "submissions_info": {},
+      "total_solving": 1.8771399999999998,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-08-04T23:06:30.382Z",
+      "upsolving": 0.0,
+      "url": "/account/shanchp/resource/kaggle.com/"
+    },
+    "model": "ranking.account",
+    "pk": 5073348
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2026-08-04T11:06:33.561Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "kava1",
+      "last_activity": "2026-07-01T00:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-08-04T11:06:33.594Z",
+      "n_bronze": null,
+      "n_contests": 1,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": 1,
+      "n_silver": null,
+      "n_solved": 0,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 0,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": null,
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 74,
+      "resource_rank": null,
+      "solving": 0.95085,
+      "submissions_info": {},
+      "total_solving": 0.95085,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-08-04T11:06:33.561Z",
+      "upsolving": null,
+      "url": "/account/kava1/resource/kaggle.com/"
+    },
+    "model": "ranking.account",
+    "pk": 11595807
+  },
+  {
+    "fields": {
+      "account": 5073348,
+      "addition": {
+        "_members": [
+          {
+            "account": "shanchp"
+          }
+        ],
+        "delta_rank": 449,
+        "delta_score": 3.999999999992898e-05,
+        "last_submission": 1783889406.82,
+        "name": "Shantanu Chopra",
+        "public_rank": 450,
+        "public_score": 0.95081,
+        "solution_write_up_url": "",
+        "submission_count": 15,
+        "team_id": 16471204,
+        "team_up_info": {}
+      },
+      "advanced": false,
+      "contest": 68584574,
+      "created": "2026-08-04T11:06:33.433Z",
+      "global_rating_change": null,
+      "last_activity": "2026-07-01T00:00:00Z",
+      "medal": null,
+      "modified": "2026-08-04T11:06:33.433Z",
+      "n_first_ac": 0,
+      "n_solved": 0,
+      "n_total_solved": 0,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "1",
+      "place_as_int": 1,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 74,
+      "skip_in_stats": false,
+      "solving": 0.95085,
+      "total_solving": 0.95085,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91356083
+  },
+  {
+    "fields": {
+      "account": 11595807,
+      "addition": {
+        "_members": [
+          {
+            "account": "kava1"
+          }
+        ],
+        "delta_rank": 358,
+        "delta_score": -0.00019000000000002348,
+        "last_submission": 1785142691.566666,
+        "name": "kava1",
+        "public_rank": 360,
+        "public_score": 0.95104,
+        "solution_write_up_url": "/competitions/playground-series-s6e7/writeups/2nd-place-solution",
+        "submission_count": 112,
+        "team_id": 16463369,
+        "team_up_info": {},
+        "write_up_forum_topic_id": 731904
+      },
+      "advanced": false,
+      "contest": 68584574,
+      "created": "2026-08-04T11:06:33.582Z",
+      "global_rating_change": null,
+      "last_activity": "2026-07-01T00:00:00Z",
+      "medal": null,
+      "modified": "2026-08-04T11:06:33.582Z",
+      "n_first_ac": 0,
+      "n_solved": 0,
+      "n_total_solved": 0,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "2",
+      "place_as_int": 2,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 74,
+      "skip_in_stats": false,
+      "solving": 0.95085,
+      "total_solving": 0.95085,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91356084
+  }
+]

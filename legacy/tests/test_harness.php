@@ -111,19 +111,40 @@ try {
     file_put_contents($fixture_dir . '/expected_contests.json', "[]\n");
     file_put_contents($fixture_dir . '/httpcache/safe.html.gz', gzencode('<html>public schedule</html>', 9));
     fixture_test_assert(count(fixture_find_meta_files($fixtures_dir)) === 1, 'canonical fixture directories must be discovered');
-    fixture_validate_recording($fixture_dir);
-    fixture_test_assert(true, 'safe fixture must pass validation');
 
-    file_put_contents(
-        $fixture_dir . '/httpcache/sensitive.html.gz',
-        gzencode('{"client_secret":"not-a-real-client-secret"}', 9),
+    $archive_file = fixture_http_cache_archive_path($fixture_dir);
+    $second_archive_file = $fixtures_dir . '/second-httpcache.json.gz';
+    fixture_pack_http_cache($fixture_dir . '/httpcache', $archive_file);
+    fixture_pack_http_cache($fixture_dir . '/httpcache', $second_archive_file);
+    fixture_test_assert(
+        file_get_contents($archive_file) === file_get_contents($second_archive_file),
+        'HTTP cache archives must be deterministic',
     );
+    $archive_files = fixture_read_http_cache_archive($archive_file);
+    fixture_test_assert(
+        $archive_files['safe.html'] === '<html>public schedule</html>',
+        'HTTP cache archives must normalize and preserve gzipped responses',
+    );
+    unlink($second_archive_file);
+    fixture_rmdir_recursive($fixture_dir . '/httpcache');
+    fixture_validate_recording($fixture_dir);
+    $materialized_cache = fixture_materialize_http_cache($fixture_dir);
+    fixture_test_assert(
+        file_get_contents($materialized_cache . '/safe.html') === '<html>public schedule</html>',
+        'HTTP cache archives must materialize the original response',
+    );
+    fixture_rmdir_recursive($materialized_cache);
+
+    mkdir($fixture_dir . '/httpcache');
+    file_put_contents($fixture_dir . '/httpcache/sensitive.html', '{"client_secret":"not-a-real-client-secret"}');
+    fixture_pack_http_cache($fixture_dir . '/httpcache', $archive_file);
+    fixture_rmdir_recursive($fixture_dir . '/httpcache');
     try {
         fixture_validate_recording($fixture_dir);
         fixture_test_assert(false, 'sensitive fixture must fail validation');
     } catch (RuntimeException $e) {
         fixture_test_assert(
-            strpos($e->getMessage(), 'httpcache/sensitive.html.gz') !== false,
+            strpos($e->getMessage(), 'httpcache/sensitive.html') !== false,
             'validation failure must identify the unsafe file',
         );
     }

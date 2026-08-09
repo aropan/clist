@@ -1,0 +1,5982 @@
+[
+  {
+    "fields": {
+      "accounts_fields": {
+        "types": {
+          "avatar": [
+            "str"
+          ],
+          "city": [
+            "str"
+          ],
+          "contribution": [
+            "int"
+          ],
+          "firstName": [
+            "str"
+          ],
+          "friendOfCount": [
+            "int"
+          ],
+          "handle": [
+            "str"
+          ],
+          "lastName": [
+            "str"
+          ],
+          "lastOnlineTimeSeconds": [
+            "int"
+          ],
+          "maxRank": [
+            "str"
+          ],
+          "maxRating": [
+            "int"
+          ],
+          "name_ru": [
+            "str"
+          ],
+          "openId": [
+            "str"
+          ],
+          "organization": [
+            "str"
+          ],
+          "rank": [
+            "str"
+          ],
+          "registrationTimeSeconds": [
+            "int"
+          ],
+          "titlePhoto": [
+            "str"
+          ],
+          "vkId": [
+            "str"
+          ]
+        },
+        "verification_fields": [
+          "firstName",
+          "lastName"
+        ]
+      },
+      "allow_delete_archived_statistics": false,
+      "api_url": null,
+      "auto_remove_started": false,
+      "avatar_url": "{info[avatar]}",
+      "avg_rating": 1277.7317418007292,
+      "color": "#84CC66",
+      "contest_update_time": "2026-08-01T17:10:10.035Z",
+      "country_rank_update_time": "2026-08-03T19:20:06.024Z",
+      "created": "2013-02-03T00:00:00Z",
+      "default_account_type": 1,
+      "enable": true,
+      "has_account_last_submission": true,
+      "has_account_n_writers": true,
+      "has_account_verification": true,
+      "has_accounts_infos_update": true,
+      "has_country_medal": null,
+      "has_country_place": null,
+      "has_country_rating": true,
+      "has_inherit_medals_to_related": false,
+      "has_multi_account": false,
+      "has_problem_archive": false,
+      "has_problem_rating": true,
+      "has_problem_statistic": true,
+      "has_problem_update": false,
+      "has_rating_history": true,
+      "has_standings_renamed_account": false,
+      "has_statistic_medal": null,
+      "has_statistic_n_first_ac": null,
+      "has_statistic_n_total_solved": null,
+      "has_statistic_place": true,
+      "has_statistic_total_solving": null,
+      "has_submissions_statistics_log": false,
+      "has_upsolving": true,
+      "host": "codeforces.com",
+      "icon_file": "resources/codeforces_com.png",
+      "icon_updated_at": "2025-12-14T00:15:15Z",
+      "icon_url": null,
+      "info": {
+        "accounts": {
+          "delta": {
+            "days": 100
+          },
+          "force_on_new_year": true
+        },
+        "default_variables": {
+          "min_n_participations": "6"
+        },
+        "get_events": {
+          "colors": {
+            "darken": "#244416",
+            "lighten": "#DAEFD1"
+          }
+        },
+        "ratings": {
+          "adjustment": {
+            "deltas": [
+              900,
+              550,
+              300,
+              150,
+              50,
+              0
+            ],
+            "filter": {
+              "field": "registrationTimeSeconds",
+              "operator": "gt",
+              "value": 1590278400
+            }
+          }
+        },
+        "standings": {
+          "timeline": {
+            "attempt_penalty": 600,
+            "challenge_score": false,
+            "full_score_reduction_factor": 0.004,
+            "guaranteed_full_score_factor": 0.3,
+            "penalty_score_more": 50,
+            "time_factor": {
+              "1": [
+                60
+              ],
+              "2": [
+                3600,
+                60
+              ],
+              "3": [
+                86400,
+                3600,
+                60
+              ]
+            }
+          }
+        }
+      },
+      "modified": "2026-08-04T13:03:09.044Z",
+      "n_accounts": 1459261,
+      "n_accounts_to_update": 0,
+      "n_contests": 2144,
+      "n_rating_accounts": 950313,
+      "n_statistics": 34486274,
+      "n_team_accounts": 0,
+      "n_university_accounts": 0,
+      "parse_url": "https://codeforces.com/contests?locale=en",
+      "path": "./module/codeforces.com/index.php",
+      "problem_archive_update_time": null,
+      "problem_rating_predictor": {},
+      "problem_url": null,
+      "problems_fields": {
+        "types": {
+          "first_ac__accounts": [
+            "list"
+          ],
+          "first_ac__in_seconds": [
+            "int"
+          ],
+          "first_ac__time": [
+            "str"
+          ],
+          "full_score": [
+            "float"
+          ],
+          "max_score": [
+            "float",
+            "int"
+          ],
+          "min_score": [
+            "float"
+          ]
+        }
+      },
+      "profile_url": "https://codeforces.com/profile/{account}",
+      "rank_update_time": "2026-08-03T12:45:07.459Z",
+      "rating_prediction": null,
+      "rating_update_time": "2026-08-04T00:51:24.920Z",
+      "ratings": [
+        {
+          "color": "gray",
+          "hex_rgb": "#808080",
+          "high": 1200,
+          "hsl": [
+            0,
+            0,
+            0.5
+          ],
+          "low": -100500,
+          "name": "Newbie",
+          "next": 1200,
+          "prev": -100500
+        },
+        {
+          "color": "green",
+          "hex_rgb": "#008000",
+          "high": 1400,
+          "hsl": [
+            0.33,
+            1,
+            0.25
+          ],
+          "low": 1200,
+          "name": "Pupil",
+          "next": 1400,
+          "prev": 1200
+        },
+        {
+          "color": "cyan",
+          "hex_rgb": "#03A89E",
+          "high": 1600,
+          "hsl": [
+            0.49,
+            0.96,
+            0.34
+          ],
+          "low": 1400,
+          "name": "Specialist",
+          "next": 1600,
+          "prev": 1400
+        },
+        {
+          "color": "blue",
+          "hex_rgb": "#0000FF",
+          "high": 1900,
+          "hsl": [
+            0.67,
+            1,
+            0.5
+          ],
+          "low": 1600,
+          "name": "Expert",
+          "next": 1900,
+          "prev": 1600
+        },
+        {
+          "color": "violet",
+          "hex_rgb": "#AA00AA",
+          "high": 2100,
+          "hsl": [
+            0.83,
+            1,
+            0.33
+          ],
+          "low": 1900,
+          "name": "Candidate Master",
+          "next": 2100,
+          "prev": 1900
+        },
+        {
+          "color": "orange",
+          "hex_rgb": "#FF8C00",
+          "high": 2300,
+          "hsl": [
+            0.09,
+            1,
+            0.5
+          ],
+          "low": 2100,
+          "name": "Master",
+          "next": 2400,
+          "prev": 2100
+        },
+        {
+          "color": "orange",
+          "hex_rgb": "#FF8C00",
+          "high": 2400,
+          "hsl": [
+            0.09,
+            1,
+            0.375
+          ],
+          "low": 2300,
+          "name": "International Master",
+          "next": 2400,
+          "prev": 2100
+        },
+        {
+          "color": "red",
+          "hex_rgb": "#FF0000",
+          "high": 2600,
+          "hsl": [
+            0,
+            1,
+            0.5
+          ],
+          "low": 2400,
+          "name": "Grandmaster",
+          "next": 4000,
+          "prev": 2400
+        },
+        {
+          "color": "red",
+          "hex_rgb": "#FF0000",
+          "high": 3000,
+          "hsl": [
+            0,
+            1,
+            0.375
+          ],
+          "low": 2600,
+          "name": "International Grandmaster",
+          "next": 4000,
+          "prev": 2400
+        },
+        {
+          "color": "legendary",
+          "hex_rgb": "#FF0000",
+          "high": 4000,
+          "hsl": [
+            0,
+            1,
+            0.28125
+          ],
+          "low": 3000,
+          "name": "Legendary Grandmaster",
+          "next": 4000,
+          "prev": 2400
+        },
+        {
+          "color": "tourist",
+          "hex_rgb": "#000000",
+          "high": 100500,
+          "hsl": [
+            0,
+            0,
+            0
+          ],
+          "low": 4000,
+          "name": "Tourist",
+          "prev": 4000
+        }
+      ],
+      "regexp": null,
+      "short_host": "cf",
+      "skip_for_contests_chart": false,
+      "statistics_fields": {
+        "types": {
+          "advanced": [
+            "bool"
+          ],
+          "country": [
+            "_ElementUnicodeResult"
+          ],
+          "medal": [
+            "str"
+          ],
+          "name": [
+            "str"
+          ],
+          "new_rating": [
+            "int"
+          ],
+          "old_rating": [
+            "int"
+          ],
+          "participant_type": [
+            "list"
+          ],
+          "penalty": [
+            "int"
+          ],
+          "rating_change": [
+            "str"
+          ],
+          "room": [
+            "int",
+            "str"
+          ],
+          "team_id": [
+            "int",
+            "str"
+          ]
+        }
+      },
+      "timezone": "Europe/Moscow",
+      "uid": "br1o1n70iqgrrbc875vcehacjg@group.calendar.google.com",
+      "url": "https://codeforces.com/contests"
+    },
+    "model": "clist.resource",
+    "pk": 1
+  },
+  {
+    "fields": {
+      "created": "2016-02-10T05:57:38Z",
+      "delay_on_error": "00:30:00",
+      "delay_on_success": "12:00:00",
+      "delay_shortly_after": "00:05:00",
+      "enable": true,
+      "long_contest_divider": 20,
+      "long_contest_idle": "06:00:00",
+      "max_delay_after_end": "7 00:00:00",
+      "min_delay_after_end": null,
+      "modified": "2025-02-11T15:22:36.634Z",
+      "path": "ranking/management/modules/codeforces",
+      "resource": 1,
+      "shortly_after": "00:30:00"
+    },
+    "model": "ranking.module",
+    "pk": 3
+  },
+  {
+    "fields": {
+      "allow_updating_statistics_for_participants": null,
+      "auto_updated": "2026-05-13T08:28:31Z",
+      "calculate_time": false,
+      "created": "2026-04-06T10:29:20.719Z",
+      "duration_in_secs": 10800,
+      "edit": null,
+      "elimination_tournament_info": {},
+      "end_time": "2026-04-12T08:35:00Z",
+      "finalists_info": {},
+      "has_fixed_rating_prediction_field": null,
+      "has_hidden_results": false,
+      "has_submissions": null,
+      "has_submissions_tests": null,
+      "has_unlimited_statistics": null,
+      "hide_unsolved_standings_problems": null,
+      "host": "codeforces.com",
+      "info": {
+        "fields": [
+          "room",
+          "participant_type",
+          "_no_update_n_contests",
+          "_skip_medal",
+          "problems",
+          "solved",
+          "_languages",
+          "_verdicts"
+        ],
+        "fields_types": {
+          "_languages": [
+            "list"
+          ],
+          "_no_update_n_contests": [
+            "bool"
+          ],
+          "_skip_medal": [
+            "bool"
+          ],
+          "_verdicts": [
+            "list"
+          ],
+          "participant_type": [
+            "list"
+          ],
+          "problems": [
+            "dict"
+          ],
+          "room": [
+            "int"
+          ],
+          "solved": [
+            "dict"
+          ]
+        },
+        "hidden_fields": [],
+        "languages": [
+          "C# 10",
+          "C# 13",
+          "C# 8",
+          "C++17 (GCC 7-32)",
+          "C++20 (GCC 13-64)",
+          "C++23 (GCC 14-64, msys2)",
+          "GNU C11",
+          "Go",
+          "Haskell",
+          "Java 21",
+          "Java 8",
+          "Kotlin 2.2",
+          "PyPy 3",
+          "PyPy 3-64",
+          "Python 2",
+          "Python 3",
+          "Rust 2024"
+        ],
+        "problems": [
+          {
+            "code": "2216A",
+            "first_ac": {
+              "accounts": [
+                "sourabhyadav626333"
+              ],
+              "in_seconds": 104,
+              "time": "00:01"
+            },
+            "full_score": 500.0,
+            "n_accepted": 2532,
+            "n_failed": 311,
+            "n_submissions": 102,
+            "n_teams": 2843,
+            "n_total": 3176,
+            "name": "Пожелания по курсам",
+            "rating": 897,
+            "short": "A",
+            "tags": [
+              "greedy"
+            ],
+            "url": "https://codeforces.com/contest/2216/problem/A"
+          },
+          {
+            "code": "2216B",
+            "first_ac": {
+              "accounts": [
+                "kazuppa0506"
+              ],
+              "in_seconds": 345,
+              "time": "00:05"
+            },
+            "full_score": 1000.0,
+            "n_accepted": 1495,
+            "n_failed": 943,
+            "n_submissions": 2409,
+            "n_teams": 2438,
+            "n_total": 3176,
+            "name": "Головоломка с упаковкой THU ",
+            "rating": 1294,
+            "short": "B",
+            "tags": [
+              "greedy"
+            ],
+            "url": "https://codeforces.com/contest/2216/problem/B"
+          },
+          {
+            "_no_problem_url": true,
+            "code": "2215A",
+            "first_ac": {
+              "accounts": [
+                "Neoster4762"
+              ],
+              "in_seconds": 733,
+              "time": "00:12"
+            },
+            "full_score": 1750.0,
+            "n_accepted": 605,
+            "n_failed": 336,
+            "n_submissions": 391,
+            "n_teams": 941,
+            "n_total": 3176,
+            "name": "Отрезки по модулю",
+            "rating": 1670,
+            "short": "C",
+            "tags": [
+              "greedy"
+            ],
+            "url": "https://codeforces.com/contest/2216/problem/C"
+          },
+          {
+            "_no_problem_url": true,
+            "code": "2215B",
+            "first_ac": {
+              "accounts": [
+                "acaciawood"
+              ],
+              "in_seconds": 1529,
+              "time": "00:25"
+            },
+            "full_score": 2250.0,
+            "n_accepted": 223,
+            "n_failed": 115,
+            "n_submissions": 240,
+            "n_teams": 338,
+            "n_total": 3176,
+            "name": "ППооввттооррееннииее",
+            "rating": 1958,
+            "short": "D",
+            "tags": [
+              "brute force",
+              "implementation",
+              "number theory"
+            ],
+            "url": "https://codeforces.com/contest/2216/problem/D"
+          },
+          {
+            "_no_problem_url": true,
+            "code": "2215C",
+            "first_ac": {
+              "accounts": [
+                "applebottomjeans"
+              ],
+              "in_seconds": 2732,
+              "time": "00:45"
+            },
+            "full_score": 2750.0,
+            "n_accepted": 69,
+            "n_failed": 54,
+            "n_submissions": 9,
+            "n_teams": 123,
+            "n_total": 3176,
+            "name": "Ориентированное путешествие",
+            "rating": 2183,
+            "short": "E",
+            "tags": [
+              "communication",
+              "constructive algorithms",
+              "interactive"
+            ],
+            "url": "https://codeforces.com/contest/2216/problem/E"
+          },
+          {
+            "_no_problem_url": true,
+            "code": "2215E",
+            "first_ac": {
+              "accounts": [
+                "prakharsri_7"
+              ],
+              "in_seconds": 6645,
+              "time": "01:50"
+            },
+            "full_score": 4000.0,
+            "n_accepted": 10,
+            "n_failed": 34,
+            "n_submissions": 0,
+            "n_teams": 44,
+            "n_total": 3176,
+            "name": "Звёздная карта",
+            "rating": 2713,
+            "short": "F",
+            "tags": [
+              "constructive algorithms",
+              "geometry"
+            ],
+            "url": "https://codeforces.com/contest/2216/problem/F"
+          }
+        ],
+        "standings": {
+          "fixed_fields": [
+            [
+              "hack",
+              "Hacks"
+            ]
+          ]
+        },
+        "verdicts": [
+          "CE",
+          "ILE",
+          "MLE",
+          "OK",
+          "RE",
+          "S",
+          "TLE",
+          "WA"
+        ],
+        "writers": [
+          "Doqe",
+          "E.Space",
+          "Ecrade_",
+          "Kratrissa",
+          "SpiritualKhorosho",
+          "Warriors_Cat",
+          "crazy_sea",
+          "dapingguo8",
+          "xiaoziyao",
+          "yinianzhijian",
+          "zhouhuanyi"
+        ]
+      },
+      "invisible": false,
+      "is_auto_added": true,
+      "is_promoted": null,
+      "is_rated": null,
+      "key": "2216",
+      "kind": null,
+      "link_statistic_timing": null,
+      "merging_contests": [],
+      "modified": "2026-04-12T03:11:23.144Z",
+      "n_problems": 6,
+      "n_statistics": 3176,
+      "notification_timing": "2026-04-12T03:12:59.391Z",
+      "parsed_percentage": null,
+      "parsed_time": "2026-05-09T02:27:45.772Z",
+      "problem_rating_hash": "3b93c1769ddc797eb5f1fd11f4348ab801e6f206ca8a521d16211e4361e3ded9",
+      "problem_rating_update_required": false,
+      "rating_prediction_fields": null,
+      "rating_prediction_hash": null,
+      "rating_prediction_timing": null,
+      "raw_info": {},
+      "registration_url": null,
+      "related": null,
+      "resource": 1,
+      "series": null,
+      "set_matched_coders_to_members": null,
+      "slug": "codeforces-round-1092-unrated-div-2-based-on-thupc-2026-finals",
+      "standings_kind": null,
+      "standings_url": "https://codeforces.com/contest/2216/standings",
+      "start_time": "2026-04-12T05:35:00Z",
+      "statistic_timing": "2026-05-09T14:27:45.772Z",
+      "statistics_update_required": false,
+      "submissions_info": {},
+      "title": "Codeforces Round 1092 (Unrated, Div. 2, Based on THUPC 2026 — Finals)",
+      "title_path": "codeforces.round.1092.unrated.div.2.based.on.thupc.2026.finals",
+      "trial_standings_url": null,
+      "uid": "4lkk9shg89vsivahgui6uvrnj0",
+      "updated": "2026-05-13T08:28:31.231Z",
+      "upload_solved_problems_solutions": null,
+      "upsolving_key": null,
+      "upsolving_url": null,
+      "url": "https://codeforces.com/contests/2216",
+      "variables": {},
+      "wait_for_successful_update_timing": null,
+      "with_advance": false,
+      "with_medals": false
+    },
+    "model": "clist.contest",
+    "pk": 66765008
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2026-03-08T15:15:10.126Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "contribution": 0,
+        "friendOfCount": 2,
+        "handle": "hykiop63",
+        "lastOnlineTimeSeconds": 1777808372,
+        "maxRank": "expert",
+        "maxRating": 1756,
+        "name": "",
+        "rank": "expert",
+        "rating": 1756,
+        "registrationTimeSeconds": 1772408378
+      },
+      "key": "hykiop63",
+      "last_activity": "2026-04-25T16:20:19Z",
+      "last_rating_activity": "2026-04-25T16:20:19Z",
+      "last_submission": null,
+      "modified": "2026-07-08T00:33:47.400Z",
+      "n_bronze": null,
+      "n_contests": 7,
+      "n_first_ac": 0,
+      "n_first_places": 1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 28,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 37,
+      "n_upsolved": 9,
+      "n_win": null,
+      "n_writers": 0,
+      "name": null,
+      "need_verification": false,
+      "rating": 1756,
+      "rating50": 35,
+      "rating_prediction": null,
+      "rating_update_time": "2026-04-25T17:05:00Z",
+      "related": null,
+      "resource": 1,
+      "resource_rank": 44031,
+      "solving": 25092.0,
+      "submissions_info": {},
+      "total_solving": 29967.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-10-16T23:59:59.999Z",
+      "upsolving": 4875.0,
+      "url": "/account/hykiop63/resource/codeforces.com/"
+    },
+    "model": "ranking.account",
+    "pk": 10193607
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "CN",
+      "created": "2025-01-27T01:03:23.365Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar": "https://userpic.codeforces.org/4601939/avatar/ade6bdbc96e254a.jpg",
+        "city": "Chongqing",
+        "contribution": 0,
+        "country": "China",
+        "friendOfCount": 31,
+        "handle": "creesh_krx",
+        "lastOnlineTimeSeconds": 1779587825,
+        "maxRank": "candidate master",
+        "maxRating": 1913,
+        "name": "",
+        "organization": "ChongQing No.8 Secondary School",
+        "rank": "candidate master",
+        "rating": 1913,
+        "registrationTimeSeconds": 1737793221,
+        "titlePhoto": "https://userpic.codeforces.org/4601939/title/4ea52e4af53637a5.jpg"
+      },
+      "key": "creesh_krx",
+      "last_activity": "2026-05-23T14:40:28Z",
+      "last_rating_activity": "2026-04-13T16:33:58Z",
+      "last_submission": null,
+      "modified": "2026-05-26T06:50:44.995Z",
+      "n_bronze": null,
+      "n_contests": 26,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": 1,
+      "n_silver": null,
+      "n_solved": 70,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 208,
+      "n_upsolved": 138,
+      "n_win": null,
+      "n_writers": 0,
+      "name": null,
+      "need_verification": false,
+      "rating": 1913,
+      "rating50": 38,
+      "rating_prediction": null,
+      "rating_update_time": "2026-05-23T17:35:00Z",
+      "related": null,
+      "resource": 1,
+      "resource_rank": 26722,
+      "solving": 52206.0,
+      "submissions_info": {},
+      "total_solving": 90256.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-09-01T23:59:59.999Z",
+      "upsolving": 38050.0,
+      "url": "/account/creesh_krx/resource/codeforces.com/"
+    },
+    "model": "ranking.account",
+    "pk": 8042568
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2025-08-28T14:54:42.336Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar": "https://userpic.codeforces.org/4337222/avatar/399859e2aba894fa.jpg",
+        "contribution": 0,
+        "firstName": "Aman",
+        "friendOfCount": 2,
+        "handle": "amankr007",
+        "lastOnlineTimeSeconds": 1784783743,
+        "maxRank": "specialist",
+        "maxRating": 1493,
+        "name": "Aman",
+        "organization": "",
+        "rank": "specialist",
+        "rating": 1493,
+        "registrationTimeSeconds": 1728937366,
+        "titlePhoto": "https://userpic.codeforces.org/4337222/title/be5ce670e866104.jpg"
+      },
+      "key": "amankr007",
+      "last_activity": "2026-04-13T15:45:22Z",
+      "last_rating_activity": "2026-04-13T15:45:22Z",
+      "last_submission": null,
+      "modified": "2026-07-25T04:06:33.716Z",
+      "n_bronze": null,
+      "n_contests": 6,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 20,
+      "n_subscribers": 0,
+      "n_third_places": 1,
+      "n_top_ten_places": null,
+      "n_total_solved": 20,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Aman",
+      "need_verification": false,
+      "rating": 1493,
+      "rating50": 29,
+      "rating_prediction": null,
+      "rating_update_time": "2026-04-13T16:35:00Z",
+      "related": null,
+      "resource": 1,
+      "resource_rank": 124392,
+      "solving": 21129.0,
+      "submissions_info": {},
+      "total_solving": 21129.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-11-02T23:59:59.999Z",
+      "upsolving": null,
+      "url": "/account/amankr007/resource/codeforces.com/"
+    },
+    "model": "ranking.account",
+    "pk": 8820049
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2025-10-16T18:19:48.565Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "contribution": 0,
+        "friendOfCount": 14,
+        "handle": "goldenutu",
+        "lastOnlineTimeSeconds": 1785648171,
+        "maxRank": "international master",
+        "maxRating": 2305,
+        "name": "",
+        "organization": "",
+        "rank": "international master",
+        "rating": 2305,
+        "registrationTimeSeconds": 1759376606
+      },
+      "key": "goldenutu",
+      "last_activity": "2026-08-01T14:42:50Z",
+      "last_rating_activity": "2026-04-28T16:25:04Z",
+      "last_submission": null,
+      "modified": "2026-08-02T06:38:30.776Z",
+      "n_bronze": null,
+      "n_contests": 11,
+      "n_first_ac": 0,
+      "n_first_places": 0,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 4,
+      "n_second_places": 1,
+      "n_silver": null,
+      "n_solved": 48,
+      "n_subscribers": 0,
+      "n_third_places": 0,
+      "n_top_ten_places": 3,
+      "n_total_solved": 79,
+      "n_upsolved": 31,
+      "n_win": null,
+      "n_writers": 0,
+      "name": null,
+      "need_verification": false,
+      "rating": 2305,
+      "rating50": 46,
+      "rating_prediction": null,
+      "rating_update_time": "2026-08-01T17:05:00Z",
+      "related": null,
+      "resource": 1,
+      "resource_rank": 3915,
+      "solving": 44677.0,
+      "submissions_info": {},
+      "total_solving": 52295.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-11-10T23:59:59.999Z",
+      "upsolving": 7618.0,
+      "url": "/account/goldenutu/resource/codeforces.com/"
+    },
+    "model": "ranking.account",
+    "pk": 9592168
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2025-12-28T02:24:31.432Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar": "https://userpic.codeforces.org/2764767/avatar/5983b479ca50dd74.jpg",
+        "contribution": 0,
+        "friendOfCount": 25,
+        "handle": "_AirQwQ_",
+        "lastOnlineTimeSeconds": 1783586047,
+        "maxRank": "master",
+        "maxRating": 2177,
+        "name": "",
+        "rank": "master",
+        "rating": 2177,
+        "registrationTimeSeconds": 1662435532,
+        "titlePhoto": "https://userpic.codeforces.org/2764767/title/c9bd32a9df6466b7.jpg"
+      },
+      "key": "_AirQwQ_",
+      "last_activity": "2026-06-27T14:51:12Z",
+      "last_rating_activity": "2025-12-05T15:53:43Z",
+      "last_submission": "2026-07-08T08:04:46Z",
+      "modified": "2026-07-18T00:03:08.461Z",
+      "n_bronze": null,
+      "n_contests": 9,
+      "n_first_ac": 1,
+      "n_first_places": 1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 34,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 402,
+      "n_upsolved": 368,
+      "n_win": null,
+      "n_writers": 0,
+      "name": null,
+      "need_verification": false,
+      "rating": 2177,
+      "rating50": 43,
+      "rating_prediction": null,
+      "rating_update_time": "2026-06-27T17:05:00Z",
+      "related": null,
+      "resource": 1,
+      "resource_rank": 8034,
+      "solving": 36091.0,
+      "submissions_info": {},
+      "total_solving": 36459.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-08-06T23:59:59.999Z",
+      "upsolving": 368.0,
+      "url": "/coder/AirQwQ/?resource=1"
+    },
+    "model": "ranking.account",
+    "pk": 9799575
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2026-03-25T19:50:34.485Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar": "https://userpic.codeforces.org/5471839/avatar/be9a674c7e02d107.jpg",
+        "contribution": 0,
+        "friendOfCount": 1,
+        "handle": "shubh_ft_",
+        "lastOnlineTimeSeconds": 1782753513,
+        "maxRank": "newbie",
+        "maxRating": 620,
+        "name": "",
+        "rank": "newbie",
+        "rating": 620,
+        "registrationTimeSeconds": 1766467032,
+        "titlePhoto": "https://userpic.codeforces.org/5471839/title/b566e20f5f6f033e.jpg"
+      },
+      "key": "shubh_ft_",
+      "last_activity": "2026-04-12T08:21:24Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-07-15T00:54:42.516Z",
+      "n_bronze": null,
+      "n_contests": 3,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 5,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 5,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": null,
+      "need_verification": false,
+      "rating": 620,
+      "rating50": 12,
+      "rating_prediction": null,
+      "rating_update_time": "2026-04-04T16:50:00Z",
+      "related": null,
+      "resource": 1,
+      "resource_rank": 737249,
+      "solving": 5642.0,
+      "submissions_info": {},
+      "total_solving": 5642.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-10-23T23:59:59.999Z",
+      "upsolving": null,
+      "url": "/account/shubh_ft_/resource/codeforces.com/"
+    },
+    "model": "ranking.account",
+    "pk": 10365175
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2025-01-22T12:20:35.611Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar": "https://userpic.codeforces.org/4593503/avatar/ffd1448dfa818292.jpg",
+        "contribution": 0,
+        "friendOfCount": 5,
+        "handle": "Mortis_",
+        "lastOnlineTimeSeconds": 1778985666,
+        "maxRank": "candidate master",
+        "maxRating": 1962,
+        "name": "",
+        "rank": "candidate master",
+        "rating": 1962,
+        "registrationTimeSeconds": 1737546540,
+        "titlePhoto": "https://userpic.codeforces.org/4593503/title/a016d643d9d9cf77.jpg"
+      },
+      "key": "Mortis_",
+      "last_activity": "2026-05-16T14:38:02Z",
+      "last_rating_activity": "2026-04-25T16:31:08Z",
+      "last_submission": null,
+      "modified": "2026-05-17T07:31:42.455Z",
+      "n_bronze": null,
+      "n_contests": 27,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 85,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 136,
+      "n_upsolved": 51,
+      "n_win": null,
+      "n_writers": 0,
+      "name": null,
+      "need_verification": false,
+      "rating": 1962,
+      "rating50": 39,
+      "rating_prediction": null,
+      "rating_update_time": "2026-05-16T16:50:00Z",
+      "related": null,
+      "resource": 1,
+      "resource_rank": 21524,
+      "solving": 62174.0,
+      "submissions_info": {},
+      "total_solving": 75997.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-08-25T23:59:59.999Z",
+      "upsolving": 13823.0,
+      "url": "/account/Mortis_/resource/codeforces.com/"
+    },
+    "model": "ranking.account",
+    "pk": 8021210
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2025-10-19T15:09:46.408Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "contribution": 0,
+        "friendOfCount": 1,
+        "handle": "prakharsri_7",
+        "lastOnlineTimeSeconds": 1777378667,
+        "maxRank": "newbie",
+        "maxRating": 387,
+        "name": "",
+        "rank": "newbie",
+        "rating": 387,
+        "registrationTimeSeconds": 1757851031
+      },
+      "key": "prakharsri_7",
+      "last_activity": "2026-04-12T07:25:45Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-05-09T02:28:00.483Z",
+      "n_bronze": null,
+      "n_contests": 2,
+      "n_first_ac": 1,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 5,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 5,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": null,
+      "need_verification": false,
+      "rating": 387,
+      "rating50": 7,
+      "rating_prediction": null,
+      "rating_update_time": "2025-10-19T16:35:00Z",
+      "related": null,
+      "resource": 1,
+      "resource_rank": 840662,
+      "solving": 5724.0,
+      "submissions_info": {},
+      "total_solving": 5724.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-08-17T23:59:59.999Z",
+      "upsolving": null,
+      "url": "/account/prakharsri_7/resource/codeforces.com/"
+    },
+    "model": "ranking.account",
+    "pk": 9602539
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2025-05-26T14:53:03.020Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "contribution": 0,
+        "friendOfCount": 8,
+        "handle": "tau1235",
+        "lastOnlineTimeSeconds": 1784331834,
+        "maxRank": "candidate master",
+        "maxRating": 1980,
+        "name": "",
+        "rank": "expert",
+        "rating": 1894,
+        "registrationTimeSeconds": 1748215807
+      },
+      "key": "tau1235",
+      "last_activity": "2026-07-18T14:42:21Z",
+      "last_rating_activity": "2026-05-06T06:43:04Z",
+      "last_submission": "2026-05-30T18:18:32Z",
+      "modified": "2026-07-19T05:17:40.252Z",
+      "n_bronze": null,
+      "n_contests": 65,
+      "n_first_ac": 0,
+      "n_first_places": 0,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 0,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 277,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 0,
+      "n_total_solved": 305,
+      "n_upsolved": 28,
+      "n_win": null,
+      "n_writers": 0,
+      "name": null,
+      "need_verification": false,
+      "rating": 1894,
+      "rating50": 37,
+      "rating_prediction": null,
+      "rating_update_time": "2026-07-18T16:35:00Z",
+      "related": null,
+      "resource": 1,
+      "resource_rank": 29049,
+      "solving": 143888.0,
+      "submissions_info": {},
+      "total_solving": 145562.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-10-26T23:59:59.999Z",
+      "upsolving": 1674.0,
+      "url": "/coder/tau1235/?resource=1"
+    },
+    "model": "ranking.account",
+    "pk": 8390283
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "VN",
+      "created": "2025-12-27T08:39:35.019Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar": "https://userpic.codeforces.org/2496377/avatar/b5d8b65bf3f06c5d.jpg",
+        "contribution": 0,
+        "friendOfCount": 85,
+        "handle": "tuasananh",
+        "lastOnlineTimeSeconds": 1779594492,
+        "maxRank": "master",
+        "maxRating": 2198,
+        "name": "",
+        "organization": "",
+        "rank": "expert",
+        "rating": 1698,
+        "registrationTimeSeconds": 1647394363,
+        "titlePhoto": "https://userpic.codeforces.org/2496377/title/9c2da3235993cc2e.jpg"
+      },
+      "key": "tuasananh",
+      "last_activity": "2026-05-23T15:57:53Z",
+      "last_rating_activity": "2026-04-25T16:50:56Z",
+      "last_submission": null,
+      "modified": "2026-05-24T05:54:21.746Z",
+      "n_bronze": null,
+      "n_contests": 77,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 48,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 52,
+      "n_upsolved": 4,
+      "n_win": null,
+      "n_writers": 0,
+      "name": null,
+      "need_verification": false,
+      "rating": 1698,
+      "rating50": 33,
+      "rating_prediction": null,
+      "rating_update_time": "2026-05-23T17:35:00Z",
+      "related": null,
+      "resource": 1,
+      "resource_rank": 57075,
+      "solving": 21273.0,
+      "submissions_info": {},
+      "total_solving": 23703.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-09-01T23:59:59.999Z",
+      "upsolving": 2430.0,
+      "url": "/account/tuasananh/resource/codeforces.com/"
+    },
+    "model": "ranking.account",
+    "pk": 9794980
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "TR",
+      "created": "2024-12-23T06:26:48.004Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar": "https://userpic.codeforces.org/2451274/avatar/b7844b54eacc7bee.jpg",
+        "city": "Istanbul",
+        "contribution": 13,
+        "country": "Turkey",
+        "firstName": "Yunus",
+        "friendOfCount": 54,
+        "handle": "olasiliksizci",
+        "lastName": "Diler",
+        "lastOnlineTimeSeconds": 1785109385,
+        "maxRank": "master",
+        "maxRating": 2153,
+        "name": "Yunus Diler",
+        "organization": "Istanbul Technical University",
+        "rank": "expert",
+        "rating": 1820,
+        "registrationTimeSeconds": 1644720977,
+        "titlePhoto": "https://userpic.codeforces.org/2451274/title/612ca0d7fb1b7a29.jpg"
+      },
+      "key": "olasiliksizci",
+      "last_activity": "2026-07-18T14:35:00Z",
+      "last_rating_activity": "2026-04-25T16:29:54Z",
+      "last_submission": "2026-07-21T13:57:51Z",
+      "modified": "2026-07-27T00:03:47.682Z",
+      "n_bronze": null,
+      "n_contests": 91,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 0,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 187,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 0,
+      "n_total_solved": 780,
+      "n_upsolved": 593,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Yunus Diler",
+      "need_verification": false,
+      "rating": 1820,
+      "rating50": 36,
+      "rating_prediction": null,
+      "rating_update_time": "2026-07-18T16:35:00Z",
+      "related": null,
+      "resource": 1,
+      "resource_rank": 35304,
+      "solving": 124223.0,
+      "submissions_info": {},
+      "total_solving": 132769.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-08-06T23:59:59.999Z",
+      "upsolving": 8546.0,
+      "url": "/coder/olasiliksizci/?resource=1"
+    },
+    "model": "ranking.account",
+    "pk": 7849450
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2026-04-10T10:29:16.870Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "contribution": 0,
+        "friendOfCount": 1,
+        "handle": "kazuppa0506",
+        "lastOnlineTimeSeconds": 1780610677,
+        "maxRank": "newbie",
+        "maxRating": 621,
+        "name": "",
+        "rank": "newbie",
+        "rating": 621,
+        "registrationTimeSeconds": 1767265037
+      },
+      "key": "kazuppa0506",
+      "last_activity": "2026-04-12T07:08:34Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-07-20T00:21:17.820Z",
+      "n_bronze": null,
+      "n_contests": 1,
+      "n_first_ac": 1,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 4,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 5,
+      "n_upsolved": 1,
+      "n_win": null,
+      "n_writers": 0,
+      "name": null,
+      "need_verification": false,
+      "rating": 621,
+      "rating50": 12,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 1,
+      "resource_rank": 736617,
+      "solving": 4470.0,
+      "submissions_info": {},
+      "total_solving": 4620.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-10-28T23:59:59.999Z",
+      "upsolving": 150.0,
+      "url": "/account/kazuppa0506/resource/codeforces.com/"
+    },
+    "model": "ranking.account",
+    "pk": 10507502
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2025-06-15T10:18:36.594Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar": "https://userpic.codeforces.org/4906233/avatar/b8119dcc1585c771.jpg",
+        "contribution": 1,
+        "firstName": "dijkstra on segment tree",
+        "friendOfCount": 6,
+        "handle": "applebottomjeans",
+        "lastOnlineTimeSeconds": 1782669040,
+        "maxRank": "master",
+        "maxRating": 2112,
+        "name": "dijkstra on segment tree",
+        "organization": "Explosive Vegetable Club",
+        "rank": "master",
+        "rating": 2112,
+        "registrationTimeSeconds": 1749811411,
+        "titlePhoto": "https://userpic.codeforces.org/4906233/title/da1a21d9f3fbf7c3.jpg"
+      },
+      "key": "applebottomjeans",
+      "last_activity": "2026-06-28T14:48:46Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-06-28T18:24:25.248Z",
+      "n_bronze": null,
+      "n_contests": 10,
+      "n_first_ac": 1,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 40,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 42,
+      "n_upsolved": 2,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "dijkstra on segment tree",
+      "need_verification": false,
+      "rating": 2112,
+      "rating50": 42,
+      "rating_prediction": null,
+      "rating_update_time": "2026-06-28T16:35:00Z",
+      "related": null,
+      "resource": 1,
+      "resource_rank": 12861,
+      "solving": 30182.0,
+      "submissions_info": {},
+      "total_solving": 31492.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-10-06T23:59:59.999Z",
+      "upsolving": 1310.0,
+      "url": "/account/applebottomjeans/resource/codeforces.com/"
+    },
+    "model": "ranking.account",
+    "pk": 8429219
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "HK",
+      "created": "2023-01-27T14:47:26.310Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar": "https://userpic.codeforces.org/2949133/avatar/15e7355fc4c4c498.jpg",
+        "contribution": 0,
+        "country": "Hong Kong",
+        "firstName": "Matthew",
+        "friendOfCount": 44,
+        "handle": "Left0807",
+        "lastName": "Chor",
+        "lastOnlineTimeSeconds": 1785114960,
+        "maxRank": "candidate master",
+        "maxRating": 2079,
+        "name": "Matthew Chor",
+        "organization": "CUHK",
+        "rank": "expert",
+        "rating": 1858,
+        "registrationTimeSeconds": 1670399926,
+        "titlePhoto": "https://userpic.codeforces.org/2949133/title/dbbcc705015e7181.jpg"
+      },
+      "key": "Left0807",
+      "last_activity": "2026-07-26T14:38:53Z",
+      "last_rating_activity": "2026-06-28T15:15:27Z",
+      "last_submission": "2026-07-09T15:49:26Z",
+      "modified": "2026-07-27T06:38:30.794Z",
+      "n_bronze": null,
+      "n_contests": 171,
+      "n_first_ac": 0,
+      "n_first_places": 0,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 0,
+      "n_second_places": 0,
+      "n_silver": null,
+      "n_solved": 252,
+      "n_subscribers": 0,
+      "n_third_places": 0,
+      "n_top_ten_places": 0,
+      "n_total_solved": 484,
+      "n_upsolved": 232,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Matthew Chor",
+      "need_verification": false,
+      "rating": 1858,
+      "rating50": 37,
+      "rating_prediction": null,
+      "rating_update_time": "2026-07-26T17:05:00Z",
+      "related": null,
+      "resource": 1,
+      "resource_rank": 31805,
+      "solving": 132405.0,
+      "submissions_info": {},
+      "total_solving": 157628.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-08-31T23:59:59.999Z",
+      "upsolving": 25223.0,
+      "url": "/coder/Left0897/?resource=1"
+    },
+    "model": "ranking.account",
+    "pk": 5297479
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "US",
+      "created": "2023-07-25T14:48:00.687Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "contribution": 0,
+        "country": "United States",
+        "friendOfCount": 9,
+        "handle": "Neoster4762",
+        "lastOnlineTimeSeconds": 1784407812,
+        "maxRank": "expert",
+        "maxRating": 1789,
+        "name": "",
+        "organization": "",
+        "rank": "expert",
+        "rating": 1789,
+        "registrationTimeSeconds": 1688208769
+      },
+      "key": "Neoster4762",
+      "last_activity": "2026-07-18T14:35:00Z",
+      "last_rating_activity": "2026-05-06T07:12:13Z",
+      "last_submission": null,
+      "modified": "2026-07-19T05:17:43.741Z",
+      "n_bronze": null,
+      "n_contests": 43,
+      "n_first_ac": 1,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 0,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 91,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 0,
+      "n_total_solved": 130,
+      "n_upsolved": 39,
+      "n_win": null,
+      "n_writers": 0,
+      "name": null,
+      "need_verification": false,
+      "rating": 1789,
+      "rating50": 35,
+      "rating_prediction": null,
+      "rating_update_time": "2026-07-18T16:35:00Z",
+      "related": null,
+      "resource": 1,
+      "resource_rank": 38983,
+      "solving": 47313.0,
+      "submissions_info": {},
+      "total_solving": 54158.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-10-27T23:59:59.999Z",
+      "upsolving": 6845.0,
+      "url": "/account/Neoster4762/resource/codeforces.com/"
+    },
+    "model": "ranking.account",
+    "pk": 5632020
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "US",
+      "created": "2025-03-23T05:55:29.055Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar": "https://userpic.codeforces.org/4355145/avatar/62795ab3cd617c85.jpg",
+        "city": "Tempe",
+        "contribution": 0,
+        "country": "United States",
+        "friendOfCount": 5,
+        "handle": "zilinj",
+        "lastOnlineTimeSeconds": 1782839359,
+        "maxRank": "specialist",
+        "maxRating": 1579,
+        "name": "",
+        "organization": "Arizona State University",
+        "rank": "specialist",
+        "rating": 1481,
+        "registrationTimeSeconds": 1729373476,
+        "titlePhoto": "https://userpic.codeforces.org/4355145/title/82c02ae5de951ed8.jpg"
+      },
+      "key": "zilinj",
+      "last_activity": "2026-06-30T14:35:00Z",
+      "last_rating_activity": "2026-05-06T07:28:42Z",
+      "last_submission": null,
+      "modified": "2026-07-01T20:37:49.648Z",
+      "n_bronze": null,
+      "n_contests": 20,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 70,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 84,
+      "n_upsolved": 14,
+      "n_win": null,
+      "n_writers": 0,
+      "name": null,
+      "need_verification": false,
+      "rating": 1481,
+      "rating50": 29,
+      "rating_prediction": null,
+      "rating_update_time": "2026-06-30T16:50:00Z",
+      "related": null,
+      "resource": 1,
+      "resource_rank": 130020,
+      "solving": 35290.0,
+      "submissions_info": {},
+      "total_solving": 38897.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-10-09T23:59:59.999Z",
+      "upsolving": 3607.0,
+      "url": "/account/zilinj/resource/codeforces.com/"
+    },
+    "model": "ranking.account",
+    "pk": 8260879
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2023-12-29T23:27:43.485Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar": "https://userpic.codeforces.org/3539417/avatar/dc080dd12a3c22aa.jpg",
+        "contribution": 10,
+        "friendOfCount": 48,
+        "handle": "Misaka16172",
+        "lastOnlineTimeSeconds": 1785422080,
+        "maxRank": "candidate master",
+        "maxRating": 1925,
+        "name": "",
+        "organization": "Beijing No.80 High School",
+        "rank": "candidate master",
+        "rating": 1912,
+        "registrationTimeSeconds": 1696937969,
+        "titlePhoto": "https://userpic.codeforces.org/3539417/title/1c98de1f66939864.jpg"
+      },
+      "key": "Misaka16172",
+      "last_activity": "2026-07-06T14:37:32Z",
+      "last_rating_activity": "2026-05-23T15:57:35Z",
+      "last_submission": "2026-07-06T16:59:58Z",
+      "modified": "2026-07-31T00:04:39.405Z",
+      "n_bronze": null,
+      "n_contests": 56,
+      "n_first_ac": 0,
+      "n_first_places": 0,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 0,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 163,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 0,
+      "n_total_solved": 650,
+      "n_upsolved": 487,
+      "n_win": null,
+      "n_writers": 0,
+      "name": null,
+      "need_verification": false,
+      "rating": 1912,
+      "rating50": 38,
+      "rating_prediction": null,
+      "rating_update_time": "2026-07-06T16:35:00Z",
+      "related": null,
+      "resource": 1,
+      "resource_rank": 26866,
+      "solving": 91253.0,
+      "submissions_info": {},
+      "total_solving": 102375.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-09-17T23:59:59.999Z",
+      "upsolving": 11122.0,
+      "url": "/coder/M1saka16I72/?resource=1"
+    },
+    "model": "ranking.account",
+    "pk": 6125359
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2022-03-07T19:30:00.097Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "contribution": 105,
+        "friendOfCount": 671,
+        "handle": "wuhudsm",
+        "lastOnlineTimeSeconds": 1785046337,
+        "maxRank": "master",
+        "maxRating": 2189,
+        "name": "",
+        "organization": "",
+        "rank": "expert",
+        "rating": 1813,
+        "registrationTimeSeconds": 1646667344
+      },
+      "key": "wuhudsm",
+      "last_activity": "2026-07-26T14:49:11Z",
+      "last_rating_activity": "2026-05-06T07:48:03Z",
+      "last_submission": null,
+      "modified": "2026-07-27T06:38:45.890Z",
+      "n_bronze": null,
+      "n_contests": 261,
+      "n_first_ac": 0,
+      "n_first_places": 0,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 0,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 392,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 0,
+      "n_total_solved": 443,
+      "n_upsolved": 51,
+      "n_win": null,
+      "n_writers": 136,
+      "name": null,
+      "need_verification": false,
+      "rating": 1813,
+      "rating50": 36,
+      "rating_prediction": null,
+      "rating_update_time": "2026-07-26T17:05:00Z",
+      "related": null,
+      "resource": 1,
+      "resource_rank": 36043,
+      "solving": 234178.0,
+      "submissions_info": {},
+      "total_solving": 248756.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-11-04T23:59:59.999Z",
+      "upsolving": 14578.0,
+      "url": "/account/wuhudsm/resource/codeforces.com/"
+    },
+    "model": "ranking.account",
+    "pk": 4111278
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "SY",
+      "created": "2024-02-19T17:39:55.849Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "city": "Damascus",
+        "contribution": 0,
+        "country": "Syria",
+        "firstName": "Alaa alden",
+        "friendOfCount": 116,
+        "handle": "alaa-_-",
+        "lastName": "hamodeh",
+        "lastOnlineTimeSeconds": 1785634352,
+        "maxRank": "expert",
+        "maxRating": 1706,
+        "name": "Alaa alden hamodeh",
+        "organization": "Jiangly Fan Club",
+        "rank": "expert",
+        "rating": 1606,
+        "registrationTimeSeconds": 1704211551
+      },
+      "key": "alaa-_-",
+      "last_activity": "2026-08-01T14:38:33Z",
+      "last_rating_activity": "2026-05-06T06:39:36Z",
+      "last_submission": null,
+      "modified": "2026-08-02T06:39:06.577Z",
+      "n_bronze": null,
+      "n_contests": 103,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 0,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 282,
+      "n_subscribers": 0,
+      "n_third_places": 0,
+      "n_top_ten_places": null,
+      "n_total_solved": 417,
+      "n_upsolved": 135,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Alaa alden hamodeh",
+      "need_verification": false,
+      "rating": 1606,
+      "rating50": 32,
+      "rating_prediction": null,
+      "rating_update_time": "2026-08-01T17:05:00Z",
+      "related": null,
+      "resource": 1,
+      "resource_rank": 86953,
+      "solving": 114109.0,
+      "submissions_info": {},
+      "total_solving": 156609.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-11-10T23:59:59.999Z",
+      "upsolving": 42500.0,
+      "url": "/account/alaa-_-/resource/codeforces.com/"
+    },
+    "model": "ranking.account",
+    "pk": 6423895
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "CN",
+      "created": "2025-12-26T07:54:02.246Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar": "https://userpic.codeforces.org/4641326/avatar/8edc639feeaa8be7.jpg",
+        "city": "Beijing",
+        "contribution": 48,
+        "country": "China",
+        "firstName": "Sleeping early instead of CP makes a better life.",
+        "friendOfCount": 249,
+        "handle": "Kuro_neko",
+        "lastOnlineTimeSeconds": 1785778637,
+        "maxRank": "international master",
+        "maxRating": 2348,
+        "name": "Sleeping early instead of CP makes a better life.",
+        "organization": "0x3F Club",
+        "rank": "master",
+        "rating": 2243,
+        "registrationTimeSeconds": 1739362760,
+        "titlePhoto": "https://userpic.codeforces.org/4641326/title/2df99666cf9c12a0.jpg"
+      },
+      "key": "Kuro_neko",
+      "last_activity": "2026-07-26T14:44:16Z",
+      "last_rating_activity": "2026-06-27T16:12:07Z",
+      "last_submission": "2026-08-03T02:01:18Z",
+      "modified": "2026-08-04T00:23:58.842Z",
+      "n_bronze": null,
+      "n_contests": 70,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 248,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 1648,
+      "n_upsolved": 1400,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Sleeping early instead of CP makes a better life.",
+      "need_verification": false,
+      "rating": 2243,
+      "rating50": 44,
+      "rating_prediction": null,
+      "rating_update_time": "2026-07-26T17:05:00Z",
+      "related": null,
+      "resource": 1,
+      "resource_rank": 5353,
+      "solving": 126948.0,
+      "submissions_info": {},
+      "total_solving": 139797.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-08-04T23:59:59.999Z",
+      "upsolving": 12849.0,
+      "url": "/coder/elainafan/?resource=1"
+    },
+    "model": "ranking.account",
+    "pk": 9791998
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "PK",
+      "created": "2025-12-31T00:25:56.432Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar": "https://userpic.codeforces.org/3944826/avatar/61b995b3481462d1.jpg",
+        "city": "Karachi",
+        "contribution": 67,
+        "country": "Pakistan",
+        "firstName": "Wasif",
+        "friendOfCount": 236,
+        "handle": "wasif2397",
+        "lastName": ", gimme div3 or ill retire",
+        "lastOnlineTimeSeconds": 1783408325,
+        "maxRank": "expert",
+        "maxRating": 1765,
+        "name": "Wasif , gimme div3 or ill retire",
+        "organization": "FAST NUCES",
+        "rank": "expert",
+        "rating": 1627,
+        "registrationTimeSeconds": 1714295623,
+        "titlePhoto": "https://userpic.codeforces.org/3944826/title/acd251510e30202d.jpg"
+      },
+      "key": "wasif2397",
+      "last_activity": "2026-06-18T14:39:05Z",
+      "last_rating_activity": "2026-04-21T16:03:44Z",
+      "last_submission": "2026-06-24T08:12:28Z",
+      "modified": "2026-07-08T00:06:37.706Z",
+      "n_bronze": null,
+      "n_contests": 120,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 227,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 821,
+      "n_upsolved": 594,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Wasif , gimme div3 or ill retire",
+      "need_verification": false,
+      "rating": 1627,
+      "rating50": 32,
+      "rating_prediction": null,
+      "rating_update_time": "2026-06-18T17:35:00Z",
+      "related": null,
+      "resource": 1,
+      "resource_rank": 78226,
+      "solving": 84380.0,
+      "submissions_info": {},
+      "total_solving": 113084.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-08-04T23:59:59.999Z",
+      "upsolving": 28704.0,
+      "url": "/coder/Wasif/?resource=1"
+    },
+    "model": "ranking.account",
+    "pk": 9809295
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "CN",
+      "created": "2025-10-03T14:53:55.503Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar": "https://userpic.codeforces.org/4161472/avatar/c255e74faad28e2a.jpg",
+        "city": "Wuxi",
+        "contribution": 0,
+        "country": "China",
+        "firstName": "Zhoujun",
+        "friendOfCount": 3,
+        "handle": "Xue_Zhoujun_RhF6",
+        "lastName": "Xue",
+        "lastOnlineTimeSeconds": 1785730593,
+        "maxRank": "expert",
+        "maxRating": 1758,
+        "name": "Zhoujun Xue",
+        "organization": "NanjingExperimentalSchool",
+        "rank": "expert",
+        "rating": 1758,
+        "registrationTimeSeconds": 1724493482,
+        "titlePhoto": "https://userpic.codeforces.org/4161472/title/28a7d9940a011f00.jpg"
+      },
+      "key": "Xue_Zhoujun_RhF6",
+      "last_activity": "2026-08-01T14:43:34Z",
+      "last_rating_activity": "2026-05-16T15:17:42Z",
+      "last_submission": "2026-08-03T06:37:37Z",
+      "modified": "2026-08-04T00:23:14.884Z",
+      "n_bronze": null,
+      "n_contests": 23,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 63,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 365,
+      "n_upsolved": 302,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Zhoujun Xue",
+      "need_verification": false,
+      "rating": 1758,
+      "rating50": 35,
+      "rating_prediction": null,
+      "rating_update_time": "2026-08-01T17:05:00Z",
+      "related": null,
+      "resource": 1,
+      "resource_rank": 43678,
+      "solving": 38167.0,
+      "submissions_info": {},
+      "total_solving": 40710.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-08-04T23:59:59.999Z",
+      "upsolving": 2543.0,
+      "url": "/coder/Xue_Zhoujun_RhF6/?resource=1"
+    },
+    "model": "ranking.account",
+    "pk": 9503060
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2026-05-09T02:28:15.825Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar": "https://userpic.codeforces.org/5527711/avatar/baf4128c2ec2ac37.jpg",
+        "contribution": 0,
+        "friendOfCount": 0,
+        "handle": "acaciawood",
+        "lastOnlineTimeSeconds": 1777527445,
+        "name": "",
+        "registrationTimeSeconds": 1768301654,
+        "titlePhoto": "https://userpic.codeforces.org/5527711/title/171d0514681c3a0c.jpg"
+      },
+      "key": "acaciawood",
+      "last_activity": "2026-04-12T06:00:29Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-05-09T03:33:13.470Z",
+      "n_bronze": null,
+      "n_contests": 1,
+      "n_first_ac": 1,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 1,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 1,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": null,
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 1,
+      "resource_rank": null,
+      "solving": 2050.0,
+      "submissions_info": {},
+      "total_solving": 2050.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-08-17T23:59:59.999Z",
+      "upsolving": null,
+      "url": "/account/acaciawood/resource/codeforces.com/"
+    },
+    "model": "ranking.account",
+    "pk": 10810021
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "EG",
+      "created": "2026-02-07T00:48:30.989Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar": "https://userpic.codeforces.org/3616288/avatar/835554f6d1c737de.jpg",
+        "city": "Qina",
+        "contribution": 0,
+        "country": "Egypt",
+        "firstName": "Moataz",
+        "friendOfCount": 33,
+        "handle": "MoatazXD",
+        "lastName": "Essam",
+        "lastOnlineTimeSeconds": 1785598110,
+        "maxRank": "pupil",
+        "maxRating": 1338,
+        "name": "Moataz Essam",
+        "organization": "",
+        "rank": "pupil",
+        "rating": 1306,
+        "registrationTimeSeconds": 1699985849,
+        "titlePhoto": "https://userpic.codeforces.org/3616288/title/469e8f6479a60088.jpg"
+      },
+      "key": "MoatazXD",
+      "last_activity": "2026-08-01T14:38:47Z",
+      "last_rating_activity": "2026-04-30T15:42:34Z",
+      "last_submission": null,
+      "modified": "2026-08-03T06:41:04.980Z",
+      "n_bronze": null,
+      "n_contests": 47,
+      "n_first_ac": 0,
+      "n_first_places": 0,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 0,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 119,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 0,
+      "n_total_solved": 173,
+      "n_upsolved": 54,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Moataz Essam",
+      "need_verification": false,
+      "rating": 1306,
+      "rating50": 26,
+      "rating_prediction": null,
+      "rating_update_time": "2026-08-01T17:05:00Z",
+      "related": null,
+      "resource": 1,
+      "resource_rank": 275463,
+      "solving": 40201.0,
+      "submissions_info": {},
+      "total_solving": 46088.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-11-10T23:59:59.999Z",
+      "upsolving": 5887.0,
+      "url": "/account/MoatazXD/resource/codeforces.com/"
+    },
+    "model": "ranking.account",
+    "pk": 9969906
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "PH",
+      "created": "2023-08-16T18:43:49.085Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "contribution": 0,
+        "country": "Philippines",
+        "friendOfCount": 14,
+        "handle": "eeyoowan",
+        "lastOnlineTimeSeconds": 1785651458,
+        "maxRank": "expert",
+        "maxRating": 1627,
+        "name": "",
+        "organization": "",
+        "rank": "expert",
+        "rating": 1627,
+        "registrationTimeSeconds": 1685411243
+      },
+      "key": "eeyoowan",
+      "last_activity": "2026-04-21T15:35:38Z",
+      "last_rating_activity": "2026-04-21T15:35:38Z",
+      "last_submission": "2026-07-30T00:00:50Z",
+      "modified": "2026-08-03T00:08:36.778Z",
+      "n_bronze": null,
+      "n_contests": 17,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 39,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 836,
+      "n_upsolved": 797,
+      "n_win": null,
+      "n_writers": 0,
+      "name": null,
+      "need_verification": false,
+      "rating": 1627,
+      "rating50": 32,
+      "rating_prediction": null,
+      "rating_update_time": "2026-04-21T16:35:00Z",
+      "related": null,
+      "resource": 1,
+      "resource_rank": 78226,
+      "solving": 4292.0,
+      "submissions_info": {},
+      "total_solving": 24304.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-08-11T23:59:59.999Z",
+      "upsolving": 20012.0,
+      "url": "/coder/eeyoowan/?resource=1"
+    },
+    "model": "ranking.account",
+    "pk": 5786478
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "IN",
+      "created": "2024-12-03T11:08:45.972Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar": "https://userpic.codeforces.org/3646177/avatar/33ff99ed8cbb8f07.jpg",
+        "city": "Khargone",
+        "contribution": 0,
+        "country": "India",
+        "firstName": "Sourabh",
+        "friendOfCount": 2,
+        "handle": "sourabhyadav626333",
+        "lastName": "Yadav",
+        "lastOnlineTimeSeconds": 1782407138,
+        "maxRank": "pupil",
+        "maxRating": 1363,
+        "name": "Sourabh Yadav",
+        "organization": "Maulana Azad National Institute of Technology",
+        "rank": "pupil",
+        "rating": 1237,
+        "registrationTimeSeconds": 1701176304,
+        "titlePhoto": "https://userpic.codeforces.org/3646177/title/512cd0373a9e9bc.jpg"
+      },
+      "key": "sourabhyadav626333",
+      "last_activity": "2026-06-28T14:56:36Z",
+      "last_rating_activity": "2026-04-25T14:45:44Z",
+      "last_submission": null,
+      "modified": "2026-06-29T04:48:13.143Z",
+      "n_bronze": null,
+      "n_contests": 14,
+      "n_first_ac": 1,
+      "n_first_places": 0,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 0,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 34,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 0,
+      "n_total_solved": 34,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Sourabh Yadav",
+      "need_verification": false,
+      "rating": 1237,
+      "rating50": 24,
+      "rating_prediction": null,
+      "rating_update_time": "2026-06-28T16:35:00Z",
+      "related": null,
+      "resource": 1,
+      "resource_rank": 326845,
+      "solving": 15024.0,
+      "submissions_info": {},
+      "total_solving": 15024.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-10-07T23:59:59.999Z",
+      "upsolving": 0.0,
+      "url": "/account/sourabhyadav626333/resource/codeforces.com/"
+    },
+    "model": "ranking.account",
+    "pk": 7744020
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "JP",
+      "created": "2025-12-26T07:56:26.256Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar": "https://userpic.codeforces.org/4221945/avatar/cc51adffe079331d.jpg",
+        "city": "Tokyo",
+        "contribution": 0,
+        "country": "Japan",
+        "firstName": "JH",
+        "friendOfCount": 36,
+        "handle": "Leopold_Fitz",
+        "lastName": "L",
+        "lastOnlineTimeSeconds": 1785517484,
+        "maxRank": "expert",
+        "maxRating": 1720,
+        "name": "JH L",
+        "organization": "ACtoder",
+        "rank": "expert",
+        "rating": 1601,
+        "registrationTimeSeconds": 1726131702,
+        "titlePhoto": "https://userpic.codeforces.org/4221945/title/cecfe7474efe1024.jpg"
+      },
+      "key": "Leopold_Fitz",
+      "last_activity": "2026-06-27T14:41:48Z",
+      "last_rating_activity": "2026-05-16T15:48:12Z",
+      "last_submission": "2026-07-30T10:25:02Z",
+      "modified": "2026-08-01T00:09:12.041Z",
+      "n_bronze": null,
+      "n_contests": 36,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 149,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 1745,
+      "n_upsolved": 1596,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "JH L",
+      "need_verification": false,
+      "rating": 1601,
+      "rating50": 32,
+      "rating_prediction": null,
+      "rating_update_time": "2026-06-27T17:05:00Z",
+      "related": null,
+      "resource": 1,
+      "resource_rank": 89087,
+      "solving": 65929.0,
+      "submissions_info": {},
+      "total_solving": 105480.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-08-04T23:59:59.999Z",
+      "upsolving": 39551.0,
+      "url": "/coder/Starwin/?resource=1"
+    },
+    "model": "ranking.account",
+    "pk": 9792116
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "IN",
+      "created": "2026-03-14T15:32:39.267Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar": "https://userpic.codeforces.org/5522010/avatar/f5e50d461dc516ec.jpg",
+        "city": "Kolkata",
+        "contribution": 0,
+        "country": "India",
+        "firstName": "Purbali",
+        "friendOfCount": 1,
+        "handle": "purbali2005",
+        "lastName": "Kar",
+        "lastOnlineTimeSeconds": 1784596920,
+        "maxRank": "newbie",
+        "maxRating": 966,
+        "name": "Purbali Kar",
+        "organization": "IIT BHU (Varanasi)",
+        "rank": "newbie",
+        "rating": 966,
+        "registrationTimeSeconds": 1768142252,
+        "titlePhoto": "https://userpic.codeforces.org/5522010/title/21e31203fbac5b99.jpg"
+      },
+      "key": "purbali2005",
+      "last_activity": "2026-06-30T14:35:00Z",
+      "last_rating_activity": "2026-05-23T15:14:55Z",
+      "last_submission": "2026-07-13T09:44:52Z",
+      "modified": "2026-07-24T00:09:32.511Z",
+      "n_bronze": null,
+      "n_contests": 13,
+      "n_first_ac": 0,
+      "n_first_places": 0,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 0,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 18,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 0,
+      "n_total_solved": 271,
+      "n_upsolved": 253,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Purbali Kar",
+      "need_verification": false,
+      "rating": 966,
+      "rating50": 19,
+      "rating_prediction": null,
+      "rating_update_time": "2026-06-30T16:50:00Z",
+      "related": null,
+      "resource": 1,
+      "resource_rank": 506123,
+      "solving": 5285.0,
+      "submissions_info": {},
+      "total_solving": 5985.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-08-14T23:59:59.999Z",
+      "upsolving": 700.0,
+      "url": "/coder/prolly/?resource=1"
+    },
+    "model": "ranking.account",
+    "pk": 10253824
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "RU",
+      "created": "2023-12-23T01:02:11.398Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "avatar": "https://userpic.codeforces.org/577/avatar/c4603e9bec842bd0.jpg",
+        "city": "Nizhny Novgorod",
+        "contribution": 5,
+        "country": "Russia",
+        "firstName": "Alexey",
+        "friendOfCount": 707,
+        "handle": "ashmelev",
+        "lastName": "Shmelev",
+        "lastOnlineTimeSeconds": 1785781509,
+        "maxRank": "international grandmaster",
+        "maxRating": 2672,
+        "name": "Alexey Shmelev",
+        "organization": "Cucumber fun club",
+        "rank": "grandmaster",
+        "rating": 2480,
+        "registrationTimeSeconds": 1266844757,
+        "titlePhoto": "https://userpic.codeforces.org/577/title/9e075cadee178d7e.jpg",
+        "vkId": "864318"
+      },
+      "key": "ashmelev",
+      "last_activity": "2025-12-26T11:00:00Z",
+      "last_rating_activity": "2024-04-08T14:35:00Z",
+      "last_submission": "2026-08-03T15:18:36Z",
+      "modified": "2026-08-04T00:16:40.443Z",
+      "n_bronze": null,
+      "n_contests": 130,
+      "n_first_ac": 0,
+      "n_first_places": 3,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 23,
+      "n_second_places": 3,
+      "n_silver": null,
+      "n_solved": 2,
+      "n_subscribers": 0,
+      "n_third_places": 1,
+      "n_top_ten_places": 16,
+      "n_total_solved": 1817,
+      "n_upsolved": 1815,
+      "n_win": null,
+      "n_writers": 9,
+      "name": "Alexey Shmelev",
+      "need_verification": false,
+      "rating": 2480,
+      "rating50": 49,
+      "rating_prediction": null,
+      "rating_update_time": "2023-12-23T00:40:04Z",
+      "related": null,
+      "resource": 1,
+      "resource_rank": 1627,
+      "solving": 124329.222,
+      "submissions_info": {},
+      "total_solving": 192445.222,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-08-04T23:59:59.999Z",
+      "upsolving": 68116.0,
+      "url": "/coder/%E2%88%A83887833/?resource=1"
+    },
+    "model": "ranking.account",
+    "pk": 6101922
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2024-09-28T12:49:30.316Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "contribution": 0,
+        "firstName": "StonksCF-verify",
+        "friendOfCount": 33,
+        "handle": "robertfan",
+        "lastName": "rjp1SXGAX8dBHxhVG7YP",
+        "lastOnlineTimeSeconds": 1785113945,
+        "maxRank": "grandmaster",
+        "maxRating": 2422,
+        "name": "StonksCF-verify rjp1SXGAX8dBHxhVG7YP",
+        "organization": "",
+        "rank": "master",
+        "rating": 2274,
+        "registrationTimeSeconds": 1725514704
+      },
+      "key": "robertfan",
+      "last_activity": "2026-07-26T14:45:57Z",
+      "last_rating_activity": "2026-05-06T08:21:43Z",
+      "last_submission": "2026-07-19T11:44:27Z",
+      "modified": "2026-07-27T06:31:14.191Z",
+      "n_bronze": null,
+      "n_contests": 24,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 98,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 220,
+      "n_upsolved": 122,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "StonksCF-verify rjp1SXGAX8dBHxhVG7YP",
+      "need_verification": false,
+      "rating": 2274,
+      "rating50": 45,
+      "rating_prediction": null,
+      "rating_update_time": "2026-07-26T17:05:00Z",
+      "related": null,
+      "resource": 1,
+      "resource_rank": 4528,
+      "solving": 94985.0,
+      "submissions_info": {},
+      "total_solving": 112974.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-08-11T23:59:59.999Z",
+      "upsolving": 17989.0,
+      "url": "/coder/orchard1st/?resource=1"
+    },
+    "model": "ranking.account",
+    "pk": 7536838
+  },
+  {
+    "fields": {
+      "account": 10193607,
+      "addition": {
+        "_languages": [
+          "C++20 (GCC 13-64)"
+        ],
+        "_no_update_n_contests": false,
+        "_skip_medal": false,
+        "_verdicts": [
+          "OK"
+        ],
+        "participant_type": [
+          "CONTESTANT"
+        ],
+        "problems": {
+          "A": {
+            "external_solution": true,
+            "language": "C++20 (GCC 13-64)",
+            "partial": false,
+            "result": 332.0,
+            "submission_id": 370787733,
+            "submission_time": 1775979675,
+            "time": "02:06",
+            "time_in_seconds": 7575,
+            "url": "https://codeforces.com/contest/2216/submission/370787733",
+            "verdict": "OK"
+          },
+          "B": {
+            "external_solution": true,
+            "language": "C++20 (GCC 13-64)",
+            "partial": false,
+            "result": 928.0,
+            "submission_id": 370768789,
+            "submission_time": 1775973722,
+            "time": "00:27",
+            "time_in_seconds": 1622,
+            "url": "https://codeforces.com/contest/2216/submission/370768789",
+            "verdict": "OK"
+          },
+          "C": {
+            "external_solution": true,
+            "language": "C++20 (GCC 13-64)",
+            "partial": false,
+            "result": 1498.0,
+            "submission_id": 370775272,
+            "submission_time": 1775975381,
+            "time": "00:54",
+            "time_in_seconds": 3281,
+            "url": "https://codeforces.com/contest/2216/submission/370775272",
+            "verdict": "OK"
+          },
+          "D": {
+            "external_solution": true,
+            "language": "C++20 (GCC 13-64)",
+            "partial": false,
+            "result": 1740.0,
+            "submission_id": 370781124,
+            "submission_time": 1775977225,
+            "time": "01:25",
+            "time_in_seconds": 5125,
+            "url": "https://codeforces.com/contest/2216/submission/370781124",
+            "verdict": "OK"
+          },
+          "E": {
+            "external_solution": true,
+            "language": "C++20 (GCC 13-64)",
+            "partial": false,
+            "result": 1936.0,
+            "submission_id": 370785471,
+            "submission_time": 1775978801,
+            "time": "01:51",
+            "time_in_seconds": 6701,
+            "url": "https://codeforces.com/contest/2216/submission/370785471",
+            "verdict": "OK"
+          },
+          "F": {
+            "external_solution": true,
+            "language": "C++20 (GCC 13-64)",
+            "partial": false,
+            "result": 2283.0,
+            "submission_id": 370792671,
+            "submission_time": 1775981810,
+            "time": "02:41",
+            "time_in_seconds": 9710,
+            "url": "https://codeforces.com/contest/2216/submission/370792671",
+            "verdict": "OK"
+          }
+        },
+        "room": 327,
+        "solved": {
+          "solving": 6,
+          "upsolving": 0
+        }
+      },
+      "advanced": false,
+      "contest": 66765008,
+      "created": "2026-05-09T02:27:59.138Z",
+      "global_rating_change": null,
+      "last_activity": "2026-04-12T08:16:50Z",
+      "medal": null,
+      "modified": "2026-05-09T02:27:59.138Z",
+      "n_first_ac": 0,
+      "n_solved": 6,
+      "n_total_solved": 6,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "1",
+      "place_as_int": 1,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 1,
+      "skip_in_stats": false,
+      "solving": 8717.0,
+      "total_solving": 8717.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 88314285
+  },
+  {
+    "fields": {
+      "account": 8042568,
+      "addition": {
+        "_languages": [
+          "C++20 (GCC 13-64)"
+        ],
+        "_no_update_n_contests": false,
+        "_skip_medal": false,
+        "_verdicts": [
+          "OK"
+        ],
+        "participant_type": [
+          "CONTESTANT"
+        ],
+        "problems": {
+          "A": {
+            "external_solution": true,
+            "language": "C++20 (GCC 13-64)",
+            "partial": false,
+            "result": 315.0,
+            "submission_id": 370789585,
+            "submission_time": 1775980471,
+            "time": "02:19",
+            "time_in_seconds": 8371,
+            "url": "https://codeforces.com/contest/2216/submission/370789585",
+            "verdict": "OK"
+          },
+          "B": {
+            "external_solution": true,
+            "language": "C++20 (GCC 13-64)",
+            "partial": false,
+            "penalty_score": 3,
+            "result": 496.0,
+            "submission_id": 370788667,
+            "submission_time": 1775980090,
+            "time": "02:13",
+            "time_in_seconds": 7990,
+            "url": "https://codeforces.com/contest/2216/submission/370788667",
+            "verdict": "OK"
+          },
+          "C": {
+            "external_solution": true,
+            "language": "C++20 (GCC 13-64)",
+            "partial": false,
+            "penalty_score": 2,
+            "result": 1263.0,
+            "submission_id": 370780880,
+            "submission_time": 1775977129,
+            "time": "01:23",
+            "time_in_seconds": 5029,
+            "url": "https://codeforces.com/contest/2216/submission/370780880",
+            "verdict": "OK"
+          },
+          "D": {
+            "external_solution": true,
+            "language": "C++20 (GCC 13-64)",
+            "partial": false,
+            "penalty_score": 1,
+            "result": 1774.0,
+            "submission_id": 370778644,
+            "submission_time": 1775976396,
+            "time": "01:11",
+            "time_in_seconds": 4296,
+            "url": "https://codeforces.com/contest/2216/submission/370778644",
+            "verdict": "OK"
+          },
+          "E": {
+            "external_solution": true,
+            "language": "C++20 (GCC 13-64)",
+            "partial": false,
+            "result": 1907.0,
+            "submission_id": 370785947,
+            "submission_time": 1775979000,
+            "time": "01:55",
+            "time_in_seconds": 6900,
+            "url": "https://codeforces.com/contest/2216/submission/370785947",
+            "verdict": "OK"
+          },
+          "F": {
+            "external_solution": true,
+            "language": "C++20 (GCC 13-64)",
+            "partial": false,
+            "result": 2187.0,
+            "submission_id": 370793795,
+            "submission_time": 1775982348,
+            "time": "02:50",
+            "time_in_seconds": 10248,
+            "url": "https://codeforces.com/contest/2216/submission/370793795",
+            "verdict": "OK"
+          }
+        },
+        "room": 242,
+        "solved": {
+          "solving": 6,
+          "upsolving": 0
+        }
+      },
+      "advanced": false,
+      "contest": 66765008,
+      "created": "2026-05-09T02:27:59.265Z",
+      "global_rating_change": null,
+      "last_activity": "2026-04-12T08:25:48Z",
+      "medal": null,
+      "modified": "2026-05-09T02:27:59.265Z",
+      "n_first_ac": 0,
+      "n_solved": 6,
+      "n_total_solved": 6,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "2",
+      "place_as_int": 2,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 1,
+      "skip_in_stats": false,
+      "solving": 7942.0,
+      "total_solving": 7942.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 88314286
+  },
+  {
+    "fields": {
+      "account": 8820049,
+      "addition": {
+        "_languages": [
+          "C++20 (GCC 13-64)"
+        ],
+        "_no_update_n_contests": false,
+        "_skip_medal": false,
+        "_verdicts": [
+          "OK"
+        ],
+        "participant_type": [
+          "CONTESTANT"
+        ],
+        "problems": {
+          "A": {
+            "external_solution": true,
+            "language": "C++20 (GCC 13-64)",
+            "partial": false,
+            "penalty_score": 1,
+            "result": 330.0,
+            "submission_id": 370782052,
+            "submission_time": 1775977542,
+            "time": "01:30",
+            "time_in_seconds": 5442,
+            "url": "https://codeforces.com/contest/2216/submission/370782052",
+            "verdict": "OK"
+          },
+          "B": {
+            "external_solution": true,
+            "language": "C++20 (GCC 13-64)",
+            "partial": false,
+            "result": 734.0,
+            "submission_id": 370783707,
+            "submission_time": 1775978144,
+            "test": 1,
+            "time": "01:40",
+            "time_in_seconds": 6044,
+            "url": "https://codeforces.com/contest/2216/submission/370783707",
+            "verdict": "OK"
+          },
+          "C": {
+            "external_solution": true,
+            "language": "C++20 (GCC 13-64)",
+            "partial": false,
+            "penalty_score": 1,
+            "result": 1084.0,
+            "submission_id": 370788571,
+            "submission_time": 1775980044,
+            "time": "02:12",
+            "time_in_seconds": 7944,
+            "url": "https://codeforces.com/contest/2216/submission/370788571",
+            "verdict": "OK"
+          },
+          "D": {
+            "external_solution": true,
+            "language": "C++20 (GCC 13-64)",
+            "partial": false,
+            "penalty_score": 4,
+            "result": 1402.0,
+            "submission_id": 370784946,
+            "submission_time": 1775978606,
+            "time": "01:48",
+            "time_in_seconds": 6506,
+            "url": "https://codeforces.com/contest/2216/submission/370784946",
+            "verdict": "OK"
+          },
+          "E": {
+            "external_solution": true,
+            "language": "C++20 (GCC 13-64)",
+            "partial": false,
+            "penalty_score": 3,
+            "result": 1596.0,
+            "submission_id": 370789247,
+            "submission_time": 1775980325,
+            "time": "02:17",
+            "time_in_seconds": 8225,
+            "url": "https://codeforces.com/contest/2216/submission/370789247",
+            "verdict": "OK"
+          },
+          "F": {
+            "external_solution": true,
+            "language": "C++20 (GCC 13-64)",
+            "partial": false,
+            "result": 2667.0,
+            "submission_id": 370787595,
+            "submission_time": 1775979617,
+            "time": "02:05",
+            "time_in_seconds": 7517,
+            "url": "https://codeforces.com/contest/2216/submission/370787595",
+            "verdict": "OK"
+          }
+        },
+        "room": 123,
+        "solved": {
+          "solving": 6,
+          "upsolving": 0
+        }
+      },
+      "advanced": false,
+      "contest": 66765008,
+      "created": "2026-05-09T02:27:59.303Z",
+      "global_rating_change": null,
+      "last_activity": "2026-04-12T07:52:05Z",
+      "medal": null,
+      "modified": "2026-05-09T02:27:59.303Z",
+      "n_first_ac": 0,
+      "n_solved": 6,
+      "n_total_solved": 6,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "3",
+      "place_as_int": 3,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 1,
+      "skip_in_stats": false,
+      "solving": 7813.0,
+      "total_solving": 7813.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 88314287
+  },
+  {
+    "fields": {
+      "account": 9592168,
+      "addition": {
+        "_languages": [
+          "C++23 (GCC 14-64, msys2)"
+        ],
+        "_no_update_n_contests": false,
+        "_skip_medal": false,
+        "_verdicts": [
+          "OK"
+        ],
+        "participant_type": [
+          "CONTESTANT"
+        ],
+        "problems": {
+          "A": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "result": 468.0,
+            "submission_id": 370768255,
+            "submission_time": 1775973594,
+            "time": "00:24",
+            "time_in_seconds": 1494,
+            "url": "https://codeforces.com/contest/2216/submission/370768255",
+            "verdict": "OK"
+          },
+          "B": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "result": 934.0,
+            "submission_id": 370768338,
+            "submission_time": 1775973612,
+            "time": "00:25",
+            "time_in_seconds": 1512,
+            "url": "https://codeforces.com/contest/2216/submission/370768338",
+            "verdict": "OK"
+          },
+          "C": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "result": 1382.0,
+            "submission_id": 370780114,
+            "submission_time": 1775976883,
+            "time": "01:19",
+            "time_in_seconds": 4783,
+            "upsolving": {
+              "external_solution": true,
+              "language": "C++23 (GCC 14-64, msys2)",
+              "partial": false,
+              "result": "+",
+              "submission_id": 371481585,
+              "submission_time": 1776421561,
+              "url": "https://codeforces.com/contest/2216/submission/371481585",
+              "verdict": "OK"
+            },
+            "url": "https://codeforces.com/contest/2216/submission/370780114",
+            "verdict": "OK"
+          },
+          "D": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "penalty_score": 1,
+            "result": 1912.0,
+            "submission_id": 370773942,
+            "submission_time": 1775975004,
+            "time": "00:48",
+            "time_in_seconds": 2904,
+            "url": "https://codeforces.com/contest/2216/submission/370773942",
+            "verdict": "OK"
+          },
+          "E": {
+            "upsolving": {
+              "external_solution": true,
+              "language": "C++23 (GCC 14-64, msys2)",
+              "partial": false,
+              "result": "+",
+              "submission_id": 371098732,
+              "submission_time": 1776155473,
+              "url": "https://codeforces.com/contest/2216/submission/371098732",
+              "verdict": "OK"
+            }
+          },
+          "F": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "result": 2774.0,
+            "submission_id": 370786000,
+            "submission_time": 1775979018,
+            "time": "01:55",
+            "time_in_seconds": 6918,
+            "url": "https://codeforces.com/contest/2216/submission/370786000",
+            "verdict": "OK"
+          }
+        },
+        "room": 348,
+        "solved": {
+          "solving": 5,
+          "upsolving": 1
+        }
+      },
+      "advanced": false,
+      "contest": 66765008,
+      "created": "2026-05-09T02:27:59.378Z",
+      "global_rating_change": null,
+      "last_activity": "2026-04-12T07:30:18Z",
+      "medal": null,
+      "modified": "2026-05-09T02:27:59.378Z",
+      "n_first_ac": 0,
+      "n_solved": 5,
+      "n_total_solved": 6,
+      "n_upsolved": 1,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "5",
+      "place_as_int": 5,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 1,
+      "skip_in_stats": false,
+      "solving": 7470.0,
+      "total_solving": 7471.0,
+      "upsolving": 1.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 88314289
+  },
+  {
+    "fields": {
+      "account": 9799575,
+      "addition": {
+        "_languages": [
+          "C++23 (GCC 14-64, msys2)"
+        ],
+        "_no_update_n_contests": false,
+        "_skip_medal": false,
+        "_verdicts": [
+          "OK",
+          "WA"
+        ],
+        "participant_type": [
+          "CONTESTANT"
+        ],
+        "problems": {
+          "A": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "result": 472.0,
+            "submission_id": 370767357,
+            "submission_time": 1775973395,
+            "time": "00:21",
+            "time_in_seconds": 1295,
+            "url": "https://codeforces.com/contest/2216/submission/370767357",
+            "verdict": "OK"
+          },
+          "B": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "penalty_score": 2,
+            "result": 828.0,
+            "submission_id": 370768927,
+            "submission_time": 1775973757,
+            "time": "00:27",
+            "time_in_seconds": 1657,
+            "url": "https://codeforces.com/contest/2216/submission/370768927",
+            "verdict": "OK"
+          },
+          "C": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "result": 1531.0,
+            "submission_id": 370773636,
+            "submission_time": 1775974923,
+            "time": "00:47",
+            "time_in_seconds": 2823,
+            "url": "https://codeforces.com/contest/2216/submission/370773636",
+            "verdict": "OK"
+          },
+          "D": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "result": 1848.0,
+            "submission_id": 370777902,
+            "submission_time": 1775976164,
+            "time": "01:07",
+            "time_in_seconds": 4064,
+            "url": "https://codeforces.com/contest/2216/submission/370777902",
+            "verdict": "OK"
+          },
+          "E": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "result": 2032.0,
+            "submission_id": 370783405,
+            "submission_time": 1775978024,
+            "time": "01:38",
+            "time_in_seconds": 5924,
+            "url": "https://codeforces.com/contest/2216/submission/370783405",
+            "verdict": "OK"
+          },
+          "F": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": null,
+            "result": "-",
+            "submission_id": 370788090,
+            "submission_time": 1775979824,
+            "test": 1,
+            "upsolving": {
+              "external_solution": true,
+              "language": "C++23 (GCC 14-64, msys2)",
+              "partial": false,
+              "result": "+",
+              "submission_id": 370796559,
+              "submission_time": 1775983801,
+              "url": "https://codeforces.com/contest/2216/submission/370796559",
+              "verdict": "OK"
+            },
+            "url": "https://codeforces.com/contest/2216/submission/370788090",
+            "verdict": "WA"
+          }
+        },
+        "room": 24,
+        "solved": {
+          "solving": 5,
+          "upsolving": 1
+        }
+      },
+      "advanced": false,
+      "contest": 66765008,
+      "created": "2026-04-20T00:14:00.795Z",
+      "global_rating_change": null,
+      "last_activity": "2026-04-12T07:13:44Z",
+      "medal": null,
+      "modified": "2026-05-09T02:27:59.658Z",
+      "n_first_ac": 0,
+      "n_solved": 5,
+      "n_total_solved": 6,
+      "n_upsolved": 1,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "13",
+      "place_as_int": 13,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 1,
+      "skip_in_stats": false,
+      "solving": 6711.0,
+      "total_solving": 6712.0,
+      "upsolving": 1.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 87795562
+  },
+  {
+    "fields": {
+      "account": 10365175,
+      "addition": {
+        "_languages": [
+          "Python 3"
+        ],
+        "_no_update_n_contests": false,
+        "_skip_medal": false,
+        "_verdicts": [
+          "TLE",
+          "OK"
+        ],
+        "participant_type": [
+          "CONTESTANT"
+        ],
+        "problems": {
+          "A": {
+            "external_solution": true,
+            "language": "Python 3",
+            "partial": false,
+            "result": 378.0,
+            "submission_id": 370782448,
+            "submission_time": 1775977679,
+            "time": "01:32",
+            "time_in_seconds": 5579,
+            "url": "https://codeforces.com/contest/2216/submission/370782448",
+            "verdict": "OK"
+          },
+          "B": {
+            "external_solution": true,
+            "language": "Python 3",
+            "partial": false,
+            "result": 590.0,
+            "submission_id": 370791667,
+            "submission_time": 1775981361,
+            "time": "02:34",
+            "time_in_seconds": 9261,
+            "url": "https://codeforces.com/contest/2216/submission/370791667",
+            "verdict": "OK"
+          },
+          "C": {
+            "external_solution": true,
+            "language": "Python 3",
+            "partial": false,
+            "result": 1176.0,
+            "submission_id": 370787416,
+            "submission_time": 1775979534,
+            "time": "02:03",
+            "time_in_seconds": 7434,
+            "url": "https://codeforces.com/contest/2216/submission/370787416",
+            "verdict": "OK"
+          },
+          "D": {
+            "external_solution": true,
+            "language": "Python 3",
+            "partial": false,
+            "penalty_score": 1,
+            "result": 1204.0,
+            "submission_id": 370793227,
+            "submission_time": 1775982084,
+            "time": "02:46",
+            "time_in_seconds": 9984,
+            "url": "https://codeforces.com/contest/2216/submission/370793227",
+            "verdict": "OK"
+          },
+          "E": {
+            "external_solution": true,
+            "language": "Python 3",
+            "partial": false,
+            "result": "-1",
+            "submission_id": 370790012,
+            "submission_time": 1775980661,
+            "test": 9,
+            "url": "https://codeforces.com/contest/2216/submission/370790012",
+            "verdict": "TLE"
+          },
+          "F": {
+            "external_solution": true,
+            "language": "Python 3",
+            "partial": false,
+            "result": 2294.0,
+            "submission_id": 370792526,
+            "submission_time": 1775981744,
+            "time": "02:40",
+            "time_in_seconds": 9644,
+            "url": "https://codeforces.com/contest/2216/submission/370792526",
+            "verdict": "OK"
+          }
+        },
+        "room": 410,
+        "solved": {
+          "solving": 5,
+          "upsolving": 0
+        }
+      },
+      "advanced": false,
+      "contest": 66765008,
+      "created": "2026-05-09T02:28:00.400Z",
+      "global_rating_change": null,
+      "last_activity": "2026-04-12T08:21:24Z",
+      "medal": null,
+      "modified": "2026-05-09T02:28:00.400Z",
+      "n_first_ac": 0,
+      "n_solved": 5,
+      "n_total_solved": 5,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "37",
+      "place_as_int": 37,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 1,
+      "skip_in_stats": false,
+      "solving": 5642.0,
+      "total_solving": 5642.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 88314320
+  },
+  {
+    "fields": {
+      "account": 8021210,
+      "addition": {
+        "_languages": [
+          "C++23 (GCC 14-64, msys2)"
+        ],
+        "_no_update_n_contests": false,
+        "_skip_medal": false,
+        "_verdicts": [
+          "OK"
+        ],
+        "participant_type": [
+          "CONTESTANT"
+        ],
+        "problems": {
+          "A": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "result": 487.0,
+            "submission_id": 370764725,
+            "submission_time": 1775972736,
+            "time": "00:10",
+            "time_in_seconds": 636,
+            "url": "https://codeforces.com/contest/2216/submission/370764725",
+            "verdict": "OK"
+          },
+          "B": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "penalty_score": 4,
+            "result": 704.0,
+            "submission_id": 370771244,
+            "submission_time": 1775974307,
+            "time": "00:36",
+            "time_in_seconds": 2207,
+            "url": "https://codeforces.com/contest/2216/submission/370771244",
+            "verdict": "OK"
+          },
+          "C": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "result": 1466.0,
+            "submission_id": 370776702,
+            "submission_time": 1775975796,
+            "time": "01:01",
+            "time_in_seconds": 3696,
+            "url": "https://codeforces.com/contest/2216/submission/370776702",
+            "verdict": "OK"
+          },
+          "D": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "penalty_score": 2,
+            "result": 1520.0,
+            "submission_id": 370784395,
+            "submission_time": 1775978400,
+            "time": "01:45",
+            "time_in_seconds": 6300,
+            "upsolving": {
+              "external_solution": true,
+              "language": "C++23 (GCC 14-64, msys2)",
+              "partial": false,
+              "result": "+",
+              "submission_id": 370817678,
+              "submission_time": 1775995084,
+              "url": "https://codeforces.com/contest/2216/submission/370817678",
+              "verdict": "OK"
+            },
+            "url": "https://codeforces.com/contest/2216/submission/370784395",
+            "verdict": "OK"
+          },
+          "E": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "result": 1438.0,
+            "submission_id": 370795116,
+            "submission_time": 1775982891,
+            "time": "02:59",
+            "time_in_seconds": 10791,
+            "url": "https://codeforces.com/contest/2216/submission/370795116",
+            "verdict": "OK"
+          }
+        },
+        "room": 447,
+        "solved": {
+          "solving": 5,
+          "upsolving": 0
+        }
+      },
+      "advanced": false,
+      "contest": 66765008,
+      "created": "2026-05-09T02:28:00.421Z",
+      "global_rating_change": null,
+      "last_activity": "2026-04-12T08:34:51Z",
+      "medal": null,
+      "modified": "2026-05-09T02:28:00.421Z",
+      "n_first_ac": 0,
+      "n_solved": 5,
+      "n_total_solved": 5,
+      "n_upsolved": 0,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "38",
+      "place_as_int": 38,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 1,
+      "skip_in_stats": false,
+      "solving": 5615.0,
+      "total_solving": 5615.0,
+      "upsolving": 0.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 88314321
+  },
+  {
+    "fields": {
+      "account": 9602539,
+      "addition": {
+        "_languages": [
+          "Python 3"
+        ],
+        "_no_update_n_contests": false,
+        "_skip_medal": false,
+        "_verdicts": [
+          "OK"
+        ],
+        "participant_type": [
+          "CONTESTANT"
+        ],
+        "problems": {
+          "A": {
+            "external_solution": true,
+            "language": "Python 3",
+            "partial": false,
+            "result": 419.0,
+            "submission_id": 370776659,
+            "submission_time": 1775975781,
+            "time": "01:01",
+            "time_in_seconds": 3681,
+            "url": "https://codeforces.com/contest/2216/submission/370776659",
+            "verdict": "OK"
+          },
+          "B": {
+            "external_solution": true,
+            "language": "Python 3",
+            "partial": false,
+            "result": 782.0,
+            "submission_id": 370780660,
+            "submission_time": 1775977053,
+            "time": "01:22",
+            "time_in_seconds": 4953,
+            "url": "https://codeforces.com/contest/2216/submission/370780660",
+            "verdict": "OK"
+          },
+          "C": {
+            "external_solution": true,
+            "language": "Python 3",
+            "partial": false,
+            "result": 1270.0,
+            "submission_id": 370784133,
+            "submission_time": 1775978300,
+            "time": "01:43",
+            "time_in_seconds": 6200,
+            "url": "https://codeforces.com/contest/2216/submission/370784133",
+            "verdict": "OK"
+          },
+          "F": {
+            "external_solution": true,
+            "first_ac": true,
+            "language": "Python 3",
+            "partial": false,
+            "result": 2827.0,
+            "submission_id": 370785307,
+            "submission_time": 1775978745,
+            "time": "01:50",
+            "time_in_seconds": 6645,
+            "url": "https://codeforces.com/contest/2216/submission/370785307",
+            "verdict": "OK"
+          }
+        },
+        "room": 136,
+        "solved": {
+          "solving": 4,
+          "upsolving": 0
+        }
+      },
+      "advanced": false,
+      "contest": 66765008,
+      "created": "2026-05-09T02:28:00.469Z",
+      "global_rating_change": null,
+      "last_activity": "2026-04-12T07:25:45Z",
+      "medal": null,
+      "modified": "2026-05-09T02:28:00.469Z",
+      "n_first_ac": 1,
+      "n_solved": 4,
+      "n_total_solved": 4,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "40",
+      "place_as_int": 40,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 1,
+      "skip_in_stats": false,
+      "solving": 5298.0,
+      "total_solving": 5298.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 88314323
+  },
+  {
+    "fields": {
+      "account": 8390283,
+      "addition": {
+        "_languages": [
+          "C++23 (GCC 14-64, msys2)"
+        ],
+        "_no_update_n_contests": false,
+        "_skip_medal": false,
+        "_verdicts": [
+          "OK",
+          "WA"
+        ],
+        "participant_type": [
+          "CONTESTANT"
+        ],
+        "problems": {
+          "A": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "result": 494.0,
+            "submission_id": 370763880,
+            "submission_time": 1775972451,
+            "time": "00:05",
+            "time_in_seconds": 351,
+            "url": "https://codeforces.com/contest/2216/submission/370763880",
+            "verdict": "OK"
+          },
+          "B": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "penalty_score": 1,
+            "result": 900.0,
+            "submission_id": 370766762,
+            "submission_time": 1775973244,
+            "time": "00:19",
+            "time_in_seconds": 1144,
+            "url": "https://codeforces.com/contest/2216/submission/370766762",
+            "verdict": "OK"
+          },
+          "C": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "result": "-2",
+            "submission_id": 370790670,
+            "submission_time": 1775980949,
+            "test": 2,
+            "url": "https://codeforces.com/contest/2216/submission/370790670",
+            "verdict": "WA"
+          },
+          "D": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "result": 1764.0,
+            "submission_id": 370780441,
+            "submission_time": 1775976984,
+            "time": "01:21",
+            "time_in_seconds": 4884,
+            "url": "https://codeforces.com/contest/2216/submission/370780441",
+            "verdict": "OK"
+          },
+          "E": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "result": 1973.0,
+            "submission_id": 370784678,
+            "submission_time": 1775978495,
+            "time": "01:46",
+            "time_in_seconds": 6395,
+            "url": "https://codeforces.com/contest/2216/submission/370784678",
+            "verdict": "OK"
+          }
+        },
+        "room": 120,
+        "solved": {
+          "solving": 4,
+          "upsolving": 0
+        }
+      },
+      "advanced": false,
+      "contest": 66765008,
+      "created": "2026-05-09T02:28:00.527Z",
+      "global_rating_change": null,
+      "last_activity": "2026-04-12T07:21:35Z",
+      "medal": null,
+      "modified": "2026-05-09T02:28:00.527Z",
+      "n_first_ac": 0,
+      "n_solved": 4,
+      "n_total_solved": 4,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "42",
+      "place_as_int": 42,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 1,
+      "skip_in_stats": false,
+      "solving": 5131.0,
+      "total_solving": 5131.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 88314325
+  },
+  {
+    "fields": {
+      "account": 9794980,
+      "addition": {
+        "_languages": [
+          "C++23 (GCC 14-64, msys2)"
+        ],
+        "_no_update_n_contests": false,
+        "_skip_medal": false,
+        "_verdicts": [
+          "OK",
+          "WA"
+        ],
+        "participant_type": [
+          "CONTESTANT"
+        ],
+        "problems": {
+          "A": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "result": 494.0,
+            "submission_id": 370763847,
+            "submission_time": 1775972438,
+            "time": "00:05",
+            "time_in_seconds": 338,
+            "url": "https://codeforces.com/contest/2216/submission/370763847",
+            "verdict": "OK"
+          },
+          "B": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "result": "-4",
+            "submission_id": 370769365,
+            "submission_time": 1775973862,
+            "test": 2,
+            "upsolving": {
+              "external_solution": true,
+              "language": "C++23 (GCC 14-64, msys2)",
+              "partial": false,
+              "result": "+",
+              "submission_id": 370796368,
+              "submission_time": 1775983707,
+              "url": "https://codeforces.com/contest/2216/submission/370796368",
+              "verdict": "OK"
+            },
+            "url": "https://codeforces.com/contest/2216/submission/370769365",
+            "verdict": "WA"
+          },
+          "C": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "penalty_score": 2,
+            "result": 1310.0,
+            "submission_id": 370778923,
+            "submission_time": 1775976485,
+            "time": "01:13",
+            "time_in_seconds": 4385,
+            "url": "https://codeforces.com/contest/2216/submission/370778923",
+            "verdict": "OK"
+          },
+          "D": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "penalty_score": 1,
+            "result": 1528.0,
+            "submission_id": 370785542,
+            "submission_time": 1775978828,
+            "time": "01:52",
+            "time_in_seconds": 6728,
+            "url": "https://codeforces.com/contest/2216/submission/370785542",
+            "verdict": "OK"
+          },
+          "E": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "penalty_score": 1,
+            "result": 1498.0,
+            "submission_id": 370793007,
+            "submission_time": 1775981976,
+            "time": "02:44",
+            "time_in_seconds": 9876,
+            "url": "https://codeforces.com/contest/2216/submission/370793007",
+            "verdict": "OK"
+          }
+        },
+        "room": 444,
+        "solved": {
+          "solving": 4,
+          "upsolving": 1
+        }
+      },
+      "advanced": false,
+      "contest": 66765008,
+      "created": "2026-05-09T02:28:00.640Z",
+      "global_rating_change": null,
+      "last_activity": "2026-04-12T08:19:36Z",
+      "medal": null,
+      "modified": "2026-05-09T02:28:00.640Z",
+      "n_first_ac": 0,
+      "n_solved": 4,
+      "n_total_solved": 5,
+      "n_upsolved": 1,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "47",
+      "place_as_int": 47,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 1,
+      "skip_in_stats": false,
+      "solving": 4830.0,
+      "total_solving": 4831.0,
+      "upsolving": 1.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 88314330
+  },
+  {
+    "fields": {
+      "account": 7849450,
+      "addition": {
+        "_languages": [
+          "C++20 (GCC 13-64)"
+        ],
+        "_no_update_n_contests": false,
+        "_skip_medal": false,
+        "_verdicts": [
+          "OK"
+        ],
+        "participant_type": [
+          "CONTESTANT"
+        ],
+        "problems": {
+          "A": {
+            "external_solution": true,
+            "language": "C++20 (GCC 13-64)",
+            "partial": false,
+            "result": 487.0,
+            "submission_id": 370764675,
+            "submission_time": 1775972729,
+            "test": 1,
+            "time": "00:10",
+            "time_in_seconds": 629,
+            "url": "https://codeforces.com/contest/2216/submission/370764675",
+            "verdict": "OK"
+          },
+          "B": {
+            "external_solution": true,
+            "language": "C++20 (GCC 13-64)",
+            "partial": false,
+            "penalty_score": 1,
+            "result": 886.0,
+            "submission_id": 370768234,
+            "submission_time": 1775973591,
+            "time": "00:24",
+            "time_in_seconds": 1491,
+            "url": "https://codeforces.com/contest/2216/submission/370768234",
+            "verdict": "OK"
+          },
+          "C": {
+            "external_solution": true,
+            "language": "C++20 (GCC 13-64)",
+            "partial": false,
+            "result": 1550.0,
+            "submission_id": 370772851,
+            "submission_time": 1775974699,
+            "time": "00:43",
+            "time_in_seconds": 2599,
+            "url": "https://codeforces.com/contest/2216/submission/370772851",
+            "verdict": "OK"
+          },
+          "E": {
+            "external_solution": true,
+            "language": "C++20 (GCC 13-64)",
+            "partial": false,
+            "penalty_score": 3,
+            "result": 1654.0,
+            "submission_id": 370788187,
+            "submission_time": 1775979866,
+            "time": "02:09",
+            "time_in_seconds": 7766,
+            "url": "https://codeforces.com/contest/2216/submission/370788187",
+            "verdict": "OK"
+          }
+        },
+        "room": 433,
+        "solved": {
+          "solving": 4,
+          "upsolving": 0
+        }
+      },
+      "advanced": false,
+      "contest": 66765008,
+      "created": "2026-05-09T02:28:00.978Z",
+      "global_rating_change": null,
+      "last_activity": "2026-04-12T07:44:26Z",
+      "medal": null,
+      "modified": "2026-05-09T02:28:00.978Z",
+      "n_first_ac": 0,
+      "n_solved": 4,
+      "n_total_solved": 4,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "62",
+      "place_as_int": 62,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 1,
+      "skip_in_stats": false,
+      "solving": 4577.0,
+      "total_solving": 4577.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 88314345
+  },
+  {
+    "fields": {
+      "account": 10507502,
+      "addition": {
+        "_languages": [
+          "C++23 (GCC 14-64, msys2)"
+        ],
+        "_no_update_n_contests": false,
+        "_skip_medal": false,
+        "_verdicts": [
+          "OK"
+        ],
+        "participant_type": [
+          "CONTESTANT"
+        ],
+        "problems": {
+          "A": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "result": 487.0,
+            "submission_id": 370764678,
+            "submission_time": 1775972730,
+            "time": "00:10",
+            "time_in_seconds": 630,
+            "url": "https://codeforces.com/contest/2216/submission/370764678",
+            "verdict": "OK"
+          },
+          "B": {
+            "external_solution": true,
+            "first_ac": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "penalty_score": 1,
+            "result": 937.0,
+            "submission_id": 370763869,
+            "submission_time": 1775972445,
+            "time": "00:05",
+            "time_in_seconds": 345,
+            "url": "https://codeforces.com/contest/2216/submission/370763869",
+            "verdict": "OK"
+          },
+          "C": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "penalty_score": 1,
+            "result": 1504.0,
+            "submission_id": 370772732,
+            "submission_time": 1775974670,
+            "time": "00:42",
+            "time_in_seconds": 2570,
+            "url": "https://codeforces.com/contest/2216/submission/370772732",
+            "verdict": "OK"
+          },
+          "D": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "penalty_score": 3,
+            "result": 1542.0,
+            "submission_id": 370782548,
+            "submission_time": 1775977714,
+            "time": "01:33",
+            "time_in_seconds": 5614,
+            "url": "https://codeforces.com/contest/2216/submission/370782548",
+            "verdict": "OK"
+          }
+        },
+        "room": 404,
+        "solved": {
+          "solving": 4,
+          "upsolving": 0
+        }
+      },
+      "advanced": false,
+      "contest": 66765008,
+      "created": "2026-05-09T02:28:01.182Z",
+      "global_rating_change": null,
+      "last_activity": "2026-04-12T07:08:34Z",
+      "medal": null,
+      "modified": "2026-05-09T02:28:01.182Z",
+      "n_first_ac": 1,
+      "n_solved": 4,
+      "n_total_solved": 4,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "68",
+      "place_as_int": 68,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 1,
+      "skip_in_stats": false,
+      "solving": 4470.0,
+      "total_solving": 4470.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 88314351
+  },
+  {
+    "fields": {
+      "account": 8429219,
+      "addition": {
+        "_languages": [
+          "C++20 (GCC 13-64)"
+        ],
+        "_no_update_n_contests": false,
+        "_skip_medal": false,
+        "_verdicts": [
+          "OK",
+          "WA"
+        ],
+        "participant_type": [
+          "CONTESTANT"
+        ],
+        "problems": {
+          "A": {
+            "external_solution": true,
+            "language": "C++20 (GCC 13-64)",
+            "partial": false,
+            "result": 490.0,
+            "submission_id": 370764404,
+            "submission_time": 1775972631,
+            "time": "00:08",
+            "time_in_seconds": 531,
+            "url": "https://codeforces.com/contest/2216/submission/370764404",
+            "verdict": "OK"
+          },
+          "B": {
+            "external_solution": true,
+            "language": "C++20 (GCC 13-64)",
+            "partial": false,
+            "result": "-1",
+            "submission_id": 370779365,
+            "submission_time": 1775976624,
+            "test": 2,
+            "url": "https://codeforces.com/contest/2216/submission/370779365",
+            "verdict": "WA"
+          },
+          "C": {
+            "external_solution": true,
+            "language": "C++20 (GCC 13-64)",
+            "partial": false,
+            "result": 1428.0,
+            "submission_id": 370778216,
+            "submission_time": 1775976263,
+            "time": "01:09",
+            "time_in_seconds": 4163,
+            "url": "https://codeforces.com/contest/2216/submission/370778216",
+            "verdict": "OK"
+          },
+          "E": {
+            "external_solution": true,
+            "first_ac": true,
+            "language": "C++20 (GCC 13-64)",
+            "partial": false,
+            "result": 2420.0,
+            "submission_id": 370773303,
+            "submission_time": 1775974832,
+            "time": "00:45",
+            "time_in_seconds": 2732,
+            "url": "https://codeforces.com/contest/2216/submission/370773303",
+            "verdict": "OK"
+          }
+        },
+        "room": 229,
+        "solved": {
+          "solving": 3,
+          "upsolving": 0
+        }
+      },
+      "advanced": false,
+      "contest": 66765008,
+      "created": "2026-05-09T02:28:01.658Z",
+      "global_rating_change": null,
+      "last_activity": "2026-04-12T06:44:23Z",
+      "medal": null,
+      "modified": "2026-05-09T02:28:01.658Z",
+      "n_first_ac": 1,
+      "n_solved": 3,
+      "n_total_solved": 3,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "85",
+      "place_as_int": 85,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 1,
+      "skip_in_stats": false,
+      "solving": 4338.0,
+      "total_solving": 4338.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 88314365
+  },
+  {
+    "fields": {
+      "account": 5297479,
+      "addition": {
+        "_languages": [
+          "C++23 (GCC 14-64, msys2)"
+        ],
+        "_no_update_n_contests": false,
+        "_skip_medal": false,
+        "_verdicts": [
+          "OK"
+        ],
+        "participant_type": [
+          "CONTESTANT"
+        ],
+        "problems": {
+          "A": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "result": 495.0,
+            "submission_id": 370763677,
+            "submission_time": 1775972349,
+            "time": "00:04",
+            "time_in_seconds": 249,
+            "url": "https://codeforces.com/contest/2216/submission/370763677",
+            "verdict": "OK"
+          },
+          "B": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "penalty_score": 1,
+            "result": 908.0,
+            "submission_id": 370766098,
+            "submission_time": 1775973077,
+            "time": "00:16",
+            "time_in_seconds": 977,
+            "url": "https://codeforces.com/contest/2216/submission/370766098",
+            "verdict": "OK"
+          },
+          "C": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "result": 1540.0,
+            "submission_id": 370773398,
+            "submission_time": 1775974858,
+            "time": "00:45",
+            "time_in_seconds": 2758,
+            "url": "https://codeforces.com/contest/2216/submission/370773398",
+            "verdict": "OK"
+          },
+          "D": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "penalty_score": 5,
+            "result": 1310.0,
+            "submission_id": 370786006,
+            "submission_time": 1775979023,
+            "time": "01:55",
+            "time_in_seconds": 6923,
+            "url": "https://codeforces.com/contest/2216/submission/370786006",
+            "verdict": "OK"
+          },
+          "E": {
+            "upsolving": {
+              "external_solution": true,
+              "language": "C++23 (GCC 14-64, msys2)",
+              "partial": null,
+              "result": "-",
+              "submission_id": 370796401,
+              "submission_time": 1775983721,
+              "test": 3,
+              "url": "https://codeforces.com/contest/2216/submission/370796401",
+              "verdict": "WA"
+            }
+          }
+        },
+        "room": 265,
+        "solved": {
+          "solving": 4,
+          "upsolving": 0
+        }
+      },
+      "advanced": false,
+      "contest": 66765008,
+      "created": "2026-04-15T00:07:16.638Z",
+      "global_rating_change": null,
+      "last_activity": "2026-04-12T07:30:23Z",
+      "medal": null,
+      "modified": "2026-05-09T02:28:01.878Z",
+      "n_first_ac": 0,
+      "n_solved": 4,
+      "n_total_solved": 4,
+      "n_upsolved": 0,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "92",
+      "place_as_int": 92,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 1,
+      "skip_in_stats": false,
+      "solving": 4253.0,
+      "total_solving": 4253.0,
+      "upsolving": 0.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 87625002
+  },
+  {
+    "fields": {
+      "account": 5632020,
+      "addition": {
+        "_languages": [
+          "C++23 (GCC 14-64, msys2)"
+        ],
+        "_no_update_n_contests": false,
+        "_skip_medal": false,
+        "_verdicts": [
+          "OK",
+          "WA"
+        ],
+        "participant_type": [
+          "CONTESTANT"
+        ],
+        "problems": {
+          "A": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "penalty_score": 1,
+            "result": 397.0,
+            "submission_id": 370772063,
+            "submission_time": 1775974505,
+            "time": "00:40",
+            "time_in_seconds": 2405,
+            "url": "https://codeforces.com/contest/2216/submission/370772063",
+            "verdict": "OK"
+          },
+          "B": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "penalty_score": 1,
+            "result": 849.0,
+            "submission_id": 370771594,
+            "submission_time": 1775974386,
+            "time": "00:38",
+            "time_in_seconds": 2286,
+            "url": "https://codeforces.com/contest/2216/submission/370771594",
+            "verdict": "OK"
+          },
+          "C": {
+            "external_solution": true,
+            "first_ac": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "result": 1694.0,
+            "submission_id": 370765120,
+            "submission_time": 1775972833,
+            "time": "00:12",
+            "time_in_seconds": 733,
+            "url": "https://codeforces.com/contest/2216/submission/370765120",
+            "verdict": "OK"
+          },
+          "D": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "penalty_score": 11,
+            "result": 1010.0,
+            "submission_id": 370786012,
+            "submission_time": 1775979025,
+            "time": "01:55",
+            "time_in_seconds": 6925,
+            "url": "https://codeforces.com/contest/2216/submission/370786012",
+            "verdict": "OK"
+          },
+          "E": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": null,
+            "result": "-",
+            "submission_id": 370794122,
+            "submission_time": 1775982485,
+            "test": 1,
+            "upsolving": {
+              "external_solution": true,
+              "language": "C++23 (GCC 14-64, msys2)",
+              "partial": false,
+              "result": "+",
+              "submission_id": 370796792,
+              "submission_time": 1775983920,
+              "url": "https://codeforces.com/contest/2216/submission/370796792",
+              "verdict": "OK"
+            },
+            "url": "https://codeforces.com/contest/2216/submission/370794122",
+            "verdict": "WA"
+          }
+        },
+        "room": 48,
+        "solved": {
+          "solving": 4,
+          "upsolving": 1
+        }
+      },
+      "advanced": false,
+      "contest": 66765008,
+      "created": "2026-05-09T02:28:03.616Z",
+      "global_rating_change": null,
+      "last_activity": "2026-04-12T07:30:25Z",
+      "medal": null,
+      "modified": "2026-05-09T02:28:03.616Z",
+      "n_first_ac": 1,
+      "n_solved": 4,
+      "n_total_solved": 5,
+      "n_upsolved": 1,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "128",
+      "place_as_int": 128,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 1,
+      "skip_in_stats": false,
+      "solving": 3950.0,
+      "total_solving": 3951.0,
+      "upsolving": 1.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 88314406
+  },
+  {
+    "fields": {
+      "account": 8260879,
+      "addition": {
+        "_languages": [
+          "C++17 (GCC 7-32)"
+        ],
+        "_no_update_n_contests": false,
+        "_skip_medal": false,
+        "_verdicts": [
+          "TLE",
+          "OK"
+        ],
+        "participant_type": [
+          "CONTESTANT"
+        ],
+        "problems": {
+          "A": {
+            "external_solution": true,
+            "language": "C++17 (GCC 7-32)",
+            "partial": false,
+            "result": 458.0,
+            "submission_id": 370770098,
+            "submission_time": 1775974044,
+            "time": "00:32",
+            "time_in_seconds": 1944,
+            "url": "https://codeforces.com/contest/2216/submission/370770098",
+            "verdict": "OK"
+          },
+          "B": {
+            "external_solution": true,
+            "language": "C++17 (GCC 7-32)",
+            "partial": false,
+            "result": 843.0,
+            "submission_id": 370776315,
+            "submission_time": 1775975686,
+            "time": "00:59",
+            "time_in_seconds": 3586,
+            "url": "https://codeforces.com/contest/2216/submission/370776315",
+            "verdict": "OK"
+          },
+          "C": {
+            "external_solution": true,
+            "language": "C++17 (GCC 7-32)",
+            "partial": false,
+            "penalty_score": 1,
+            "result": 1005.0,
+            "submission_id": 370790958,
+            "submission_time": 1775981064,
+            "time": "02:29",
+            "time_in_seconds": 8964,
+            "url": "https://codeforces.com/contest/2216/submission/370790958",
+            "verdict": "OK"
+          },
+          "D": {
+            "external_solution": true,
+            "language": "C++17 (GCC 7-32)",
+            "partial": null,
+            "result": "-",
+            "submission_id": 370795094,
+            "submission_time": 1775982885,
+            "test": 1,
+            "upsolving": {
+              "external_solution": true,
+              "language": "C++17 (GCC 7-32)",
+              "partial": false,
+              "result": "+",
+              "submission_id": 370796668,
+              "submission_time": 1775983859,
+              "url": "https://codeforces.com/contest/2216/submission/370796668",
+              "verdict": "OK"
+            },
+            "url": "https://codeforces.com/contest/2216/submission/370795094",
+            "verdict": "TLE"
+          },
+          "E": {
+            "external_solution": true,
+            "language": "C++17 (GCC 7-32)",
+            "partial": false,
+            "penalty_score": 2,
+            "result": 1638.0,
+            "submission_id": 370789415,
+            "submission_time": 1775980394,
+            "time": "02:18",
+            "time_in_seconds": 8294,
+            "url": "https://codeforces.com/contest/2216/submission/370789415",
+            "verdict": "OK"
+          }
+        },
+        "room": 88,
+        "solved": {
+          "solving": 4,
+          "upsolving": 1
+        }
+      },
+      "advanced": false,
+      "contest": 66765008,
+      "created": "2026-05-09T02:28:03.671Z",
+      "global_rating_change": null,
+      "last_activity": "2026-04-12T08:04:24Z",
+      "medal": null,
+      "modified": "2026-05-09T02:28:03.671Z",
+      "n_first_ac": 0,
+      "n_solved": 4,
+      "n_total_solved": 5,
+      "n_upsolved": 1,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "130",
+      "place_as_int": 130,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 1,
+      "skip_in_stats": false,
+      "solving": 3944.0,
+      "total_solving": 3945.0,
+      "upsolving": 1.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 88314408
+  },
+  {
+    "fields": {
+      "account": 6125359,
+      "addition": {
+        "_languages": [
+          "C++23 (GCC 14-64, msys2)"
+        ],
+        "_no_update_n_contests": false,
+        "_skip_medal": false,
+        "_verdicts": [
+          "OK",
+          "WA"
+        ],
+        "participant_type": [
+          "CONTESTANT"
+        ],
+        "problems": {
+          "A": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "result": 492.0,
+            "submission_id": 370764057,
+            "submission_time": 1775972514,
+            "time": "00:06",
+            "time_in_seconds": 414,
+            "url": "https://codeforces.com/contest/2216/submission/370764057",
+            "verdict": "OK"
+          },
+          "B": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "penalty_score": 1,
+            "result": 902.0,
+            "submission_id": 370766569,
+            "submission_time": 1775973190,
+            "time": "00:18",
+            "time_in_seconds": 1090,
+            "url": "https://codeforces.com/contest/2216/submission/370766569",
+            "verdict": "OK"
+          },
+          "C": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "result": "-2",
+            "submission_id": 370794985,
+            "submission_time": 1775982847,
+            "test": 2,
+            "upsolving": {
+              "external_solution": true,
+              "language": "C++23 (GCC 14-64, msys2)",
+              "partial": null,
+              "result": "-",
+              "submission_id": 370802922,
+              "submission_time": 1775987134,
+              "test": 2,
+              "url": "https://codeforces.com/contest/2216/submission/370802922",
+              "verdict": "WA"
+            },
+            "url": "https://codeforces.com/contest/2216/submission/370794985",
+            "verdict": "WA"
+          },
+          "E": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "result": 1768.0,
+            "submission_id": 370788899,
+            "submission_time": 1775980184,
+            "time": "02:14",
+            "time_in_seconds": 8084,
+            "url": "https://codeforces.com/contest/2216/submission/370788899",
+            "verdict": "OK"
+          }
+        },
+        "room": 335,
+        "solved": {
+          "solving": 3,
+          "upsolving": 0
+        }
+      },
+      "advanced": false,
+      "contest": 66765008,
+      "created": "2026-04-14T00:05:30.643Z",
+      "global_rating_change": null,
+      "last_activity": "2026-04-12T07:49:44Z",
+      "medal": null,
+      "modified": "2026-05-09T02:28:05.856Z",
+      "n_first_ac": 0,
+      "n_solved": 3,
+      "n_total_solved": 3,
+      "n_upsolved": 0,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "190",
+      "place_as_int": 190,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 1,
+      "skip_in_stats": false,
+      "solving": 3162.0,
+      "total_solving": 3162.0,
+      "upsolving": 0.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 87604357
+  },
+  {
+    "fields": {
+      "account": 4111278,
+      "addition": {
+        "_languages": [
+          "C++20 (GCC 13-64)"
+        ],
+        "_no_update_n_contests": false,
+        "_skip_medal": false,
+        "_verdicts": [
+          "TLE",
+          "OK"
+        ],
+        "participant_type": [
+          "CONTESTANT"
+        ],
+        "problems": {
+          "A": {
+            "external_solution": true,
+            "language": "C++20 (GCC 13-64)",
+            "partial": false,
+            "result": 488.0,
+            "submission_id": 370764499,
+            "submission_time": 1775972666,
+            "time": "00:09",
+            "time_in_seconds": 566,
+            "url": "https://codeforces.com/contest/2216/submission/370764499",
+            "verdict": "OK"
+          },
+          "B": {
+            "external_solution": true,
+            "language": "C++20 (GCC 13-64)",
+            "partial": false,
+            "result": 950.0,
+            "submission_id": 370766787,
+            "submission_time": 1775973249,
+            "time": "00:19",
+            "time_in_seconds": 1149,
+            "url": "https://codeforces.com/contest/2216/submission/370766787",
+            "verdict": "OK"
+          },
+          "D": {
+            "external_solution": true,
+            "language": "C++20 (GCC 13-64)",
+            "partial": false,
+            "result": "-2",
+            "submission_id": 370794047,
+            "submission_time": 1775982457,
+            "test": 8,
+            "upsolving": {
+              "external_solution": true,
+              "language": "C++20 (GCC 13-64)",
+              "partial": false,
+              "result": "+",
+              "submission_id": 370799279,
+              "submission_time": 1775985194,
+              "test": 27,
+              "url": "https://codeforces.com/contest/2216/submission/370799279",
+              "verdict": "OK"
+            },
+            "url": "https://codeforces.com/contest/2216/submission/370794047",
+            "verdict": "TLE"
+          },
+          "E": {
+            "external_solution": true,
+            "language": "C++20 (GCC 13-64)",
+            "partial": false,
+            "penalty_score": 2,
+            "result": 1638.0,
+            "submission_id": 370789394,
+            "submission_time": 1775980386,
+            "time": "02:18",
+            "time_in_seconds": 8286,
+            "url": "https://codeforces.com/contest/2216/submission/370789394",
+            "verdict": "OK"
+          }
+        },
+        "room": 211,
+        "solved": {
+          "solving": 3,
+          "upsolving": 1
+        }
+      },
+      "advanced": false,
+      "contest": 66765008,
+      "created": "2026-05-09T02:28:05.905Z",
+      "global_rating_change": null,
+      "last_activity": "2026-04-12T07:53:06Z",
+      "medal": null,
+      "modified": "2026-05-09T02:28:05.905Z",
+      "n_first_ac": 0,
+      "n_solved": 3,
+      "n_total_solved": 4,
+      "n_upsolved": 1,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "192",
+      "place_as_int": 192,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 1,
+      "skip_in_stats": false,
+      "solving": 3076.0,
+      "total_solving": 3077.0,
+      "upsolving": 1.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 88314468
+  },
+  {
+    "fields": {
+      "account": 6423895,
+      "addition": {
+        "_languages": [
+          "C++20 (GCC 13-64)"
+        ],
+        "_no_update_n_contests": false,
+        "_skip_medal": false,
+        "_verdicts": [
+          "OK"
+        ],
+        "participant_type": [
+          "CONTESTANT"
+        ],
+        "problems": {
+          "A": {
+            "external_solution": true,
+            "language": "C++20 (GCC 13-64)",
+            "partial": false,
+            "result": 484.0,
+            "submission_id": 370765184,
+            "submission_time": 1775972847,
+            "time": "00:12",
+            "time_in_seconds": 747,
+            "upsolving": {
+              "external_solution": true,
+              "language": "C++23 (GCC 14-64, msys2)",
+              "partial": false,
+              "result": "+",
+              "submission_id": 371690909,
+              "submission_time": 1776538184,
+              "url": "https://codeforces.com/contest/2216/submission/371690909",
+              "verdict": "OK"
+            },
+            "url": "https://codeforces.com/contest/2216/submission/370765184",
+            "verdict": "OK"
+          },
+          "B": {
+            "external_solution": true,
+            "language": "C++20 (GCC 13-64)",
+            "partial": false,
+            "penalty_score": 1,
+            "result": 892.0,
+            "submission_id": 370767683,
+            "submission_time": 1775973469,
+            "time": "00:22",
+            "time_in_seconds": 1369,
+            "url": "https://codeforces.com/contest/2216/submission/370767683",
+            "verdict": "OK"
+          },
+          "C": {
+            "external_solution": true,
+            "language": "C++20 (GCC 13-64)",
+            "partial": false,
+            "penalty_score": 4,
+            "result": 1200.0,
+            "submission_id": 370779357,
+            "submission_time": 1775976622,
+            "time": "01:15",
+            "time_in_seconds": 4522,
+            "url": "https://codeforces.com/contest/2216/submission/370779357",
+            "verdict": "OK"
+          },
+          "D": {
+            "upsolving": {
+              "external_solution": true,
+              "language": "C++23 (GCC 14-64, msys2)",
+              "partial": false,
+              "result": "+",
+              "submission_id": 370928872,
+              "submission_time": 1776073784,
+              "url": "https://codeforces.com/contest/2216/submission/370928872",
+              "verdict": "OK"
+            }
+          },
+          "E": {
+            "upsolving": {
+              "external_solution": true,
+              "language": "C++20 (GCC 13-64)",
+              "partial": false,
+              "result": "+",
+              "submission_id": 370807000,
+              "submission_time": 1775989299,
+              "url": "https://codeforces.com/contest/2216/submission/370807000",
+              "verdict": "OK"
+            }
+          }
+        },
+        "room": 308,
+        "solved": {
+          "solving": 3,
+          "upsolving": 2
+        }
+      },
+      "advanced": false,
+      "contest": 66765008,
+      "created": "2026-05-09T02:28:10.286Z",
+      "global_rating_change": null,
+      "last_activity": "2026-04-12T06:50:22Z",
+      "medal": null,
+      "modified": "2026-05-09T02:28:10.286Z",
+      "n_first_ac": 0,
+      "n_solved": 3,
+      "n_total_solved": 5,
+      "n_upsolved": 2,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "352",
+      "place_as_int": 352,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 1,
+      "skip_in_stats": false,
+      "solving": 2576.0,
+      "total_solving": 2578.0,
+      "upsolving": 2.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 88314623
+  },
+  {
+    "fields": {
+      "account": 9791998,
+      "addition": {
+        "_languages": [
+          "C++23 (GCC 14-64, msys2)"
+        ],
+        "_no_update_n_contests": false,
+        "_skip_medal": false,
+        "_verdicts": [
+          "OK"
+        ],
+        "participant_type": [
+          "CONTESTANT"
+        ],
+        "problems": {
+          "A": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "result": 488.0,
+            "submission_id": 370764446,
+            "submission_time": 1775972647,
+            "time": "00:09",
+            "time_in_seconds": 547,
+            "url": "https://codeforces.com/contest/2216/submission/370764446",
+            "verdict": "OK"
+          },
+          "B": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "penalty_score": 6,
+            "result": 476.0,
+            "submission_id": 370780978,
+            "submission_time": 1775977171,
+            "time": "01:24",
+            "time_in_seconds": 5071,
+            "url": "https://codeforces.com/contest/2216/submission/370780978",
+            "verdict": "OK"
+          },
+          "C": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "result": 1508.0,
+            "submission_id": 370774791,
+            "submission_time": 1775975238,
+            "time": "00:52",
+            "time_in_seconds": 3138,
+            "url": "https://codeforces.com/contest/2216/submission/370774791",
+            "verdict": "OK"
+          },
+          "D": {
+            "upsolving": {
+              "binary": true,
+              "external_solution": true,
+              "language": "C++23 (GCC 14-64, msys2)",
+              "partial": false,
+              "result": "+",
+              "submission_id": 379512817,
+              "submission_time": 1781882724,
+              "url": "https://codeforces.com/contest/2216/submission/379512817",
+              "verdict": "OK"
+            }
+          }
+        },
+        "room": 81,
+        "solved": {
+          "solving": 3,
+          "upsolving": 0
+        }
+      },
+      "advanced": false,
+      "contest": 66765008,
+      "created": "2026-05-09T02:28:11.663Z",
+      "global_rating_change": null,
+      "last_activity": "2026-04-12T06:59:31Z",
+      "medal": null,
+      "modified": "2026-06-22T00:00:33.134Z",
+      "n_first_ac": 0,
+      "n_solved": 3,
+      "n_total_solved": 3,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "407",
+      "place_as_int": 407,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 1,
+      "skip_in_stats": false,
+      "solving": 2472.0,
+      "total_solving": 2472.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 88314676
+  },
+  {
+    "fields": {
+      "account": 9809295,
+      "addition": {
+        "_languages": [
+          "C++23 (GCC 14-64, msys2)"
+        ],
+        "_no_update_n_contests": false,
+        "_skip_medal": false,
+        "_verdicts": [
+          "OK"
+        ],
+        "participant_type": [
+          "CONTESTANT"
+        ],
+        "problems": {
+          "A": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "result": 484.0,
+            "submission_id": 370765238,
+            "submission_time": 1775972858,
+            "time": "00:12",
+            "time_in_seconds": 758,
+            "upsolving": {
+              "external_solution": true,
+              "language": "C++23 (GCC 14-64, msys2)",
+              "partial": null,
+              "result": "-",
+              "submission_id": 371464644,
+              "submission_time": 1776409889,
+              "test": 1,
+              "url": "https://codeforces.com/contest/2216/submission/371464644",
+              "verdict": "CE"
+            },
+            "url": "https://codeforces.com/contest/2216/submission/370765238",
+            "verdict": "OK"
+          },
+          "B": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "penalty_score": 3,
+            "result": 680.0,
+            "submission_id": 370777244,
+            "submission_time": 1775975965,
+            "time": "01:04",
+            "time_in_seconds": 3865,
+            "url": "https://codeforces.com/contest/2216/submission/370777244",
+            "verdict": "OK"
+          },
+          "C": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "penalty_score": 1,
+            "result": 1108.0,
+            "submission_id": 370787902,
+            "submission_time": 1775979745,
+            "time": "02:07",
+            "time_in_seconds": 7645,
+            "url": "https://codeforces.com/contest/2216/submission/370787902",
+            "verdict": "OK"
+          }
+        },
+        "room": 26,
+        "solved": {
+          "solving": 3,
+          "upsolving": 0
+        }
+      },
+      "advanced": false,
+      "contest": 66765008,
+      "created": "2026-04-18T00:05:22.254Z",
+      "global_rating_change": null,
+      "last_activity": "2026-04-12T07:42:25Z",
+      "medal": null,
+      "modified": "2026-05-09T02:28:14.364Z",
+      "n_first_ac": 0,
+      "n_solved": 3,
+      "n_total_solved": 3,
+      "n_upsolved": 0,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "510",
+      "place_as_int": 510,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 1,
+      "skip_in_stats": false,
+      "solving": 2272.0,
+      "total_solving": 2272.0,
+      "upsolving": 0.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 87706998
+  },
+  {
+    "fields": {
+      "account": 9503060,
+      "addition": {
+        "_languages": [
+          "C++20 (GCC 13-64)"
+        ],
+        "_no_update_n_contests": false,
+        "_skip_medal": false,
+        "_verdicts": [
+          "OK",
+          "WA"
+        ],
+        "participant_type": [
+          "CONTESTANT"
+        ],
+        "problems": {
+          "A": {
+            "external_solution": true,
+            "language": "C++20 (GCC 13-64)",
+            "partial": false,
+            "result": 488.0,
+            "submission_id": 370764456,
+            "submission_time": 1775972650,
+            "time": "00:09",
+            "time_in_seconds": 550,
+            "url": "https://codeforces.com/contest/2216/submission/370764456",
+            "verdict": "OK"
+          },
+          "B": {
+            "external_solution": true,
+            "language": "C++20 (GCC 13-64)",
+            "partial": false,
+            "result": "-3",
+            "submission_id": 370785422,
+            "submission_time": 1775978782,
+            "test": 2,
+            "upsolving": {
+              "binary": true,
+              "external_solution": true,
+              "language": "C++20 (GCC 13-64)",
+              "partial": false,
+              "result": "+",
+              "submission_id": 374195464,
+              "submission_time": 1778508312,
+              "url": "https://codeforces.com/contest/2216/submission/374195464",
+              "verdict": "OK"
+            },
+            "url": "https://codeforces.com/contest/2216/submission/370785422",
+            "verdict": "WA"
+          },
+          "D": {
+            "external_solution": true,
+            "language": "C++20 (GCC 13-64)",
+            "partial": false,
+            "result": 1638.0,
+            "submission_id": 370783961,
+            "submission_time": 1775978237,
+            "time": "01:42",
+            "time_in_seconds": 6137,
+            "url": "https://codeforces.com/contest/2216/submission/370783961",
+            "verdict": "OK"
+          }
+        },
+        "room": 265,
+        "solved": {
+          "solving": 2,
+          "upsolving": 0
+        }
+      },
+      "advanced": false,
+      "contest": 66765008,
+      "created": "2026-05-09T02:28:15.379Z",
+      "global_rating_change": null,
+      "last_activity": "2026-04-12T07:17:17Z",
+      "medal": null,
+      "modified": "2026-05-13T00:05:01.995Z",
+      "n_first_ac": 0,
+      "n_solved": 2,
+      "n_total_solved": 2,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "553",
+      "place_as_int": 553,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 1,
+      "skip_in_stats": false,
+      "solving": 2126.0,
+      "total_solving": 2126.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 88314816
+  },
+  {
+    "fields": {
+      "account": 10810021,
+      "addition": {
+        "_languages": [
+          "C++20 (GCC 13-64)"
+        ],
+        "_no_update_n_contests": false,
+        "_skip_medal": false,
+        "_verdicts": [
+          "OK"
+        ],
+        "participant_type": [
+          "CONTESTANT"
+        ],
+        "problems": {
+          "D": {
+            "external_solution": true,
+            "first_ac": true,
+            "language": "C++20 (GCC 13-64)",
+            "partial": false,
+            "penalty_score": 1,
+            "result": 2050.0,
+            "submission_id": 370768410,
+            "submission_time": 1775973629,
+            "time": "00:25",
+            "time_in_seconds": 1529,
+            "url": "https://codeforces.com/contest/2216/submission/370768410",
+            "verdict": "OK"
+          }
+        },
+        "room": 108,
+        "solved": {
+          "solving": 1,
+          "upsolving": 0
+        }
+      },
+      "advanced": false,
+      "contest": 66765008,
+      "created": "2026-05-09T02:28:15.834Z",
+      "global_rating_change": null,
+      "last_activity": "2026-04-12T06:00:29Z",
+      "medal": null,
+      "modified": "2026-05-09T02:28:15.834Z",
+      "n_first_ac": 1,
+      "n_solved": 1,
+      "n_total_solved": 1,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "575",
+      "place_as_int": 575,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 1,
+      "skip_in_stats": false,
+      "solving": 2050.0,
+      "total_solving": 2050.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 88314837
+  },
+  {
+    "fields": {
+      "account": 9969906,
+      "addition": {
+        "_languages": [
+          "C++23 (GCC 14-64, msys2)"
+        ],
+        "_no_update_n_contests": false,
+        "_skip_medal": false,
+        "_verdicts": [
+          "OK"
+        ],
+        "participant_type": [
+          "CONTESTANT"
+        ],
+        "problems": {
+          "A": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "result": 478.0,
+            "submission_id": 370766325,
+            "submission_time": 1775973133,
+            "time": "00:17",
+            "time_in_seconds": 1033,
+            "url": "https://codeforces.com/contest/2216/submission/370766325",
+            "verdict": "OK"
+          },
+          "B": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "penalty_score": 1,
+            "result": 558.0,
+            "submission_id": 370790720,
+            "submission_time": 1775980970,
+            "time": "02:27",
+            "time_in_seconds": 8870,
+            "upsolving": {
+              "external_solution": true,
+              "language": "PyPy 3",
+              "partial": false,
+              "result": "+",
+              "submission_id": 371968614,
+              "submission_time": 1776773005,
+              "test": 1,
+              "url": "https://codeforces.com/contest/2216/submission/371968614",
+              "verdict": "OK"
+            },
+            "url": "https://codeforces.com/contest/2216/submission/370790720",
+            "verdict": "OK"
+          },
+          "C": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "penalty_score": 3,
+            "result": 980.0,
+            "submission_id": 370788729,
+            "submission_time": 1775980117,
+            "time": "02:13",
+            "time_in_seconds": 8017,
+            "url": "https://codeforces.com/contest/2216/submission/370788729",
+            "verdict": "OK"
+          }
+        },
+        "room": 124,
+        "solved": {
+          "solving": 3,
+          "upsolving": 0
+        }
+      },
+      "advanced": false,
+      "contest": 66765008,
+      "created": "2026-05-09T02:28:15.957Z",
+      "global_rating_change": null,
+      "last_activity": "2026-04-12T08:02:50Z",
+      "medal": null,
+      "modified": "2026-05-09T02:28:15.957Z",
+      "n_first_ac": 0,
+      "n_solved": 3,
+      "n_total_solved": 3,
+      "n_upsolved": 0,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "580",
+      "place_as_int": 580,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 1,
+      "skip_in_stats": false,
+      "solving": 2016.0,
+      "total_solving": 2016.0,
+      "upsolving": 0.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 88314842
+  },
+  {
+    "fields": {
+      "account": 5786478,
+      "addition": {
+        "_languages": [
+          "C++17 (GCC 7-32)"
+        ],
+        "_no_update_n_contests": false,
+        "_skip_medal": false,
+        "_verdicts": [
+          "OK",
+          "WA"
+        ],
+        "participant_type": [
+          "CONTESTANT"
+        ],
+        "problems": {
+          "A": {
+            "external_solution": true,
+            "language": "C++17 (GCC 7-32)",
+            "partial": false,
+            "result": 480.0,
+            "submission_id": 370765976,
+            "submission_time": 1775973048,
+            "time": "00:15",
+            "time_in_seconds": 948,
+            "url": "https://codeforces.com/contest/2216/submission/370765976",
+            "verdict": "OK"
+          },
+          "B": {
+            "external_solution": true,
+            "language": "C++17 (GCC 7-32)",
+            "partial": false,
+            "result": "-5",
+            "submission_id": 370785405,
+            "submission_time": 1775978778,
+            "test": 2,
+            "upsolving": {
+              "external_solution": true,
+              "language": "C++17 (GCC 7-32)",
+              "partial": false,
+              "result": "+",
+              "submission_id": 370948378,
+              "submission_time": 1776085158,
+              "url": "https://codeforces.com/contest/2216/submission/370948378",
+              "verdict": "OK"
+            },
+            "url": "https://codeforces.com/contest/2216/submission/370785405",
+            "verdict": "WA"
+          },
+          "C": {
+            "external_solution": true,
+            "language": "C++17 (GCC 7-32)",
+            "partial": false,
+            "result": 1106.0,
+            "submission_id": 370789399,
+            "submission_time": 1775980389,
+            "time": "02:18",
+            "time_in_seconds": 8289,
+            "upsolving": {
+              "binary": false,
+              "external_solution": true,
+              "language": "C++17 (GCC 7-32)",
+              "partial": null,
+              "result": "-",
+              "submission_id": 374511183,
+              "submission_time": 1778766493,
+              "test": 1,
+              "url": "https://codeforces.com/contest/2216/submission/374511183",
+              "verdict": "WA"
+            },
+            "url": "https://codeforces.com/contest/2216/submission/370789399",
+            "verdict": "OK"
+          },
+          "D": {
+            "upsolving": {
+              "binary": true,
+              "external_solution": true,
+              "language": "C++17 (GCC 7-32)",
+              "partial": false,
+              "result": "+",
+              "submission_id": 382659583,
+              "submission_time": 1784044859,
+              "url": "https://codeforces.com/contest/2216/submission/382659583",
+              "verdict": "OK"
+            }
+          }
+        },
+        "room": 395,
+        "solved": {
+          "solving": 2,
+          "upsolving": 1
+        }
+      },
+      "advanced": false,
+      "contest": 66765008,
+      "created": "2026-04-20T00:13:46.605Z",
+      "global_rating_change": null,
+      "last_activity": "2026-04-12T07:53:09Z",
+      "medal": null,
+      "modified": "2026-07-21T00:02:12.732Z",
+      "n_first_ac": 0,
+      "n_solved": 2,
+      "n_total_solved": 3,
+      "n_upsolved": 1,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "645",
+      "place_as_int": 645,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 1,
+      "skip_in_stats": false,
+      "solving": 1586.0,
+      "total_solving": 1587.0,
+      "upsolving": 1.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 87795482
+  },
+  {
+    "fields": {
+      "account": 7744020,
+      "addition": {
+        "_languages": [
+          "Java 21"
+        ],
+        "_no_update_n_contests": false,
+        "_skip_medal": false,
+        "_verdicts": [
+          "OK",
+          "WA"
+        ],
+        "participant_type": [
+          "CONTESTANT"
+        ],
+        "problems": {
+          "A": {
+            "external_solution": true,
+            "first_ac": true,
+            "language": "Java 21",
+            "partial": false,
+            "result": 499.0,
+            "submission_id": 370763482,
+            "submission_time": 1775972204,
+            "time": "00:01",
+            "time_in_seconds": 104,
+            "url": "https://codeforces.com/contest/2216/submission/370763482",
+            "verdict": "OK"
+          },
+          "B": {
+            "external_solution": true,
+            "language": "Java 21",
+            "partial": false,
+            "result": "-1",
+            "submission_id": 370768873,
+            "submission_time": 1775973744,
+            "test": 1,
+            "url": "https://codeforces.com/contest/2216/submission/370768873",
+            "verdict": "WA"
+          },
+          "C": {
+            "external_solution": true,
+            "language": "Java 21",
+            "partial": null,
+            "result": "-",
+            "submission_id": 370769745,
+            "submission_time": 1775973961,
+            "test": 1,
+            "url": "https://codeforces.com/contest/2216/submission/370769745",
+            "verdict": "WA"
+          }
+        },
+        "room": 344,
+        "solved": {
+          "solving": 1,
+          "upsolving": 0
+        }
+      },
+      "advanced": false,
+      "contest": 66765008,
+      "created": "2026-05-09T02:28:39.950Z",
+      "global_rating_change": null,
+      "last_activity": "2026-04-12T05:36:44Z",
+      "medal": null,
+      "modified": "2026-05-09T02:28:39.950Z",
+      "n_first_ac": 1,
+      "n_solved": 1,
+      "n_total_solved": 1,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "1577",
+      "place_as_int": 1577,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 1,
+      "skip_in_stats": false,
+      "solving": 499.0,
+      "total_solving": 499.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 88315818
+  },
+  {
+    "fields": {
+      "account": 9792116,
+      "addition": {
+        "_languages": [
+          "C++23 (GCC 14-64, msys2)"
+        ],
+        "_no_update_n_contests": false,
+        "_skip_medal": false,
+        "_verdicts": [
+          "OK",
+          "WA"
+        ],
+        "participant_type": [
+          "CONTESTANT"
+        ],
+        "problems": {
+          "A": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "result": 402.0,
+            "submission_id": 370779116,
+            "submission_time": 1775976551,
+            "time": "01:14",
+            "time_in_seconds": 4451,
+            "url": "https://codeforces.com/contest/2216/submission/370779116",
+            "verdict": "OK"
+          },
+          "B": {
+            "external_solution": true,
+            "language": "C++23 (GCC 14-64, msys2)",
+            "partial": false,
+            "result": "-1",
+            "submission_id": 370784739,
+            "submission_time": 1775978522,
+            "test": 2,
+            "upsolving": {
+              "external_solution": true,
+              "language": "C++23 (GCC 14-64, msys2)",
+              "partial": false,
+              "result": "+",
+              "submission_id": 373318959,
+              "submission_time": 1777719859,
+              "url": "https://codeforces.com/contest/2216/submission/373318959",
+              "verdict": "OK"
+            },
+            "url": "https://codeforces.com/contest/2216/submission/370784739",
+            "verdict": "WA"
+          },
+          "E": {
+            "upsolving": {
+              "binary": true,
+              "external_solution": true,
+              "language": "C++23 (GCC 14-64, msys2)",
+              "partial": false,
+              "result": "+",
+              "submission_id": 376367211,
+              "submission_time": 1779948943,
+              "url": "https://codeforces.com/contest/2216/submission/376367211",
+              "verdict": "OK"
+            }
+          }
+        },
+        "room": 204,
+        "solved": {
+          "solving": 1,
+          "upsolving": 1
+        }
+      },
+      "advanced": false,
+      "contest": 66765008,
+      "created": "2026-05-05T00:04:09.251Z",
+      "global_rating_change": null,
+      "last_activity": "2026-04-12T06:49:11Z",
+      "medal": null,
+      "modified": "2026-06-01T00:15:31.241Z",
+      "n_first_ac": 0,
+      "n_solved": 1,
+      "n_total_solved": 2,
+      "n_upsolved": 1,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "2393",
+      "place_as_int": 2393,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 1,
+      "skip_in_stats": false,
+      "solving": 402.0,
+      "total_solving": 403.0,
+      "upsolving": 1.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 88233480
+  },
+  {
+    "fields": {
+      "account": 10253824,
+      "addition": {
+        "_languages": [
+          "C++17 (GCC 7-32)"
+        ],
+        "_no_update_n_contests": false,
+        "_skip_medal": false,
+        "_verdicts": [
+          "WA"
+        ],
+        "participant_type": [
+          "CONTESTANT"
+        ],
+        "problems": {
+          "A": {
+            "external_solution": true,
+            "language": "C++17 (GCC 7-32)",
+            "partial": null,
+            "result": "-",
+            "submission_id": 370768303,
+            "submission_time": 1775973603,
+            "test": 1,
+            "upsolving": {
+              "binary": true,
+              "external_solution": true,
+              "language": "C++23 (GCC 14-64, msys2)",
+              "partial": false,
+              "result": "+",
+              "submission_id": 380277571,
+              "submission_time": 1782541100,
+              "url": "https://codeforces.com/contest/2216/submission/380277571",
+              "verdict": "OK"
+            },
+            "url": "https://codeforces.com/contest/2216/submission/370768303",
+            "verdict": "WA"
+          }
+        },
+        "room": 39
+      },
+      "advanced": false,
+      "contest": 66765008,
+      "created": "2026-05-09T02:29:13.940Z",
+      "global_rating_change": null,
+      "last_activity": "2026-04-12T05:35:00Z",
+      "medal": null,
+      "modified": "2026-06-28T17:43:00.417Z",
+      "n_first_ac": 0,
+      "n_solved": 0,
+      "n_total_solved": 0,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "2651",
+      "place_as_int": 2651,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 1,
+      "skip_in_stats": false,
+      "solving": 0.0,
+      "total_solving": 0.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 88317190
+  },
+  {
+    "fields": {
+      "account": 6101922,
+      "addition": {
+        "_no_update_n_contests": true,
+        "name": "Alexey Shmelev",
+        "participant_type": [
+          "PRACTICE"
+        ],
+        "problems": {
+          "A": {
+            "upsolving": {
+              "binary": true,
+              "external_solution": true,
+              "language": "C++23 (GCC 14-64, msys2)",
+              "partial": false,
+              "result": "+",
+              "submission_id": 370808572,
+              "submission_time": 1775990171,
+              "url": "https://codeforces.com/contest/2216/submission/370808572",
+              "verdict": "OK"
+            }
+          },
+          "B": {
+            "upsolving": {
+              "binary": true,
+              "external_solution": true,
+              "language": "C++23 (GCC 14-64, msys2)",
+              "partial": false,
+              "result": "+",
+              "submission_id": 370809931,
+              "submission_time": 1775990890,
+              "url": "https://codeforces.com/contest/2216/submission/370809931",
+              "verdict": "OK"
+            }
+          },
+          "C": {
+            "upsolving": {
+              "binary": true,
+              "external_solution": true,
+              "language": "C++23 (GCC 14-64, msys2)",
+              "partial": false,
+              "result": "+",
+              "submission_id": 370827611,
+              "submission_time": 1776000172,
+              "url": "https://codeforces.com/contest/2216/submission/370827611",
+              "verdict": "OK"
+            }
+          },
+          "D": {
+            "upsolving": {
+              "binary": true,
+              "external_solution": true,
+              "language": "C++23 (GCC 14-64, msys2)",
+              "partial": false,
+              "result": "+",
+              "submission_id": 370920275,
+              "submission_time": 1776068232,
+              "url": "https://codeforces.com/contest/2216/submission/370920275",
+              "verdict": "OK"
+            }
+          }
+        }
+      },
+      "advanced": false,
+      "contest": 66765008,
+      "created": "2026-04-13T00:08:07.222Z",
+      "global_rating_change": null,
+      "last_activity": null,
+      "medal": null,
+      "modified": "2026-04-14T00:04:16.695Z",
+      "n_first_ac": 0,
+      "n_solved": 0,
+      "n_total_solved": 0,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": null,
+      "place_as_int": null,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 1,
+      "skip_in_stats": true,
+      "solving": 0.0,
+      "total_solving": 0.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 87585057
+  },
+  {
+    "fields": {
+      "account": 7536838,
+      "addition": {
+        "_no_update_n_contests": true,
+        "name": "StonksCF-verify rjp1SXGAX8dBHxhVG7YP",
+        "participant_type": [
+          "PRACTICE"
+        ],
+        "problems": {
+          "F": {
+            "upsolving": {
+              "binary": false,
+              "external_solution": true,
+              "language": "C++23 (GCC 14-64, msys2)",
+              "partial": null,
+              "result": "-",
+              "submission_id": 371761845,
+              "submission_time": 1776599964,
+              "test": 1,
+              "url": "https://codeforces.com/contest/2216/submission/371761845",
+              "verdict": "CE"
+            }
+          }
+        }
+      },
+      "advanced": false,
+      "contest": 66765008,
+      "created": "2026-05-04T00:06:05.106Z",
+      "global_rating_change": null,
+      "last_activity": null,
+      "medal": null,
+      "modified": "2026-05-04T00:06:05.111Z",
+      "n_first_ac": 0,
+      "n_solved": 0,
+      "n_total_solved": 0,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": null,
+      "place_as_int": null,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 1,
+      "skip_in_stats": true,
+      "solving": 0.0,
+      "total_solving": 0.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 88213287
+  }
+]

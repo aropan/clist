@@ -1,0 +1,712 @@
+[
+    {
+        "end_time": "2025-07-31T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 91718,
+        "rid": 74,
+        "start_time": "2025-06-30T23:59:09.313Z",
+        "timezone": "UTC",
+        "title": "Predict the Introverts from the Extroverts [beginner, tabular, accuracy score]",
+        "url": "https://www.kaggle.com/competitions/playground-series-s5e7"
+    },
+    {
+        "end_time": "2025-08-06T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 105267,
+        "rid": 74,
+        "start_time": "2025-06-26T16:17:36.757Z",
+        "timezone": "UTC",
+        "title": "Google - The Gemma 3n Impact Challenge [tabular, text]",
+        "url": "https://www.kaggle.com/competitions/google-gemma-3n-hackathon"
+    },
+    {
+        "end_time": "2025-08-26T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 106949,
+        "rid": 74,
+        "start_time": "2025-08-05T16:54:59.713Z",
+        "timezone": "UTC",
+        "title": "Red‑Teaming Challenge - OpenAI gpt-oss-20b [nlp, adversarial learning]",
+        "url": "https://www.kaggle.com/competitions/openai-gpt-oss-20b-red-teaming"
+    },
+    {
+        "end_time": "2025-08-31T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 91719,
+        "rid": 74,
+        "start_time": "2025-08-01T00:00:00Z",
+        "timezone": "UTC",
+        "title": "Binary Classification with a Bank Dataset [beginner, tabular, roc auc score]",
+        "url": "https://www.kaggle.com/competitions/playground-series-s5e8"
+    },
+    {
+        "end_time": "2025-09-15T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 74608,
+        "rid": 74,
+        "start_time": "2025-06-16T18:24:41.910Z",
+        "timezone": "UTC",
+        "title": "NeurIPS - Open Polymer Prediction 2025 [chemistry, science and technology, custom metric]",
+        "url": "https://www.kaggle.com/competitions/neurips-open-polymer-prediction-2025"
+    },
+    {
+        "end_time": "2025-09-22T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 110281,
+        "rid": 74,
+        "start_time": "2025-08-12T16:26:04.707Z",
+        "timezone": "UTC",
+        "title": "BigQuery AI - Building the Future of Data [tabular, text, bigquery, multimodal]",
+        "url": "https://www.kaggle.com/competitions/bigquery-ai-hackathon"
+    },
+    {
+        "end_time": "2025-09-24T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 101849,
+        "rid": 74,
+        "start_time": "2025-06-26T19:53:40.570Z",
+        "timezone": "UTC",
+        "title": "NeurIPS - Ariel Data Challenge 2025 [astronomy, intermediate, regression, multimodal, custom metric]",
+        "url": "https://www.kaggle.com/competitions/ariel-data-challenge-2025"
+    },
+    {
+        "end_time": "2025-09-30T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 91720,
+        "rid": 74,
+        "start_time": "2025-09-01T00:03:32.277Z",
+        "timezone": "UTC",
+        "title": "Predicting the Beats-per-Minute of Songs [beginner, tabular, mean squared error]",
+        "url": "https://www.kaggle.com/competitions/playground-series-s5e9"
+    },
+    {
+        "end_time": "2025-10-14T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 99552,
+        "rid": 74,
+        "start_time": "2025-07-28T20:36:04.027Z",
+        "timezone": "UTC",
+        "title": "RSNA Intracranial Aneurysm Detection [medicine, multilabel classification, image classification, custom metric]",
+        "url": "https://www.kaggle.com/competitions/rsna-intracranial-aneurysm-detection"
+    },
+    {
+        "end_time": "2025-10-15T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 104383,
+        "rid": 74,
+        "start_time": "2025-07-10T19:01:35.920Z",
+        "timezone": "UTC",
+        "title": "MAP - Charting Student Math Misunderstandings [education, nlp, primary and secondary schools, map@{k}]",
+        "url": "https://www.kaggle.com/competitions/map-charting-student-math-misunderstandings"
+    },
+    {
+        "end_time": "2025-10-23T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 94635,
+        "rid": 74,
+        "start_time": "2025-07-23T17:37:04.667Z",
+        "timezone": "UTC",
+        "title": "Jigsaw - Agile Community Rules Classification [classification, text, social networks, text classification, english, custom metric]",
+        "url": "https://www.kaggle.com/competitions/jigsaw-agile-community-rules"
+    },
+    {
+        "end_time": "2025-10-30T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 95282,
+        "rid": 74,
+        "start_time": "2025-07-31T23:34:31.590Z",
+        "timezone": "UTC",
+        "title": "NeurIPS 2025 - Google Code Golf Championship [optimization, custom metric]",
+        "url": "https://www.kaggle.com/competitions/google-code-golf-2025"
+    },
+    {
+        "end_time": "2025-10-31T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 91721,
+        "rid": 74,
+        "start_time": "2025-10-01T00:00:05.393Z",
+        "timezone": "UTC",
+        "title": "Predicting Road Accident Risk [beginner, tabular, mean squared error]",
+        "url": "https://www.kaggle.com/competitions/playground-series-s5e10"
+    },
+    {
+        "end_time": "2025-11-30T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 91722,
+        "rid": 74,
+        "start_time": "2025-11-01T00:00:12.330Z",
+        "timezone": "UTC",
+        "title": "Predicting Loan Payback [beginner, tabular, roc auc score]",
+        "url": "https://www.kaggle.com/competitions/playground-series-s5e11"
+    },
+    {
+        "end_time": "2025-12-12T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 120570,
+        "rid": 74,
+        "start_time": "2025-12-05T17:00:00Z",
+        "timezone": "UTC",
+        "title": "Google DeepMind - Vibe Code with Gemini 3 Pro in AI Studio  [artificial intelligence, beginner, intermediate, advanced, image generator]",
+        "url": "https://www.kaggle.com/competitions/gemini-3"
+    },
+    {
+        "end_time": "2025-12-15T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 59156,
+        "rid": 74,
+        "start_time": "2025-09-18T17:55:31.300Z",
+        "timezone": "UTC",
+        "title": "MABe Challenge - Social Action Recognition in Mice [biology, time series analysis, classification, deep learning, transfer learning, custom metric]",
+        "url": "https://www.kaggle.com/competitions/MABe-mouse-behavior-detection"
+    },
+    {
+        "end_time": "2025-12-17T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 114250,
+        "rid": 74,
+        "start_time": "2025-09-25T14:40:18.100Z",
+        "timezone": "UTC",
+        "title": "NFL Big Data Bowl 2026 - Analytics [football, sports]",
+        "url": "https://www.kaggle.com/competitions/nfl-big-data-bowl-2026-analytics"
+    },
+    {
+        "end_time": "2025-12-31T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 91723,
+        "rid": 74,
+        "start_time": "2025-12-01T00:00:06.573Z",
+        "timezone": "UTC",
+        "title": "Diabetes Prediction Challenge [beginner, tabular, roc auc score]",
+        "url": "https://www.kaggle.com/competitions/playground-series-s5e12"
+    },
+    {
+        "end_time": "2026-01-06T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 114239,
+        "rid": 74,
+        "start_time": "2025-09-25T14:41:10.920Z",
+        "timezone": "UTC",
+        "title": "NFL Big Data Bowl 2026 - Prediction [football, sports, custom metric]",
+        "url": "https://www.kaggle.com/competitions/nfl-big-data-bowl-2026-prediction"
+    },
+    {
+        "end_time": "2026-01-12T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 119261,
+        "rid": 74,
+        "start_time": "2025-11-11T16:32:10.177Z",
+        "timezone": "UTC",
+        "title": "Google Tunix Hack - Train a model to show its work [reinforcement learning, tpu, ml ethics, text generation, coding]",
+        "url": "https://www.kaggle.com/competitions/google-tunix-hackathon"
+    },
+    {
+        "end_time": "2026-01-16T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 94771,
+        "rid": 74,
+        "start_time": "2025-07-24T16:14:52.173Z",
+        "timezone": "UTC",
+        "title": "MITSUI&CO. Commodity Prediction Challenge [finance, investing, custom metric]",
+        "url": "https://www.kaggle.com/competitions/mitsui-commodity-prediction-challenge"
+    },
+    {
+        "end_time": "2026-01-22T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 97984,
+        "rid": 74,
+        "start_time": "2025-10-21T17:00:05.267Z",
+        "timezone": "UTC",
+        "title": "PhysioNet - Digitization of ECG Images [health, medicine, time series analysis, custom metric]",
+        "url": "https://www.kaggle.com/competitions/physionet-ecg-image-digitization"
+    },
+    {
+        "end_time": "2026-01-28T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 112509,
+        "rid": 74,
+        "start_time": "2025-10-28T20:02:37.367Z",
+        "timezone": "UTC",
+        "title": "CSIRO - Image2Biomass Prediction [biology, agriculture, r2 score]",
+        "url": "https://www.kaggle.com/competitions/csiro-biomass"
+    },
+    {
+        "end_time": "2026-01-30T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 119106,
+        "rid": 74,
+        "start_time": "2025-11-17T18:25:29.117Z",
+        "timezone": "UTC",
+        "title": "Santa 2025 - Christmas Tree Packing Challenge [optimization, holidays and cultural events, custom metric]",
+        "url": "https://www.kaggle.com/competitions/santa-2025"
+    },
+    {
+        "end_time": "2026-01-31T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 119082,
+        "rid": 74,
+        "start_time": "2025-12-31T23:58:51.803Z",
+        "timezone": "UTC",
+        "title": "Predicting Student Test Scores [beginner, tabular, rmse]",
+        "url": "https://www.kaggle.com/competitions/playground-series-s6e1"
+    },
+    {
+        "end_time": "2026-02-24T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 118534,
+        "rid": 74,
+        "start_time": "2026-01-13T21:00:28.470Z",
+        "timezone": "UTC",
+        "title": "The MedGemma Impact Challenge [healthcare, health, model comparison]",
+        "url": "https://www.kaggle.com/competitions/med-gemma-impact-challenge"
+    },
+    {
+        "end_time": "2026-02-27T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 117682,
+        "rid": 74,
+        "start_time": "2025-11-13T17:44:07.847Z",
+        "timezone": "UTC",
+        "title": "Vesuvius Challenge - Surface Detection [history, image segmentation, segmentation, custom metric]",
+        "url": "https://www.kaggle.com/competitions/vesuvius-challenge-surface-detection"
+    },
+    {
+        "end_time": "2026-02-28T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 125192,
+        "rid": 74,
+        "start_time": "2026-02-01T00:00:00Z",
+        "timezone": "UTC",
+        "title": "Predicting Heart Disease [beginner, tabular, roc auc score]",
+        "url": "https://www.kaggle.com/competitions/playground-series-s6e2"
+    },
+    {
+        "end_time": "2026-03-23T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 121150,
+        "rid": 74,
+        "start_time": "2025-12-16T19:57:18.657Z",
+        "timezone": "UTC",
+        "title": "Deep Past Challenge - Translate Akkadian to English [history, text, translation, custom metric]",
+        "url": "https://www.kaggle.com/competitions/deep-past-initiative-machine-translation"
+    },
+    {
+        "end_time": "2026-03-25T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 118765,
+        "rid": 74,
+        "start_time": "2026-01-07T18:00:03Z",
+        "timezone": "UTC",
+        "title": "Stanford RNA 3D Folding Part 2 [video games, biology, chemistry, biotechnology, regression, custom metric]",
+        "url": "https://www.kaggle.com/competitions/stanford-rna-3d-folding-2"
+    },
+    {
+        "end_time": "2026-03-31T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 125197,
+        "rid": 74,
+        "start_time": "2026-02-28T23:52:56.233Z",
+        "timezone": "UTC",
+        "title": "Predict Customer Churn [beginner, tabular, roc auc score]",
+        "url": "https://www.kaggle.com/competitions/playground-series-s6e3"
+    },
+    {
+        "end_time": "2026-04-07T16:00:00Z",
+        "host": "kaggle.com",
+        "key": 130469,
+        "rid": 74,
+        "start_time": "2026-02-19T21:05:09.250Z",
+        "timezone": "UTC",
+        "title": "March Machine Learning Mania 2026 [basketball, sports, mse]",
+        "url": "https://www.kaggle.com/competitions/march-machine-learning-mania-2026"
+    },
+    {
+        "end_time": "2026-04-15T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 118448,
+        "rid": 74,
+        "start_time": "2025-11-20T15:00:23.740Z",
+        "timezone": "UTC",
+        "title": "AI Mathematical Olympiad - Progress Prize 3 [nlp, mathematics, custom metric]",
+        "url": "https://www.kaggle.com/competitions/ai-mathematical-olympiad-progress-prize-3"
+    },
+    {
+        "end_time": "2026-04-16T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 128852,
+        "rid": 74,
+        "start_time": "2026-03-17T15:54:59.853Z",
+        "timezone": "UTC",
+        "title": "Measuring Progress Toward AGI - Cognitive Abilities [research, benchmark, personal benchmark]",
+        "url": "https://www.kaggle.com/competitions/kaggle-measuring-agi"
+    },
+    {
+        "end_time": "2026-04-22T18:00:00Z",
+        "host": "kaggle.com",
+        "key": 113558,
+        "rid": 74,
+        "start_time": "2025-10-23T18:03:01.113Z",
+        "timezone": "UTC",
+        "title": "Recod.ai/LUC - Scientific Image Forgery Detection [research, biology, medicine, image, custom metric]",
+        "url": "https://www.kaggle.com/competitions/recodai-luc-scientific-image-forgery-detection"
+    },
+    {
+        "end_time": "2026-04-30T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 125220,
+        "rid": 74,
+        "start_time": "2026-03-31T23:59:52.370Z",
+        "timezone": "UTC",
+        "title": "Predicting Irrigation Need [beginner, tabular, balanced accuracy score]",
+        "url": "https://www.kaggle.com/competitions/playground-series-s6e4"
+    },
+    {
+        "end_time": "2026-05-18T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 134561,
+        "rid": 74,
+        "start_time": "2026-04-02T15:54:58.447Z",
+        "timezone": "UTC",
+        "title": "The Gemma 4 Good Hackathon [artificial intelligence, tabular, text]",
+        "url": "https://www.kaggle.com/competitions/gemma-4-good-hackathon"
+    },
+    {
+        "end_time": "2026-05-31T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 125221,
+        "rid": 74,
+        "start_time": "2026-05-01T00:00:03.120Z",
+        "timezone": "UTC",
+        "title": "Predicting F1 Pit Stops [beginner, tabular, roc auc score]",
+        "url": "https://www.kaggle.com/competitions/playground-series-s6e5"
+    },
+    {
+        "end_time": "2026-06-01T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 116062,
+        "rid": 74,
+        "start_time": "2025-10-15T19:04:52.073Z",
+        "timezone": "UTC",
+        "title": "CAFA 6 Protein Function Prediction [healthcare, biology, tabular, custom metric]",
+        "url": "https://www.kaggle.com/competitions/cafa-6-protein-function-prediction"
+    },
+    {
+        "end_time": "2026-06-03T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 129329,
+        "rid": 74,
+        "start_time": "2026-03-11T17:05:18.913Z",
+        "timezone": "UTC",
+        "title": "BirdCLEF+ 2026 [earth and nature, animals, multilabel classification, audio event classification, custom metric]",
+        "url": "https://www.kaggle.com/competitions/birdclef-2026"
+    },
+    {
+        "end_time": "2026-06-15T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 129716,
+        "rid": 74,
+        "start_time": "2026-03-16T22:51:41.757Z",
+        "timezone": "UTC",
+        "title": "NVIDIA Nemotron Model Reasoning Challenge [deep learning, pre-trained model, general knowledge and reasoning, custom metric]",
+        "url": "https://www.kaggle.com/competitions/nvidia-nemotron-model-reasoning-challenge"
+    },
+    {
+        "end_time": "2026-06-19T07:00:00Z",
+        "host": "kaggle.com",
+        "key": 137190,
+        "rid": 74,
+        "start_time": "2026-04-21T12:47:50.587Z",
+        "timezone": "UTC",
+        "title": "5-Day AI Agents: Intensive Vibe Coding Course With Google [learn]",
+        "url": "https://www.kaggle.com/competitions/5-day-ai-agents-intensive-vibecoding-course-with-google"
+    },
+    {
+        "end_time": "2026-06-25T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 111543,
+        "rid": 74,
+        "start_time": "2025-09-16T17:04:06.800Z",
+        "timezone": "UTC",
+        "title": "Hull Tactical - Market Prediction [finance, tabular, custom metric]",
+        "url": "https://www.kaggle.com/competitions/hull-tactical-market-prediction"
+    },
+    {
+        "end_time": "2026-06-30T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 125222,
+        "rid": 74,
+        "start_time": "2026-06-01T00:00:00Z",
+        "timezone": "UTC",
+        "title": "Predicting Stellar Class [beginner, tabular, balanced accuracy score]",
+        "url": "https://www.kaggle.com/competitions/playground-series-s6e6"
+    },
+    {
+        "end_time": "2026-06-30T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 140389,
+        "rid": 74,
+        "start_time": "2026-05-01T16:24:03.243Z",
+        "timezone": "UTC",
+        "title": "Maze Crawler [games, artificial intelligence, reinforcement learning, simulations, custom metric]",
+        "url": "https://www.kaggle.com/competitions/maze-crawler"
+    },
+    {
+        "end_time": "2026-07-07T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 138420,
+        "rid": 74,
+        "start_time": "2026-04-16T19:01:30.503Z",
+        "timezone": "UTC",
+        "title": "Orbit Wars [games, artificial intelligence, reinforcement learning, custom metric]",
+        "url": "https://www.kaggle.com/competitions/orbit-wars"
+    },
+    {
+        "end_time": "2026-07-15T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 116438,
+        "rid": 74,
+        "start_time": "2026-04-15T18:41:14.320Z",
+        "timezone": "UTC",
+        "title": "The 2026 NeuroGolf Championship [golf, artificial intelligence, neural networks, optimization, custom metric]",
+        "url": "https://www.kaggle.com/competitions/neurogolf-2026"
+    },
+    {
+        "end_time": "2026-07-31T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 125223,
+        "rid": 74,
+        "start_time": "2026-07-01T00:00:00Z",
+        "timezone": "UTC",
+        "title": "Predicting Student Health Risk [beginner, tabular, balanced accuracy score]",
+        "url": "https://www.kaggle.com/competitions/playground-series-s6e7"
+    },
+    {
+        "end_time": "2026-08-05T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 132265,
+        "rid": 74,
+        "start_time": "2026-05-05T15:40:14.943Z",
+        "timezone": "UTC",
+        "title": "ROGII - Wellbore Geology Prediction [geology, multimodal, evaluation, mean squared error]",
+        "url": "https://www.kaggle.com/competitions/rogii-wellbore-geology-prediction"
+    },
+    {
+        "end_time": "2026-08-06T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 151211,
+        "rid": 74,
+        "start_time": "2026-07-07T17:53:04.397Z",
+        "timezone": "UTC",
+        "title": "Autonomous Agent Prediction (Beta) [automl, custom metric]",
+        "url": "https://www.kaggle.com/competitions/autonomous-agent-prediction-beta"
+    },
+    {
+        "end_time": "2026-08-16T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 116727,
+        "rid": 74,
+        "start_time": "2026-06-16T11:00:00Z",
+        "timezone": "UTC",
+        "title": "The Pokémon Company - PTCG AI Battle Challenge Simulation [games, artificial intelligence, reinforcement learning, custom metric]",
+        "url": "https://www.kaggle.com/competitions/pokemon-tcg-ai-battle"
+    },
+    {
+        "end_time": "2026-08-31T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 125218,
+        "rid": 74,
+        "start_time": "2026-08-01T00:00:00Z",
+        "timezone": "UTC",
+        "title": "Predicting Smartphone Addiction [beginner, tabular, roc auc score]",
+        "url": "https://www.kaggle.com/competitions/playground-series-s6e8"
+    },
+    {
+        "end_time": "2026-09-01T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 134815,
+        "rid": 74,
+        "start_time": "2026-06-11T18:31:39.920Z",
+        "timezone": "UTC",
+        "title": "AI Agent Security - Multi-Step Tool Attacks [cyber security, custom metric]",
+        "url": "https://www.kaggle.com/competitions/ai-agent-security-multi-step-tool-attacks"
+    },
+    {
+        "end_time": "2026-09-13T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 131772,
+        "rid": 74,
+        "start_time": "2026-06-16T11:00:00Z",
+        "timezone": "UTC",
+        "title": "The Pokémon Company - PTCG AI Battle Challenge Strategy [games, artificial intelligence, reinforcement learning]",
+        "url": "https://www.kaggle.com/competitions/pokemon-tcg-ai-battle-challenge-strategy"
+    },
+    {
+        "end_time": "2026-09-29T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 136605,
+        "rid": 74,
+        "start_time": "2026-06-29T19:01:13.613Z",
+        "timezone": "UTC",
+        "title": "Biohub - Cell Tracking During Development [biology, computer vision, image, video, object detection, custom metric]",
+        "url": "https://www.kaggle.com/competitions/biohub-cell-tracking-during-development"
+    },
+    {
+        "end_time": "2026-09-30T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 147734,
+        "rid": 74,
+        "start_time": "2026-07-30T16:15:52.123Z",
+        "timezone": "UTC",
+        "title": "Kaggriculture [simulations, custom metric]",
+        "url": "https://www.kaggle.com/competitions/kaggriculture"
+    },
+    {
+        "end_time": "2026-10-22T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 154281,
+        "rid": 74,
+        "start_time": "2026-08-05T15:51:31.833Z",
+        "timezone": "UTC",
+        "title": "RSNA Knee Abnormality Detection [medicine, computer vision, image, text, image classification, roc auc score]",
+        "url": "https://www.kaggle.com/competitions/rsna-knee-abnormality-detection"
+    },
+    {
+        "end_time": "2026-11-02T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 133468,
+        "rid": 74,
+        "start_time": "2026-03-25T17:38:23.913Z",
+        "timezone": "UTC",
+        "title": "ARC Prize 2026 - ARC-AGI-3 [artificial intelligence, general knowledge and reasoning, custom metric]",
+        "url": "https://www.kaggle.com/competitions/arc-prize-2026-arc-agi-3"
+    },
+    {
+        "end_time": "2026-11-02T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 133469,
+        "rid": 74,
+        "start_time": "2026-03-25T17:38:19.547Z",
+        "timezone": "UTC",
+        "title": "ARC Prize 2026 - ARC-AGI-2 [artificial intelligence, custom metric]",
+        "url": "https://www.kaggle.com/competitions/arc-prize-2026-arc-agi-2"
+    },
+    {
+        "end_time": "2026-11-09T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 133724,
+        "rid": 74,
+        "start_time": "2026-03-25T17:38:13.097Z",
+        "timezone": "UTC",
+        "title": "ARC Prize 2026 - Paper Track [artificial intelligence, general knowledge and reasoning]",
+        "url": "https://www.kaggle.com/competitions/arc-prize-2026-paper-track"
+    },
+    {
+        "end_time": "2030-01-01T00:00:00Z",
+        "host": "kaggle.com",
+        "key": 17592,
+        "rid": 74,
+        "start_time": "2020-01-03T21:25:59Z",
+        "timezone": "UTC",
+        "title": "Connect X [simulations, custom metric]",
+        "url": "https://www.kaggle.com/competitions/connectx"
+    },
+    {
+        "end_time": "2030-01-01T00:00:00Z",
+        "host": "kaggle.com",
+        "key": 17777,
+        "rid": 74,
+        "start_time": "2019-12-23T22:02:26.193Z",
+        "timezone": "UTC",
+        "title": "Natural Language Processing with Disaster Tweets [nlp, text, binary classification, custom metric]",
+        "url": "https://www.kaggle.com/competitions/nlp-getting-started"
+    },
+    {
+        "end_time": "2030-01-01T00:00:00Z",
+        "host": "kaggle.com",
+        "key": 3004,
+        "rid": 74,
+        "start_time": "2012-07-25T20:43:30.087Z",
+        "timezone": "UTC",
+        "title": "Digit Recognizer [tabular, image, multiclass classification, categorizationaccuracy]",
+        "url": "https://www.kaggle.com/competitions/digit-recognizer"
+    },
+    {
+        "end_time": "2030-01-01T00:00:00Z",
+        "host": "kaggle.com",
+        "key": 3136,
+        "rid": 74,
+        "start_time": "2012-09-28T21:13:33.550Z",
+        "timezone": "UTC",
+        "title": "Titanic - Machine Learning from Disaster [beginner, tabular, binary classification, categorizationaccuracy]",
+        "url": "https://www.kaggle.com/competitions/titanic"
+    },
+    {
+        "end_time": "2030-01-01T00:00:00Z",
+        "host": "kaggle.com",
+        "key": 34377,
+        "rid": 74,
+        "start_time": "2022-02-23T19:33:28.377Z",
+        "timezone": "UTC",
+        "title": "Spaceship Titanic [beginner, tabular, binary classification, categorizationaccuracy]",
+        "url": "https://www.kaggle.com/competitions/spaceship-titanic"
+    },
+    {
+        "end_time": "2030-01-01T00:00:00Z",
+        "host": "kaggle.com",
+        "key": 5407,
+        "rid": 74,
+        "start_time": "2016-08-30T01:08:56.763Z",
+        "timezone": "UTC",
+        "title": "House Prices - Advanced Regression Techniques [tabular, regression, rmsle]",
+        "url": "https://www.kaggle.com/competitions/house-prices-advanced-regression-techniques"
+    },
+    {
+        "end_time": "2030-01-01T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 10211,
+        "rid": 74,
+        "start_time": "2018-07-18T19:25:27.107Z",
+        "timezone": "UTC",
+        "title": "Housing Prices Competition for Kaggle Learn Users [mae]",
+        "url": "https://www.kaggle.com/competitions/home-data-for-ml-course"
+    },
+    {
+        "end_time": "2030-06-03T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 21154,
+        "rid": 74,
+        "start_time": "2020-06-18T23:27:53.083Z",
+        "timezone": "UTC",
+        "title": "Petals to the Metal - Flower Classification on TPU [image, multiclass classification, fscoremacro]",
+        "url": "https://www.kaggle.com/competitions/tpu-getting-started"
+    },
+    {
+        "end_time": "2030-06-30T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 29781,
+        "rid": 74,
+        "start_time": "2021-10-06T17:45:52.597Z",
+        "timezone": "UTC",
+        "title": "Store Sales - Time Series Forecasting [beginner, time series analysis, tabular, rmsle]",
+        "url": "https://www.kaggle.com/competitions/store-sales-time-series-forecasting"
+    },
+    {
+        "end_time": "2030-07-01T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 21733,
+        "rid": 74,
+        "start_time": "2020-07-30T21:03:15.780Z",
+        "timezone": "UTC",
+        "title": "Contradictory, My Dear Watson [nlp, text, multiclass classification, categorizationaccuracy]",
+        "url": "https://www.kaggle.com/competitions/contradictory-my-dear-watson"
+    },
+    {
+        "end_time": "2030-07-01T23:59:00Z",
+        "host": "kaggle.com",
+        "key": 86518,
+        "rid": 74,
+        "start_time": "2024-10-16T19:00:30.487Z",
+        "timezone": "UTC",
+        "title": "LLM Classification Finetuning [languages, text conversation, log loss]",
+        "url": "https://www.kaggle.com/competitions/llm-classification-finetuning"
+    }
+]

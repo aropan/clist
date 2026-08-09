@@ -1,0 +1,22 @@
+{
+    "host": "potyczki.mimuw.edu.pl",
+    "rid": 131,
+    "path": "./module/potyczki.mimuw.edu.pl/index.php",
+    "url": "https://potyczki.mimuw.edu.pl/harmonogram/",
+    "parse_url": "https://sio2.mimuw.edu.pl/c/pa-${YEAR}-1/p/",
+    "timezone": "Europe/Warsaw",
+    "api_url": null,
+    "info": {
+        "standings": {
+            "name_instead_key": true
+        },
+        "get_events": {
+            "colors": {
+                "darken": "#164418",
+                "lighten": "#D0EFD2"
+            }
+        }
+    },
+    "parse_full_list": false,
+    "recorded_at": "2026-08-08 17:01:40"
+}

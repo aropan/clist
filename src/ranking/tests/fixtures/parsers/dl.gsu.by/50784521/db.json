@@ -1,0 +1,1060 @@
+[
+  {
+    "fields": {
+      "accounts_fields": {
+        "types": {},
+        "verification_fields": []
+      },
+      "allow_delete_archived_statistics": false,
+      "api_url": null,
+      "auto_remove_started": false,
+      "avatar_url": null,
+      "avg_rating": null,
+      "color": "#7865CC",
+      "contest_update_time": "2026-06-03T11:27:15.461Z",
+      "country_rank_update_time": "2026-06-06T13:00:07.010Z",
+      "created": "2013-02-03T00:00:00Z",
+      "default_account_type": 1,
+      "enable": true,
+      "has_account_last_submission": null,
+      "has_account_n_writers": null,
+      "has_account_verification": false,
+      "has_accounts_infos_update": false,
+      "has_country_medal": null,
+      "has_country_place": null,
+      "has_country_rating": false,
+      "has_inherit_medals_to_related": false,
+      "has_multi_account": true,
+      "has_problem_archive": false,
+      "has_problem_rating": false,
+      "has_problem_statistic": true,
+      "has_problem_update": false,
+      "has_rating_history": false,
+      "has_standings_renamed_account": false,
+      "has_statistic_medal": true,
+      "has_statistic_n_first_ac": null,
+      "has_statistic_n_total_solved": true,
+      "has_statistic_place": true,
+      "has_statistic_total_solving": true,
+      "has_submissions_statistics_log": false,
+      "has_upsolving": false,
+      "host": "dl.gsu.by",
+      "icon_file": "resources/dl_gsu_by.png",
+      "icon_updated_at": "2025-12-19T17:40:14.682Z",
+      "icon_url": null,
+      "info": {
+        "get_events": {
+          "colors": {
+            "darken": "#1F1644",
+            "lighten": "#D6D0EF"
+          }
+        },
+        "parse": {
+          "last_standings_data": {
+            "1186": {
+              "date": "2021-06-19",
+              "title": "К городу (осень 2021)/Область, 3 мая 2013",
+              "url": "http://dl.gsu.by/restable.jsp?hid=172455058&hd=3&obid=172455058&pi=7&pi=4&pi=10&u.a&hd=3&u.c=1186&lng=rus"
+            },
+            "1208": {
+              "date": "2021-12-05",
+              "title": "19_Rup1",
+              "url": "http://dl.gsu.by/restable.jsp?hid=173640423&hd=1&obid=173640423&u.a&c.l=4&c.n=2&c.s=2&c.s=7&lng=rus"
+            },
+            "1228": {
+              "date": "2022-03-27",
+              "title": "Зимний Кубок 2021-2022/К республике/16_NN",
+              "url": "http://dl.gsu.by/restable.jsp?hid=174094805&hd=3&obid=174094805&pi=7&pi=4&pi=10&u.a&hd=3&u.c=1228&lng=rus"
+            },
+            "1229": {
+              "date": "2021-09-04",
+              "title": "1-10/1",
+              "url": "http://dl.gsu.by/restable.jsp?hid=173354476&hd=2&obid=173354476&hd=2&u.c=1229&pi=6&pi=7&pi=4&pi=10&u.a&lng=rus"
+            },
+            "1258": {
+              "date": "2022-11-27",
+              "title": "Осенний Кубок 2022/21_Rup3",
+              "url": "http://dl.gsu.by/restable.jsp?hid=174665652&hd=1&obid=174665652&u.a&c.l=4&c.n=2&c.s=2&c.s=7&lng=rus"
+            },
+            "1272": {
+              "date": "2023-03-26",
+              "title": "Зимний Кубок 2022-2023/К республике/Воскресные между сборами/23_COCI3_Jan",
+              "url": "http://dl.gsu.by/restable.jsp?hid=174924416&hd=3&obid=174924416&pi=7&pi=4&pi=10&u.a&hd=3&lng=rus"
+            },
+            "1304": {
+              "date": "2023-11-26",
+              "title": "Осенний Кубок 2023/2012",
+              "url": "http://dl.gsu.by/restable.jsp?hid=176005959&hd=1&obid=176005959&u.a&c.l=4&c.n=2&c.s=2&c.s=7&lng=rus"
+            },
+            "1322": {
+              "date": "2024-02-11",
+              "title": "Зимний Кубок 2023-2024/К республике/Воскресные между сборами/23_COCI5_Mar",
+              "url": "http://dl.gsu.by/restable.jsp?hid=176485061&hd=3&obid=176485061&pi=7&pi=4&pi=10&u.a&hd=3&lng=rus"
+            },
+            "1353": {
+              "date": "2024-10-13",
+              "title": "Осенний Кубок 2024 (Nee4n)/2021",
+              "url": "http://dl.gsu.by/restable.jsp?hid=177128961&hd=1&obid=177128961&u.a&c.l=4&c.n=2&c.s=2&c.s=7&lng=rus"
+            },
+            "1367": {
+              "date": "2025-01-26",
+              "title": "Зимний Кубок 2024-2025/К республике/Воскресные до сборов/20_Rui3",
+              "url": "http://dl.gsu.by/restable.jsp?hid=177695175&hd=3&obid=177695175&pi=7&pi=4&pi=10&u.a&hd=3&lng=rus"
+            },
+            "1390": {
+              "date": "2025-11-23",
+              "title": "Осенний Кубок 2025 (Nee4n)/2017",
+              "url": "http://dl.gsu.by/restable.jsp?hid=179024387&hd=1&obid=179024387&u.a&c.l=4&c.n=2&c.s=2&c.s=7&lng=rus"
+            },
+            "1422": {
+              "date": "2026-02-10",
+              "title": "К республике/Сборы 1/2017/Day 2",
+              "url": "http://dl.gsu.by/restable.jsp?hid=179403361&hd=3&obid=179403361&pi=7&pi=4&pi=10&u.a&hd=3&lng=rus"
+            },
+            "1435": {
+              "date": "2026-05-31",
+              "title": "Весенний Кубок 2026/SPbt/2025",
+              "url": "http://dl.gsu.by/restable.jsp?hid=179710923&hd=1&obid=179710923&u.a&c.l=4&c.n=2&c.s=2&c.s=7&lng=rus"
+            },
+            "1449": {
+              "date": "2026-06-03",
+              "title": "SPbt/2025",
+              "url": "http://dl.gsu.by/restable.jsp?hid=179936580&hd=3&obid=179936580&pi=7&pi=4&pi=10&u.a&hd=3&lng=rus"
+            }
+          }
+        },
+        "standings": {
+          "avg_problem_width": true,
+          "name_instead_key": true
+        }
+      },
+      "modified": "2026-06-06T13:00:07.188Z",
+      "n_accounts": 3084,
+      "n_accounts_to_update": null,
+      "n_contests": 1517,
+      "n_rating_accounts": null,
+      "n_statistics": 11570,
+      "n_team_accounts": 0,
+      "n_university_accounts": 0,
+      "parse_url": null,
+      "path": "./module/dl.gsu.by/index.php",
+      "problem_archive_update_time": null,
+      "problem_rating_predictor": {},
+      "problem_url": null,
+      "problems_fields": {
+        "types": {
+          "full_score": [
+            "str",
+            "int"
+          ]
+        }
+      },
+      "profile_url": "https://dl.gsu.by/report.asp?id={account}",
+      "rank_update_time": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "ratings": [],
+      "regexp": "#<tr>[^<]*<td>(?<title>[^<]*)</td>.*?<td nowrap>(?<start_time>[^<]*)</td>[^<]*<td nowrap>(?<end_time>[^<]*)</td>[^<]*</tr>#is",
+      "short_host": "dl",
+      "skip_for_contests_chart": false,
+      "statistics_fields": {
+        "types": {
+          "advance": [
+            "bool"
+          ],
+          "class": [
+            "str",
+            "int"
+          ],
+          "medal": [
+            "str"
+          ],
+          "name": [
+            "_ElementUnicodeResult",
+            "str"
+          ],
+          "penalty": [
+            "int"
+          ],
+          "region": [
+            "str"
+          ],
+          "school": [
+            "str"
+          ],
+          "город": [
+            "str"
+          ],
+          "класс": [
+            "str"
+          ],
+          "с": [
+            "str"
+          ],
+          "страна": [
+            "str"
+          ],
+          "школа": [
+            "str"
+          ]
+        }
+      },
+      "timezone": "Europe/Minsk",
+      "uid": "o5ql0qn43aa01kq012cjcfgltc@group.calendar.google.com",
+      "url": "https://dl.gsu.by/LC.jsp?Type=-1&lng=ru"
+    },
+    "model": "clist.resource",
+    "pk": 4
+  },
+  {
+    "fields": {
+      "created": "2019-02-10T23:43:28.010Z",
+      "delay_on_error": "03:00:00",
+      "delay_on_success": "1 00:00:00",
+      "delay_shortly_after": "00:05:00",
+      "enable": true,
+      "long_contest_divider": 15,
+      "long_contest_idle": "06:00:00",
+      "max_delay_after_end": "3 00:00:00",
+      "min_delay_after_end": "02:00:00",
+      "modified": "2020-03-13T22:48:40.515Z",
+      "path": "ranking/management/modules/dl_gsu",
+      "resource": 4,
+      "shortly_after": "00:30:00"
+    },
+    "model": "ranking.module",
+    "pk": 14
+  },
+  {
+    "fields": {
+      "aliases": [
+        "belarusian-olympiad-in-informatics",
+        "byio"
+      ],
+      "created": "2023-04-15T07:14:58.808Z",
+      "modified": "2023-04-15T07:15:43.595Z",
+      "name": "Belarusian Olympiad in Informatics",
+      "short": "BYIO",
+      "slug": "byio"
+    },
+    "model": "clist.contestseries",
+    "pk": 43
+  },
+  {
+    "fields": {
+      "allow_updating_statistics_for_participants": null,
+      "auto_updated": "2026-08-04T12:47:43Z",
+      "calculate_time": false,
+      "created": "2024-03-29T19:09:49.736Z",
+      "duration_in_secs": 36000,
+      "edit": null,
+      "elimination_tournament_info": {},
+      "end_time": "2024-03-27T21:00:00Z",
+      "finalists_info": {},
+      "has_fixed_rating_prediction_field": null,
+      "has_hidden_results": false,
+      "has_submissions": null,
+      "has_submissions_tests": null,
+      "has_unlimited_statistics": null,
+      "hide_unsolved_standings_problems": null,
+      "host": "dl.gsu.by",
+      "info": {
+        "default_problem_full_score": 100,
+        "fields": [
+          "problems",
+          "name",
+          "class",
+          "medal",
+          "_diploma",
+          "_medal_title_field",
+          "solved"
+        ],
+        "fields_types": {
+          "_diploma": [
+            "str"
+          ],
+          "_medal_title_field": [
+            "str"
+          ],
+          "class": [
+            "str"
+          ],
+          "medal": [
+            "str"
+          ],
+          "name": [
+            "_ElementUnicodeResult"
+          ],
+          "problems": [
+            "dict"
+          ],
+          "solved": [
+            "dict"
+          ]
+        },
+        "hidden_fields": [],
+        "problems": [
+          {
+            "full_score": 100,
+            "n_accepted": 30,
+            "n_partial": 91,
+            "n_teams": 122,
+            "n_total": 122,
+            "name": "Последний момент",
+            "short": "1",
+            "url": "https://dl.gsu.by/task.jsp?nid=2363786&cid=19",
+            "visible": true
+          },
+          {
+            "full_score": 100,
+            "n_accepted": 5,
+            "n_partial": 104,
+            "n_teams": 122,
+            "n_total": 122,
+            "name": "Отличный выбор",
+            "short": "2",
+            "url": "https://dl.gsu.by/task.jsp?nid=2363787&cid=19",
+            "visible": true
+          },
+          {
+            "full_score": 100,
+            "n_accepted": 1,
+            "n_partial": 36,
+            "n_teams": 122,
+            "n_total": 122,
+            "name": "Добро пожаловать",
+            "short": "3",
+            "url": "https://dl.gsu.by/task.jsp?nid=2363788&cid=19",
+            "visible": true
+          },
+          {
+            "full_score": 100,
+            "n_partial": 25,
+            "n_teams": 122,
+            "n_total": 122,
+            "name": "Масштабный план",
+            "short": "4",
+            "url": "https://dl.gsu.by/task.jsp?nid=2363789&cid=19",
+            "visible": true
+          },
+          {
+            "full_score": 100,
+            "n_accepted": 49,
+            "n_partial": 63,
+            "n_teams": 122,
+            "n_total": 122,
+            "name": "Единственный и неповторимый",
+            "short": "5",
+            "url": "https://dl.gsu.by/task.jsp?nid=2363791&cid=19",
+            "visible": true
+          },
+          {
+            "full_score": 100,
+            "n_accepted": 17,
+            "n_partial": 94,
+            "n_teams": 122,
+            "n_total": 122,
+            "name": "Неожиданная встреча",
+            "short": "6",
+            "url": "https://dl.gsu.by/task.jsp?nid=2363792&cid=19",
+            "visible": true
+          },
+          {
+            "full_score": 100,
+            "n_accepted": 2,
+            "n_partial": 91,
+            "n_teams": 122,
+            "n_total": 122,
+            "name": "Ехидная улыбка",
+            "short": "7",
+            "url": "https://dl.gsu.by/task.jsp?nid=2363793&cid=19",
+            "visible": true
+          },
+          {
+            "full_score": 100,
+            "n_partial": 91,
+            "n_teams": 122,
+            "n_total": 122,
+            "name": "Нет ничего лучше пикника",
+            "short": "8",
+            "url": "https://dl.gsu.by/task.jsp?nid=2363794&cid=19",
+            "visible": true
+          }
+        ],
+        "series": "byio"
+      },
+      "invisible": false,
+      "is_auto_added": true,
+      "is_promoted": null,
+      "is_rated": null,
+      "key": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2023-2024",
+      "kind": null,
+      "link_statistic_timing": null,
+      "merging_contests": [],
+      "modified": "2024-03-29T19:09:49.736Z",
+      "n_problems": 8,
+      "n_statistics": 122,
+      "notification_timing": null,
+      "parsed_percentage": null,
+      "parsed_time": "2024-03-30T19:11:04.687Z",
+      "problem_rating_hash": null,
+      "problem_rating_update_required": false,
+      "rating_prediction_fields": null,
+      "rating_prediction_hash": null,
+      "rating_prediction_timing": null,
+      "raw_info": {},
+      "registration_url": null,
+      "related": null,
+      "resource": 4,
+      "series": 43,
+      "set_matched_coders_to_members": false,
+      "slug": "zakliuchitelnyi-etap-respublikanskoi-olimpiady-po-uchebnomu-predmetu-informatika-2023-2024",
+      "standings_kind": "scoring",
+      "standings_url": "https://dl.gsu.by/olymp/xrestable.jsp?hd=2&hid=997&u.c=151&lng=rus&pi=3&c.s=9",
+      "start_time": "2024-03-24T21:00:00Z",
+      "statistic_timing": "2024-03-31T19:11:04.687Z",
+      "statistics_update_required": false,
+      "submissions_info": {},
+      "title": "Заключительный этап республиканской олимпиады по учебному предмету «Информатика» 2023-2024",
+      "title_path": "zakliuchitelnyi.etap.respublikanskoi.olimpiady.po.uchebnomu.predmetu.informatika.2023.2024",
+      "trial_standings_url": null,
+      "uid": "jdgc8b1656u2ibuvb4ru00bjeg",
+      "updated": "2026-08-04T12:47:43.762Z",
+      "upload_solved_problems_solutions": null,
+      "upsolving_key": null,
+      "upsolving_url": null,
+      "url": "https://dl.gsu.by/olymp/info/allgomel.asp",
+      "variables": {},
+      "wait_for_successful_update_timing": null,
+      "with_advance": false,
+      "with_medals": true
+    },
+    "model": "clist.contest",
+    "pk": 50784521
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2023-04-14T22:33:45.959Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "olymp205166",
+      "last_activity": "2026-03-24T21:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-04-16T15:12:12.793Z",
+      "n_bronze": null,
+      "n_contests": 5,
+      "n_first_ac": 0,
+      "n_first_places": 1,
+      "n_gold": 4,
+      "n_listvalues": 0,
+      "n_medals": 5,
+      "n_other_medals": null,
+      "n_places": 4,
+      "n_second_places": 1,
+      "n_silver": 1,
+      "n_solved": 22,
+      "n_subscribers": 0,
+      "n_third_places": 1,
+      "n_top_ten_places": 1,
+      "n_total_solved": 22,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Брель Михаил",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 4,
+      "resource_rank": null,
+      "solving": 3053.0,
+      "submissions_info": {},
+      "total_solving": 3053.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2023-04-14T22:33:45.959Z",
+      "upsolving": 0.0,
+      "url": "/account/olymp205166/resource/dl.gsu.by/"
+    },
+    "model": "ranking.account",
+    "pk": 5460635
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2023-04-14T22:33:46.169Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "olymp205173",
+      "last_activity": "2024-03-24T21:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-03-17T16:06:54.051Z",
+      "n_bronze": null,
+      "n_contests": 3,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": 1,
+      "n_listvalues": 0,
+      "n_medals": 3,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": null,
+      "n_silver": 2,
+      "n_solved": 10,
+      "n_subscribers": 0,
+      "n_third_places": 1,
+      "n_top_ten_places": null,
+      "n_total_solved": 10,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Козлова Анастасия",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 4,
+      "resource_rank": null,
+      "solving": 1623.0,
+      "submissions_info": {},
+      "total_solving": 1623.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2023-04-14T22:33:46.169Z",
+      "upsolving": 0.0,
+      "url": "/account/olymp205173/resource/dl.gsu.by/"
+    },
+    "model": "ranking.account",
+    "pk": 5460647
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2023-04-14T22:33:46.468Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "olymp205201",
+      "last_activity": "2024-03-24T21:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-03-17T16:06:54.425Z",
+      "n_bronze": 1,
+      "n_contests": 3,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": 1,
+      "n_listvalues": 0,
+      "n_medals": 2,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 7,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 1,
+      "n_total_solved": 7,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Оголихин Артемий",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 4,
+      "resource_rank": null,
+      "solving": 1249.0,
+      "submissions_info": {},
+      "total_solving": 1249.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2023-04-14T22:33:46.469Z",
+      "upsolving": 0.0,
+      "url": "/account/olymp205201/resource/dl.gsu.by/"
+    },
+    "model": "ranking.account",
+    "pk": 5460666
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2024-03-29T19:10:12.007Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "olymp205306",
+      "last_activity": "2026-03-24T21:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-04-16T15:12:12.932Z",
+      "n_bronze": 1,
+      "n_contests": 3,
+      "n_first_ac": 0,
+      "n_first_places": 0,
+      "n_gold": 2,
+      "n_listvalues": 0,
+      "n_medals": 3,
+      "n_other_medals": null,
+      "n_places": 2,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 8,
+      "n_subscribers": 0,
+      "n_third_places": 1,
+      "n_top_ten_places": 1,
+      "n_total_solved": 8,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Кошман Иван",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 4,
+      "resource_rank": null,
+      "solving": 1480.0,
+      "submissions_info": {},
+      "total_solving": 1480.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2024-03-29T19:10:12.007Z",
+      "upsolving": 0.0,
+      "url": "/account/olymp205306/resource/dl.gsu.by/"
+    },
+    "model": "ranking.account",
+    "pk": 6777115
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2023-04-14T22:33:46.314Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {},
+      "key": "olymp204977",
+      "last_activity": "2024-03-24T21:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2025-03-17T16:06:48.649Z",
+      "n_bronze": 1,
+      "n_contests": 4,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": 2,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": 1,
+      "n_solved": 10,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 10,
+      "n_upsolved": 0,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Молокович Александр",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 4,
+      "resource_rank": null,
+      "solving": 1638.0,
+      "submissions_info": {},
+      "total_solving": 1638.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2023-04-14T22:33:46.314Z",
+      "upsolving": 0.0,
+      "url": "/account/olymp204977/resource/dl.gsu.by/"
+    },
+    "model": "ranking.account",
+    "pk": 5460657
+  },
+  {
+    "fields": {
+      "account": 5460635,
+      "addition": {
+        "_diploma": "I",
+        "_medal_title_field": "_diploma",
+        "class": "9 класс",
+        "medal": "gold",
+        "name": "Брель Михаил",
+        "problems": {
+          "1": {
+            "result": "100"
+          },
+          "2": {
+            "result": "100"
+          },
+          "3": {
+            "partial": true,
+            "result": "67"
+          },
+          "4": {
+            "partial": true,
+            "result": "5"
+          },
+          "5": {
+            "result": "100"
+          },
+          "6": {
+            "result": "100"
+          },
+          "7": {
+            "result": "100"
+          },
+          "8": {
+            "partial": true,
+            "result": "81"
+          }
+        },
+        "solved": {
+          "solving": 5
+        }
+      },
+      "advanced": false,
+      "contest": 50784521,
+      "created": "2024-03-29T19:10:11.830Z",
+      "global_rating_change": null,
+      "last_activity": "2024-03-24T21:00:00Z",
+      "medal": "gold",
+      "modified": "2025-02-21T21:37:16.826Z",
+      "n_first_ac": 0,
+      "n_solved": 5,
+      "n_total_solved": 5,
+      "n_upsolved": 0,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "1",
+      "place_as_int": 1,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 4,
+      "skip_in_stats": false,
+      "solving": 653.0,
+      "total_solving": 653.0,
+      "upsolving": 0.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 62595106
+  },
+  {
+    "fields": {
+      "account": 5460647,
+      "addition": {
+        "_diploma": "I",
+        "_medal_title_field": "_diploma",
+        "class": "11 класс",
+        "medal": "gold",
+        "name": "Козлова Анастасия",
+        "problems": {
+          "1": {
+            "result": "100"
+          },
+          "2": {
+            "result": "100"
+          },
+          "3": {
+            "partial": true,
+            "result": "4"
+          },
+          "4": {
+            "partial": true,
+            "result": "13"
+          },
+          "5": {
+            "result": "100"
+          },
+          "6": {
+            "result": "100"
+          },
+          "7": {
+            "partial": true,
+            "result": "30"
+          },
+          "8": {
+            "partial": true,
+            "result": "64"
+          }
+        },
+        "solved": {
+          "solving": 4
+        }
+      },
+      "advanced": false,
+      "contest": 50784521,
+      "created": "2024-03-29T19:10:11.858Z",
+      "global_rating_change": null,
+      "last_activity": "2024-03-24T21:00:00Z",
+      "medal": "gold",
+      "modified": "2025-02-21T21:37:16.951Z",
+      "n_first_ac": 0,
+      "n_solved": 4,
+      "n_total_solved": 4,
+      "n_upsolved": 0,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "3",
+      "place_as_int": 3,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 4,
+      "skip_in_stats": false,
+      "solving": 511.0,
+      "total_solving": 511.0,
+      "upsolving": 0.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 62595107
+  },
+  {
+    "fields": {
+      "account": 5460666,
+      "addition": {
+        "_diploma": "I",
+        "_medal_title_field": "_diploma",
+        "class": "11 класс",
+        "medal": "gold",
+        "name": "Оголихин Артемий",
+        "problems": {
+          "1": {
+            "result": "100"
+          },
+          "2": {
+            "partial": true,
+            "result": "17"
+          },
+          "3": {
+            "partial": true,
+            "result": "52"
+          },
+          "4": {
+            "partial": true,
+            "result": "0"
+          },
+          "5": {
+            "result": "100"
+          },
+          "6": {
+            "result": "100"
+          },
+          "7": {
+            "partial": true,
+            "result": "38"
+          },
+          "8": {
+            "partial": true,
+            "result": "94"
+          }
+        },
+        "solved": {
+          "solving": 3
+        }
+      },
+      "advanced": false,
+      "contest": 50784521,
+      "created": "2024-03-29T19:10:11.876Z",
+      "global_rating_change": null,
+      "last_activity": "2024-03-24T21:00:00Z",
+      "medal": "gold",
+      "modified": "2025-02-21T21:37:16.817Z",
+      "n_first_ac": 0,
+      "n_solved": 3,
+      "n_total_solved": 3,
+      "n_upsolved": 0,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "4",
+      "place_as_int": 4,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 4,
+      "skip_in_stats": false,
+      "solving": 501.0,
+      "total_solving": 501.0,
+      "upsolving": 0.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 62595108
+  },
+  {
+    "fields": {
+      "account": 6777115,
+      "addition": {
+        "_diploma": "I",
+        "_medal_title_field": "_diploma",
+        "class": "9 класс",
+        "medal": "gold",
+        "name": "Кошман Иван",
+        "problems": {
+          "1": {
+            "partial": true,
+            "result": "78"
+          },
+          "2": {
+            "partial": true,
+            "result": "54"
+          },
+          "3": {
+            "partial": true,
+            "result": "71"
+          },
+          "4": {
+            "partial": true,
+            "result": "22"
+          },
+          "5": {
+            "result": "100"
+          },
+          "6": {
+            "partial": true,
+            "result": "54"
+          },
+          "7": {
+            "partial": true,
+            "result": "38"
+          },
+          "8": {
+            "partial": true,
+            "result": "72"
+          }
+        },
+        "solved": {
+          "solving": 1
+        }
+      },
+      "advanced": false,
+      "contest": 50784521,
+      "created": "2024-03-29T19:10:12.022Z",
+      "global_rating_change": null,
+      "last_activity": "2024-03-24T21:00:00Z",
+      "medal": "gold",
+      "modified": "2025-02-21T21:37:17.656Z",
+      "n_first_ac": 0,
+      "n_solved": 1,
+      "n_total_solved": 1,
+      "n_upsolved": 0,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "5",
+      "place_as_int": 5,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 4,
+      "skip_in_stats": false,
+      "solving": 489.0,
+      "total_solving": 489.0,
+      "upsolving": 0.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 62595112
+  },
+  {
+    "fields": {
+      "account": 5460657,
+      "addition": {
+        "_diploma": "II",
+        "_medal_title_field": "_diploma",
+        "class": "11 класс",
+        "medal": "silver",
+        "name": "Молокович Александр",
+        "problems": {
+          "1": {
+            "result": "100"
+          },
+          "2": {
+            "partial": true,
+            "result": "54"
+          },
+          "3": {
+            "partial": true,
+            "result": "52"
+          },
+          "4": {
+            "partial": true,
+            "result": "0"
+          },
+          "5": {
+            "partial": true,
+            "result": "7"
+          },
+          "6": {
+            "result": "100"
+          },
+          "7": {
+            "partial": true,
+            "result": "13"
+          },
+          "8": {
+            "partial": true,
+            "result": "50"
+          }
+        },
+        "solved": {
+          "solving": 2
+        }
+      },
+      "advanced": false,
+      "contest": 50784521,
+      "created": "2024-03-29T19:10:12.061Z",
+      "global_rating_change": null,
+      "last_activity": "2024-03-24T21:00:00Z",
+      "medal": "silver",
+      "modified": "2025-02-21T21:37:17.563Z",
+      "n_first_ac": 0,
+      "n_solved": 2,
+      "n_total_solved": 2,
+      "n_upsolved": 0,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "16",
+      "place_as_int": 16,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 4,
+      "skip_in_stats": false,
+      "solving": 376.0,
+      "total_solving": 376.0,
+      "upsolving": 0.0,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 62595114
+  }
+]

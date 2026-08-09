@@ -1,0 +1,232 @@
+[
+    {
+        "end_time": "2026-06-22T22:00:00+05:30",
+        "host": "codechef.com",
+        "key": "DSAMONDAY008",
+        "rid": 2,
+        "start_time": "2026-06-22T19:00:00+05:30",
+        "timezone": "UTC",
+        "title": "Monday Munch - DSA Challenge 008 (Rated)",
+        "url": "https://www.codechef.com/DSAMONDAY008"
+    },
+    {
+        "end_time": "2026-06-24T22:00:00+05:30",
+        "host": "codechef.com",
+        "key": "START244",
+        "rid": 2,
+        "start_time": "2026-06-24T20:00:00+05:30",
+        "timezone": "UTC",
+        "title": "Starters 244 (Rated till 5 star)",
+        "url": "https://www.codechef.com/START244"
+    },
+    {
+        "end_time": "2026-06-29T00:00:00+05:30",
+        "host": "codechef.com",
+        "key": "DEVWEEKEND56",
+        "rid": 2,
+        "start_time": "2026-06-27T00:00:00+05:30",
+        "timezone": "UTC",
+        "title": "Weekend Dev Challenge 56: .NET projects",
+        "url": "https://www.codechef.com/DEVWEEKEND56"
+    },
+    {
+        "end_time": "2026-06-29T22:00:00+05:30",
+        "host": "codechef.com",
+        "key": "DSAMONDAY009",
+        "rid": 2,
+        "start_time": "2026-06-29T19:00:00+05:30",
+        "timezone": "UTC",
+        "title": "Monday Munch - DSA Challenge 009 (Rated)",
+        "url": "https://www.codechef.com/DSAMONDAY009"
+    },
+    {
+        "end_time": "2026-07-01T22:00:00+05:30",
+        "host": "codechef.com",
+        "key": "START245",
+        "rid": 2,
+        "start_time": "2026-07-01T20:00:00+05:30",
+        "timezone": "UTC",
+        "title": "Starters 245 (Rated till 6 star)",
+        "url": "https://www.codechef.com/START245"
+    },
+    {
+        "end_time": "2026-07-06T00:00:00+05:30",
+        "host": "codechef.com",
+        "key": "DEVWEEKEND57",
+        "rid": 2,
+        "start_time": "2026-07-04T00:00:00+05:30",
+        "timezone": "UTC",
+        "title": "Weekend Dev Challenge 57: LLD Projects",
+        "url": "https://www.codechef.com/DEVWEEKEND57"
+    },
+    {
+        "end_time": "2026-07-06T22:00:00+05:30",
+        "host": "codechef.com",
+        "key": "DSAMONDAY010",
+        "rid": 2,
+        "start_time": "2026-07-06T19:00:00+05:30",
+        "timezone": "UTC",
+        "title": "Monday Munch - DSA Challenge 010 (Rated)",
+        "url": "https://www.codechef.com/DSAMONDAY010"
+    },
+    {
+        "end_time": "2026-07-08T22:00:00+05:30",
+        "host": "codechef.com",
+        "key": "START246",
+        "rid": 2,
+        "start_time": "2026-07-08T20:00:00+05:30",
+        "timezone": "UTC",
+        "title": "Starters 246 (Rated till 4 Star)",
+        "url": "https://www.codechef.com/START246"
+    },
+    {
+        "end_time": "2026-07-13T00:00:00+05:30",
+        "host": "codechef.com",
+        "key": "DEVWEEKEND58",
+        "rid": 2,
+        "start_time": "2026-07-11T00:00:00+05:30",
+        "timezone": "UTC",
+        "title": "Weekend Dev Challenge 58: LLD Projects",
+        "url": "https://www.codechef.com/DEVWEEKEND58"
+    },
+    {
+        "end_time": "2026-07-13T22:00:00+05:30",
+        "host": "codechef.com",
+        "key": "DSAMONDAY011",
+        "rid": 2,
+        "start_time": "2026-07-13T19:00:00+05:30",
+        "timezone": "UTC",
+        "title": "Monday Munch - DSA Challenge 011 (Rated)",
+        "url": "https://www.codechef.com/DSAMONDAY011"
+    },
+    {
+        "end_time": "2026-07-15T22:00:00+05:30",
+        "host": "codechef.com",
+        "key": "START247",
+        "rid": 2,
+        "start_time": "2026-07-15T20:00:00+05:30",
+        "timezone": "UTC",
+        "title": "Starters 247 (Rated till 5 star)",
+        "url": "https://www.codechef.com/START247"
+    },
+    {
+        "end_time": "2026-07-20T00:00:00+05:30",
+        "host": "codechef.com",
+        "key": "DEVWEEKEND59",
+        "rid": 2,
+        "start_time": "2026-07-18T00:00:00+05:30",
+        "timezone": "UTC",
+        "title": "Weekend Dev Challenge 59: LLD Projects",
+        "url": "https://www.codechef.com/DEVWEEKEND59"
+    },
+    {
+        "end_time": "2026-07-20T22:00:00+05:30",
+        "host": "codechef.com",
+        "key": "DSAMONDAY012",
+        "rid": 2,
+        "start_time": "2026-07-20T19:00:00+05:30",
+        "timezone": "UTC",
+        "title": "Monday Munch - DSA Challenge 012 (Rated)",
+        "url": "https://www.codechef.com/DSAMONDAY012"
+    },
+    {
+        "end_time": "2026-07-22T22:00:00+05:30",
+        "host": "codechef.com",
+        "key": "START248",
+        "rid": 2,
+        "start_time": "2026-07-22T20:00:00+05:30",
+        "timezone": "UTC",
+        "title": "Starters 248 (Unrated)",
+        "url": "https://www.codechef.com/START248"
+    },
+    {
+        "end_time": "2026-07-27T00:00:00+05:30",
+        "host": "codechef.com",
+        "key": "DEVWEEKEND60",
+        "rid": 2,
+        "start_time": "2026-07-25T00:00:00+05:30",
+        "timezone": "UTC",
+        "title": "Weekend Dev Challenge 60: LLD Projects",
+        "url": "https://www.codechef.com/DEVWEEKEND60"
+    },
+    {
+        "end_time": "2026-07-27T22:00:00+05:30",
+        "host": "codechef.com",
+        "key": "DSAMONDAY013",
+        "rid": 2,
+        "start_time": "2026-07-27T19:00:00+05:30",
+        "timezone": "UTC",
+        "title": "Monday Munch - DSA Challenge 013 (Rated)",
+        "url": "https://www.codechef.com/DSAMONDAY013"
+    },
+    {
+        "end_time": "2026-07-29T22:30:00+05:30",
+        "host": "codechef.com",
+        "key": "START249",
+        "rid": 2,
+        "start_time": "2026-07-29T20:00:00+05:30",
+        "timezone": "UTC",
+        "title": "Starters 249 (Rated till 6 star)",
+        "url": "https://www.codechef.com/START249"
+    },
+    {
+        "end_time": "2026-08-03T01:59:00+05:30",
+        "host": "codechef.com",
+        "key": "PLACEPREP01",
+        "rid": 2,
+        "start_time": "2026-08-01T00:00:00+05:30",
+        "timezone": "UTC",
+        "title": "Placement Prep Weekends - 01",
+        "url": "https://www.codechef.com/PLACEPREP01"
+    },
+    {
+        "end_time": "2026-08-03T22:00:00+05:30",
+        "host": "codechef.com",
+        "key": "DSAMONDAY014",
+        "rid": 2,
+        "start_time": "2026-08-03T19:00:00+05:30",
+        "timezone": "UTC",
+        "title": "Monday Munch - DSA Challenge 014 (Rated)",
+        "url": "https://www.codechef.com/DSAMONDAY014"
+    },
+    {
+        "end_time": "2026-08-05T22:00:00+05:30",
+        "host": "codechef.com",
+        "key": "START250",
+        "rid": 2,
+        "start_time": "2026-08-05T20:00:00+05:30",
+        "timezone": "UTC",
+        "title": "Starters 250 (Rated till 5 star)",
+        "url": "https://www.codechef.com/START250"
+    },
+    {
+        "end_time": "2026-08-10T02:59:00+05:30",
+        "host": "codechef.com",
+        "key": "PLACEPREP02",
+        "rid": 2,
+        "start_time": "2026-08-08T00:00:00+05:30",
+        "timezone": "UTC",
+        "title": "Placement Prep Weekends - 02",
+        "url": "https://www.codechef.com/PLACEPREP02"
+    },
+    {
+        "end_time": "2026-08-10T22:00:00+05:30",
+        "host": "codechef.com",
+        "key": "DSAMONDAY015",
+        "rid": 2,
+        "start_time": "2026-08-10T19:00:00+05:30",
+        "timezone": "UTC",
+        "title": "Monday Munch - DSA Challenge 015 (Rated)",
+        "url": "https://www.codechef.com/DSAMONDAY015"
+    },
+    {
+        "end_time": "2026-08-12T22:00:00+05:30",
+        "host": "codechef.com",
+        "key": "START251",
+        "rid": 2,
+        "start_time": "2026-08-12T20:00:00+05:30",
+        "timezone": "UTC",
+        "title": "Starters 251",
+        "url": "https://www.codechef.com/START251"
+    }
+]

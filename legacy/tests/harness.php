@@ -16,6 +16,128 @@ function fixture_resource_component($host)
     return str_replace('%2F', '__', $component);
 }
 
+function fixture_http_cache_archive_path($fixture_dir)
+{
+    return $fixture_dir . '/httpcache.json.gz';
+}
+
+function fixture_validate_http_cache_path($path)
+{
+    if (
+        !is_string($path)
+        || $path === ''
+        || $path[0] === '/'
+        || strpos($path, '\\') !== false
+        || strpos($path, '//') !== false
+        || preg_match('#(?:^|/)\.{1,2}(?:/|$)#', $path)
+    ) {
+        throw new RuntimeException('invalid HTTP cache archive path: ' . var_export($path, true));
+    }
+    return $path;
+}
+
+function fixture_pack_http_cache($cache_dir, $archive_file)
+{
+    if (!is_dir($cache_dir)) {
+        throw new RuntimeException("missing HTTP cache directory: $cache_dir");
+    }
+
+    $files = [];
+    $iterator = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($cache_dir, FilesystemIterator::SKIP_DOTS),
+    );
+    foreach ($iterator as $file) {
+        if (!$file->isFile()) {
+            continue;
+        }
+        $relative_path = str_replace('\\', '/', substr($file->getPathname(), strlen($cache_dir) + 1));
+        $content = file_get_contents($file->getPathname());
+        if ($content === false) {
+            throw new RuntimeException("failed to read HTTP cache file: {$file->getPathname()}");
+        }
+        if (substr($relative_path, -3) === '.gz') {
+            $content = gzdecode($content);
+            if ($content === false) {
+                throw new RuntimeException("invalid gzip HTTP cache file: {$file->getPathname()}");
+            }
+            $relative_path = substr($relative_path, 0, -3);
+        }
+        $relative_path = fixture_validate_http_cache_path($relative_path);
+        if (array_key_exists($relative_path, $files)) {
+            throw new RuntimeException("duplicate HTTP cache archive path: $relative_path");
+        }
+        $files[$relative_path] = base64_encode($content);
+    }
+    ksort($files, SORT_STRING);
+
+    $json = json_encode(
+        ['files' => $files, 'version' => 1],
+        JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES,
+    );
+    if ($json === false) {
+        throw new RuntimeException('failed to encode HTTP cache archive');
+    }
+    $compressed = gzencode($json . "\n", 9);
+    if ($compressed === false || file_put_contents($archive_file, $compressed) === false) {
+        throw new RuntimeException("failed to write HTTP cache archive: $archive_file");
+    }
+    return count($files);
+}
+
+function fixture_read_http_cache_archive($archive_file)
+{
+    if (!file_exists($archive_file)) {
+        throw new RuntimeException("missing HTTP cache archive: $archive_file");
+    }
+    $json = gzdecode(file_get_contents($archive_file));
+    if ($json === false) {
+        throw new RuntimeException("invalid gzip HTTP cache archive: $archive_file");
+    }
+    $archive = json_decode($json, true);
+    if (!is_array($archive) || !isset($archive['version']) || $archive['version'] !== 1 || !isset($archive['files']) || !is_array($archive['files'])) {
+        throw new RuntimeException("unsupported HTTP cache archive format: $archive_file");
+    }
+
+    $files = [];
+    ksort($archive['files'], SORT_STRING);
+    foreach ($archive['files'] as $relative_path => $encoded_content) {
+        $relative_path = fixture_validate_http_cache_path($relative_path);
+        if (!is_string($encoded_content)) {
+            throw new RuntimeException("invalid HTTP cache archive content for $relative_path");
+        }
+        $content = base64_decode($encoded_content, true);
+        if ($content === false) {
+            throw new RuntimeException("invalid HTTP cache archive content for $relative_path");
+        }
+        $files[$relative_path] = $content;
+    }
+    return $files;
+}
+
+function fixture_unpack_http_cache($archive_file, $cache_dir)
+{
+    if (!is_dir($cache_dir) && !mkdir($cache_dir, 0777, true)) {
+        throw new RuntimeException("failed to create HTTP cache directory: $cache_dir");
+    }
+    foreach (fixture_read_http_cache_archive($archive_file) as $relative_path => $content) {
+        $path = $cache_dir . '/' . $relative_path;
+        $parent = dirname($path);
+        if (!is_dir($parent) && !mkdir($parent, 0777, true)) {
+            throw new RuntimeException("failed to create HTTP cache parent directory: $parent");
+        }
+        if (file_put_contents($path, $content) === false) {
+            throw new RuntimeException("failed to unpack HTTP cache file: $relative_path");
+        }
+    }
+}
+
+function fixture_materialize_http_cache($fixture_dir)
+{
+    $cache_dir = sys_get_temp_dir() . '/clist-schedule-httpcache-' . bin2hex(random_bytes(8));
+    fixture_unpack_http_cache(fixture_http_cache_archive_path($fixture_dir), $cache_dir);
+    return $cache_dir;
+}
+
 function fixture_load_meta($fixture_dir)
 {
     $meta_file = $fixture_dir . '/meta.json';
@@ -297,6 +419,9 @@ function fixture_sanitize_recording($fixture_dir)
             continue;
         }
         $path = $file->getPathname();
+        if ($path === fixture_http_cache_archive_path($fixture_dir)) {
+            continue;
+        }
         $compressed = substr($path, -3) === '.gz';
         $content = file_get_contents($path);
         if ($compressed) {
@@ -330,11 +455,15 @@ function fixture_validate_content($content, $relative_path, $meta)
 function fixture_validate_recording($fixture_dir)
 {
     $meta = fixture_load_meta($fixture_dir);
+    $archive_file = fixture_http_cache_archive_path($fixture_dir);
     $iterator = new RecursiveIteratorIterator(
         new RecursiveDirectoryIterator($fixture_dir, FilesystemIterator::SKIP_DOTS),
     );
     foreach ($iterator as $file) {
         if (!$file->isFile()) {
+            continue;
+        }
+        if ($file->getPathname() === $archive_file) {
             continue;
         }
         $relative_path = substr($file->getPathname(), strlen($fixture_dir) + 1);
@@ -348,6 +477,16 @@ function fixture_validate_recording($fixture_dir)
         $issue = fixture_validate_content($content, $relative_path, $meta);
         if ($issue !== null) {
             throw new RuntimeException("refusing to keep a potential credential in $relative_path: $issue");
+        }
+    }
+
+    if (file_exists($archive_file)) {
+        foreach (fixture_read_http_cache_archive($archive_file) as $relative_path => $content) {
+            $relative_path = 'httpcache/' . $relative_path;
+            $issue = fixture_validate_content($content, $relative_path, $meta);
+            if ($issue !== null) {
+                throw new RuntimeException("refusing to keep a potential credential in $relative_path: $issue");
+            }
         }
     }
 }
@@ -437,10 +576,10 @@ function fixture_exec_child($command, &$stdout, &$stderr)
     return proc_close($process);
 }
 
-function fixture_module_command($fixture_dir, $mode, $use_faketime)
+function fixture_module_command($fixture_dir, $mode, $use_faketime, $cache_dir = null)
 {
     $command = 'CURLEXEC_CACHE_MODE=' . escapeshellarg($mode);
-    $command .= ' CURLEXEC_CACHE_DIR=' . escapeshellarg($fixture_dir . '/httpcache');
+    $command .= ' CURLEXEC_CACHE_DIR=' . escapeshellarg($cache_dir === null ? $fixture_dir . '/httpcache' : $cache_dir);
     $command .= ' TZ=UTC';
     if ($use_faketime) {
         $meta = fixture_load_meta($fixture_dir);

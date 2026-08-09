@@ -1,0 +1,68 @@
+{
+    "host": "codeforces.com",
+    "rid": 1,
+    "path": "./module/codeforces.com/index.php",
+    "url": "https://codeforces.com/contests",
+    "parse_url": "https://codeforces.com/contests?locale=en",
+    "timezone": "Europe/Moscow",
+    "api_url": null,
+    "info": {
+        "ratings": {
+            "adjustment": {
+                "deltas": [
+                    900,
+                    550,
+                    300,
+                    150,
+                    50,
+                    0
+                ],
+                "filter": {
+                    "field": "registrationTimeSeconds",
+                    "value": 1590278400,
+                    "operator": "gt"
+                }
+            }
+        },
+        "accounts": {
+            "delta": {
+                "days": 100
+            },
+            "force_on_new_year": true
+        },
+        "standings": {
+            "timeline": {
+                "time_factor": {
+                    "1": [
+                        60
+                    ],
+                    "2": [
+                        3600,
+                        60
+                    ],
+                    "3": [
+                        86400,
+                        3600,
+                        60
+                    ]
+                },
+                "attempt_penalty": 600,
+                "challenge_score": false,
+                "penalty_score_more": 50,
+                "full_score_reduction_factor": 0.004,
+                "guaranteed_full_score_factor": 0.3
+            }
+        },
+        "get_events": {
+            "colors": {
+                "darken": "#244416",
+                "lighten": "#DAEFD1"
+            }
+        },
+        "default_variables": {
+            "min_n_participations": "6"
+        }
+    },
+    "parse_full_list": false,
+    "recorded_at": "2026-08-06 17:54:38"
+}

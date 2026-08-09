@@ -25,6 +25,8 @@ from ranking.tests.parser_regression import (
     discover_parser_fixtures,
     fixture_path_for_contest,
     fixture_resource_component,
+    materialized_http_cache,
+    pack_http_cache,
     parser_fixture_path,
 )
 from utils.attrdict import AttrDict
@@ -35,7 +37,11 @@ class ParserFixtureCoverageTest(SimpleTestCase):
     def test_load_fixture_coverage(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
             fixture_path = Path(temporary_directory) / "1" / "2"
-            (fixture_path / "httpcache").mkdir(parents=True)
+            cache_path = Path(temporary_directory) / "recording-cache"
+            cache_path.mkdir()
+            (cache_path / "page.html").write_text("cached response")
+            fixture_path.mkdir(parents=True)
+            pack_http_cache(cache_path, fixture_path / "httpcache.json.gz")
             (fixture_path / "expected_standings.json").write_text("{}")
             (fixture_path / "db.json").write_text(
                 json.dumps([
@@ -562,6 +568,20 @@ class ParserFixtureStatisticsSelectionTest(TestCase):
             with pytest.raises(CommandError, match="refusing to keep potentially sensitive data"):
                 Command().validate_recording(fixture_path)
 
+    def test_validation_checks_bundled_http_cache_content(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            fixture_path = Path(temporary_directory)
+            cache_path = fixture_path / "httpcache"
+            cache_path.mkdir()
+            payload_path = cache_path / "payload.json"
+            payload_path.write_text('{"contact": "alice@example.com"}')
+            pack_http_cache(cache_path, fixture_path / "httpcache.json.gz")
+            payload_path.unlink()
+            cache_path.rmdir()
+
+            with pytest.raises(CommandError, match=r"potentially sensitive data in httpcache/payload\.json"):
+                Command().validate_recording(fixture_path)
+
 
 class ParserFixtureRecordingTest(SimpleTestCase):
     def test_gzip_file_is_deterministic(self):
@@ -659,7 +679,7 @@ class ParserFixtureRecordingTest(SimpleTestCase):
         assert "write golden standings snapshot" in output
         assert "run immediate offline replay" in output
 
-    def test_recorded_fixture_files_are_gzipped(self):
+    def test_recorded_fixture_bundles_http_cache(self):
         command = Command()
         command.serialize_database_fixture = Mock(return_value=[])
         command.select_statistics_for_fixture = Mock(
@@ -689,10 +709,12 @@ class ParserFixtureRecordingTest(SimpleTestCase):
 
             assert not (fixture_path / "expected_standings.json").exists()
             assert (fixture_path / "expected_standings.json.gz").is_file()
-            assert not (fixture_path / "httpcache" / "page.html").exists()
-            assert (fixture_path / "httpcache" / "page.html.gz").is_file()
+            assert not (fixture_path / "httpcache").exists()
+            assert (fixture_path / "httpcache.json.gz").is_file()
             with gzip.open(fixture_path / "expected_standings.json.gz", "rt") as input_file:
                 assert json.load(input_file)["result"] == {"alice": {"solving": 1}}
+            with materialized_http_cache(fixture_path) as cache_path:
+                assert json.loads((cache_path / "page.html").read_text()) == {"ok": True}
 
     def test_recording_sanitizes_cache_and_expected_standings(self):
         command = Command()
@@ -731,8 +753,8 @@ class ParserFixtureRecordingTest(SimpleTestCase):
 
             with gzip.open(fixture_path / "expected_standings.json.gz", "rt") as input_file:
                 expected = json.load(input_file)
-            with gzip.open(fixture_path / "httpcache" / "page.html.gz", "rt") as input_file:
-                cached = json.load(input_file)
+            with materialized_http_cache(fixture_path) as cache_path:
+                cached = json.loads((cache_path / "page.html").read_text())
 
         assert expected["result"]["alice"]["name"] == "<redacted-email>"
         assert cached["name"] == "<redacted-email>"
@@ -989,7 +1011,7 @@ class ParserFixtureSuggestionsTest(TestCase):
         with tempfile.TemporaryDirectory() as temporary_directory:
             fixture_root = Path(temporary_directory)
             fixture_path = fixture_root / str(newer.resource_id) / str(newer.pk)
-            (fixture_path / "httpcache").mkdir(parents=True)
+            fixture_path.mkdir(parents=True)
             (fixture_path / "expected_standings.json").write_text("{}")
             (fixture_path / "db.json").write_text(
                 json.dumps([

@@ -1,0 +1,502 @@
+[
+    {
+        "end_time": "2026-08-05T20:00:00+01:00",
+        "host": "ctftime.org",
+        "key": "3328",
+        "rid": 70,
+        "start_time": "2026-08-05T08:00:00+01:00",
+        "timezone": "UTC",
+        "title": "Kali Team - CTF 26",
+        "url": "https://ctftime.org/event/3328/"
+    },
+    {
+        "end_time": "2026-08-09T01:00:00+01:00",
+        "host": "ctftime.org",
+        "key": "3305",
+        "rid": 70,
+        "start_time": "2026-08-07T01:00:00+01:00",
+        "timezone": "UTC",
+        "title": "RoboHack AI CTF (Robotic Hacking Community at DEFCON 34)",
+        "url": "https://ctftime.org/event/3305/"
+    },
+    {
+        "end_time": "2026-08-09T02:00:00+01:00",
+        "host": "ctftime.org",
+        "key": "3382",
+        "rid": 70,
+        "start_time": "2026-08-08T14:00:00+01:00",
+        "timezone": "UTC",
+        "title": "The heart of Sysola",
+        "url": "https://ctftime.org/event/3382/"
+    },
+    {
+        "end_time": "2026-08-09T19:00:00+01:00",
+        "host": "ctftime.org",
+        "key": "3342",
+        "rid": 70,
+        "start_time": "2026-08-06T18:00:00+01:00",
+        "timezone": "UTC",
+        "title": "AEROSPACE VILLAGE STARPWN CTF",
+        "url": "https://ctftime.org/event/3342/"
+    },
+    {
+        "end_time": "2026-08-09T20:00:00+01:00",
+        "host": "ctftime.org",
+        "key": "3322",
+        "rid": 70,
+        "start_time": "2026-08-07T17:00:00+01:00",
+        "timezone": "UTC",
+        "title": "DEF CON CTF 2026",
+        "url": "https://ctftime.org/event/3322/"
+    },
+    {
+        "end_time": "2026-08-10T01:00:00+01:00",
+        "host": "ctftime.org",
+        "key": "3052",
+        "rid": 70,
+        "start_time": "2026-08-08T01:00:00+01:00",
+        "timezone": "UTC",
+        "title": "scriptCTF 2026",
+        "url": "https://ctftime.org/event/3052/"
+    },
+    {
+        "end_time": "2026-08-10T01:00:00+01:00",
+        "host": "ctftime.org",
+        "key": "3148",
+        "rid": 70,
+        "start_time": "2026-08-08T01:00:00+01:00",
+        "timezone": "UTC",
+        "title": "UIUCTF 2026",
+        "url": "https://ctftime.org/event/3148/"
+    },
+    {
+        "end_time": "2026-08-14T21:00:00+01:00",
+        "host": "ctftime.org",
+        "key": "3330",
+        "rid": 70,
+        "start_time": "2026-08-14T12:00:00+01:00",
+        "timezone": "UTC",
+        "title": "Thryve CTF 2026",
+        "url": "https://ctftime.org/event/3330/"
+    },
+    {
+        "end_time": "2026-08-16T08:30:00+01:00",
+        "host": "ctftime.org",
+        "key": "3387",
+        "rid": 70,
+        "start_time": "2026-08-15T08:30:00+01:00",
+        "timezone": "UTC",
+        "title": "0xV01D CTF 2026 V2",
+        "url": "https://ctftime.org/event/3387/"
+    },
+    {
+        "end_time": "2026-08-16T13:00:00+01:00",
+        "host": "ctftime.org",
+        "key": "3343",
+        "rid": 70,
+        "start_time": "2026-08-15T01:00:01+01:00",
+        "timezone": "UTC",
+        "title": "THJCC CTF 2026 summer",
+        "url": "https://ctftime.org/event/3343/"
+    },
+    {
+        "end_time": "2026-08-17T06:00:00+01:00",
+        "host": "ctftime.org",
+        "key": "3318",
+        "rid": 70,
+        "start_time": "2026-08-15T01:00:00+01:00",
+        "timezone": "UTC",
+        "title": "HackHowl 2026",
+        "url": "https://ctftime.org/event/3318/"
+    },
+    {
+        "end_time": "2026-08-17T13:00:00+01:00",
+        "host": "ctftime.org",
+        "key": "3181",
+        "rid": 70,
+        "start_time": "2026-08-14T13:00:00+01:00",
+        "timezone": "UTC",
+        "title": "gaslightCTF 2026",
+        "url": "https://ctftime.org/event/3181/"
+    },
+    {
+        "end_time": "2026-08-22T15:00:00+01:00",
+        "host": "ctftime.org",
+        "key": "3159",
+        "rid": 70,
+        "start_time": "2026-08-21T15:00:00+01:00",
+        "timezone": "UTC",
+        "title": "PwnSec CTF 2026",
+        "url": "https://ctftime.org/event/3159/"
+    },
+    {
+        "end_time": "2026-08-23T02:00:00+01:00",
+        "host": "ctftime.org",
+        "key": "3379",
+        "rid": 70,
+        "start_time": "2026-08-22T02:00:00+01:00",
+        "timezone": "UTC",
+        "title": "Haruulzangi CTF 2026 Qualifier",
+        "url": "https://ctftime.org/event/3379/"
+    },
+    {
+        "end_time": "2026-08-23T05:00:00+01:00",
+        "host": "ctftime.org",
+        "key": "3370",
+        "rid": 70,
+        "start_time": "2026-08-21T17:00:00+01:00",
+        "timezone": "UTC",
+        "title": "z0d1ak CTF Qualifiers",
+        "url": "https://ctftime.org/event/3370/"
+    },
+    {
+        "end_time": "2026-08-23T13:00:00+01:00",
+        "host": "ctftime.org",
+        "key": "3065",
+        "rid": 70,
+        "start_time": "2026-08-21T13:00:00+01:00",
+        "timezone": "UTC",
+        "title": "BrunnerCTF 2026",
+        "url": "https://ctftime.org/event/3065/"
+    },
+    {
+        "end_time": "2026-08-30T01:00:00+01:00",
+        "host": "ctftime.org",
+        "key": "3290",
+        "rid": 70,
+        "start_time": "2026-08-29T01:00:00+01:00",
+        "timezone": "UTC",
+        "title": "COMPFEST CTF 2026",
+        "url": "https://ctftime.org/event/3290/"
+    },
+    {
+        "end_time": "2026-08-30T06:00:00+01:00",
+        "host": "ctftime.org",
+        "key": "3347",
+        "rid": 70,
+        "start_time": "2026-08-29T15:00:00+01:00",
+        "timezone": "UTC",
+        "title": "UND CyberHawks National CTF Competition 2026 Qualifiers",
+        "url": "https://ctftime.org/event/3347/"
+    },
+    {
+        "end_time": "2026-08-30T08:00:00+01:00",
+        "host": "ctftime.org",
+        "key": "3385",
+        "rid": 70,
+        "start_time": "2026-08-29T08:00:00+01:00",
+        "timezone": "UTC",
+        "title": "BlackHat MEA CTF Qualification 2026",
+        "url": "https://ctftime.org/event/3385/"
+    },
+    {
+        "end_time": "2026-08-30T15:00:00+01:00",
+        "host": "ctftime.org",
+        "key": "3033",
+        "rid": 70,
+        "start_time": "2026-08-29T15:00:00+01:00",
+        "timezone": "UTC",
+        "title": "ASIS CTF Quals 2026",
+        "url": "https://ctftime.org/event/3033/"
+    },
+    {
+        "end_time": "2026-09-06T10:00:00+01:00",
+        "host": "ctftime.org",
+        "key": "3389",
+        "rid": 70,
+        "start_time": "2026-09-06T01:00:00+01:00",
+        "timezone": "UTC",
+        "title": "SUNCTF 2026",
+        "url": "https://ctftime.org/event/3389/"
+    },
+    {
+        "end_time": "2026-09-06T11:00:00+01:00",
+        "host": "ctftime.org",
+        "key": "3344",
+        "rid": 70,
+        "start_time": "2026-09-05T11:00:00+01:00",
+        "timezone": "UTC",
+        "title": "TFC CTF 2026",
+        "url": "https://ctftime.org/event/3344/"
+    },
+    {
+        "end_time": "2026-09-06T17:00:00+01:00",
+        "host": "ctftime.org",
+        "key": "3097",
+        "rid": 70,
+        "start_time": "2026-09-04T17:00:00+01:00",
+        "timezone": "UTC",
+        "title": "NNS CTF 2026",
+        "url": "https://ctftime.org/event/3097/"
+    },
+    {
+        "end_time": "2026-09-12T13:00:00+01:00",
+        "host": "ctftime.org",
+        "key": "3360",
+        "rid": 70,
+        "start_time": "2026-09-11T13:00:00+01:00",
+        "timezone": "UTC",
+        "title": "CAT CTF 26",
+        "url": "https://ctftime.org/event/3360/"
+    },
+    {
+        "end_time": "2026-09-13T11:00:00+01:00",
+        "host": "ctftime.org",
+        "key": "3145",
+        "rid": 70,
+        "start_time": "2026-09-11T11:00:00+01:00",
+        "timezone": "UTC",
+        "title": "K17 CTF 2026",
+        "url": "https://ctftime.org/event/3145/"
+    },
+    {
+        "end_time": "2026-09-13T23:00:00+01:00",
+        "host": "ctftime.org",
+        "key": "3348",
+        "rid": 70,
+        "start_time": "2026-09-11T23:00:00+01:00",
+        "timezone": "UTC",
+        "title": "PatriotCTF 2026",
+        "url": "https://ctftime.org/event/3348/"
+    },
+    {
+        "end_time": "2026-09-17T16:00:00+01:00",
+        "host": "ctftime.org",
+        "key": "3265",
+        "rid": 70,
+        "start_time": "2026-09-17T06:00:00+01:00",
+        "timezone": "UTC",
+        "title": "VolgaCTF 2026 Final",
+        "url": "https://ctftime.org/event/3265/"
+    },
+    {
+        "end_time": "2026-09-18T17:30:00+01:00",
+        "host": "ctftime.org",
+        "key": "3346",
+        "rid": 70,
+        "start_time": "2026-09-18T05:30:00+01:00",
+        "timezone": "UTC",
+        "title": "NullOrigin CTF Qualifiers",
+        "url": "https://ctftime.org/event/3346/"
+    },
+    {
+        "end_time": "2026-09-20T04:30:00+01:00",
+        "host": "ctftime.org",
+        "key": "3326",
+        "rid": 70,
+        "start_time": "2026-09-19T04:30:00+01:00",
+        "timezone": "UTC",
+        "title": "WATCHLIST",
+        "url": "https://ctftime.org/event/3326/"
+    },
+    {
+        "end_time": "2026-09-20T11:00:00+01:00",
+        "host": "ctftime.org",
+        "key": "3392",
+        "rid": 70,
+        "start_time": "2026-09-18T11:00:00+01:00",
+        "timezone": "UTC",
+        "title": "DefCamp Capture the Flag (D-CTF) 2026 Quals",
+        "url": "https://ctftime.org/event/3392/"
+    },
+    {
+        "end_time": "2026-09-20T13:00:00+01:00",
+        "host": "ctftime.org",
+        "key": "3365",
+        "rid": 70,
+        "start_time": "2026-09-19T13:00:00+01:00",
+        "timezone": "UTC",
+        "title": "07CTF 2026",
+        "url": "https://ctftime.org/event/3365/"
+    },
+    {
+        "end_time": "2026-09-20T17:00:00+01:00",
+        "host": "ctftime.org",
+        "key": "3355",
+        "rid": 70,
+        "start_time": "2026-09-18T17:00:00+01:00",
+        "timezone": "UTC",
+        "title": "CSAW CTF Qualification Round 2026",
+        "url": "https://ctftime.org/event/3355/"
+    },
+    {
+        "end_time": "2026-09-26T22:00:00+01:00",
+        "host": "ctftime.org",
+        "key": "3312",
+        "rid": 70,
+        "start_time": "2026-09-26T13:00:00+01:00",
+        "timezone": "UTC",
+        "title": "FAUST CTF 2026",
+        "url": "https://ctftime.org/event/3312/"
+    },
+    {
+        "end_time": "2026-09-27T16:30:00+01:00",
+        "host": "ctftime.org",
+        "key": "3093",
+        "rid": 70,
+        "start_time": "2026-09-26T04:30:00+01:00",
+        "timezone": "UTC",
+        "title": "H7CTF 2026 Quals",
+        "url": "https://ctftime.org/event/3093/"
+    },
+    {
+        "end_time": "2026-10-03T23:00:00+01:00",
+        "host": "ctftime.org",
+        "key": "3352",
+        "rid": 70,
+        "start_time": "2026-10-03T15:00:00+01:00",
+        "timezone": "UTC",
+        "title": "CubeCTF 2026",
+        "url": "https://ctftime.org/event/3352/"
+    },
+    {
+        "end_time": "2026-10-04T04:00:00+01:00",
+        "host": "ctftime.org",
+        "key": "3293",
+        "rid": 70,
+        "start_time": "2026-10-03T16:00:00+01:00",
+        "timezone": "UTC",
+        "title": "CDCTF 2026",
+        "url": "https://ctftime.org/event/3293/"
+    },
+    {
+        "end_time": "2026-10-04T22:00:00+01:00",
+        "host": "ctftime.org",
+        "key": "3364",
+        "rid": 70,
+        "start_time": "2026-10-03T10:00:00+01:00",
+        "timezone": "UTC",
+        "title": "Securinets CTF Quals 2026",
+        "url": "https://ctftime.org/event/3364/"
+    },
+    {
+        "end_time": "2026-10-14T22:00:00+01:00",
+        "host": "ctftime.org",
+        "key": "3354",
+        "rid": 70,
+        "start_time": "2026-10-10T22:00:00+01:00",
+        "timezone": "UTC",
+        "title": "GaianSpace CTF 2026",
+        "url": "https://ctftime.org/event/3354/"
+    },
+    {
+        "end_time": "2026-10-19T01:00:00+01:00",
+        "host": "ctftime.org",
+        "key": "3279",
+        "rid": 70,
+        "start_time": "2026-10-17T15:00:00+01:00",
+        "timezone": "UTC",
+        "title": "DEADFACE CTF 2026",
+        "url": "https://ctftime.org/event/3279/"
+    },
+    {
+        "end_time": "2026-10-25T06:30:00Z",
+        "host": "ctftime.org",
+        "key": "3094",
+        "rid": 70,
+        "start_time": "2026-10-24T07:30:00+01:00",
+        "timezone": "UTC",
+        "title": "H7CTF 2026 Finals",
+        "url": "https://ctftime.org/event/3094/"
+    },
+    {
+        "end_time": "2026-10-25T18:00:00Z",
+        "host": "ctftime.org",
+        "key": "3207",
+        "rid": 70,
+        "start_time": "2026-10-23T19:00:00+01:00",
+        "timezone": "UTC",
+        "title": "Hack.lu CTF 2026",
+        "url": "https://ctftime.org/event/3207/"
+    },
+    {
+        "end_time": "2026-11-06T22:30:00Z",
+        "host": "ctftime.org",
+        "key": "3242",
+        "rid": 70,
+        "start_time": "2026-11-06T18:15:00Z",
+        "timezone": "UTC",
+        "title": "BlackAlps CTF 2026",
+        "url": "https://ctftime.org/event/3242/"
+    },
+    {
+        "end_time": "2026-11-08T13:00:00Z",
+        "host": "ctftime.org",
+        "key": "3333",
+        "rid": 70,
+        "start_time": "2026-11-06T13:00:00Z",
+        "timezone": "UTC",
+        "title": "CSCTF 2026",
+        "url": "https://ctftime.org/event/3333/"
+    },
+    {
+        "end_time": "2026-11-09T12:00:00Z",
+        "host": "ctftime.org",
+        "key": "3331",
+        "rid": 70,
+        "start_time": "2026-11-06T12:00:00Z",
+        "timezone": "UTC",
+        "title": "PINK+ CTF 2026",
+        "url": "https://ctftime.org/event/3331/"
+    },
+    {
+        "end_time": "2026-11-15T21:00:00Z",
+        "host": "ctftime.org",
+        "key": "3082",
+        "rid": 70,
+        "start_time": "2026-11-14T09:00:00Z",
+        "timezone": "UTC",
+        "title": "Platypwn 2026",
+        "url": "https://ctftime.org/event/3082/"
+    },
+    {
+        "end_time": "2026-11-21T18:00:00Z",
+        "host": "ctftime.org",
+        "key": "3337",
+        "rid": 70,
+        "start_time": "2026-11-20T18:00:00Z",
+        "timezone": "UTC",
+        "title": "GlacierCTF 2026",
+        "url": "https://ctftime.org/event/3337/"
+    },
+    {
+        "end_time": "2026-11-22T21:00:00Z",
+        "host": "ctftime.org",
+        "key": "3118",
+        "rid": 70,
+        "start_time": "2026-11-20T21:00:00Z",
+        "timezone": "UTC",
+        "title": "SwampCTF 2026",
+        "url": "https://ctftime.org/event/3118/"
+    },
+    {
+        "end_time": "2026-12-03T15:14:59Z",
+        "host": "ctftime.org",
+        "key": "3386",
+        "rid": 70,
+        "start_time": "2026-12-01T15:14:59Z",
+        "timezone": "UTC",
+        "title": "BlackHat MEA CTF Final 2026",
+        "url": "https://ctftime.org/event/3386/"
+    },
+    {
+        "end_time": "2026-12-13T12:00:00Z",
+        "host": "ctftime.org",
+        "key": "3367",
+        "rid": 70,
+        "start_time": "2026-12-11T12:00:00Z",
+        "timezone": "UTC",
+        "title": "niteCTF 2026",
+        "url": "https://ctftime.org/event/3367/"
+    },
+    {
+        "end_time": "2026-12-28T14:00:00Z",
+        "host": "ctftime.org",
+        "key": "3062",
+        "rid": 70,
+        "start_time": "2026-12-27T14:00:00Z",
+        "timezone": "UTC",
+        "title": "ASIS CTF Finals 2026",
+        "url": "https://ctftime.org/event/3062/"
+    }
+]

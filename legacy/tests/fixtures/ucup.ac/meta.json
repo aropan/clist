@@ -1,0 +1,38 @@
+{
+    "host": "ucup.ac",
+    "rid": 139,
+    "path": "./module/ucup.ac/index.php",
+    "url": "https://ucup.ac/",
+    "parse_url": "https://ucup.ac/",
+    "timezone": null,
+    "api_url": null,
+    "info": {
+        "standings": {
+            "timeline": {
+                "time_factor": {
+                    "1": [
+                        1
+                    ],
+                    "2": [
+                        3600,
+                        60
+                    ],
+                    "3": [
+                        3600,
+                        60,
+                        1
+                    ]
+                }
+            },
+            "name_instead_key": true
+        },
+        "get_events": {
+            "colors": {
+                "darken": "#441623",
+                "lighten": "#EFD0D9"
+            }
+        }
+    },
+    "parse_full_list": false,
+    "recorded_at": "2026-08-08 17:01:23"
+}
