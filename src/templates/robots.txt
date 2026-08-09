@@ -1,5 +1,3 @@
-# Don't forget about Cloudflare's custom robots.txt rule.
-
 User-agent: *
 Sitemap: https://clist.by/sitemap.xml
 

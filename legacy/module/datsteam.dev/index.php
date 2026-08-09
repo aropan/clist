@@ -30,8 +30,8 @@ foreach ($matches as $contest) {
     }
 
     $event_url = 'https://gamethon.datsteam.dev/' . strtolower($title);
-    $headers = get_headers($event_url);
-    if (strpos($headers[0], '200') !== false) {
+    curlexec($event_url, null, ['no_body' => true]);
+    if (response_code() == 200) {
         $url = $event_url;
     } elseif (isset($info['website'])) {
         $url = $info['website'];

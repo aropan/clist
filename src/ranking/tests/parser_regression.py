@@ -1,20 +1,23 @@
 import gzip
 import json
 import os
+import time
 import urllib.request
 from contextlib import ExitStack, contextmanager
 from copy import deepcopy
 from hashlib import sha256
-from io import BytesIO
+from io import BytesIO, TextIOWrapper
 from pathlib import Path
 from typing import NamedTuple
 from unittest.mock import patch
-from urllib.parse import quote, urlsplit, urlunsplit
+from urllib.parse import parse_qsl, quote, urlencode, urlsplit, urlunsplit
 
 import requests
 from django.core.management import call_command
+from django.db.models import F
 from django.test import TestCase
 from lazy_object_proxy import Proxy as LazyProxy
+from ratelimiter import RateLimiter
 
 from clist.models import Contest
 from ranking.management.modules.common import REQ
@@ -63,8 +66,17 @@ def fixture_component(value):
     return quote(str(value), safe="._-")
 
 
+def fixture_resource_component(host):
+    component = quote(str(host), safe=".-").replace("_", "%5F")
+    return component.replace("%2F", "__")
+
+
+def parser_fixture_path(resource_host, contest_id, root=PARSER_FIXTURES_ROOT):
+    return Path(root) / fixture_resource_component(resource_host) / fixture_component(contest_id)
+
+
 def fixture_path_for_contest(contest):
-    return PARSER_FIXTURES_ROOT / fixture_component(contest.resource_id) / fixture_component(contest.pk)
+    return parser_fixture_path(contest.resource.host, contest.pk)
 
 
 def discover_parser_fixtures(root=PARSER_FIXTURES_ROOT):
@@ -121,13 +133,101 @@ def normalize_standings(standings):
     return json.loads(json.dumps(normalized, ensure_ascii=False, sort_keys=True, default=str))
 
 
+def _diff_path(path, key):
+    if isinstance(key, str) and key.isidentifier():
+        return f"{path}.{key}"
+    return f"{path}[{key!r}]"
+
+
+def _diff_value(value, limit=160):
+    rendered = json.dumps(value, ensure_ascii=False, sort_keys=True, default=str)
+    if len(rendered) > limit:
+        return f"{rendered[:limit]}..."
+    return rendered
+
+
+def standings_diff_lines(expected, actual, limit=5):
+    lines = []
+
+    def add(message):
+        if len(lines) < limit:
+            lines.append(message)
+
+    def compare(expected_value, actual_value, path):
+        if len(lines) >= limit:
+            return
+        if type(expected_value) is not type(actual_value):
+            add(
+                f"{path}: type differs; expected={type(expected_value).__name__} "
+                f"{_diff_value(expected_value)}, actual={type(actual_value).__name__} {_diff_value(actual_value)}"
+            )
+            return
+        if isinstance(expected_value, dict):
+            expected_keys = set(expected_value)
+            actual_keys = set(actual_value)
+            for key in sorted(expected_keys - actual_keys, key=str):
+                add(f"{_diff_path(path, key)}: missing in actual; expected={_diff_value(expected_value[key])}")
+            for key in sorted(actual_keys - expected_keys, key=str):
+                add(f"{_diff_path(path, key)}: unexpected in actual; actual={_diff_value(actual_value[key])}")
+            for key in sorted(expected_keys & actual_keys, key=str):
+                compare(expected_value[key], actual_value[key], _diff_path(path, key))
+            return
+        if isinstance(expected_value, list):
+            if len(expected_value) != len(actual_value):
+                add(f"{path}: length differs; expected={len(expected_value)}, actual={len(actual_value)}")
+            for index, (expected_item, actual_item) in enumerate(zip(expected_value, actual_value)):
+                compare(expected_item, actual_item, f"{path}[{index}]")
+            return
+        if expected_value != actual_value:
+            add(f"{path}: value differs; expected={_diff_value(expected_value)}, actual={_diff_value(actual_value)}")
+
+    compare(expected, actual, "$")
+    return lines
+
+
+def assert_standings_equal(expected, actual, message, diff_limit=5):
+    if expected == actual:
+        return
+    differences = standings_diff_lines(expected, actual, limit=diff_limit)
+    detail = "\n".join(f"- {line}" for line in differences) or "- difference details unavailable"
+    raise AssertionError(f"{message}\nDifferences (up to {diff_limit}):\n{detail}")
+
+
+@contextmanager
+def open_deterministic_gzip(path, mode="wb", compresslevel=9):
+    if mode not in {"wb", "wt"}:
+        raise ValueError(f"unsupported gzip mode: {mode}")
+    with (
+        Path(path).open("wb") as raw_output,
+        gzip.GzipFile(
+            filename="",
+            mode="wb",
+            compresslevel=compresslevel,
+            fileobj=raw_output,
+            mtime=0,
+        ) as gzip_output,
+    ):
+        if mode == "wb":
+            yield gzip_output
+        else:
+            with TextIOWrapper(gzip_output, encoding="utf-8", newline="\n") as text_output:
+                yield text_output
+
+
 def write_json(path, data):
     path = Path(path)
     temporary_path = path.with_suffix(f"{path.suffix}.tmp")
-    opener = gzip.open if path.suffix == ".gz" else open
-    with opener(temporary_path, "wt") as output:
+
+    def write(output):
         json.dump(data, output, ensure_ascii=False, indent=2, sort_keys=True)
         output.write("\n")
+
+    if path.suffix == ".gz":
+        with open_deterministic_gzip(temporary_path, "wt") as output:
+            write(output)
+    else:
+        with temporary_path.open("w", encoding="utf-8", newline="\n") as output:
+            write(output)
     temporary_path.replace(path)
 
 
@@ -157,6 +257,18 @@ def _unexpected_requests_access(session, method, url, *args, **kwargs):
     return _unexpected_network_access(url)
 
 
+def _enter_rate_limiter_without_wait(rate_limiter):
+    return rate_limiter
+
+
+def _exit_rate_limiter_without_recording(_rate_limiter, *_args):
+    return None
+
+
+def _sleep_without_wait(*_args, **_kwargs):
+    return None
+
+
 def _module_requesters(plugin_module):
     requesters = [REQ.__wrapped__ if isinstance(REQ, LazyProxy) else REQ]
     for value in vars(plugin_module).values():
@@ -173,6 +285,28 @@ def _module_requesters(plugin_module):
 
 def _method_cache_key(method, url):
     return sha256(f"{method}:{url}".encode()).hexdigest()
+
+
+def _request_cache_url(url):
+    parsed = urlsplit(str(url))
+    query = parse_qsl(parsed.query, keep_blank_values=True)
+    cache_query = [(key, value) for key, value in query if key != "_"]
+    if cache_query == query:
+        return str(url)
+    return urlunsplit((parsed.scheme, parsed.netloc, parsed.path, urlencode(cache_query), parsed.fragment))
+
+
+def _post_cache_key(url, post):
+    if isinstance(post, bytes):
+        body = post
+    elif isinstance(post, str):
+        body = post.encode()
+    elif isinstance(post, dict):
+        body = urlencode(post, doseq=True).encode()
+    else:
+        body = json.dumps(post, sort_keys=True, default=str).encode()
+    body_hash = sha256(body).hexdigest()
+    return f"POST:{_request_cache_url(url)}:{body_hash}"
 
 
 @contextmanager
@@ -192,8 +326,20 @@ def use_parser_cache(plugin_module, cache_path, allow_network):
 
     try:
         with ExitStack() as stack:
+            original_get = requester.get
             original_head = requester.head
             original_geturl = requester.geturl
+
+            def cached_get(req, url, *args, **kwargs):
+                post = args[0] if args else kwargs.get("post")
+                if "md5_file_cache" not in kwargs:
+                    if post is not None:
+                        kwargs["md5_file_cache"] = _post_cache_key(url, post)
+                    else:
+                        cache_url = _request_cache_url(url)
+                        if cache_url != url:
+                            kwargs["md5_file_cache"] = cache_url
+                return original_get(req, url, *args, **kwargs)
 
             def cached_head(req, url):
                 key = _method_cache_key("HEAD", url)
@@ -228,9 +374,15 @@ def use_parser_cache(plugin_module, cache_path, allow_network):
                     return _unexpected_network_access(url)
                 return methods_cache[key]["result"]
 
+            stack.enter_context(patch.object(requester, "get", cached_get))
             stack.enter_context(patch.object(requester, "head", cached_head))
             stack.enter_context(patch.object(requester, "geturl", cached_geturl))
             if not allow_network:
+                stack.enter_context(patch.object(RateLimiter, "__enter__", _enter_rate_limiter_without_wait))
+                stack.enter_context(patch.object(RateLimiter, "__exit__", _exit_rate_limiter_without_recording))
+                if callable(getattr(plugin_module, "sleep", None)):
+                    stack.enter_context(patch.object(plugin_module, "sleep", _sleep_without_wait))
+                stack.enter_context(patch.object(time, "sleep", _sleep_without_wait))
                 stack.enter_context(patch.object(urllib.request.OpenerDirector, "open", _unexpected_opener_access))
                 stack.enter_context(patch("utils.requester.curl_response", side_effect=_unexpected_network_access))
                 stack.enter_context(patch.object(requests.sessions.Session, "request", _unexpected_requests_access))
@@ -259,11 +411,16 @@ def standings_context_from_statistics(statistics):
 def contest_standings_context(contest):
     from ranking.models import Statistics
 
-    statistics = Statistics.objects.filter(contest=contest).select_related("account").order_by("pk")
+    statistics = (
+        Statistics.objects.filter(contest=contest)
+        .select_related("account")
+        .order_by(F("place_as_int").asc(nulls_last=True), "pk")
+    )
     return standings_context_from_statistics(statistics)
 
 
 def get_standings(contest, cache_path, allow_network, users=None, statistics=None):
+    contest = Contest.objects.select_related("resource__module").get(pk=contest.pk)
     plugin_module = contest.resource.plugin
     with use_parser_cache(plugin_module, cache_path, allow_network=allow_network), REQ:
         plugin = plugin_module.Statistic(contest=contest)
@@ -279,8 +436,6 @@ def fixture_contest_pk(fixture_path):
 
 
 class ParserRegressionTestCase(TestCase):
-    maxDiff = None
-
     def run_fixture(self, fixture_path):
         fixture_path = Path(fixture_path)
         call_command("loaddata", fixture_path / "db.json", verbosity=0)
@@ -298,4 +453,4 @@ class ParserRegressionTestCase(TestCase):
         expected = read_json(fixture_file_path(fixture_path, "expected_standings.json"))
 
         relative_path = fixture_path.relative_to(PARSER_FIXTURES_ROOT)
-        self.assertEqual(expected, actual, f"parser regression mismatch for {relative_path}")  # noqa: PT009
+        assert_standings_equal(expected, actual, f"parser regression mismatch for {relative_path}")

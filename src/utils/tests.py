@@ -1,10 +1,85 @@
+import io
+import logging
+import sys
+import unittest
 from unittest import mock
 
+from django.core.management.commands.test import Command as TestCommand
 from django.test import SimpleTestCase
 from rq.job import JobStatus, validate_job_id
 
+from utils import is_interactive
 from utils.rq import get_resource_job_id, is_job_active
 from utils.strings import split_team_name_and_members
+from utils.test_runner import CompactTestResult, CompactTextTestRunner
+
+
+class IsInteractiveTest(SimpleTestCase):
+    def test_buffered_stdout_is_not_interactive(self):
+        with mock.patch("sys.stdout", io.StringIO()):
+            assert not is_interactive()
+
+
+class CompactTestRunnerTest(SimpleTestCase):
+    def test_buffer_is_enabled_by_default_and_can_be_disabled(self):
+        parser = TestCommand().create_parser("manage.py", "test")
+
+        assert parser.parse_args([]).buffer is True
+        assert parser.parse_args(["--buffer"]).buffer is True
+        assert parser.parse_args(["--no-buffer"]).buffer is False
+
+    def run_inner_test(self, test_function, logger):
+        runner_output = io.StringIO()
+        handler_output = io.StringIO()
+        handler = logging.StreamHandler(handler_output)
+        logger.addHandler(handler)
+        logger.setLevel(logging.DEBUG)
+        logger.propagate = False
+        self.addCleanup(logger.removeHandler, handler)
+
+        suite = unittest.TestSuite([unittest.FunctionTestCase(test_function)])
+        runner = CompactTextTestRunner(
+            stream=runner_output,
+            verbosity=1,
+            buffer=True,
+            resultclass=CompactTestResult,
+        )
+        result = runner.run(suite)
+        return result, runner_output.getvalue(), handler_output.getvalue()
+
+    def test_discards_logs_from_successful_test(self):
+        logger = logging.getLogger(f"{__name__}.successful")
+
+        def successful_test():
+            logger.warning("successful test log")
+
+        result, runner_output, handler_output = self.run_inner_test(successful_test, logger)
+
+        assert result.wasSuccessful()
+        assert "successful test log" not in runner_output
+        assert "successful test log" not in handler_output
+
+    def test_failure_contains_bounded_output_context(self):
+        logger = logging.getLogger(f"{__name__}.failed")
+
+        def failed_test():
+            for index in range(100):
+                logger.warning("log line %03d %s", index, "x" * 1000)
+            print("2026-08-03 15:11:46 [cache] https://example.com", file=sys.stderr)
+            raise AssertionError("expected failure")
+
+        result, runner_output, handler_output = self.run_inner_test(failed_test, logger)
+
+        assert not result.wasSuccessful()
+        assert "AssertionError: expected failure" in runner_output
+        assert "Captured stderr (tail):" in runner_output
+        assert "log line 099" in runner_output
+        assert "log line 000" not in runner_output
+        assert "character(s) omitted" in runner_output
+        assert "1 cache line(s) omitted" in runner_output
+        assert "https://example.com" not in runner_output
+        assert len(runner_output) < 25000
+        assert not handler_output
 
 
 class GetResourceJobIdTest(SimpleTestCase):

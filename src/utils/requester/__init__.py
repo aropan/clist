@@ -15,6 +15,7 @@ import shlex
 import ssl
 import string
 import subprocess
+import sys
 import threading
 import traceback
 import urllib.error
@@ -33,7 +34,6 @@ from os import environ, listdir, makedirs, path, remove, stat
 from os.path import getctime, isdir
 from random import choice, gauss
 from string import ascii_letters, digits
-from sys import stderr
 from time import sleep
 
 import brotli
@@ -592,7 +592,7 @@ class requester:
 
     def print(self, *objs, force=False):
         if self.debug_output or force:
-            print(datetime.utcnow(), *objs, file=stderr)
+            print(datetime.utcnow(), *objs, file=sys.stderr)
 
     def __init__(
         self,
@@ -699,6 +699,7 @@ class requester:
         with_referer=True,
         curl_cookie_file=None,
         verbose=False,
+        refresh_cache=False,
     ):
         prefix = "local-file:"
         if url.startswith(prefix):
@@ -832,6 +833,8 @@ class requester:
             else:
                 diff_time = datetime.now() - datetime.fromtimestamp(path.getctime(existing_file_cache))
                 from_cache = diff_time.seconds < self.cache_timeout
+        if refresh_cache:
+            from_cache = False
         if from_cache and path.isfile(file_cache_metadata):
             try:
                 with open(file_cache_metadata) as f:

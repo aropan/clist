@@ -11,7 +11,7 @@ from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from copy import deepcopy
 from datetime import datetime, timedelta
 from functools import lru_cache, partial
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 import arrow
 import yaml
@@ -61,6 +61,69 @@ class Statistic(BaseModule):
     STATE_FILE = os.path.join(os.path.dirname(__file__), ".leetcode.yaml")
     DOMAINS = {"": ".com", "us": ".com", "cn": ".cn", "ly": ".com"}
     API_SUBMISSIONS_URL_FORMAT_ = "https://leetcode.com/api/submissions/?offset={}&limit={}"
+
+    @staticmethod
+    def _ranking_page_from_url(url):
+        if not url:
+            return None
+        parsed_url = urlparse(url)
+        hostname = parsed_url.hostname or ""
+        if hostname == "leetcode.com" or hostname.endswith(".leetcode.com"):
+            domain = ".com"
+        elif hostname == "leetcode.cn" or hostname.endswith(".leetcode.cn"):
+            domain = ".cn"
+        else:
+            return None
+        match = re.search(r"/ranking/(?P<page>[1-9][0-9]*)/?$", parsed_url.path)
+        if not match:
+            return None
+        return domain, int(match.group("page")) - 1
+
+    @classmethod
+    def _stored_ranking_pages(cls, users, statistics):
+        users_with_pages = []
+        pages = defaultdict(set)
+        for user in users:
+            location = cls._ranking_page_from_url(get_item(statistics, (user, "url")))
+            if location is None:
+                continue
+            domain, page = location
+            users_with_pages.append(user)
+            pages[domain].add(page)
+        return users_with_pages, pages
+
+    @staticmethod
+    def _has_stored_ranking_page_coverage(users, users_with_pages, statistics):
+        users_with_pages = set(users_with_pages)
+        return all(
+            user in users_with_pages
+            or get_item(statistics, (user, "_skip_on_update"))
+            or get_item(statistics, (user, "_no_update_n_contests"))
+            for user in users
+        )
+
+    @staticmethod
+    def _ranking_pages_from_statistics(users, statistics, per_page):
+        pages = []
+        for member, statistic in statistics.items():
+            if member not in users:
+                continue
+            place_value = statistic.get("place")
+            place = as_number(place_value, force=True)
+            if place is None:
+                raise ExceptionParseStandings(f"Invalid place {place_value}")
+            pages.append((place - 1) // per_page)
+        return pages
+
+    @staticmethod
+    def _ranking_pages_with_neighbors(base_pages, total_pages):
+        pages = []
+        for base_page in sorted(base_pages):
+            for delta in (0, -1, +1, -2, +2):
+                page = base_page + delta
+                if 0 <= page < total_pages and page not in pages:
+                    pages.append(page)
+        return pages
 
     @staticmethod
     def _external_standings_urls(contest):
@@ -124,6 +187,12 @@ class Statistic(BaseModule):
         standings_url = self.standings_url or self.RANKING_URL_FORMAT_.format(**self.__dict__)
         region_suffix = Statistic.API_REGION_SUFFIX if self.contest.is_over() else ""
         api_ranking_url_format = self.API_RANKING_URL_FORMAT_.format(region_suffix=region_suffix, **self.__dict__)
+
+        stored_ranking_pages = None
+        if users and statistics and self.contest.is_over() and all(user in statistics for user in users):
+            users_with_pages, pages = self._stored_ranking_pages(users, statistics)
+            if self._has_stored_ranking_page_coverage(users, users_with_pages, statistics):
+                stored_ranking_pages = pages
 
         stop_fetch_standings = False
         fetch_page_rate_limiter = RateLimiter(max_calls=5, period=1)
@@ -189,6 +258,8 @@ class Statistic(BaseModule):
 
                 def fetch_ranking(domain, region, n_page=None):
                     nonlocal api_ranking_url_format, stop_fetch_standings
+                    if stored_ranking_pages is not None and domain not in stored_ranking_pages:
+                        return
                     api_ranking_url_format = re.sub("[.][^./]+(?=/)", domain, api_ranking_url_format)
                     api_ranking_url_format = re.sub("&region=[^&]+", f"&region={region}", api_ranking_url_format)
 
@@ -208,22 +279,18 @@ class Statistic(BaseModule):
                                 return
 
                     per_page = len(data["total_rank"])
-                    n_page = n_page or (data["user_num"] - 1) // per_page + 1
+                    total_pages = n_page or (data["user_num"] - 1) // per_page + 1
 
-                    if users and more_statistics:
-                        pages = []
-                        for more_stat in more_statistics.values():
-                            place = as_number(more_stat["place"], force=True)
-                            if place is None:
-                                raise ExceptionParseStandings(f"Invalid place {more_stat['place']}")
-                            base_page = (place - 1) // per_page
-                            for page_delta in (0, -1, +1, -2, +2):
-                                page = base_page + page_delta
-                                if page not in pages:
-                                    pages.append(page)
-                        n_page = len(pages)
-                    else:
-                        pages = range(n_page)
+                    base_pages = None
+                    if stored_ranking_pages is not None:
+                        base_pages = stored_ranking_pages[domain]
+                    elif users and more_statistics:
+                        base_pages = self._ranking_pages_from_statistics(users, more_statistics, per_page)
+
+                    pages = self._ranking_pages_with_neighbors(base_pages, total_pages) if base_pages else None
+                    if not pages:
+                        pages = range(total_pages)
+                    n_page = len(pages)
 
                     rank_index0 = False
                     for data in tqdm.tqdm(

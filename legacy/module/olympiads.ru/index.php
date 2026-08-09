@@ -68,13 +68,8 @@ foreach ($urls as $url) {
         }
         $used[] = $u;
 
-        $h = get_headers($u);
-        if (!$h) {
-            continue;
-        }
-        $a = explode(' ', $h[0]);
-        $code = $a[1];
-        if ($code != 200) {
+        curlexec($u, null, ['no_body' => true]);
+        if (response_code() != 200) {
             continue;
         }
         $date = trim($match['date'], '. ');

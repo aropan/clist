@@ -15,7 +15,7 @@ from typing import NamedTuple
 from django.conf import settings
 from django.core import serializers
 from django.core.management.base import BaseCommand, CommandError
-from django.db.models import BooleanField, Case, F, Value, When
+from django.db.models import BooleanField, Case, Exists, F, OuterRef, Value, When
 from django.utils import timezone
 from django_print_sql import print_sql_decorator
 
@@ -28,6 +28,7 @@ from ranking.tests.parser_regression import (
     fixture_path_for_contest,
     get_standings,
     normalize_standings,
+    open_deterministic_gzip,
     standings_context_from_statistics,
     write_expected_standings,
     write_json,
@@ -35,10 +36,95 @@ from ranking.tests.parser_regression import (
 from utils.attrdict import AttrDict
 from utils.filesystem import chown_tree_to_existing_parent_owner, is_effective_root
 
+
+class FixtureRedaction(NamedTuple):
+    name: str
+    text_pattern: re.Pattern
+    bytes_pattern: re.Pattern
+    marker: str
+    replacement: str
+    allowed_suffixes: tuple[str, ...]
+    allowed_byte_suffixes: tuple[bytes, ...]
+
+    @classmethod
+    def compile(cls, name, pattern, marker, *, replacement=None, flags=0, allowed_suffixes=()):
+        return cls(
+            name=name,
+            text_pattern=re.compile(pattern, flags),
+            bytes_pattern=re.compile(pattern.encode(), flags),
+            marker=marker,
+            replacement=replacement or marker,
+            allowed_suffixes=tuple(suffix.lower() for suffix in allowed_suffixes),
+            allowed_byte_suffixes=tuple(suffix.lower().encode() for suffix in allowed_suffixes),
+        )
+
+    def sanitize_text(self, value):
+        def replace(match):
+            if self.allowed_suffixes and match.group(0).lower().endswith(self.allowed_suffixes):
+                return match.group(0)
+            return match.expand(self.replacement)
+
+        return self.text_pattern.sub(replace, value)
+
+    def sanitize_bytes(self, value):
+        replacement = self.replacement.encode()
+
+        def replace(match):
+            if self.allowed_byte_suffixes and match.group(0).lower().endswith(self.allowed_byte_suffixes):
+                return match.group(0)
+            return match.expand(replacement)
+
+        return self.bytes_pattern.sub(replace, value)
+
+
 SENSITIVE_NAME_RE = re.compile(
     r"(?:authorization|cookie|credential|password|secret|session|token|api[_-]?key|apisig)",
     re.IGNORECASE,
 )
+ACCOUNT_PRIVATE_NAME_RE = re.compile(r"(?:e-?mail|phone|mobile|passwd|birth|telegram)", re.IGNORECASE)
+FIXTURE_REDACTIONS = (
+    FixtureRedaction.compile(
+        "email",
+        r"(?<![\w.+-])[\w.+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}(?![\w.-])",
+        "<redacted-email>",
+        allowed_suffixes=("@group.calendar.google.com",),
+    ),
+    FixtureRedaction.compile(
+        "telephone-link",
+        r"\btel:\s*\+?(?:[ ()-]*\d){7,15}",
+        "<redacted-phone>",
+        replacement="tel:<redacted-phone>",
+        flags=re.IGNORECASE,
+    ),
+    FixtureRedaction.compile(
+        "phone",
+        r"(?<![A-Za-z0-9])\+(?:[ ()-]*\d){7,15}(?![A-Za-z0-9])",
+        "<redacted-phone>",
+    ),
+    FixtureRedaction.compile(
+        "google-browser-api-key",
+        r"\bAIza[0-9A-Za-z_-]{30,}\b",
+        "<redacted-google-api-key>",
+    ),
+    FixtureRedaction.compile(
+        "test-session-handle",
+        r'("testSessionHandle"\s*:\s*")[^"]*(")',
+        "<redacted-test-session-handle>",
+        replacement=r"\g<1><redacted-test-session-handle>\g<2>",
+    ),
+)
+FIXTURE_REDACTIONS_BY_NAME = {redaction.name: redaction for redaction in FIXTURE_REDACTIONS}
+FIXTURE_FIELD_REDACTIONS = {
+    "testSessionHandle": FIXTURE_REDACTIONS_BY_NAME["test-session-handle"].marker,
+}
+DYNAMIC_JSON_MAP_FIELDS = {"problems", "result"}
+PUBLIC_JSON_TEXT_VALUE_FIELDS = {"affiliation"}
+PUBLIC_HTTPCACHE_JSON_FIELDS = {
+    "codingame.com": {"testSessionHandle"},
+}
+PUBLIC_HTTPCACHE_TEXT_PATHS = {
+    "codingame.com": (re.compile(r"(?:^|_)static\.codingame\.com_.*\.js\.html(?:\.gz)?$"),),
+}
 SENSITIVE_VALUE_RE = re.compile(
     rb"""(?ix)
     (?:^|[?&{,\s])
@@ -62,9 +148,10 @@ SUGGESTION_RESOURCES = (
     "basecamp.eolymp.com",
     "uoj.ac",
     "codingame.com",
-    "projecteuler.net",
     "ucup.ac",
     "potyczki.mimuw.edu.pl",
+    "kaggle.com",
+    "ctftime.org",
 )
 ANNUAL_SERIES = ("byio", "ioi", "icpc", "nef", "vkoshp", "fhc")
 
@@ -128,7 +215,7 @@ def contest_coverage_key(contest):
 
 def load_fixture_metadata(fixture_path):
     objects = json.loads((fixture_path / "db.json").read_text())
-    resource_ids = {obj["pk"] for obj in objects if obj["model"] == "clist.resource"}
+    resources = {obj["pk"]: obj["fields"] for obj in objects if obj["model"] == "clist.resource"}
     fixture_contests = [obj for obj in objects if obj["model"] == "clist.contest"]
     if len(fixture_contests) != 1:
         raise CommandError(f"expected one clist.contest in {fixture_path / 'db.json'}")
@@ -136,12 +223,13 @@ def load_fixture_metadata(fixture_path):
     contest = fixture_contests[0]
     fields = contest["fields"]
     resource_id = fields["resource"]
-    if resource_id not in resource_ids:
+    if resource_id not in resources:
         raise CommandError(f"contest resource is missing in {fixture_path / 'db.json'}")
 
     return {
         "contest_id": contest["pk"],
         "fields": fields,
+        "resource_host": resources[resource_id]["host"],
         "resource_id": resource_id,
     }
 
@@ -454,10 +542,15 @@ class Command(BaseCommand):
         fixture = json.loads(serializers.serialize("json", objects))
         account_ids = {statistic.account_id for statistic in selected_statistics or []}
         for obj in fixture:
-            if obj["model"] == "clist.contest":
+            if obj["model"] == "clist.resource":
+                accounts_fields = obj["fields"].get("accounts_fields")
+                if isinstance(accounts_fields, dict):
+                    accounts_fields.pop("variables", None)
+            elif obj["model"] == "clist.contest":
                 obj["fields"].pop("writers", None)
             elif obj["model"] == "ranking.account":
                 obj["fields"].pop("coders", None)
+                obj["fields"] = self.sanitize_account_data(obj["fields"])
                 for field in ("duplicate", "related"):
                     if obj["fields"].get(field) not in account_ids:
                         obj["fields"][field] = None
@@ -480,7 +573,84 @@ class Command(BaseCommand):
         if sensitive_paths:
             paths = ", ".join(sensitive_paths[:5])
             raise CommandError(f"refusing to record potentially sensitive database fields: {paths}")
-        return fixture
+        return self.sanitize_database_fixture(fixture)
+
+    def sanitize_database_fixture(self, fixture):
+        sanitized_fixture = []
+        for obj in fixture:
+            if obj.get("model") == "ranking.account":
+                obj = {**obj, "fields": self.sanitize_account_data(obj["fields"])}
+            sanitized_fixture.append(obj)
+        return self.sanitize_fixture_data(sanitized_fixture)
+
+    def sanitize_account_data(self, value):
+        if isinstance(value, dict):
+            sanitized = {}
+            for key, item in value.items():
+                key_string = str(key)
+                if (
+                    key_string.startswith("_")
+                    or key_string.endswith("_")
+                    or SENSITIVE_NAME_RE.search(key_string)
+                    or ACCOUNT_PRIVATE_NAME_RE.search(key_string)
+                ):
+                    continue
+                sanitized[key] = self.sanitize_account_data(item)
+            return sanitized
+        if isinstance(value, list):
+            return [self.sanitize_account_data(item) for item in value]
+        return value
+
+    def sanitize_fixture_text(self, value):
+        for redaction in FIXTURE_REDACTIONS:
+            value = redaction.sanitize_text(value)
+        return value
+
+    def sanitize_fixture_bytes(self, value):
+        for redaction in FIXTURE_REDACTIONS:
+            value = redaction.sanitize_bytes(value)
+        return value
+
+    def sanitize_fixture_data(self, value):
+        if isinstance(value, dict):
+            return {
+                key: FIXTURE_FIELD_REDACTIONS[key]
+                if key in FIXTURE_FIELD_REDACTIONS and isinstance(item, str)
+                else self.sanitize_fixture_data(item)
+                for key, item in value.items()
+            }
+        if isinstance(value, list):
+            return [self.sanitize_fixture_data(item) for item in value]
+        if isinstance(value, str):
+            return self.sanitize_fixture_text(value)
+        return value
+
+    def sanitize_fixture_file(self, path):
+        path = Path(path)
+        if path.suffix == ".gz":
+            with gzip.open(path, "rb") as input_file:
+                content = input_file.read()
+        else:
+            content = path.read_bytes()
+        sanitized = self.sanitize_fixture_bytes(content)
+        if sanitized == content:
+            return False
+
+        if path.suffix == ".gz":
+            temporary_path = path.with_suffix(f"{path.suffix}.tmp")
+            with open_deterministic_gzip(temporary_path, "wb", compresslevel=9) as output_file:
+                output_file.write(sanitized)
+            temporary_path.replace(path)
+        else:
+            path.write_bytes(sanitized)
+        return True
+
+    def sanitize_fixture_files(self, root):
+        sanitized = 0
+        for path in Path(root).rglob("*"):
+            if path.is_file() and self.sanitize_fixture_file(path):
+                sanitized += 1
+        return sanitized
 
     def sensitive_values(self):
         values = []
@@ -494,20 +664,108 @@ class Command(BaseCommand):
             value = value.decode("utf-8", errors="backslashreplace")
         return repr(value)
 
-    def validate_recording(self, fixture_path, show_sensitive_matches=False):
+    def find_sensitive_json_field(self, value, path="$", check_keys=True, allowed_fields=()):
+        if isinstance(value, dict):
+            for key, item in value.items():
+                item_path = f"{path}.{key}"
+                key_string = str(key)
+                if check_keys and item and key_string not in allowed_fields and SENSITIVE_NAME_RE.search(key_string):
+                    return item_path, item
+                child_check_keys = not (check_keys and isinstance(item, dict) and key_string in DYNAMIC_JSON_MAP_FIELDS)
+                sensitive_field = self.find_sensitive_json_field(
+                    item,
+                    item_path,
+                    check_keys=child_check_keys,
+                    allowed_fields=allowed_fields,
+                )
+                if sensitive_field:
+                    return sensitive_field
+        elif isinstance(value, list):
+            for index, item in enumerate(value):
+                sensitive_field = self.find_sensitive_json_field(
+                    item,
+                    f"{path}[{index}]",
+                    check_keys=True,
+                    allowed_fields=allowed_fields,
+                )
+                if sensitive_field:
+                    return sensitive_field
+        return None
+
+    def find_sensitive_json_value(self, value, path="$", check_value=True):
+        if isinstance(value, dict):
+            for key, item in value.items():
+                key_string = str(key)
+                sensitive_value = self.find_sensitive_json_value(
+                    item,
+                    f"{path}.{key_string}",
+                    check_value=check_value and key_string.lower() not in PUBLIC_JSON_TEXT_VALUE_FIELDS,
+                )
+                if sensitive_value:
+                    return sensitive_value
+        elif isinstance(value, list):
+            for index, item in enumerate(value):
+                sensitive_value = self.find_sensitive_json_value(
+                    item,
+                    f"{path}[{index}]",
+                    check_value=check_value,
+                )
+                if sensitive_value:
+                    return sensitive_value
+        elif check_value and isinstance(value, str):
+            sensitive_match = SENSITIVE_VALUE_RE.search(value.encode())
+            if sensitive_match:
+                return path, sensitive_match
+        return None
+
+    def validate_recording(self, fixture_path, show_sensitive_matches=False, resource_host=None):
         sensitive_values = self.sensitive_values()
         for path in fixture_path.rglob("*"):
             if not path.is_file():
                 continue
+            relative_path = path.relative_to(fixture_path)
+            is_httpcache = relative_path.parts and relative_path.parts[0] == "httpcache"
+            allowed_fields = PUBLIC_HTTPCACHE_JSON_FIELDS.get(resource_host, ()) if is_httpcache else ()
+            public_text_patterns = PUBLIC_HTTPCACHE_TEXT_PATHS.get(resource_host, ()) if is_httpcache else ()
+            is_public_text_cache = any(pattern.search(relative_path.name) for pattern in public_text_patterns)
             content = path.read_bytes()
-            sensitive_match = SENSITIVE_VALUE_RE.search(content)
-            if sensitive_match:
-                message = f"refusing to keep a potential credential in {path.relative_to(fixture_path)}"
+            if path.suffix == ".gz":
+                try:
+                    content = gzip.decompress(content)
+                except OSError as error:
+                    raise CommandError(f"invalid gzip file in fixture: {relative_path}") from error
+            if self.sanitize_fixture_bytes(content) != content:
+                raise CommandError(f"refusing to keep potentially sensitive data in {relative_path}")
+            try:
+                json_content = json.loads(content)
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                sensitive_match = None if is_public_text_cache else SENSITIVE_VALUE_RE.search(content)
+                sensitive_field = None
+                sensitive_json_value = None
+            else:
+                sensitive_match = None
+                sensitive_field = self.find_sensitive_json_field(json_content, allowed_fields=allowed_fields)
+                sensitive_json_value = None
+                if not sensitive_field:
+                    sensitive_json_value = self.find_sensitive_json_value(json_content)
+
+            if sensitive_match or sensitive_field or sensitive_json_value:
+                message = f"refusing to keep a potential credential in {relative_path}"
                 if show_sensitive_matches:
-                    message += (
-                        f": regex match at byte {sensitive_match.start()} "
-                        f"{self.format_sensitive_match(sensitive_match.group(0))}"
-                    )
+                    if sensitive_match:
+                        message += (
+                            f": regex match at byte {sensitive_match.start()} "
+                            f"{self.format_sensitive_match(sensitive_match.group(0))}"
+                        )
+                    elif sensitive_field:
+                        field_path, field_value = sensitive_field
+                        message += f": JSON field {field_path}={self.format_sensitive_match(field_value)}"
+                    else:
+                        value_path, value_match = sensitive_json_value
+                        message += (
+                            f": regex match in JSON value {value_path} at byte {value_match.start()} "
+                            f"{self.format_sensitive_match(value_match.group(0))}"
+                        )
                 raise CommandError(message)
 
             for name, value in sensitive_values:
@@ -545,7 +803,10 @@ class Command(BaseCommand):
         path = Path(path)
         gzip_path = path.with_suffix(f"{path.suffix}.gz")
         temporary_path = gzip_path.with_suffix(f"{gzip_path.suffix}.tmp")
-        with path.open("rb") as input_file, gzip.open(temporary_path, "wb", compresslevel=9) as output_file:
+        with (
+            path.open("rb") as input_file,
+            open_deterministic_gzip(temporary_path, "wb", compresslevel=9) as output_file,
+        ):
             shutil.copyfileobj(input_file, output_file)
         temporary_path.replace(gzip_path)
         path.unlink()
@@ -618,6 +879,12 @@ class Command(BaseCommand):
     def suggestion_candidates(self, args=None):
         self.verbose("build suggestion candidates", level=2)
         contests = self.eligible_contests(args)
+        exact_contest_filter = args and (args.contest_id is not None or args.contest_key)
+        if not exact_contest_filter:
+            fixture_statistics = Statistics.objects.filter(contest_id=OuterRef("pk")).exclude(addition={})
+            contests = contests.annotate(has_fixture_statistics=Exists(fixture_statistics)).filter(
+                has_fixture_statistics=True
+            )
         combination_contests = contests
         if not args or not (
             args.contest_id is not None or args.resource or args.resource_id is not None or args.contest_key
@@ -743,7 +1010,9 @@ class Command(BaseCommand):
 
         covered_annual_count = 0
         for contest in annual_candidates:
-            covered = (contest.resource_id, contest.pk) in covered_contests
+            covered = (contest.resource_id, contest.pk) in covered_contests or contest_coverage_key(
+                contest
+            ) in covered_combinations
             if covered:
                 covered_annual_count += 1
             if force_update or not covered:
@@ -863,6 +1132,11 @@ class Command(BaseCommand):
             self.verbose(f"live standings: {self.describe_standings(standings)}", level=3)
             if "result" not in standings:
                 raise CommandError(f"parser returned no result snapshot: {sorted(standings)}")
+            standings = self.sanitize_fixture_data(standings)
+            sanitized_statistics = self.sanitize_fixture_data(selected_statistics.statistics_by_key)
+            sanitized_cache_files = self.sanitize_fixture_files(cache_path)
+            if sanitized_cache_files:
+                self.verbose(f"sanitized {sanitized_cache_files} HTTP cache file(s)", level=2)
             self.verbose("serialize database fixture", level=2)
             write_json(
                 temporary_path / "db.json",
@@ -883,7 +1157,7 @@ class Command(BaseCommand):
                 cache_path,
                 allow_network=False,
                 users=selected_statistics.users,
-                statistics=selected_statistics.statistics_by_key,
+                statistics=sanitized_statistics,
             )
             self.verbose(f"offline standings: {self.describe_standings(replayed)}", level=3)
             self.verbose("compare live and offline normalized standings", level=2)
@@ -894,7 +1168,12 @@ class Command(BaseCommand):
             )
 
             self.verbose("scan fixture for credentials", level=2)
-            self.validate_recording(temporary_path, show_sensitive_matches=show_sensitive_matches)
+            resource_host = getattr(getattr(contest, "resource", None), "host", None)
+            self.validate_recording(
+                temporary_path,
+                show_sensitive_matches=show_sensitive_matches,
+                resource_host=resource_host,
+            )
             self.verbose("compress fixture files", level=2)
             self.compress_fixture_files(temporary_path)
             self.verbose("run compressed offline replay", level=2)
@@ -903,7 +1182,7 @@ class Command(BaseCommand):
                 cache_path,
                 allow_network=False,
                 users=selected_statistics.users,
-                statistics=selected_statistics.statistics_by_key,
+                statistics=sanitized_statistics,
             )
             self.verbose(f"compressed offline standings: {self.describe_standings(replayed)}", level=3)
             self.verbose("compare live and compressed offline normalized standings", level=2)
@@ -953,13 +1232,17 @@ class Command(BaseCommand):
             if not (fixture_path / "httpcache").is_dir():
                 raise CommandError(f"fixture is incomplete, missing httpcache: {fixture_path}")
             selected_statistics = self.select_statistics_for_fixture(contest)
+            sanitized_cache_files = self.sanitize_fixture_files(fixture_path / "httpcache")
+            if sanitized_cache_files:
+                self.verbose(f"sanitized {sanitized_cache_files} HTTP cache file(s)", level=2)
+            sanitized_statistics = self.sanitize_fixture_data(selected_statistics.statistics_by_key)
             self.verbose("replay existing fixture cache offline", level=2)
             standings = get_standings(
                 contest,
                 fixture_path / "httpcache",
                 allow_network=False,
                 users=selected_statistics.users,
-                statistics=selected_statistics.statistics_by_key,
+                statistics=sanitized_statistics,
             )
             self.verbose(f"offline standings: {self.describe_standings(standings)}", level=3)
             self.verbose("write database fixture with selected statistics", level=2)
@@ -972,6 +1255,12 @@ class Command(BaseCommand):
             raw_expected_standings = fixture_path / "expected_standings.json"
             if raw_expected_standings.exists():
                 raw_expected_standings.unlink()
+            resource_host = getattr(getattr(contest, "resource", None), "host", None)
+            self.validate_recording(
+                fixture_path,
+                show_sensitive_matches=args.show_sensitive_matches,
+                resource_host=resource_host,
+            )
             action = "Updated"
         else:
             self.record_fixture(contest, fixture_path, show_sensitive_matches=args.show_sensitive_matches)

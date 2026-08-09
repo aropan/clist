@@ -26,7 +26,8 @@ COPY --from=ghcr.io/astral-sh/uv:0.11.32 /uv /uvx /bin/
 ENV UV_PROJECT_ENVIRONMENT=/usr/local
 ENV UV_LINK_MODE=copy
 COPY pyproject.toml uv.lock .
-RUN --mount=type=cache,target=/root/.cache/uv uv sync --locked --no-install-project --inexact
+RUN --mount=type=cache,id=clist-uv-py310-bullseye,target=/root/.cache/uv \
+    uv sync --locked --no-install-project --inexact --compile-bytecode
 
 # Curl
 COPY src/scripts/install_curl.bash src/scripts/install_curl.sums ./
@@ -42,6 +43,8 @@ WORKDIR $APPDIR
 
 FROM base AS dev
 ENV DJANGO_ENV_FILE .env.dev
+ENV PYTHONDONTWRITEBYTECODE=""
+ENV PYTHONPYCACHEPREFIX=/tmp/clist-pycache
 RUN apt install -y redis-server
 CMD sh -c 'redis-server --daemonize yes; scripts/watchdog.bash "python manage.py rqworker system default parse_statistics parse_accounts" "**/*.py"; python manage.py runserver 0.0.0.0:10042'
 
@@ -56,6 +59,7 @@ ENV DJANGO_ENV_FILE .env.prod
 RUN apt install -y cron redis-server logrotate
 
 COPY src/ $APPDIR/
+RUN python -m compileall -q -j 0 $APPDIR
 
 COPY config/cron /etc/cron.d/clist
 RUN chmod 0644 /etc/cron.d/clist

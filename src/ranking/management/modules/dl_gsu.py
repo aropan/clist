@@ -26,21 +26,32 @@ class Statistic(BaseModule):
             raise InitModuleException()
 
     @staticmethod
+    def _submit_auth_form(form, data=None):
+        if form["method"].lower() != "post":
+            raise ExceptionParseStandings("Unexpected authentication form method")
+        post = dict(form["post"])
+        post.update(data or {})
+        form_url = urljoin(req.current_url, form.get("url") or req.current_url)
+        return req.get(form_url, post=post, content_type=form.get("enctype"), caching=False)
+
+    @staticmethod
     def _get(url):
         page = req.get(url)
-        form = req.form(name="logon", action="login.jsp")
+        form = req.form(page=page, name="logon", action="login.jsp")
         if form:
-            req.submit_form(
-                form=form,
-                data={
+            page = Statistic._submit_auth_form(
+                form,
+                {
                     "id": conf.DLGSU_ID,
                     "password": conf.DLGSU_PASSWORD,
                 },
             )
-            form = req.form(name="dllogon")
+            form = req.form(page=page, name="dllogon")
             if form:
-                req.submit_form(data={}, form=form)
-            page = req.get(url)
+                Statistic._submit_auth_form(form)
+            page = req.get(url, refresh_cache=True)
+            if req.form(page=page, name="logon", action="login.jsp"):
+                raise ExceptionParseStandings("Failed to authenticate on dl.gsu.by")
         return page
 
     @staticmethod

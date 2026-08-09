@@ -71,6 +71,7 @@ ENVIRONMENT = env("DJANGO_ENV")
 PYLINT_ENV = ENVIRONMENT == "pylint"
 DEBUG = ENVIRONMENT == DEV_ENV or PYLINT_ENV
 WEBSOCKET_ALLOWED_ORIGINS = env.list("WEBSOCKET_ALLOWED_ORIGINS")
+TEST_RUNNER = "utils.test_runner.CompactTestRunner"
 
 # Application definition
 
@@ -678,6 +679,9 @@ CSP_SCRIPT_SRC += (
 )
 CSP_IMG_SRC += ("https://www.google-analytics.com",)
 CSP_CONNECT_SRC += ("https://www.google-analytics.com",)
+
+# CSP Cloudflare Web Analytics counter
+CSP_SCRIPT_SRC += ("https://static.cloudflareinsights.com",)
 
 # CSP Yandex form
 CSP_SCRIPT_SRC += ("https://forms.yandex.ru",)

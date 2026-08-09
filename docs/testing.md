@@ -33,8 +33,9 @@ docker compose exec dev ./manage.py test --keepdb ranking.tests.test_parsers
 ```
 
 Fixtures are discovered automatically under `src/ranking/tests/fixtures/parsers/`.
-New fixtures are written to `<resource-id>/<contest-id>/` so host or contest-key
-renames do not change fixture identity. Each fixture has:
+New fixtures are written to `<encoded-host>/<contest-id>/`. The host stays readable,
+while `/` is encoded as `__` and a literal `_` as `%5F`, so every resource occupies
+one directory (`nerc.itmo.ru/school` becomes `nerc.itmo.ru__school`). Each fixture has:
 
 - `db.json` — the `Resource`, `Module`, `Contest`, any directly required
   `ContestSeries`, and the selected `Account`/`Statistics` rows used to limit
@@ -143,30 +144,52 @@ with a golden snapshot. PHP exists only in the `legacy` container:
 ```bash
 docker compose exec legacy php tests/run.php              # replay all fixtures
 docker compose exec legacy php tests/run.php atcoder.jp   # one fixture
+docker compose exec legacy php tests/test_harness.php     # fixture infrastructure checks
 ```
 
-Fixtures live in `legacy/tests/fixtures/<host>/`:
+Fixtures live in `legacy/tests/fixtures/<encoded-host>/`, using the same host encoding
+as standings fixtures (`/` becomes `__`, while a literal `_` becomes `%5F`):
 
 - `meta.json` — resolved resource globals (`rid`, `path`, `parse_url` with the raw
   `${YEAR}` placeholder, timezone, info) plus `recorded_at`;
-- `httpcache/` — one gzipped raw response per request (`*.html.gz`, Git LFS) plus a
-  plain `*.meta.json` sidecar (`url`, `effective_url`, `response_code`), keyed by
-  url + postfields, so POST/GraphQL parsers replay too;
+- `httpcache/` — one deterministic gzipped raw response per request (`*.html.gz`, Git LFS) plus a
+  plain `*.meta.json` sidecar (`method`, `url`, `effective_url`, `response_code`), keyed by
+  HTTP method + url + postfields, so HEAD and POST/GraphQL parsers replay too;
 - `expected_contests.json` — normalized golden snapshot (plain JSON, reviewable).
 
-Replay is strictly offline: a cache miss is a fatal `curlexec replay miss` error.
+Replay is strictly offline: URL stream wrappers are disabled, schedule modules are
+rejected if they call raw network functions instead of `curlexec()`, and a cache miss
+is a fatal `curlexec replay miss` error. The runner also fails when there are no
+fixtures, so an empty suite cannot produce a false green result.
 Each fixture runs in its own subprocess wrapped in `faketime <recorded_at>` so
-modules that infer the year from the current date stay deterministic; if `faketime`
-is missing from the image, the runner warns and uses the live clock, which may fail
-year-sensitive fixtures — rebuild the legacy image or re-record. Re-record a fixture
-when its module or the site intentionally changes:
+modules that infer the year from the current date stay deterministic. Missing
+`faketime` is a fatal configuration error rather than a fallback to the live clock;
+rebuild the legacy image in that case. Re-record a fixture when its module or the
+site intentionally changes:
 
 ```bash
 docker compose exec legacy php tests/record.php leetcode.com [--parse-full-list]
 ```
 
 Recording performs live requests, needs DB access for the resource row, refuses
-0-contest output, and immediately replays offline before replacing the fixture.
+0-contest output, and automatically retries with `parse_full_list` when the normal
+schedule view is empty. It scans metadata, golden output, response bodies, and
+response metadata for credential fields and known secret environment values, then
+immediately replays offline before replacing the fixture. A narrowly scoped public technical
+field can be allowed in `meta.json` with
+`allowed_sensitive_fields: [{"file": "httpcache/...", "path": "$.path.to.field"}]`;
+never allow an actual credential. Recorded `Set-Cookie` values and URL userinfo are
+replaced with explicit redaction placeholders before validation and storage.
+
+When selecting schedule fixtures, prefer resource hosts already present in
+`src/ranking/tests/fixtures/parsers/*/*/db.json`: those resources have known contest
+data even when their current schedule page is temporarily empty. The recorder's
+full-list fallback can then capture historical schedule output. The current set
+covers every enabled resource in that standings-fixture inventory that has a PHP
+module, except `facebook.com/hackercup`, whose public JavaScript is rejected by the
+credential scanner. `stats.ioinformatics.org` is regexp-only and `icpc.global` is
+disabled; `kattis.com` remains as an additional wrapper/year-dependent fixture.
+
 Limitations: regexp-only resources (`clist_resource.regexp`, parsed inline in
 `update.php`) are not covered; two identical requests in one run replay the same
 response.

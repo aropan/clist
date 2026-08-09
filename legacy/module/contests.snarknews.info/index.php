@@ -101,12 +101,9 @@ foreach ($URLS as $url) {
         );
         $round = intval($round);
         if (isset($standings_url[$round])) {
-            $headers = get_headers($standings_url[$round], true);
-            if (stripos($headers[0], 'error') === false) {
-                $content = file_get_contents($standings_url[$round], false, null, 0, 20);
-                if (stripos($content, 'wrong') === false) {
-                    continue;
-                }
+            $content = curlexec($standings_url[$round], null, ['no_header' => true]);
+            if (response_code() == 200 && stripos(substr($content, 0, 20), 'wrong') === false) {
+                continue;
             }
         }
         $u = url_merge($url, $m['url']);

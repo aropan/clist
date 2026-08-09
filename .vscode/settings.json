@@ -1,6 +1,7 @@
 {
     "search.exclude": {
         "legacy/libs/smarty/**": true,
+        "**/tests/fixtures/**": true,
     },
     "files.watcherExclude": {
         "**/.ruff_cache/**": true,

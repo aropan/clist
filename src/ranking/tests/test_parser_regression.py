@@ -3,22 +3,32 @@ import io
 import json
 import os
 import tempfile
+import time
 import urllib.error
+from copy import deepcopy
+from datetime import timedelta
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
+from django.utils import timezone
 from lazy_load import lz
+from ratelimiter import RateLimiter
 
+from clist.models import Contest, Resource
 from ranking.management.modules import common
 from ranking.management.modules.excepts import FailOnGetResponse
+from ranking.models import Module
 from ranking.tests.parser_regression import (
+    assert_standings_equal,
     discover_parser_fixtures,
     fixture_file_path,
+    get_standings,
     normalize_standings,
     use_parser_cache,
+    write_json,
 )
 from utils.requester import requester
 
@@ -38,6 +48,38 @@ class Response(io.BytesIO):
 
 
 class ParserRegressionHelpersTest(SimpleTestCase):
+    def test_standings_mismatch_has_bounded_output(self):
+        expected = {
+            "result": {f"user_{index:04}": {"payload": "x" * 1000} for index in range(20)},
+        }
+        actual = {
+            "result": {f"user_{index:04}": {"payload": "y" * 1000} for index in range(20)},
+        }
+
+        with pytest.raises(AssertionError) as error:
+            assert_standings_equal(expected, actual, "parser regression mismatch for 1/2")
+
+        message = str(error.value)
+        assert "$.result.user_0000.payload: value differs" in message
+        assert "$.result.user_0004.payload: value differs" in message
+        assert "user_0005" not in message
+        assert len(message) < 2500
+
+    def test_write_json_creates_deterministic_gzip(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            first_path = root / "first.json.gz"
+            second_path = root / "second.json.gz"
+
+            write_json(first_path, {"result": {"alice": {"solving": 1}}})
+            write_json(second_path, {"result": {"alice": {"solving": 1}}})
+
+            first = first_path.read_bytes()
+            assert first == second_path.read_bytes()
+            assert first[:3] == b"\x1f\x8b\x08"
+            assert first[3] & 0x08 == 0
+            assert first[4:8] == b"\0\0\0\0"
+
     def test_normalize_standings_filters_volatile_fields(self):
         standings = {
             "result": {
@@ -90,6 +132,61 @@ class ParserRegressionHelpersTest(SimpleTestCase):
             assert len(cache_files) == 1
             assert json.loads(cache_files[0].read_text()) == {"result": {"ok": True}}
             assert Path(f"{cache_files[0]}.meta.json").is_file()
+
+    def test_requester_can_refresh_cached_response(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            req = requester(proxy=False, cookie_filename=None, caching=True)
+            req.cookie_filename = None
+            req.dir_cache = f"{temporary_directory}{os.sep}"
+            req.cache_timeout = 2**31 - 1
+            req.limit_file_cache = 0
+            req.time_sleep = 0
+
+            url = "https://example.com/private"
+            req.opener.open = Mock(return_value=Response(b"session expired", url))
+            assert req.get(url) == "session expired"
+
+            req.opener.open = Mock(return_value=Response(b"authenticated", url))
+            assert req.get(url, refresh_cache=True) == "authenticated"
+            req.opener.open.assert_called_once()
+
+            req.opener.open = Mock(side_effect=AssertionError("network should not be used"))
+            assert req.get(url) == "authenticated"
+            req.opener.open.assert_not_called()
+
+    def test_parser_cache_replays_curl_url_with_cache_busting_parameter(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            live_url = "https://example.com/api/standings?page=1&_=1000"
+            replay_url = "https://example.com/api/standings?page=1&_=2000"
+            response = Response(b'{"result": {"ok": true}}', live_url)
+
+            with (
+                patch("utils.requester.curl_response", return_value=response) as curl_response,
+                use_parser_cache(common, temporary_directory, allow_network=True),
+            ):
+                assert common.REQ.get(live_url, return_json=True, with_curl=True) == {"result": {"ok": True}}
+
+            curl_response.assert_called_once()
+
+            with use_parser_cache(common, temporary_directory, allow_network=False):
+                assert common.REQ.get(replay_url, return_json=True, with_curl=True) == {"result": {"ok": True}}
+
+    def test_parser_cache_replays_post_request(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            url = "https://example.com/graphql"
+            post = b'{"query": "query standings { rows { rank } }"}'
+            response = Response(b'{"data": {"rows": []}}', url)
+
+            with (
+                patch("utils.requester.curl_response", return_value=response) as curl_response,
+                use_parser_cache(common, temporary_directory, allow_network=True),
+            ):
+                assert common.REQ.get(url, post=post, return_json=True, with_curl=True) == {"data": {"rows": []}}
+
+            curl_response.assert_called_once()
+
+            with use_parser_cache(common, temporary_directory, allow_network=False):
+                assert common.REQ.get(url, post=post, return_json=True, with_curl=True) == {"data": {"rows": []}}
 
     def test_requester_replays_gzipped_cache_file(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
@@ -246,3 +343,117 @@ class ParserRegressionHelpersTest(SimpleTestCase):
             pytest.raises(AssertionError, match="unexpected network access"),
         ):
             common.REQ.get("https://example.com/missing")
+
+    def test_offline_parser_cache_bypasses_rate_limiter(self):
+        rate_limiter = RateLimiter(max_calls=1, period=3600)
+
+        @rate_limiter
+        def limited_call():
+            return "result"
+
+        assert limited_call() == "result"
+        recorded_calls = list(rate_limiter.calls)
+
+        with (
+            tempfile.TemporaryDirectory() as temporary_directory,
+            patch("ratelimiter.time.sleep") as sleep,
+            use_parser_cache(common, temporary_directory, allow_network=False),
+        ):
+            assert limited_call() == "result"
+
+        sleep.assert_not_called()
+        assert list(rate_limiter.calls) == recorded_calls
+
+    def test_network_parser_cache_preserves_rate_limiter(self):
+        rate_limiter = RateLimiter(max_calls=1, period=3600)
+
+        @rate_limiter
+        def limited_call():
+            return "result"
+
+        assert limited_call() == "result"
+
+        with (
+            tempfile.TemporaryDirectory() as temporary_directory,
+            patch("ratelimiter.time.sleep") as sleep,
+            use_parser_cache(common, temporary_directory, allow_network=True),
+        ):
+            assert limited_call() == "result"
+
+        sleep.assert_called_once()
+
+    def test_offline_parser_cache_bypasses_direct_sleep(self):
+        def direct_sleep(_seconds):
+            raise AssertionError("plugin sleep should be bypassed")
+
+        plugin_module = SimpleNamespace(sleep=direct_sleep, time=time)
+        with (
+            tempfile.TemporaryDirectory() as temporary_directory,
+            patch.object(time, "sleep", side_effect=AssertionError("time.sleep should be bypassed")) as sleep,
+            use_parser_cache(plugin_module, temporary_directory, allow_network=False),
+        ):
+            plugin_module.sleep(2)
+            plugin_module.time.sleep(2)
+
+        sleep.assert_not_called()
+        assert plugin_module.sleep is direct_sleep
+
+
+class ParserRegressionIsolationTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        current_time = timezone.now()
+        resource = Resource.objects.create(
+            host="parser-isolation.example.com",
+            enable=True,
+            url="https://parser-isolation.example.com/",
+            color="#336699",
+            icon_file="resources/test.png",
+            icon_updated_at=current_time,
+        )
+        Module.objects.create(
+            resource=resource,
+            path="ranking.management.modules.common",
+            long_contest_idle=timedelta(hours=6),
+            shortly_after=timedelta(minutes=30),
+            delay_shortly_after=timedelta(minutes=5),
+            max_delay_after_end=timedelta(hours=1),
+            delay_on_error=timedelta(hours=1),
+        )
+        cls.contest = Contest.objects.create(
+            resource=resource,
+            title="Parser isolation",
+            start_time=current_time - timedelta(hours=2),
+            end_time=current_time - timedelta(hours=1),
+            duration_in_secs=3600,
+            url="https://parser-isolation.example.com/contest",
+            key="parser-isolation",
+            host=resource.host,
+            parsed_time=current_time,
+            info={"state": {"value": 1}},
+            submissions_info={"cursor": 2},
+        )
+
+    def test_get_standings_loads_isolated_contest(self):
+        class MutatingStatistic:
+            def __init__(self, contest):
+                self.contest = contest
+
+            def get_standings(self, **kwargs):
+                state = self.contest.info.pop("state")
+                cursor = self.contest.submissions_info.pop("cursor")
+                return {"result": {"test": {"member": "test", "state": state, "cursor": cursor}}}
+
+        original_info = deepcopy(self.contest.info)
+        original_submissions_info = deepcopy(self.contest.submissions_info)
+
+        with (
+            tempfile.TemporaryDirectory() as temporary_directory,
+            patch.object(common, "Statistic", MutatingStatistic, create=True),
+        ):
+            first = get_standings(self.contest, temporary_directory, allow_network=False)
+            second = get_standings(self.contest, temporary_directory, allow_network=False)
+
+        assert first == second
+        assert self.contest.info == original_info
+        assert self.contest.submissions_info == original_submissions_info

@@ -43,8 +43,28 @@ class Statistic(BaseModule):
         is_escape = "://escape." in escape_url
         is_battle = challenge.get("type") == "BATTLE"
 
+        selected_users = list(map(str, users)) if users is not None else None
+        requested_users = set(selected_users) if selected_users is not None else None
+        target_users = None
+        if requested_users and not is_clash and not is_escape:
+            accounts = {
+                str(account.key): account for account in self.resource.account_set.filter(key__in=requested_users)
+            }
+            users_with_public_handles = []
+            seen_public_handles = set()
+            for user in selected_users:
+                account = accounts.get(user)
+                public_handle = account.info.get("profile_url", {}).get("public_handle") if account else None
+                if not public_handle:
+                    break
+                if public_handle not in seen_public_handles:
+                    users_with_public_handles.append((user, public_handle))
+                    seen_public_handles.add(public_handle)
+            else:
+                target_users = users_with_public_handles
+
         @RateLimiter(max_calls=10, period=1)
-        def get_leaderboard(url, column="", value="", limit=None):
+        def get_leaderboard(url, column="", value="", limit=None, public_handle=None):
             active = "true" if column else "false"
             filt = f'{{"active":{active},"column":"{column}","filter":"{value}"}}'
             if is_clash:
@@ -59,7 +79,8 @@ class Statistic(BaseModule):
                     + ',"fromEventStart":true},"query":"query GeneralLeaderboard($handle: String\u0021, $groupIds: [String\u0021], $fromEventStart: Boolean, $search: String, $limit: Int) { liveEventLeaderboard( eventHandle: $handle groupIds: $groupIds fromEventStart: $fromEventStart search: $search limit: $limit ) { totalCount teams { id group { id name } rank timeSinceEventStart gameSession { id status previousElapsedTime timePenalty hints { category unlocked total } players(type: Player) { id creationTime type alive user { id nickname avatar type company { id region } } } checkpoints { id completed } } teamName } } } "}'
                 )  # noqa
             else:
-                post = f'["{self.key}",null,"global",{filt}]'
+                public_handle_value = f'"{public_handle}"' if public_handle else "null"
+                post = f'["{self.key}",{public_handle_value},"global",{filt}]'
             page = REQ.get(url, post=post, content_type="application/json")
             data = json.loads(page)
             return data
@@ -71,7 +92,8 @@ class Statistic(BaseModule):
         else:
             url = self.host + "services/Leaderboards/getFilteredChallengeLeaderboard"
 
-        data = get_leaderboard(url, limit=1)
+        initial_public_handle = target_users[0][1] if target_users else None
+        data = get_leaderboard(url, limit=1, public_handle=initial_public_handle)
 
         standings_url = os.path.join(self.url, "leaderboard")
 
@@ -140,10 +162,14 @@ class Statistic(BaseModule):
                     if "codingamer" not in row:
                         continue
                     info = row.pop("codingamer")
+                    public_handle = info.pop("publicHandle")
                     row.update(info)
+                    row.pop("testSessionHandle", None)
 
-                    info["profile_url"] = {"public_handle": info.pop("publicHandle")}
+                    info["profile_url"] = {"public_handle": public_handle}
                     handle = str(info.pop("userId"))
+                    if requested_users and handle not in requested_users:
+                        continue
                     if handle in result:
                         continue
                     r = result.setdefault(handle, OrderedDict())
@@ -183,8 +209,6 @@ class Statistic(BaseModule):
                     if "duration" in row:
                         row["duration"] = self.to_time(row["duration"] / 1000, 3)
 
-                    row.pop("public_handle", None)
-                    row.pop("test_session_handle", None)
                     row.pop("avatar", None)
                     for k, v in row.items():
                         if k not in r:
@@ -199,15 +223,15 @@ class Statistic(BaseModule):
 
                     if "percentage" in r:
                         r["percentage"] = min(r["percentage"], 100)
-                        percentages.append(r["percentage"])
+                        if requested_users is None:
+                            percentages.append(r["percentage"])
                         if is_battle and r["percentage"] < 100:
                             r["_score_percentage"] = {
                                 "percent": r["percentage"] / 100,
                                 "score": r["solving"],
                             }
-                            if r.get("league_index") == r.get("_league_index"):
-                                if "_solving" in r:
-                                    r["_score_percentage"]["delta_score"] = r["solving"] - r["_solving"]
+                            if r.get("league_index") == r.get("_league_index") and "_solving" in r:
+                                r["_score_percentage"]["delta_score"] = r["solving"] - r["_solving"]
                                 r["solving"] = r["_solving"]
                             has_percentage = True
 
@@ -313,11 +337,20 @@ class Statistic(BaseModule):
             else:
                 process_data(data)
 
-                if len(data["users"]) >= 1000:
+                if target_users:
+                    remaining_users = target_users[1:]
+                    for user, public_handle in tqdm.tqdm(
+                        remaining_users,
+                        total=len(remaining_users),
+                        desc="users",
+                    ):
+                        if user not in result:
+                            process_data(get_leaderboard(url, public_handle=public_handle))
+                elif len(data["users"]) >= 1000:
                     leagues_ = [league.lower().replace(" ", "") for league in leagues]
                     fetch_data = partial(get_leaderboard, url, "LEAGUE")
                     n_rows = []
-                    for data in tqdm.tqdm(executor.map(fetch_data, leagues_), total=len(languages), desc="leagues"):
+                    for data in tqdm.tqdm(executor.map(fetch_data, leagues_), total=len(leagues_), desc="leagues"):
                         n_rows.append(process_data(data))
 
                     if not n_rows or max(n_rows) >= 1000:
@@ -334,7 +367,7 @@ class Statistic(BaseModule):
                             process_data(data)
 
                 scores = defaultdict(list)
-                if has_percentage:
+                if has_percentage and requested_users is None:
                     for r in result.values():
                         r["order"] = (r.get("league_index", float("inf")), -r["solving"])
                     last_rank = None

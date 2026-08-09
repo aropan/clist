@@ -17,9 +17,16 @@ from ranking.management.commands.dump_parser_fixture import (
     SelectedStatistics,
     contest_coverage_key,
     load_fixture_coverage,
+    load_fixture_metadata,
 )
 from ranking.models import Account, Module, Statistics
-from ranking.tests.parser_regression import PARSER_FIXTURES_ROOT, fixture_path_for_contest
+from ranking.tests.parser_regression import (
+    PARSER_FIXTURES_ROOT,
+    discover_parser_fixtures,
+    fixture_path_for_contest,
+    fixture_resource_component,
+    parser_fixture_path,
+)
 from utils.attrdict import AttrDict
 from utils.filesystem import PathOwner
 
@@ -59,10 +66,31 @@ class ParserFixtureCoverageTest(SimpleTestCase):
         assert combinations == {(1, "algorithm", "scoring", False, True, False, False)}
         assert contests == {(1, 2)}
 
-    def test_fixture_path_uses_ids(self):
-        contest = AttrDict({"pk": 22, "resource_id": 11})
+    def test_fixture_path_uses_encoded_resource_host(self):
+        contest = AttrDict({"pk": 22, "resource": AttrDict({"host": "example.com/path_with_underscore"})})
 
-        assert fixture_path_for_contest(contest) == PARSER_FIXTURES_ROOT / "11" / "22"
+        assert fixture_path_for_contest(contest) == (
+            PARSER_FIXTURES_ROOT / "example.com__path%5Fwith%5Funderscore" / "22"
+        )
+
+    def test_fixture_resource_component_escapes_literal_underscores(self):
+        assert fixture_resource_component("example.com/path_with_underscore") == (
+            "example.com__path%5Fwith%5Funderscore"
+        )
+        assert fixture_resource_component("example.com__path/with_underscore") == (
+            "example.com%5F%5Fpath__with%5Funderscore"
+        )
+
+    def test_repository_fixture_paths_are_canonical(self):
+        fixture_paths = discover_parser_fixtures()
+
+        assert fixture_paths
+        for fixture_path in fixture_paths:
+            metadata = load_fixture_metadata(fixture_path)
+            assert fixture_path == parser_fixture_path(
+                metadata["resource_host"],
+                metadata["contest_id"],
+            )
 
 
 class ParserFixtureValidationTest(SimpleTestCase):
@@ -113,7 +141,7 @@ class ParserFixtureValidationTest(SimpleTestCase):
         assert "regex match at byte 0" in message
         assert "testsecret123" in message
 
-    def test_sensitive_regex_error_detects_json_secret_key(self):
+    def test_sensitive_json_error_detects_secret_key(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
             fixture_path = Path(temporary_directory)
             (fixture_path / "payload.txt").write_text('{"secret": "testsecret123"}')
@@ -123,7 +151,174 @@ class ParserFixtureValidationTest(SimpleTestCase):
 
         message = str(error.value)
         assert "refusing to keep a potential credential in payload.txt" in message
+        assert "JSON field $.secret=" in message
         assert "testsecret123" in message
+
+    def test_sensitive_json_ignores_credential_like_text_in_affiliation(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            fixture_path = Path(temporary_directory)
+            (fixture_path / "payload.txt").write_text(
+                json.dumps({"StandingsData": [{"Affiliation": "Example password: public-value-123"}]})
+            )
+
+            Command().validate_recording(fixture_path)
+
+    def test_sensitive_json_detects_credential_inside_string_value(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            fixture_path = Path(temporary_directory)
+            (fixture_path / "payload.txt").write_text(
+                json.dumps({"html": '<input name="x"> access_token=testsecret123'})
+            )
+
+            with pytest.raises(CommandError) as error:
+                Command().validate_recording(fixture_path, show_sensitive_matches=True)
+
+        message = str(error.value)
+        assert "regex match in JSON value $.html" in message
+        assert "testsecret123" in message
+
+    def test_sensitive_json_detects_credential_inside_root_string(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            fixture_path = Path(temporary_directory)
+            (fixture_path / "payload.txt").write_text(json.dumps("session_id=testsecret123"))
+
+            with pytest.raises(CommandError) as error:
+                Command().validate_recording(fixture_path, show_sensitive_matches=True)
+
+        assert "regex match in JSON value $" in str(error.value)
+
+    def test_sensitive_json_ignores_dynamic_result_and_problem_keys(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            fixture_path = Path(temporary_directory)
+            (fixture_path / "payload.txt").write_text(
+                json.dumps({
+                    "result": {
+                        "snowysecret": {
+                            "member": "snowysecret",
+                            "problems": {"access_token": {"result": "+"}},
+                        }
+                    }
+                })
+            )
+
+            Command().validate_recording(fixture_path)
+
+    def test_sensitive_json_checks_fields_inside_dynamic_maps(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            fixture_path = Path(temporary_directory)
+            (fixture_path / "payload.txt").write_text(
+                json.dumps({"result": {"snowysecret": {"session_token": "testsecret123"}}})
+            )
+
+            with pytest.raises(CommandError) as error:
+                Command().validate_recording(fixture_path, show_sensitive_matches=True)
+
+        assert "JSON field $.result.snowysecret.session_token=" in str(error.value)
+
+    def test_codingame_httpcache_redacts_public_test_session_handle(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            fixture_path = Path(temporary_directory)
+            httpcache_path = fixture_path / "httpcache"
+            httpcache_path.mkdir()
+            payload_path = httpcache_path / "leaderboard.html"
+            payload_path.write_text(json.dumps({"users": [{"testSessionHandle": "public-test-session-handle"}]}))
+
+            command = Command()
+            assert command.sanitize_fixture_file(payload_path)
+            payload = json.loads(payload_path.read_text())
+            command.validate_recording(fixture_path, resource_host="codingame.com")
+
+        assert payload["users"][0]["testSessionHandle"] == "<redacted-test-session-handle>"
+
+    def test_public_test_session_handle_allowance_is_scoped_to_codingame_httpcache(self):
+        cases = (
+            ("codingame.com", "leaderboard.html"),
+            ("example.com", "httpcache/leaderboard.html"),
+        )
+        for resource_host, relative_path in cases:
+            with (
+                self.subTest(resource_host=resource_host, relative_path=relative_path),
+                tempfile.TemporaryDirectory() as temporary_directory,
+            ):
+                fixture_path = Path(temporary_directory)
+                payload_path = fixture_path / relative_path
+                payload_path.parent.mkdir(parents=True, exist_ok=True)
+                payload_path.write_text(
+                    json.dumps({"users": [{"testSessionHandle": "<redacted-test-session-handle>"}]})
+                )
+
+                with pytest.raises(CommandError):
+                    Command().validate_recording(fixture_path, resource_host=resource_host)
+
+    def test_codingame_httpcache_still_rejects_other_session_fields(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            fixture_path = Path(temporary_directory)
+            httpcache_path = fixture_path / "httpcache"
+            httpcache_path.mkdir()
+            (httpcache_path / "leaderboard.html").write_text(
+                json.dumps({"users": [{"sessionToken": "test-session-token"}]})
+            )
+
+            with pytest.raises(CommandError):
+                Command().validate_recording(fixture_path, resource_host="codingame.com")
+
+    def test_codingame_httpcache_allows_public_static_javascript(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            fixture_path = Path(temporary_directory)
+            httpcache_path = fixture_path / "httpcache"
+            httpcache_path.mkdir()
+            (httpcache_path / "hash_static.codingame.com_app.js.html").write_text(
+                'const form = {password: "public-placeholder"};'
+            )
+
+            Command().validate_recording(fixture_path, resource_host="codingame.com")
+
+    def test_codingame_httpcache_allows_compressed_public_static_javascript(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            fixture_path = Path(temporary_directory)
+            httpcache_path = fixture_path / "httpcache"
+            httpcache_path.mkdir()
+            with gzip.open(
+                httpcache_path / "hash_static.codingame.com_app.js.html.gz",
+                "wt",
+            ) as output_file:
+                output_file.write('const form = {password: "public-placeholder"};')
+
+            Command().validate_recording(fixture_path, resource_host="codingame.com")
+
+    def test_public_static_javascript_allowance_is_scoped_to_codingame_httpcache(self):
+        cases = (
+            ("codingame.com", "hash_static.codingame.com_app.js.html"),
+            ("example.com", "httpcache/hash_static.codingame.com_app.js.html"),
+            ("codingame.com", "httpcache/page.html"),
+        )
+        for resource_host, relative_path in cases:
+            with (
+                self.subTest(resource_host=resource_host, relative_path=relative_path),
+                tempfile.TemporaryDirectory() as temporary_directory,
+            ):
+                fixture_path = Path(temporary_directory)
+                payload_path = fixture_path / relative_path
+                payload_path.parent.mkdir(parents=True, exist_ok=True)
+                payload_path.write_text('const form = {password: "public-placeholder"};')
+
+                with pytest.raises(CommandError):
+                    Command().validate_recording(fixture_path, resource_host=resource_host)
+
+    def test_public_static_javascript_still_checks_environment_secrets(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            fixture_path = Path(temporary_directory)
+            httpcache_path = fixture_path / "httpcache"
+            httpcache_path.mkdir()
+            (httpcache_path / "hash_static.codingame.com_app.js.html").write_text(
+                'const form = {password: "test-environment-secret"};'
+            )
+
+            with (
+                patch.dict("os.environ", {"API_TOKEN": "test-environment-secret"}),
+                pytest.raises(CommandError, match="refusing to keep an environment secret"),
+            ):
+                Command().validate_recording(fixture_path, resource_host="codingame.com")
 
     def test_sensitive_regex_ignores_secret_inside_plain_identifier(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
@@ -170,6 +365,23 @@ class ParserFixtureValidationTest(SimpleTestCase):
         with tempfile.TemporaryDirectory() as temporary_directory:
             fixture_path = Path(temporary_directory)
             (fixture_path / "payload.txt").write_bytes(b"prefix test-environment-secret suffix")
+
+            with (
+                patch.dict("os.environ", {"API_TOKEN": "test-environment-secret"}),
+                pytest.raises(CommandError) as error,
+            ):
+                Command().validate_recording(fixture_path)
+
+        message = str(error.value)
+        assert "refusing to keep an environment secret in payload.txt" in message
+        assert "test-environment-secret" not in message
+
+    def test_environment_secret_is_detected_inside_json_value(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            fixture_path = Path(temporary_directory)
+            (fixture_path / "payload.txt").write_text(
+                json.dumps({"Affiliation": "prefix test-environment-secret suffix"})
+            )
 
             with (
                 patch.dict("os.environ", {"API_TOKEN": "test-environment-secret"}),
@@ -253,7 +465,34 @@ class ParserFixtureStatisticsSelectionTest(TestCase):
         assert "problems.B.verdict" in selected.addition_keys
 
     def test_database_fixture_includes_selected_accounts_and_statistics(self):
+        self.resource.accounts_fields = {
+            "types": {"rating": ["int"]},
+            "variables": {"LEETCODE_SESSION": {"help": "Session cookie", "regex": ".+"}},
+        }
+        self.resource.save(update_fields=["accounts_fields"])
         statistic = self.create_statistic("alice", {"rating": {"new": 1500}}, 1)
+        statistic.account.info = {
+            "__typename": "User",
+            "_rating_time": 123,
+            "birthday": "2000-01-01",
+            "emailAddress": "alice@example.com",
+            "phone_number": "+123456789",
+            "profile_url": {"_handle": "alice", "slug": "alice"},
+            "outdated_": {"slogan": "alice@example.com"},
+            "variables_": {"LEETCODE_SESSION": {"value": "session-value"}},
+            "public_field": {"nested": "value"},
+        }
+        statistic.account.submissions_info = {
+            "_private_cursor": 1,
+            "session_id": "session-value",
+            "public_cursor": 2,
+        }
+        statistic.account.rating_prediction = {
+            "_private_rank": 1,
+            "email": "alice@example.com",
+            "public_rank": 2,
+        }
+        statistic.account.save(update_fields=["info", "submissions_info", "rating_prediction"])
         selected = SelectedStatistics(
             statistics=[statistic],
             users=["alice"],
@@ -267,16 +506,81 @@ class ParserFixtureStatisticsSelectionTest(TestCase):
         assert "ranking.account" in models
         assert "ranking.statistics" in models
         account = next(obj for obj in fixture if obj["model"] == "ranking.account")
+        resource = next(obj for obj in fixture if obj["model"] == "clist.resource")
         statistic_object = next(obj for obj in fixture if obj["model"] == "ranking.statistics")
+        assert resource["fields"]["accounts_fields"] == {"types": {"rating": ["int"]}}
         assert "coders" not in account["fields"]
         assert account["fields"]["duplicate"] is None
         assert account["fields"]["related"] is None
+        assert account["fields"]["info"] == {
+            "profile_url": {"slug": "alice"},
+            "public_field": {"nested": "value"},
+        }
+        assert account["fields"]["submissions_info"] == {"public_cursor": 2}
+        assert account["fields"]["rating_prediction"] == {"public_rank": 2}
         assert statistic_object["fields"]["account"] == statistic.account_id
         assert statistic_object["fields"]["addition"] == {"rating": {"new": 1500}}
         assert statistic_object["fields"]["related"] is None
 
+    def test_fixture_public_data_is_redacted_but_calendar_uid_is_preserved(self):
+        command = Command()
+        google_api_key = "AIza" + "x" * 35
+        payload = {
+            "contact": "alice@example.com",
+            "phone": "+123 456 7890",
+            "link": "tel:+1234567890",
+            "calendar": "calendar@group.calendar.google.com",
+            "script": f"key={google_api_key}",
+            "testSessionHandle": "public-test-session-handle",
+        }
+        expected = {
+            "contact": "<redacted-email>",
+            "phone": "<redacted-phone>",
+            "link": "tel:<redacted-phone>",
+            "calendar": "calendar@group.calendar.google.com",
+            "script": "key=<redacted-google-api-key>",
+            "testSessionHandle": "<redacted-test-session-handle>",
+        }
+
+        assert command.sanitize_fixture_data(payload) == expected
+        assert json.loads(command.sanitize_fixture_bytes(json.dumps(payload).encode())) == expected
+
+    def test_validation_rejects_unsanitized_public_data(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            fixture_path = Path(temporary_directory)
+            (fixture_path / "payload.txt").write_text('{"contact": "alice@example.com"}')
+
+            with pytest.raises(CommandError, match="refusing to keep potentially sensitive data"):
+                Command().validate_recording(fixture_path)
+
+    def test_validation_checks_compressed_public_data(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            fixture_path = Path(temporary_directory)
+            with gzip.open(fixture_path / "payload.json.gz", "wt") as output_file:
+                json.dump({"contact": "alice@example.com"}, output_file)
+
+            with pytest.raises(CommandError, match="refusing to keep potentially sensitive data"):
+                Command().validate_recording(fixture_path)
+
 
 class ParserFixtureRecordingTest(SimpleTestCase):
+    def test_gzip_file_is_deterministic(self):
+        command = Command()
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            first_path = root / "first.html"
+            second_path = root / "second.html"
+            first_path.write_bytes(b'{"result": {"alice": 1}}')
+            second_path.write_bytes(b'{"result": {"alice": 1}}')
+
+            first_gzip = command.gzip_file(first_path).read_bytes()
+            second_gzip = command.gzip_file(second_path).read_bytes()
+
+        assert first_gzip == second_gzip
+        assert first_gzip[:3] == b"\x1f\x8b\x08"
+        assert first_gzip[3] & 0x08 == 0
+        assert first_gzip[4:8] == b"\0\0\0\0"
+
     def test_standings_mismatch_error_includes_diff_path_and_values(self):
         command = Command()
         live = {"result": {"alice": {"solving": 1}}, "problems": [{"short": "A"}]}
@@ -390,6 +694,49 @@ class ParserFixtureRecordingTest(SimpleTestCase):
             with gzip.open(fixture_path / "expected_standings.json.gz", "rt") as input_file:
                 assert json.load(input_file)["result"] == {"alice": {"solving": 1}}
 
+    def test_recording_sanitizes_cache_and_expected_standings(self):
+        command = Command()
+        command.serialize_database_fixture = Mock(return_value=[])
+        command.select_statistics_for_fixture = Mock(
+            return_value=SelectedStatistics(
+                statistics=[],
+                users=["alice"],
+                statistics_by_key={"alice": {"name": "alice@example.com"}},
+                addition_keys={"name"},
+            )
+        )
+
+        def get_standings(contest, cache_path, allow_network, users=None, statistics=None):
+            cache_path = Path(cache_path)
+            if allow_network:
+                (cache_path / "page.html").write_text('{"name": "alice@example.com"}')
+                name = "alice@example.com"
+            else:
+                page_path = cache_path / "page.html"
+                if page_path.is_file():
+                    page = page_path.read_text()
+                else:
+                    with gzip.open(f"{page_path}.gz", "rt") as input_file:
+                        page = input_file.read()
+                name = json.loads(page)["name"]
+            return {"result": {"alice": {"name": name}}}
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            fixture_path = Path(temporary_directory) / "1" / "2"
+            with (
+                patch("ranking.management.commands.dump_parser_fixture.get_standings", side_effect=get_standings),
+                patch.object(command, "make_fixture_owned_by_workspace_user"),
+            ):
+                command.record_fixture(object(), fixture_path)
+
+            with gzip.open(fixture_path / "expected_standings.json.gz", "rt") as input_file:
+                expected = json.load(input_file)
+            with gzip.open(fixture_path / "httpcache" / "page.html.gz", "rt") as input_file:
+                cached = json.load(input_file)
+
+        assert expected["result"]["alice"]["name"] == "<redacted-email>"
+        assert cached["name"] == "<redacted-email>"
+
     def test_recorded_fixture_is_chowned_to_workspace_owner_when_running_as_root(self):
         command = Command()
 
@@ -497,6 +844,16 @@ class ParserFixtureSuggestionsTest(TestCase):
             **kwargs,
         )
 
+    @classmethod
+    def create_fixture_statistic(cls, contest, addition=None):
+        account = Account.objects.create(resource=contest.resource, key=f"fixture-user-{contest.pk}")
+        return Statistics.objects.create(
+            account=account,
+            contest=contest,
+            resource=contest.resource,
+            addition={"fixture": True} if addition is None else addition,
+        )
+
     def create_candidates(self):
         combination_kwargs = {
             "kind": "algorithm",
@@ -527,6 +884,8 @@ class ParserFixtureSuggestionsTest(TestCase):
             self.now - timedelta(days=1),
             series=self.series,
         )
+        for contest in (older, newer, old_annual, new_annual):
+            self.create_fixture_statistic(contest)
         return older, newer, old_annual, new_annual
 
     def test_candidates_are_latest_per_combination_and_annual_series(self):
@@ -539,6 +898,7 @@ class ParserFixtureSuggestionsTest(TestCase):
             standings_kind="scoring",
             is_rated=True,
         )
+        self.create_fixture_statistic(extra_suggestion)
 
         combinations, annual = Command().suggestion_candidates()
         combination_ids = {contest.pk for contest in combinations}
@@ -549,6 +909,33 @@ class ParserFixtureSuggestionsTest(TestCase):
         assert older.pk not in combination_ids
         assert new_annual.pk in annual_ids
         assert old_annual.pk not in annual_ids
+
+    def test_candidates_fall_back_to_older_contest_with_addition_statistics(self):
+        combination_kwargs = {
+            "kind": "algorithm",
+            "standings_kind": "scoring",
+            "is_rated": True,
+        }
+        older = self.create_contest(
+            self.resource,
+            "older-with-statistics",
+            self.now - timedelta(days=2),
+            **combination_kwargs,
+        )
+        self.create_fixture_statistic(older)
+        newer = self.create_contest(
+            self.resource,
+            "newer-with-empty-statistics",
+            self.now - timedelta(days=1),
+            **combination_kwargs,
+        )
+        self.create_fixture_statistic(newer, addition={})
+
+        combinations, _ = Command().suggestion_candidates()
+        combination_ids = {contest.pk for contest in combinations}
+
+        assert older.pk in combination_ids
+        assert newer.pk not in combination_ids
 
     def test_candidates_can_be_filtered_by_resource(self):
         _, newer, _, new_annual = self.create_candidates()
@@ -662,6 +1049,26 @@ class ParserFixtureSuggestionsTest(TestCase):
         assert "1 recorded, 1 failed" in output
         assert "Failed codeforces.com/newer" in stderr.getvalue()
         assert "Traceback (most recent call last)" not in stderr.getvalue()
+
+    def test_annual_latest_is_covered_by_older_fixture_with_same_variant(self):
+        _, newer, old_annual, new_annual = self.create_candidates()
+        stdout = StringIO()
+        command = Command(stdout=stdout)
+
+        with patch(
+            "ranking.management.commands.dump_parser_fixture.load_fixture_coverage",
+            return_value=(
+                {contest_coverage_key(newer), contest_coverage_key(old_annual)},
+                {(old_annual.resource_id, old_annual.pk)},
+            ),
+        ):
+            command.suggest_fixtures()
+
+        output = stdout.getvalue()
+        assert "parser variants: 1/1 covered" in output
+        assert "annual latest:   1/1 covered" in output
+        assert "No parser fixtures need to be added." in output
+        assert f"contest_id={new_annual.pk}" not in output
 
     def test_force_update_suggestions_records_already_covered_fixtures(self):
         _, newer, _, new_annual = self.create_candidates()

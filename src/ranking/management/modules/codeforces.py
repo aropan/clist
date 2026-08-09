@@ -804,6 +804,7 @@ class Statistic(BaseModule):
             for handle, row in statistics.items():
                 if handle not in result:
                     continue
+                r = result[handle]
                 for field in ("old_rating", "new_rating"):
                     if field in row:
                         r[field] = row[field]

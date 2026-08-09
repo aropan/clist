@@ -3,6 +3,7 @@
 import collections
 import json
 from copy import deepcopy
+from http.cookiejar import LoadError, MozillaCookieJar
 from urllib.parse import urljoin
 
 import dateutil.parser
@@ -12,28 +13,55 @@ from ranking.management.modules.common import REQ, BaseModule
 from ranking.management.modules.excepts import ExceptionParseAccounts, ExceptionParseStandings, FailOnGetResponse
 
 
+def get_headers():
+    try:
+        with open("sharedfiles/resource/kaggle/headers.json") as file:
+            return json.load(file)
+    except FileNotFoundError:
+        return {}
+
+
 class Statistic(BaseModule):
     STANDING_URL_FORMAT_ = "{0.url}/leaderboard"
     API_STANDINGS_URL_ = "https://www.kaggle.com/api/i/competitions.LeaderboardService/GetLeaderboard"
     API_PROFILE_URL_ = "https://www.kaggle.com/api/i/routing.RoutingService/GetPageDataByUrl"
+    CURL_COOKIE_FILE_ = "sharedfiles/resource/kaggle/cookies.txt"
 
     def __init__(self, **kwargs):
         super(Statistic, self).__init__(**kwargs)
 
+    @classmethod
+    def _get(cls, *args, **kwargs):
+        headers = get_headers()
+        headers.update(kwargs.get("headers") or {})
+        kwargs["headers"] = headers
+        kwargs["with_curl"] = True
+        kwargs["curl_cookie_file"] = cls.CURL_COOKIE_FILE_
+        return REQ.get(*args, **kwargs)
+
+    @classmethod
+    def _get_xsrf_token(cls):
+        cookiejar = MozillaCookieJar(cls.CURL_COOKIE_FILE_)
+        try:
+            cookiejar.load(ignore_discard=True, ignore_expires=True)
+        except (LoadError, OSError):
+            return None
+        return next((cookie.value for cookie in cookiejar if cookie.name == "XSRF-TOKEN"), None)
+
     def get_standings(self, users=None, statistics=None, **kwargs):
         standings_url = self.STANDING_URL_FORMAT_.format(self)
         try:
-            REQ.get(standings_url)
+            self._get(standings_url)
         except FailOnGetResponse as e:
             if e.code == 404:
                 return {"action": "delete"}
             raise e
 
-        xsrf_token = REQ.get_cookie("XSRF-TOKEN", domain_regex="kaggle.com")
+        xsrf_token = self._get_xsrf_token()
 
         post = '{"competitionId":' + self.key + ',"leaderboardMode":"LEADERBOARD_MODE_DEFAULT"}'
         headers = {"content-type": "application/json", "x-xsrf-token": xsrf_token}
-        data = REQ.get(self.API_STANDINGS_URL_, post, headers=headers, return_json=True)
+        data = self._get(self.API_STANDINGS_URL_, post, headers=headers, return_json=True)
 
         if "teams" not in data:
             raise ExceptionParseStandings("Not found teams")

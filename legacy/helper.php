@@ -136,18 +136,7 @@ $COOKIE = [];
 
 function redirect_url($url)
 {
-    stream_context_set_default([
-        'http' => [
-            'method' => 'HEAD',
-        ],
-    ]);
-    $headers = get_headers($url, true);
-    if ($headers !== false && isset($headers['Location'])) {
-        if (is_array($headers['Location'])) {
-            return end($headers['Location']);
-        }
-        return $headers['Location'];
-    }
+    curlexec($url, null, ['no_body' => true]);
     return $url;
 }
 
@@ -164,8 +153,9 @@ function curlexec(&$url, $postfields = null, $params = [])
     $curlexec_cache_file = false;
     if (CURLEXEC_CACHE_MODE) {
         $curlexec_requested_url = $url;
+        $curlexec_method = isset($params['no_body']) ? 'HEAD' : ($postfields === null ? 'GET' : 'POST');
         $curlexec_postfields = $postfields === null ? '' : (is_array($postfields) ? http_build_query($postfields) : $postfields);
-        $curlexec_cache_name = CURLEXEC_CACHE_DIR . '/' . parse_url($url, PHP_URL_HOST) . '-' . md5($url . "\n" . $curlexec_postfields);
+        $curlexec_cache_name = CURLEXEC_CACHE_DIR . '/' . parse_url($url, PHP_URL_HOST) . '-' . md5($curlexec_method . "\n" . $url . "\n" . $curlexec_postfields);
         $curlexec_cache_file = $curlexec_cache_name . '.html.gz';
         $curlexec_meta_file = $curlexec_cache_name . '.meta.json';
     }
@@ -306,10 +296,22 @@ function curlexec(&$url, $postfields = null, $params = [])
         $url = curl_getinfo($CID, CURLINFO_EFFECTIVE_URL);
     }
     if (CURLEXEC_CACHE_MODE === 'record') {
-        // never record server-issued cookies: fixtures are committed to the repo
-        $curlexec_raw_page = preg_replace('/^set-cookie:[^\r\n]*\r?\n/mi', '', $curlexec_raw_page);
+        // Preserve cookie names for parsers that need them, but never record values.
+        $curlexec_raw_page = preg_replace_callback(
+            '/^(set-cookie:\s*[^=;\r\n]+=)[^;\r\n]*/mi',
+            function ($match) {
+                return $match[1] . '<redacted>';
+            },
+            $curlexec_raw_page,
+        );
+        $curlexec_raw_page = preg_replace(
+            '#\b([a-z][a-z0-9+.-]*)://[^/\s:@]+:[^/\s@]+@#i',
+            '$1://<redacted>@',
+            $curlexec_raw_page,
+        );
         file_put_contents($curlexec_cache_file, gzencode($curlexec_raw_page, 9));
         file_put_contents($curlexec_meta_file, json_encode([
+            'method' => $curlexec_method,
             'url' => $curlexec_requested_url,
             'effective_url' => $url,
             'response_code' => response_code(),

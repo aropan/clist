@@ -10,31 +10,42 @@ require_once __DIR__ . '/harness.php';
 
 $only_host = isset($argv[1]) ? $argv[1] : '';
 
-$meta_files = array_merge(
-    glob(__DIR__ . '/fixtures/*/meta.json'),
-    glob(__DIR__ . '/fixtures/*/*/meta.json'),
-);
+$direct_network_call = fixture_find_direct_network_call(dirname(__DIR__) . '/module');
+if ($direct_network_call !== null) {
+    fwrite(STDERR, "schedule modules must use curlexec() for HTTP: $direct_network_call\n");
+    exit(1);
+}
+
+$meta_files = fixture_find_meta_files(__DIR__ . '/fixtures');
 if ($only_host) {
     $meta_files = array_filter($meta_files, function ($meta_file) use ($only_host) {
-        $rel = substr(dirname($meta_file), strlen(__DIR__ . '/fixtures/'));
-        return $rel === $only_host || basename($rel) === $only_host;
+        $meta = fixture_load_meta(dirname($meta_file));
+        return $meta['host'] === $only_host;
     });
     if (!$meta_files) {
-        die("no fixture found for host '$only_host'\n");
+        fixture_fail("no fixture found for host '$only_host'");
     }
 }
 if (!$meta_files) {
-    echo "no fixtures found under tests/fixtures/\n";
-    exit(0);
+    fwrite(STDERR, "no fixtures found under tests/fixtures/\n");
+    exit(1);
 }
 
 $failures = 0;
 foreach ($meta_files as $meta_file) {
     $fixture_dir = dirname($meta_file);
-    $host = substr(dirname($meta_file), strlen(__DIR__ . '/fixtures/'));
+    $meta = fixture_load_meta($fixture_dir);
+    $host = $meta['host'];
     $expected_file = $fixture_dir . '/expected_contests.json';
     if (!file_exists($expected_file)) {
         echo fixture_colorize('FAIL', '31') . " $host (missing expected_contests.json)\n";
+        $failures += 1;
+        continue;
+    }
+    try {
+        fixture_validate_recording($fixture_dir);
+    } catch (RuntimeException $e) {
+        echo fixture_colorize('FAIL', '31') . " $host ({$e->getMessage()})\n";
         $failures += 1;
         continue;
     }

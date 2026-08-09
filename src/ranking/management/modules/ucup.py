@@ -25,6 +25,36 @@ def extract_team_name(name):
 
 
 class Statistic(BaseModule):
+    PROBLEM_RATE_LIMIT_RETRIES = 1
+    PROBLEM_RATE_LIMIT_DELAY = 60
+
+    @staticmethod
+    def _update_upsolving_submission(problem, submission):
+        submission_id = submission["submission_id"]
+        is_accepted = submission["verdict"] == "AC"
+        current_submission_id = problem.get("submission_id")
+        current_is_accepted = problem.get("verdict") == "AC"
+        current_is_solved = current_is_accepted or str(problem.get("result", "")).startswith("+")
+
+        if (
+            is_accepted
+            and (not current_is_accepted or current_submission_id is None or submission_id < current_submission_id)
+        ) or (
+            not is_accepted
+            and not current_is_solved
+            and (current_submission_id is None or submission_id > current_submission_id)
+        ):
+            problem.update(submission)
+
+        attempts = problem.get("attempts", 0)
+        if not is_accepted:
+            attempts += 1
+        if attempts:
+            problem["attempts"] = attempts
+
+        is_solved = current_is_solved or is_accepted
+        problem["result"] = f"{'+' if is_solved else '-'}{attempts or ''}"
+
     def _detect_standings(self):
         contest_titles = [self.name, self.name.replace(": ", ": Grand Prix of ")]
 
@@ -73,15 +103,45 @@ class Statistic(BaseModule):
 
         raise ExceptionParseStandings("No standings url, not found title matching")
 
+    @classmethod
+    def _get_rating_urls(cls, season):
+        base_url = "https://ucup.ac/"
+        return (
+            urllib.parse.urljoin(base_url, "/rating/"),
+            urllib.parse.urljoin(base_url, f"/archive/season{season}/rating/"),
+        )
+
+    @classmethod
+    def _get_rating_page(cls, season):
+        current_url, archive_url = cls._get_rating_urls(season)
+        try:
+            current_page = REQ.get(current_url)
+        except FailOnGetResponse:
+            current_page = None
+        if current_page:
+            match = re.search(r"The (?P<season>[0-9]+)(?:st|nd|rd|th) Universal Cup", current_page)
+            if match and match.group("season") == str(season):
+                return current_page
+        return REQ.get(archive_url)
+
+    @classmethod
+    def _get_problem_page(cls, url):
+        additional_attempts = {429: {"count": cls.PROBLEM_RATE_LIMIT_RETRIES}}
+        return REQ.get(
+            url,
+            return_code=True,
+            ignore_codes={404},
+            additional_attempts=additional_attempts,
+            additional_delay=cls.PROBLEM_RATE_LIMIT_DELAY,
+        )
+
     def _get_season_ratings(self):
         ret = {}
         season = get_item(self.info, "parse.season")
         if not season:
             return ret
         stage = get_item(self.info, "parse.stage")
-        legacy_domain_url = "https://ucup-legacy.qoj.ac/"
-        rating_url = urllib.parse.urljoin(legacy_domain_url, f"/rating?season={season}")
-        rating_page = REQ.get(rating_url)
+        rating_page = self._get_rating_page(season)
         table = parsed_table.ParsedTable(rating_page)
         for row in table:
             rating_idx = None
@@ -153,7 +213,7 @@ class Statistic(BaseModule):
                 urllib.parse.urljoin(base_url, f"/problem/{problem_id}"),
             ):
                 try:
-                    problem_page, response_code = REQ.get(url, return_code=True, ignore_codes={404})
+                    problem_page, response_code = self._get_problem_page(url)
                     if response_code == 404:
                         continue
                     problem_info["url"] = url
@@ -168,21 +228,19 @@ class Statistic(BaseModule):
             return problem_info
 
         problems_infos = []
-        with PoolExecutor(max_workers=8) as executor:
-            problems_short = variables.pop("problems_id")
-            for idx in range(len(problems_short)):
-                if not problems_short[idx]:
-                    problems_short[idx] = chr(ord("A") + idx)
-            problems_id = variables.pop("problems")
-            problems_data = zip(problems_short, problems_id)
-            fetched_problems = executor.map(fetch_problem, problems_data)
-            for problem_info in tqdm(
-                fetched_problems,
-                total=len(problems_id),
-                desc="problem details",
-                unit="problem",
-            ):
-                problems_infos.append(problem_info)
+        problems_short = variables.pop("problems_id")
+        for idx in range(len(problems_short)):
+            if not problems_short[idx]:
+                problems_short[idx] = chr(ord("A") + idx)
+        problems_id = variables.pop("problems")
+        problems_data = zip(problems_short, problems_id)
+        for problem_info in tqdm(
+            map(fetch_problem, problems_data),
+            total=len(problems_id),
+            desc="problem details",
+            unit="problem",
+        ):
+            problems_infos.append(problem_info)
 
         result = {}
         handle_mapping = {}
@@ -284,76 +342,64 @@ class Statistic(BaseModule):
         REQ.add_cookie("show_all_submissions", "true")
         submission_url = urllib.parse.urljoin(standings_url.rstrip("/"), "submissions/")
 
-        seen_pages = {1}
-        next_pages = []
         submissions_info = self.info.get("_submissions_info", {})
         last_submission_id = submissions_info.get("last_submission_id") if statistics else None
 
-        def process_submission_page(page):
+        def fetch_submission_page(page):
             try:
                 submission_page = REQ.get(submission_url + "?page=" + str(page))
             except FailOnGetResponse as e:
                 if page == 1 and e.code == 404:
-                    return
+                    return [], []
                 raise e
 
             table = parsed_table.ParsedTable(submission_page)
-            n_added = 0
+            submissions = []
             for row in table:
                 row = {k.lower().replace(" ", "_"): v.value for k, v in row.items()}
                 submission_id = int(row.pop("id").lstrip("#"))
                 if last_submission_id and submission_id <= last_submission_id:
                     continue
-                handle = row.pop("submitter").rstrip(" #")
-                short = row.pop("problem").split(".")[0]
-                verdict = "".join(re.findall("[A-Z]", row.pop("result")))
-                handle = handle_mapping.get(handle, handle)
-                if handle not in result:
-                    result[handle] = {"member": handle, "problems": {}, "_no_update_n_contests": True}
-                problems = result[handle].setdefault("problems", {})
-                problem = problems.setdefault(short, {})
-                is_accepted = verdict == "AC"
-                upsolving = submission_id > problem.get("submission_id", -1)
-                if upsolving:
-                    problem = problem.setdefault("upsolving", {})
-                elif submission_id != problem.get("submission_id", -1):
-                    continue
-
+                submission = {
+                    "handle": row.pop("submitter").rstrip(" #"),
+                    "short": row.pop("problem").split(".")[0],
+                    "submission_id": submission_id,
+                }
+                verdict = "".join(re.findall(r"[A-Z]", row.pop("result")))
                 row["execution_time"] = row.pop("time")
-                problem.update(row)
-                problem["verdict"] = verdict
-                if upsolving:
-                    if "submission_id" not in problem or submission_id > problem["submission_id"] or is_accepted:
-                        problem["submission_id"] = submission_id
-                        problem["url"] = urllib.parse.urljoin(standings_url, f"/submission/{submission_id}")
-                    if is_accepted:
-                        problem["result"] = f"+{problem.get('attempts') or ''}"
-                    else:
-                        problem["attempts"] = problem.get("attempts", 0) + 1
-                        prev_result = problem.get("result", "-")[0]
-                        problem["result"] = f"{prev_result}{problem['attempts']}"
+                submission.update(row)
+                submission["verdict"] = verdict
+                submission["url"] = urllib.parse.urljoin(standings_url, f"/submission/{submission_id}")
+                submissions.append(submission)
 
-                if submissions_info.get("last_submission_id", -1) < submission_id:
-                    submissions_info["last_submission_id"] = submission_id
-                n_added += 1
-            if not n_added:
-                return
+            if not submissions:
+                return [], []
 
-            matches = re.finditer('<a[^>]*class="page-link"[^>]*>(?P<page>[0-9]+)</a>', submission_page)
-            for match in matches:
-                page = int(match.group("page"))
-                if page not in seen_pages:
-                    seen_pages.add(page)
-                    next_pages.append(page)
+            matches = re.finditer(r'<a[^>]*class="page-link"[^>]*>(?P<page>[0-9]+)</a>', submission_page)
+            pages = [int(match.group("page")) for match in matches]
+            return submissions, pages
+
+        def process_submission(submission):
+            submission_id = submission["submission_id"]
+            handle = submission.pop("handle")
+            short = submission.pop("short")
+            handle = handle_mapping.get(handle, handle)
+            if handle not in result:
+                result[handle] = {"member": handle, "problems": {}, "_no_update_n_contests": True}
+            problems = result[handle].setdefault("problems", {})
+            problem = problems.setdefault(short, {})
+            upsolving = submission_id > problem.get("submission_id", -1)
+            if upsolving:
+                problem = problem.setdefault("upsolving", {})
+                self._update_upsolving_submission(problem, submission)
+            elif submission_id == problem.get("submission_id", -1):
+                problem.update(submission)
+
+            if submissions_info.get("last_submission_id", -1) < submission_id:
+                submissions_info["last_submission_id"] = submission_id
 
         if get_item(self.info, "standings.parse_submissions", True):
-            process_submission_page(1)
-            with PoolExecutor(max_workers=8) as executor:
-                while next_pages:
-                    curr_pages = next_pages
-                    next_pages = []
-                    for _ in executor.map(process_submission_page, curr_pages):
-                        pass
+            self._process_submission_pages(fetch_submission_page, process_submission)
 
         standings = {
             "url": self.standings_url,
@@ -365,6 +411,35 @@ class Statistic(BaseModule):
             "options": {"data": variables},
         }
         return standings
+
+    @staticmethod
+    def _process_submission_pages(fetch_submission_page, process_submission):
+        seen_pages = {1}
+        seen_submission_ids = set()
+
+        def process_page(page_data):
+            submissions, discovered_pages = page_data
+            next_pages = []
+            for page in discovered_pages:
+                if page not in seen_pages:
+                    seen_pages.add(page)
+                    next_pages.append(page)
+            for submission in submissions:
+                submission_id = submission["submission_id"]
+                if submission_id in seen_submission_ids:
+                    continue
+                seen_submission_ids.add(submission_id)
+                process_submission(submission)
+            return next_pages
+
+        pages = process_page(fetch_submission_page(1))
+        with PoolExecutor(max_workers=8) as executor:
+            while pages:
+                next_pages = []
+                for page_data in executor.map(fetch_submission_page, pages):
+                    next_pages.extend(process_page(page_data))
+                pages = next_pages
+        return seen_pages, seen_submission_ids
 
     @staticmethod
     def get_users_infos(users, resource, accounts, pbar=None):

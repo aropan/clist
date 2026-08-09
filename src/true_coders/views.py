@@ -844,11 +844,13 @@ def get_ratings_data(
             base_qs.annotate(rating_change=F("global_rating_change"))
             .annotate(new_rating=F("new_global_rating"))
             .annotate(old_rating=Value(None, IntegerField(null=True)))
-            .annotate(resource=Value(0, IntegerField()))
             .annotate(is_unrated=Value(0, IntegerField()))
             .filter(new_rating__isnull=False)
         )
-        qs.extend(global_qs.values(*qs_values))
+        global_qs = list(global_qs.values(*qs_values))
+        for stat in global_qs:
+            stat["resource"] = 0
+        qs.extend(global_qs)
 
     for stat in qs:
         if stat.get("addition___rating_data") and n_resources > 1:
@@ -914,14 +916,16 @@ def get_ratings_data(
         resources_list = qs.distinct("contest__resource__host").values_list("contest__resource__pk", flat=True)
         for pk in resources_list:
             resource = resources[pk]
-            default_info = dict(resource.info.get("ratings", {}).get("chartjs", {}))
-            default_info["pk"] = pk
-            default_info["host"] = resource.host
-            default_info["colors"] = resource.ratings
-            default_info["icon"] = resource.icon_file.name
-            resource_info = ratings["data"]["resources"].setdefault(resource.host, default_info)
-            resource_info.setdefault("data", [])
             for stat in qs.filter(contest__resource__pk=pk).distinct("account__key"):
+                default_info = dict(resource.info.get("ratings", {}).get("chartjs", {}))
+                default_info["pk"] = pk
+                default_info["host"] = resource.host
+                default_info["colors"] = resource.ratings
+                default_info["icon"] = resource.icon_file.name
+                default_info["account_pk"] = stat.account_id
+                resource_key = f"{resource.host} #{stat.account_id}"
+                resource_info = ratings["data"]["resources"].setdefault(resource_key, default_info)
+                resource_info.setdefault("data", [])
                 data = resource.plugin.Statistic.get_rating_history(
                     stat.account.info["_rating_data"], stat, resource, date_from=date_from, date_to=date_to
                 )
@@ -932,9 +936,12 @@ def get_ratings_data(
     for k in resources_to_remove:
         ratings["data"]["resources"].pop(k)
 
-    accounts_ids = {resource_info["account_pk"] for resource_info in ratings["data"]["resources"].values()}
+    account_resources = [
+        resource_info for resource_info in ratings["data"]["resources"].values() if "account_pk" in resource_info
+    ]
+    accounts_ids = {resource_info["account_pk"] for resource_info in account_resources}
     accounts_names = {a.pk: a.short_display() for a in Account.objects.filter(pk__in=accounts_ids)}
-    for resource_info in ratings["data"]["resources"].values():
+    for resource_info in account_resources:
         account_pk = resource_info["account_pk"]
         resource_info["account_name"] = accounts_names[account_pk]
 
