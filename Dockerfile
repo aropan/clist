@@ -131,3 +131,12 @@ RUN chown -R postgres:postgres /usr/src/clist/config/postgres
 RUN chmod 644 /usr/src/clist/config/postgres/postgresql.conf
 
 CMD supervisord -c /etc/supervisord.conf
+
+
+FROM postgres AS backup
+RUN apk add --no-cache python3 py3-pip \
+    && python3 -m pip install --no-cache-dir rich==13.7.1
+COPY --chmod=755 src/scripts/backup_postgres.py /usr/local/bin/backup-postgres
+
+ENTRYPOINT ["python3", "/usr/local/bin/backup-postgres"]
+CMD []

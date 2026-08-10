@@ -21,6 +21,45 @@ How CLIST is containerized and operated. **High-risk area** — change only with
 | `bugsink` | Self-hosted error tracking (sentry-sdk compatible), DB in `db`; env in `.env.bugsink` |
 | `healthchecks` | Self-hosted cron monitoring (pinged by both cron runners), DB in `db`; env in `.env.healthchecks` |
 
+## PostgreSQL backups
+
+The `backup` Compose profile creates an online logical backup of every connectable
+non-template database in `db`, plus roles and tablespaces. It does not include Redis,
+media/shared files, monitoring data, certificates, `.env` files, or other Docker
+volumes.
+
+Create the host directory once and build the tool image:
+
+```bash
+sudo install -d -m 700 -o "$(id -un)" -g "$(id -gn)" /var/backups/clist
+docker compose build backup
+```
+
+Run a discovery-only check, then create a backup:
+
+```bash
+./src/scripts/backup-postgres.bash --dry-run
+./src/scripts/backup-postgres.bash
+```
+
+Use `CLIST_BACKUP_DIR=/another/host/path` to override the destination. The defaults
+are two parallel workers per database, compression level 6, and retention of verified
+backups for seven days. Override them with `--jobs`, `--compression`, and
+`--retention-days`; setting retention to `0` disables deletion. A low-space warning
+requires an explicit `--allow-low-space` override.
+
+Each completed `postgresql-<UTC>` directory contains `globals.sql`, one compressed
+directory-format archive per database, `manifest.json`, and `SHA256SUMS`. Work is
+written to a hidden `.in-progress` directory on the same host mount and renamed only
+after every archive passes `pg_restore --list` and all checksums are written. The Rich
+display shows the current step, database and tables, bytes written, elapsed time, and
+an approximate ETA; PostgreSQL does not provide an exact total for `COPY TO`.
+
+Restoration is destructive and should first be tested on a separate PostgreSQL 14
+cluster. Verify `SHA256SUMS`, stop writers, restore `globals.sql` first, then restore
+every database archive listed in `manifest.json` with `pg_restore`. Run application
+smoke tests before enabling writers again.
+
 The app-side error-tracking DSN and Healthchecks ping key live in `.env.monitoring`
 (mounted into `prod`/`dev`/`legacy` as the `monitoring_conf` docker secret).
 

@@ -130,6 +130,25 @@ services:
       - ./.env.db
     shm_size: 4GB
     restart: unless-stopped
+  backup:
+    build:
+      context: .
+      target: backup
+      provenance: disabled=true
+    profiles:
+      - tools
+    networks:
+      - clist_network
+    volumes:
+      - ${CLIST_BACKUP_DIR:-/var/backups/clist}:/backups
+    env_file:
+      - ./.env.db
+    environment:
+      - BACKUP_ROOT=/backups
+      - BACKUP_DISPLAY_ROOT=${CLIST_BACKUP_DIR:-/var/backups/clist}
+    depends_on:
+      - db
+    init: true
   nginx:
     build:
       context: .
