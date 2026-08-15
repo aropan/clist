@@ -56,8 +56,8 @@
       "avatar_url": "{info[picture]}",
       "avg_rating": null,
       "color": "#66CC94",
-      "contest_update_time": "2026-07-29T18:07:09.684Z",
-      "country_rank_update_time": "2026-08-02T11:40:06.060Z",
+      "contest_update_time": "2026-08-15T16:43:23.001Z",
+      "country_rank_update_time": "2026-08-13T01:20:06.061Z",
       "created": "2013-02-03T00:00:00Z",
       "default_account_type": 1,
       "enable": true,
@@ -109,11 +109,11 @@
           "name_instead_key": true
         }
       },
-      "modified": "2026-08-04T05:15:12.443Z",
-      "n_accounts": 50534,
+      "modified": "2026-08-15T16:45:15.053Z",
+      "n_accounts": 50547,
       "n_accounts_to_update": 0,
-      "n_contests": 1870,
-      "n_rating_accounts": 1923,
+      "n_contests": 1871,
+      "n_rating_accounts": 1924,
       "n_statistics": 208403,
       "n_team_accounts": 0,
       "n_university_accounts": 0,
@@ -126,9 +126,9 @@
         "types": {}
       },
       "profile_url": "https://basecamp.eolymp.com/users/{account}",
-      "rank_update_time": "2026-07-31T06:15:10.895Z",
+      "rank_update_time": "2026-08-12T01:00:10.277Z",
       "rating_prediction": null,
-      "rating_update_time": "2026-07-30T06:09:09.377Z",
+      "rating_update_time": "2026-08-15T16:45:15.053Z",
       "ratings": [
         {
           "color": "legendary",
@@ -229,7 +229,7 @@
             0.25
           ],
           "low": 0.24,
-          "min_rating": 1431,
+          "min_rating": 1432,
           "name": "Specialist",
           "next": 0.55,
           "prev": 0.24
@@ -641,7 +641,7 @@
           "account": "Rmelamud"
         },
         "rank": 58,
-        "rank_percentile": 0.030697190426638918,
+        "rank_percentile": 0.030681227249089962,
         "rating": 1976,
         "streak": 0,
         "submissions_accepted": 168,
@@ -714,7 +714,7 @@
           "account": "Anastasia_aaa"
         },
         "rank": 1236,
-        "rank_percentile": 0.6233090530697191,
+        "rank_percentile": 0.6235049401976079,
         "rating": 1184,
         "streak": 0,
         "submissions_accepted": 30,
@@ -753,7 +753,7 @@
       "rating_update_time": "2025-08-23T14:00:00Z",
       "related": null,
       "resource": 10,
-      "resource_rank": 1199,
+      "resource_rank": 1200,
       "solving": 314.0,
       "submissions_info": {},
       "total_solving": 314.0,

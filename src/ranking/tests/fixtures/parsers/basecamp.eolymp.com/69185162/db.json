@@ -56,8 +56,8 @@
       "avatar_url": "{info[picture]}",
       "avg_rating": null,
       "color": "#66CC94",
-      "contest_update_time": "2026-07-29T18:07:09.684Z",
-      "country_rank_update_time": "2026-08-02T11:40:06.060Z",
+      "contest_update_time": "2026-08-15T16:43:23.001Z",
+      "country_rank_update_time": "2026-08-13T01:20:06.061Z",
       "created": "2013-02-03T00:00:00Z",
       "default_account_type": 1,
       "enable": true,
@@ -109,11 +109,11 @@
           "name_instead_key": true
         }
       },
-      "modified": "2026-08-04T05:15:12.443Z",
-      "n_accounts": 50534,
+      "modified": "2026-08-15T16:45:15.053Z",
+      "n_accounts": 50547,
       "n_accounts_to_update": 0,
-      "n_contests": 1870,
-      "n_rating_accounts": 1923,
+      "n_contests": 1871,
+      "n_rating_accounts": 1924,
       "n_statistics": 208403,
       "n_team_accounts": 0,
       "n_university_accounts": 0,
@@ -126,9 +126,9 @@
         "types": {}
       },
       "profile_url": "https://basecamp.eolymp.com/users/{account}",
-      "rank_update_time": "2026-07-31T06:15:10.895Z",
+      "rank_update_time": "2026-08-12T01:00:10.277Z",
       "rating_prediction": null,
-      "rating_update_time": "2026-07-30T06:09:09.377Z",
+      "rating_update_time": "2026-08-15T16:45:15.053Z",
       "ratings": [
         {
           "color": "legendary",
@@ -229,7 +229,7 @@
             0.25
           ],
           "low": 0.24,
-          "min_rating": 1431,
+          "min_rating": 1432,
           "name": "Specialist",
           "next": 0.55,
           "prev": 0.24
@@ -387,7 +387,7 @@
   {
     "fields": {
       "allow_updating_statistics_for_participants": null,
-      "auto_updated": "2026-08-04T13:12:32Z",
+      "auto_updated": "2026-08-15T16:46:52Z",
       "calculate_time": false,
       "created": "2026-07-28T08:29:42.450Z",
       "duration_in_secs": 14400,
@@ -403,13 +403,19 @@
       "hide_unsolved_standings_problems": null,
       "host": "basecamp.eolymp.com",
       "info": {
+        "_external_fields": [
+          "level",
+          "new_rating"
+        ],
         "fields": [
           "_no_update_n_contests",
           "name",
           "country",
           "unofficial",
           "disqualified",
-          "problems"
+          "problems",
+          "level",
+          "new_rating"
         ],
         "fields_types": {
           "_no_update_n_contests": [
@@ -440,7 +446,7 @@
             "attemptPenalty": 0,
             "freezingTime": 0,
             "modes": [
-              "RESULT",
+              "MAIN",
               "UPSOLVE"
             ],
             "tieBreaker": "",
@@ -492,7 +498,7 @@
       "invisible": false,
       "is_auto_added": true,
       "is_promoted": null,
-      "is_rated": null,
+      "is_rated": true,
       "key": "l62h8skt4h29bc83n1rb4qki40",
       "kind": "IOI",
       "link_statistic_timing": null,
@@ -525,13 +531,13 @@
       "title_path": "ejoi.2026.day.2",
       "trial_standings_url": null,
       "uid": "b3utprjfd1219ie3alfj6jie4o",
-      "updated": "2026-08-04T13:12:32.438Z",
+      "updated": "2026-08-15T16:46:52.427Z",
       "upload_solved_problems_solutions": null,
       "upsolving_key": null,
       "upsolving_url": null,
       "url": "https://basecamp.eolymp.com/contests/l62h8skt4h29bc83n1rb4qki40",
       "variables": {},
-      "wait_for_successful_update_timing": null,
+      "wait_for_successful_update_timing": "2026-08-10T15:00:11.374Z",
       "with_advance": false,
       "with_medals": false
     },
@@ -560,7 +566,7 @@
           "account": "SashaSofa"
         },
         "rank": 80,
-        "rank_percentile": 0.04058272632674298,
+        "rank_percentile": 0.0405616224648986,
         "rating": 1919,
         "streak": 0,
         "submissions_accepted": 1952,
@@ -568,26 +574,26 @@
         "unofficial": false
       },
       "key": "j5bdcgmjp97cvbnogj5kq3720g",
-      "last_activity": "2026-07-29T14:00:00Z",
+      "last_activity": "2026-08-09T12:00:00Z",
       "last_rating_activity": "2026-07-27T14:00:00Z",
       "last_submission": null,
-      "modified": "2026-08-04T05:15:11.371Z",
+      "modified": "2026-08-15T16:43:24.709Z",
       "n_bronze": null,
-      "n_contests": 96,
+      "n_contests": 97,
       "n_first_ac": 0,
       "n_first_places": 6,
       "n_gold": null,
       "n_listvalues": 0,
       "n_medals": null,
       "n_other_medals": null,
-      "n_places": 9,
-      "n_second_places": 0,
+      "n_places": 10,
+      "n_second_places": 1,
       "n_silver": null,
-      "n_solved": 278,
+      "n_solved": 283,
       "n_subscribers": 0,
       "n_third_places": 0,
       "n_top_ten_places": 3,
-      "n_total_solved": 278,
+      "n_total_solved": 283,
       "n_upsolved": 0,
       "n_win": null,
       "n_writers": 0,
@@ -600,12 +606,12 @@
       "related": null,
       "resource": 10,
       "resource_rank": 79,
-      "solving": 32719.5,
+      "solving": 34169.5,
       "submissions_info": {},
-      "total_solving": 32719.5,
+      "total_solving": 34169.5,
       "try_fill_missed_ranks_time": null,
       "try_renaming_check_time": null,
-      "updated": "2027-07-30T23:59:59.999Z",
+      "updated": "2026-08-16T04:43:23.001Z",
       "upsolving": 0.0,
       "url": "/account/j5bdcgmjp97cvbnogj5kq3720g/resource/basecamp.eolymp.com/"
     },
@@ -634,7 +640,7 @@
           "account": "user924475"
         },
         "rank": 350,
-        "rank_percentile": 0.17429760665972946,
+        "rank_percentile": 0.17420696827873114,
         "rating": 1629,
         "streak": 0,
         "submissions_accepted": 3,
@@ -707,7 +713,7 @@
           "account": "vako_p"
         },
         "rank": 128,
-        "rank_percentile": 0.06295525494276795,
+        "rank_percentile": 0.06292251690067603,
         "rating": 1836,
         "streak": 0,
         "submissions_accepted": 34,
@@ -758,6 +764,79 @@
     },
     "model": "ranking.account",
     "pk": 7954820
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "IN",
+      "created": "2026-07-29T15:24:07.903Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "country": "India",
+        "created_at": "2026-07-27T12:13:09Z",
+        "display_name": "sklamba",
+        "full_name": "Sohil kumar lamba",
+        "inactive": false,
+        "level": 6,
+        "name": "sklamba",
+        "problems_solved": 21,
+        "profile_url": {
+          "account": "sklamba"
+        },
+        "rank": 650,
+        "rank_percentile": 0.31877275091003643,
+        "rating": 1452,
+        "streak": 0,
+        "submissions_accepted": 29,
+        "submissions_total": 0,
+        "unofficial": false
+      },
+      "key": "0v7lbuhhnh339dkqcd0vu39au4",
+      "last_activity": "2026-08-09T12:00:00Z",
+      "last_rating_activity": "2026-07-29T14:00:00Z",
+      "last_submission": null,
+      "modified": "2026-08-15T16:43:25.182Z",
+      "n_bronze": null,
+      "n_contests": 2,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 4,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 1,
+      "n_total_solved": 4,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "sklamba",
+      "need_verification": false,
+      "rating": 1452,
+      "rating50": 29,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 10,
+      "resource_rank": 614,
+      "solving": 1026.0,
+      "submissions_info": {},
+      "total_solving": 1026.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-08-16T04:43:23.001Z",
+      "upsolving": null,
+      "url": "/coder/sklamba/?resource=10"
+    },
+    "model": "ranking.account",
+    "pk": 11582591
   },
   {
     "fields": {
@@ -986,6 +1065,56 @@
     },
     "model": "ranking.statistics",
     "pk": 91212163
+  },
+  {
+    "fields": {
+      "account": 11582591,
+      "addition": {
+        "country": "India",
+        "disqualified": false,
+        "level": 0,
+        "name": "sklamba",
+        "new_rating": 1452,
+        "problems": {
+          "A": {
+            "attempts": 4,
+            "partial": true,
+            "result": 33
+          },
+          "B": {
+            "attempts": 1,
+            "partial": true,
+            "result": 43
+          }
+        },
+        "unofficial": false
+      },
+      "advanced": false,
+      "contest": 69185162,
+      "created": "2026-07-29T15:24:07.940Z",
+      "global_rating_change": null,
+      "last_activity": "2026-07-29T14:00:00Z",
+      "medal": null,
+      "modified": "2026-08-09T15:00:11.271Z",
+      "n_first_ac": 0,
+      "n_solved": 0,
+      "n_total_solved": 0,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "6",
+      "place_as_int": 6,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 10,
+      "skip_in_stats": false,
+      "solving": 76.0,
+      "total_solving": 76.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 91212164
   },
   {
     "fields": {
