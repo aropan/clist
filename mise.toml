@@ -2,11 +2,10 @@ min_version = "2026.7.13"
 
 [settings]
 lockfile = true
-
-[env]
-_.python.venv = ".venv"
+python.uv_venv_auto = "create|source"
 
 [tools]
+uv = "0.12.3"
 "aqua:astral-sh/ruff" = "0.16.2"
 "aqua:biomejs/biome" = "2.5.7"
 

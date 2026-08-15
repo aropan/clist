@@ -44,6 +44,8 @@ services:
       - ./legacy/logs/:/usr/src/clist/logs/legacy/
       - ./logs/postgres/:/usr/src/clist/logs/postgres/
       - ./legacy/api/:/usr/src/clist/legacy/api/
+    ports:
+      - 127.0.0.1:10042:10042
     depends_on:
       db:
         condition: service_healthy

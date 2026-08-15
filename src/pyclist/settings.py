@@ -165,6 +165,7 @@ AUTHENTICATION_BACKENDS = (
 
 if DEBUG:
     DEBUG_PERMISSION_EXCLUDE_PATHS = {"static"}
+    MIDDLEWARE = ("pyclist.middleware.LocalhostCookieMiddleware", *MIDDLEWARE)
     MIDDLEWARE += (
         "pyclist.middleware.DebugPermissionOnlyMiddleware",
         "django_cprofile_middleware.middleware.ProfilerMiddleware",

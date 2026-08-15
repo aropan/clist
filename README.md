@@ -7,8 +7,10 @@
 
 ## Prerequisites
 
-- [Python 3.10](https://www.python.org/downloads/)
+- [Python 3.14](https://www.python.org/downloads/)
 - [Docker (with Docker Compose v2)](https://www.docker.com/products/docker-desktop)
+- Optional: [mise](https://mise.jdx.dev/installing-mise.html) for pinned host tools
+  and a local Python virtualenv
 
 ## Development setup
 
@@ -17,15 +19,24 @@
 git clone --recursive https://github.com/<your-username>/clist.git
 cd clist
 
-# 2. Generate default environment files (press Enter to accept defaults):
+# 2. Optional, when mise is installed: trust the project config and install tools.
+#    Mise then creates .venv with the required Python version when needed.
+mise trust
+mise install --locked
+
+# 3. Generate default environment files (press Enter to accept defaults):
 python3 ./configure.py
 
-# 3. Build and start the long-running dev container:
+# 4. Build and start the long-running dev container:
 docker compose up --build dev
 
-# 4. Open the app:
+# 5. Open the app:
 #    http://localhost:10042/
 ```
+
+Skip step 2 if you do not use mise; the Docker development setup does not depend
+on it. See [`docs/linting-formatting.md`](docs/linting-formatting.md) for the host
+tooling and local virtualenv workflow.
 
 ## Going further
 

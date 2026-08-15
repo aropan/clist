@@ -17,6 +17,19 @@ from true_coders.models import Coder
 from utils.custom_request import CustomRequest
 
 
+def LocalhostCookieMiddleware(get_response):
+    def middleware(request):
+        response = get_response(request)
+        hostname = request.get_host().partition(":")[0]
+        if hostname in {"localhost", "127.0.0.1"}:
+            for cookie in response.cookies.values():
+                cookie["domain"] = ""
+                cookie["secure"] = False
+        return response
+
+    return middleware
+
+
 def ForbidPostPaginationMiddleware(get_response):
     def middleware(request):
         if request.method == "POST" and (QS_KEY in request.POST or PAGE_LABEL in request.POST):

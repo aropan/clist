@@ -6,7 +6,8 @@ import random
 import re
 import string
 import subprocess
-import time
+
+VARIABLE_RE = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=")
 
 
 def random_string(length=40):
@@ -35,44 +36,110 @@ def enter_value(variable, old_value):
     return value
 
 
-def fill_template(target_file, accept_default=False, allow_empty=False):
-    template_file = target_file + ".template"
-    if os.path.exists(target_file):
-        logger.info(f"File {target_file} already exists")
-        return
+def get_variable(line):
+    match = VARIABLE_RE.match(line)
+    return match.group(1) if match else None
 
-    logger.info(f"Generating {target_file}...")
 
+def split_template_entries(lines):
+    entries = []
+    leading_lines = []
+    current_variable = None
+    current_lines = []
+
+    for line in lines:
+        variable = get_variable(line)
+        if variable is None:
+            if current_variable is None:
+                leading_lines.append(line)
+            else:
+                current_lines.append(line)
+            continue
+
+        if current_variable is not None:
+            next_leading_lines = []
+            while current_lines and (not current_lines[-1].strip() or current_lines[-1].lstrip().startswith("#")):
+                next_leading_lines.insert(0, current_lines.pop())
+            entries.append((current_variable, current_lines))
+            leading_lines = next_leading_lines
+
+        current_variable = variable
+        current_lines = [*leading_lines, line]
+        leading_lines = []
+
+    if current_variable is not None:
+        entries.append((current_variable, current_lines))
+
+    return entries
+
+
+def render_template(lines, accept_default, allow_empty):
     generated = ""
     n_sep_skip = 0
-    with open(template_file, "r") as fo:
-        for line in fo:
-            line = line.rstrip()
-            parts = re.split(r"\s*=\s*", line, maxsplit=1)
-            if len(parts) < 2:
-                generated += f"{line}\n"
-                continue
 
-            entry = re.search(r"\s*=\s*", line)
-            sep = entry.group(0)
+    for line in lines:
+        line = line.rstrip()
+        parts = re.split(r"\s*=\s*", line, maxsplit=1)
+        if len(parts) < 2:
+            generated += f"{line}\n"
+            continue
 
-            variable, old_value = parts
-            entry = re.search("""^['"]""", old_value)
-            quote = entry.group(0) if entry else ""
-            if old_value.endswith("random-string"):
-                old_value = ""
-            if old_value and " " in sep:
-                n_sep_skip += 1
-                generated += f"{line}\n"
-                continue
-            if accept_default and (allow_empty or old_value):
-                value = old_value
-                logger.info(f'Accept default value "{old_value}" for "{variable}"')
-            else:
-                value = enter_value(variable, old_value)
-            generated += f"{variable}{sep}{quote}{value}{quote}\n"
+        entry = re.search(r"\s*=\s*", line)
+        sep = entry.group(0)
 
-    with open(target_file, "w") as fo:
+        variable, old_value = parts
+        entry = re.search(r"""^['"]""", old_value)
+        quote = entry.group(0) if entry else ""
+        if old_value.endswith("random-string"):
+            old_value = ""
+        if old_value and " " in sep:
+            n_sep_skip += 1
+            generated += f"{line}\n"
+            continue
+        if accept_default and (allow_empty or old_value):
+            value = old_value
+            logger.info(f'Accept default value "{old_value}" for "{variable}"')
+        else:
+            value = enter_value(variable, old_value)
+        generated += f"{variable}{sep}{quote}{value}{quote}\n"
+
+    return generated, n_sep_skip
+
+
+def fill_template(target_file, accept_default=False, allow_empty=False):
+    template_file = target_file + ".template"
+    with open(template_file) as fo:
+        template_lines = fo.readlines()
+
+    target_exists = os.path.exists(target_file)
+    target_lines = []
+    if target_exists:
+        with open(target_file) as fo:
+            target_lines = fo.readlines()
+        existing_variables = {variable for line in target_lines if (variable := get_variable(line))}
+        missing_entries = [
+            (variable, lines)
+            for variable, lines in split_template_entries(template_lines)
+            if variable not in existing_variables
+        ]
+        if not missing_entries:
+            logger.info(f"File {target_file} already contains all template variables")
+            return
+
+        template_lines = []
+        for _, lines in missing_entries:
+            template_lines.extend(lines)
+        missing_variables = ", ".join(variable for variable, _ in missing_entries)
+        logger.info(f"Adding missing variables to {target_file}: {missing_variables}")
+    else:
+        logger.info(f"Generating {target_file}...")
+
+    generated, n_sep_skip = render_template(template_lines, accept_default, allow_empty)
+    if target_lines and not target_lines[-1].endswith("\n"):
+        generated = "\n" + generated
+
+    mode = "a" if target_exists else "w"
+    with open(target_file, mode) as fo:
         fo.write(generated)
 
     if n_sep_skip:
@@ -81,13 +148,13 @@ def fill_template(target_file, accept_default=False, allow_empty=False):
 
 def run_command(cmd):
     cmd = cmd.replace("\n", " ")
-    not_sensitive_data = re.sub('"[^"]*"', "***", cmd)
+    not_sensitive_data = re.sub(r'"[^"]*"', "***", cmd)
     logger.info(f"Run command = {not_sensitive_data}")
     subprocess.run(cmd, shell=True, check=True)
 
 
 def create_volumes():
-    with open("docker-compose.yml", "r") as fo:
+    with open("docker-compose.yml") as fo:
         content = fo.read()
     folders = re.findall(r"^\s*device:\s*(.*)", content, re.MULTILINE)
     for folder in folders:
@@ -109,8 +176,6 @@ def main():
     create_volumes()
     run_command("docker compose build dev")
     run_command("docker compose up --build --detach db")
-    logger.info("Waiting 30 seconds for database to start")
-    time.sleep(30)
     run_command("docker compose run dev ./manage.py migrate contenttypes")
     run_command("docker compose run dev ./manage.py migrate auth")
     run_command("docker compose run dev ./manage.py migrate")

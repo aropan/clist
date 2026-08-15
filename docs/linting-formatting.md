@@ -4,11 +4,12 @@
 
 ## Tool installation
 
-Formatter versions are pinned in [`mise.toml`](../mise.toml) and
+Host tool versions are pinned in [`mise.toml`](../mise.toml) and
 [`mise.lock`](../mise.lock). Install [mise](https://mise.jdx.dev/installing-mise.html)
-once, then install all project tools:
+once, then trust the project configuration and install all project tools:
 
 ```bash
+mise trust
 mise install --locked
 ```
 
@@ -66,7 +67,11 @@ Shared VS Code formatter selection and format-on-save settings live in
 [`.vscode/settings.json`](../.vscode/settings.json). The extension recommendations
 are optional and do not affect other editors.
 
-Mise activates the existing `.venv` virtualenv when entering the project.
+Because this is a uv project, mise creates `.venv` with Python 3.14 as required by
+[`uv.lock`](../uv.lock) when it is missing and activates it when entering the project
+when mise shell activation is enabled. Run `mise exec -- uv sync --locked` if you need
+the application dependencies on the host; the Docker workflow does not require a host
+virtualenv.
 The shared workspace settings disable legacy Python extension activation. Keep
 executable paths and the current Python Environments activation setting in VS
 Code user settings because they are machine-specific:

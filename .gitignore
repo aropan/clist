@@ -2,6 +2,7 @@
 !.env.*.template
 logs/
 volumes/
+/.venv/
 /mise.local.toml
 
 # Shared VS Code workspace configuration
