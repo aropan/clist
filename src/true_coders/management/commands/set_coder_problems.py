@@ -7,10 +7,10 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.db.models import Prefetch, Q
 from sql_util.utils import Exists
-from tqdm import tqdm
 
 from clist.models import Contest, ProblemVerdict, Resource
 from clist.templatetags.extras import get_problem_solution, is_hidden, is_partial, is_reject, is_solved
+from logify.live import register_live_logger, tqdm
 from logify.models import EventLog, EventStatus
 from ranking.models import Statistics
 from true_coders.models import Coder, CoderProblem
@@ -42,6 +42,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         self.stdout.write(str(options))
         args = AttrDict(options)
+        register_live_logger(self.logger)
 
         coders = Coder.objects.all()
         update_need_set_coder_problems = False

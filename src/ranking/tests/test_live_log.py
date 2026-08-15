@@ -1,3 +1,4 @@
+import logging
 from datetime import timedelta
 from types import SimpleNamespace
 from unittest import mock
@@ -10,6 +11,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from clist.models import Contest, Resource
+from logify.live import LiveLogSession
 from logify.models import EventLog, EventStatus
 from logify.rq import fail_live_event_logs, interrupt_live_event_logs
 from ranking.management.modules.common import LOG
@@ -179,6 +181,39 @@ class ParseStatisticLiveLifecycleTest(LiveLogFixtureTest):
         new_event_log = event_logs.exclude(pk=completed_event_log.pk).get()
         assert new_event_log.status == EventStatus.COMPLETED
         assert new_event_log.job_id == current_job.id
+
+
+class NestedCommandLiveLogTest(TestCase):
+    def test_set_coder_problems_joins_parent_live_session(self):
+        class ChannelLayer:
+            def __init__(self):
+                self.events = []
+
+            async def group_send(self, _group_name, message):
+                self.events.extend(message["events"])
+
+            async def close_pools(self):
+                pass
+
+        channel_layer = ChannelLayer()
+        command_logger = logging.getLogger("coders.set_coder_problems")
+        previous_level = command_logger.level
+        command_logger.setLevel("INFO")
+        try:
+            with LiveLogSession(
+                SimpleNamespace(pk=987654),
+                channel_layer_factory=lambda: channel_layer,
+                batch_interval=0.001,
+            ):
+                call_command("set_coder_problems", coders=["missing-coder"])
+        finally:
+            command_logger.setLevel(previous_level)
+
+        assert any(
+            event["kind"] == "log" and "n_created = 0, n_deleted = 0, n_total = 0" in event["message"]
+            for event in channel_layer.events
+        )
+        assert any(event["kind"] == "progress" and event["description"] == "coders" for event in channel_layer.events)
 
 
 class ParseStatisticResultTest(LiveLogFixtureTest):

@@ -3,6 +3,7 @@
 import json
 import os
 import re
+import html
 from collections import OrderedDict, defaultdict
 from copy import deepcopy
 from datetime import datetime, timedelta
@@ -15,7 +16,6 @@ from urllib.parse import urlencode, urljoin, urlparse
 import pytz
 from django.db.models import Min
 
-from clist.models import Problem
 from clist.templatetags.extras import as_number, get_division_problems, get_problem_short, is_solved, scoreformat, slug
 from pyclist.middleware import RedirectException
 from ranking.management.modules import conf
@@ -47,6 +47,7 @@ def api_query(
     url = api_url_format % method
     key, secret = api_key
     params = dict(params)
+    params.setdefault("lang", "en")
 
     if method == "contest.standings" and (contest_id := params.get("contestId")) and re.match(r"^\d{1,5}$", contest_id):
         new_params = {"contestId": contest_id}
@@ -55,10 +56,7 @@ def api_query(
         params = new_params
     else:
         params.update({"time": int(time()), "apiKey": key})
-        params.setdefault("lang", "en")
-
         url_encode = "&".join(("%s=%s" % (k, v) for k, v in sorted(params.items())))
-
         api_sig_prefix = "".join(choice(ascii_lowercase) for x in range(6))
         api_sig = "%s/%s?%s#%s" % (
             api_sig_prefix,
@@ -105,9 +103,10 @@ def api_query(
     return ret
 
 
-def _get(url, *args, return_url=False, **kwargs):
+def _get(url, *args, lang="en", return_url=False, **kwargs):
     if SUBDOMAIN and SUBDOMAIN not in url:
         url = url.replace("://codeforces.", "://%scodeforces." % SUBDOMAIN, 1)
+    url = urljoin(url, f"?lang={lang}")
     page, last_url = REQ.get(url, *args, return_url=True, **kwargs)
     if 'document.cookie="RCPC="+toHex(slowAES.decrypt(c,2,a,b))+";' in page:
         matches = re.findall(r'(?P<var>[a-z]+)=toNumbers\("(?P<value>[^"]*)"\)', page)
@@ -153,7 +152,7 @@ class Statistic(BaseModule):
 
     def get_standings_from_html(self, url=None, with_exception=True):
         url = urljoin(self.url, url or self.standings_url)
-        page = _get(urljoin(url, "?lang=en"))
+        page = _get(url)
         regex = """<table[^>]*standings[^>]*>.*?</table>"""
         match = re.search(regex, page, re.DOTALL)
         if not match:
@@ -377,8 +376,7 @@ class Statistic(BaseModule):
         return standings
 
     def get_blitz_cup_standings_from_html(self):
-        url = urljoin(self.standings_url, "?lang=ru")
-        page = _get(url)
+        page = _get(self.standings_url, lang="ru")
         content = re.search(r'<div[^>]*class="content"[^>]*>.*?</div>', page, re.DOTALL).group(0)
         matches = re.finditer("<(?P<tag>li|h3)>(?P<content>.*?)</(?:li|h3)>", content)
         result = {}
@@ -600,7 +598,9 @@ class Statistic(BaseModule):
                     status_url = urljoin(self.url, status_url)
                     try:
                         page = _get(status_url)
-                        match = re.search(r"<div[^>]*>\s*(?:Problem|Задача)\s*(?P<code>[0-9A-Z]+)\s*-", page)
+                        match = re.search(
+                            r"<div[^>]*>\s*(?:Problem|Задача)\s*(?P<code>[0-9A-Z]+)\s*-(?P<name>[^\<]+)<", page
+                        )
                     except FailOnGetResponse as e:
                         if e.code == 403:
                             match = None
@@ -610,6 +610,7 @@ class Statistic(BaseModule):
                         d["code"] = match.group("code")
                         if self.cid not in d["code"]:
                             d["_no_problem_url"] = True
+                        d["name"] = html.unescape(match.group("name")).strip()
                     elif len(self.contest.key) < 6:
                         d["code"] = f"{self.contest.key}{d['short']}"
                         same_problems = self.resource.problem_set.filter(
@@ -1004,7 +1005,7 @@ class Statistic(BaseModule):
             info = {"info": data}
 
             if parse_russian_name:
-                page = REQ.get(f"https://{SUBDOMAIN}codeforces.com/profile/{user}?locale=ru")
+                page = _get(f"https://{SUBDOMAIN}codeforces.com/profile/{user}", lang="ru")
                 match = re.search(
                     r"""<div style="margin-top: 0.5em;">\s*"""
                     r"""<div style="font-size: 0.8em; color: #777;">(?P<name>[^<,]*)""",
@@ -1018,8 +1019,6 @@ class Statistic(BaseModule):
             if data and data["handle"] != orig:
                 info["rename"] = data["handle"]
             yield info
-        if parse_russian_name:
-            REQ.get(f"https://{SUBDOMAIN}codeforces.com/?locale=en")
 
     @staticmethod
     def get_source_code(contest, problem):

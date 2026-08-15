@@ -13,6 +13,7 @@ from django.db.models import Max, Min
 
 from clist.models import Contest
 from clist.templatetags.extras import slug
+from logify.live import register_live_logger
 from utils.attrdict import AttrDict
 from utils.strings import word_string_iou
 
@@ -36,6 +37,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         self.stdout.write(str(options))
         args = AttrDict(options)
+        register_live_logger(logger)
 
         with transaction.atomic():
             if args.contest_id:

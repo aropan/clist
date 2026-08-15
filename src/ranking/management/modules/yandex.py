@@ -35,6 +35,10 @@ def normalize_standings_url(url):
     return url
 
 
+def request_get(*args, **kwargs):
+    return REQ.get(*args, with_curl=True, **kwargs)
+
+
 class Statistic(BaseModule):
     YANDEX_API_URL = "https://api.contest.yandex.net/api/public/v2"
     SUBMISSION_FIELDS_MAPPING = {
@@ -83,7 +87,7 @@ class Statistic(BaseModule):
             page += 1
             url = f"{Statistic.YANDEX_API_URL}/contests/{contest_id}/submissions?page={page}&pageSize={size}"
             try:
-                data = REQ.get(url, headers=headers, return_json=True)
+                data = request_get(url, headers=headers, return_json=True)
             except FailOnGetResponse as e:
                 LOG.warning(f"Fail to get submission ids: {e}")
                 progress.total = progress.n + 1
@@ -160,7 +164,7 @@ class Statistic(BaseModule):
                 run_ids_query = "&".join(f"runIds={run_id}" for run_id in run_ids[offset : offset + batch_size])
                 url = f"{Statistic.YANDEX_API_URL}/contests/{self.key}/submissions/multiple?{run_ids_query}"
                 try:
-                    submissions = REQ.get(url, headers=headers, return_json=True)
+                    submissions = request_get(url, headers=headers, return_json=True)
                     n_success += 1
                     return submissions
                 except FailOnGetResponse as e:
@@ -322,7 +326,7 @@ class Statistic(BaseModule):
                 page_size = 1000
                 while True:
                     url = f"{Statistic.YANDEX_API_URL}/contests/{contest_id}/standings?page={page}&pageSize={page_size}"
-                    standings_data = REQ.get(url, headers=headers, return_json=True)
+                    standings_data = request_get(url, headers=headers, return_json=True)
                     processed_participant_ids = set()
                     participant_names = set()
                     n_rows = 0
@@ -343,7 +347,7 @@ class Statistic(BaseModule):
                         break
                     page += 1
                 url = f"{Statistic.YANDEX_API_URL}/contests/{contest_id}/participants"
-                data = REQ.get(url, headers=headers, return_json=True)
+                data = request_get(url, headers=headers, return_json=True)
             except FailOnGetResponse:
                 continue
             for participant in data:
@@ -368,7 +372,7 @@ class Statistic(BaseModule):
         problems_info = OrderedDict()
         while True:
             url = f"{Statistic.YANDEX_API_URL}/contests/{contest_id}/standings?page={page}&pageSize={page_size}"
-            standings_data = REQ.get(url, headers=headers, return_json=True)
+            standings_data = request_get(url, headers=headers, return_json=True)
             if page == 1:
                 for problem in standings_data["titles"]:
                     short = problem["title"]
@@ -445,7 +449,7 @@ class Statistic(BaseModule):
             tqdm_pagination = None
             n_page = 1
             while True:
-                page = REQ.get(url)
+                page = request_get(url)
 
                 if n_page == 1:
                     pages = re.findall('<a[^>]*href="[^"]*standings[^"]*p[^"]*=([0-9]+)"[^>]*>', page)

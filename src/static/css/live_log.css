@@ -3,6 +3,11 @@
   margin-bottom: 10px;
 }
 
+html.live-logs-page,
+html.live-logs-page body {
+  height: 100%;
+}
+
 @media (min-width: 992px) {
   .body-wrapper,
   .container__left,
@@ -17,6 +22,15 @@
     flex-direction: column;
   }
 
+  .live-logs-page .body-wrapper,
+  .live-logs-page .container__left,
+  .live-logs-page #live-log-app,
+  .live-logs-page .live-log-runs-column,
+  .live-logs-page .live-log-viewer-column,
+  .live-logs-page .live-log-viewer-panel {
+    min-height: 0;
+  }
+
   #live-log-app {
     flex: 1;
     align-items: stretch;
@@ -24,6 +38,10 @@
 
   .live-log-runs-column {
     padding-right: 7.5px;
+  }
+
+  .live-logs-page .live-log-runs-column {
+    overflow-y: auto;
   }
 
   .live-log-viewer-column {
@@ -138,6 +156,7 @@
   max-height: 130px;
   padding: 10px 15px 0;
   overflow-y: auto;
+  overflow-anchor: none;
   scrollbar-gutter: stable;
 }
 
@@ -146,12 +165,23 @@
 }
 
 .live-log-progress-list::-webkit-scrollbar-track {
-  background-color: #eee;
+  background-color: transparent;
 }
 
 .live-log-progress-list::-webkit-scrollbar-thumb {
-  background-color: #bbb;
+  background-color: transparent;
   border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.live-log-progress-list:hover::-webkit-scrollbar-track,
+.live-log-progress-list.live-log-scrolling::-webkit-scrollbar-track {
+  background-color: #eee;
+}
+
+.live-log-progress-list:hover::-webkit-scrollbar-thumb,
+.live-log-progress-list.live-log-scrolling::-webkit-scrollbar-thumb {
+  background-color: #bbb;
 }
 
 .live-log-progress-list:empty {
@@ -175,13 +205,23 @@
 
 @supports not selector(::-webkit-scrollbar) {
   .live-log-progress-list {
-    scrollbar-color: #bbb #eee;
+    scrollbar-color: transparent transparent;
     scrollbar-width: thin;
   }
 
   .live-log-output {
-    scrollbar-color: #686868 #303030;
+    scrollbar-color: transparent transparent;
     scrollbar-width: thin;
+  }
+
+  .live-log-progress-list:hover,
+  .live-log-progress-list.live-log-scrolling {
+    scrollbar-color: #bbb #eee;
+  }
+
+  .live-log-output:hover,
+  .live-log-output.live-log-scrolling {
+    scrollbar-color: #686868 #303030;
   }
 }
 
@@ -191,16 +231,31 @@
 }
 
 .live-log-output::-webkit-scrollbar-track {
-  background-color: #303030;
+  background-color: transparent;
 }
 
 .live-log-output::-webkit-scrollbar-thumb {
-  background-color: #686868;
-  border: 2px solid #303030;
+  background-color: transparent;
+  border: 2px solid transparent;
   border-radius: 5px;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
 }
 
-.live-log-output::-webkit-scrollbar-thumb:hover {
+.live-log-output:hover::-webkit-scrollbar-track,
+.live-log-output.live-log-scrolling::-webkit-scrollbar-track {
+  background-color: #303030;
+}
+
+.live-log-output:hover::-webkit-scrollbar-thumb,
+.live-log-output.live-log-scrolling::-webkit-scrollbar-thumb {
+  background-color: #686868;
+  border-color: #303030;
+}
+
+.live-log-output:hover::-webkit-scrollbar-thumb:hover,
+.live-log-output.live-log-scrolling::-webkit-scrollbar-thumb:hover {
   background-color: #808080;
 }
 

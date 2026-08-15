@@ -16,6 +16,8 @@
     skipped: "label-default",
   };
   const STATUS_LABEL_CLASS_NAMES = [...new Set(Object.values(STATUS_LABEL_CLASSES))].join(" ");
+  const SCROLL_EDGE_THRESHOLD = 4;
+  const SCROLLBAR_HIDE_DELAY = 1000;
 
   class LiveLogViewer {
     constructor(options) {
@@ -36,6 +38,10 @@
       this.reconnectTimer = null;
       this.resolveTimer = null;
       this.resolveJobId = null;
+      this.initialScrollPending = true;
+      this.scrollActivityTimers = new WeakMap();
+      this.bindScrollActivity(this.output);
+      this.bindScrollActivity(this.progress);
     }
 
     reset() {
@@ -46,6 +52,8 @@
       this.eventTypeSeparator.addClass("hidden");
       this.lastSeq = 0;
       this.terminal = false;
+      this.initialScrollPending = true;
+      this.scrollToInitialPosition();
     }
 
     connect(eventLog) {
@@ -162,6 +170,10 @@
         }
         this.onEvent(event);
       });
+      if (this.initialScrollPending) {
+        this.scrollToInitialPosition();
+        this.initialScrollPending = false;
+      }
     }
 
     formatTimestamp(timestamp) {
@@ -183,9 +195,81 @@
       });
     }
 
+    bindScrollActivity(container) {
+      container.on("scroll.liveLog wheel.liveLog touchmove.liveLog", (event) => {
+        this.showScrollbar($(event.currentTarget));
+      });
+    }
+
+    showScrollbar(container) {
+      const element = container[0];
+      if (!element) {
+        return;
+      }
+      container.addClass("live-log-scrolling");
+      clearTimeout(this.scrollActivityTimers.get(element));
+      this.scrollActivityTimers.set(
+        element,
+        setTimeout(() => container.removeClass("live-log-scrolling"), SCROLLBAR_HIDE_DELAY),
+      );
+    }
+
+    isScrolledToBottom(container) {
+      if (!container.length) {
+        return true;
+      }
+      const element = container[0];
+      return element.scrollHeight - container.scrollTop() - element.clientHeight <= SCROLL_EDGE_THRESHOLD;
+    }
+
+    scrollToInitialPosition() {
+      if (this.output.length) {
+        this.output.scrollTop(this.output[0].scrollHeight);
+      }
+      if (this.progress.length) {
+        this.progress.scrollTop(0);
+      }
+    }
+
+    captureProgressScroll(excludedElement) {
+      const container = this.progress[0];
+      if (!container || container.scrollTop <= SCROLL_EDGE_THRESHOLD) {
+        return { stickToTop: true };
+      }
+
+      const containerRect = container.getBoundingClientRect();
+      const anchor = Array.from(container.children)
+        .filter((element) => element !== excludedElement)
+        .map((element) => ({ element, rect: element.getBoundingClientRect() }))
+        .filter(({ rect }) => rect.bottom > containerRect.top && rect.top < containerRect.bottom)
+        .sort((left, right) => left.rect.top - right.rect.top)[0];
+
+      return {
+        stickToTop: false,
+        scrollTop: container.scrollTop,
+        scrollHeight: container.scrollHeight,
+        anchorElement: anchor ? anchor.element : null,
+        anchorTop: anchor ? anchor.rect.top : null,
+      };
+    }
+
+    restoreProgressScroll(state) {
+      const container = this.progress[0];
+      if (!container) {
+        return;
+      }
+      if (state.stickToTop) {
+        container.scrollTop = 0;
+      } else if (state.anchorElement && state.anchorElement.isConnected) {
+        const offset = state.anchorElement.getBoundingClientRect().top - state.anchorTop;
+        container.scrollTop = state.scrollTop + offset;
+      } else {
+        container.scrollTop = state.scrollTop + container.scrollHeight - state.scrollHeight;
+      }
+    }
+
     addLog(level, message, timestamp) {
-      const shouldScrollToBottom =
-        !this.output.length || this.output[0].scrollHeight - this.output.scrollTop() - this.output[0].clientHeight <= 4;
+      const shouldScrollToBottom = this.isScrolledToBottom(this.output);
       const normalizedLevel = String(level || "INFO").toUpperCase();
       const line = $("<span>")
         .addClass("live-log-line")
@@ -211,8 +295,10 @@
       const description = event.description || "Progress";
       const finished = Boolean(event.completed || event.finished);
       let row = this.progress.children('[data-bar-id="' + event.bar_id + '"]');
+      const scrollState = this.captureProgressScroll(row[0]);
       if (event.total === 0) {
         row.remove();
+        this.restoreProgressScroll(scrollState);
         return;
       }
       if (!row.length) {
@@ -225,7 +311,6 @@
             "</div>",
         );
         this.progress.prepend(row);
-        this.progress.scrollTop(0);
       }
       row.attr("data-description", description);
 
@@ -246,6 +331,7 @@
       }
       row.find(".live-log-progress-label").text(details);
       row.toggleClass("live-log-progress-completed", finished);
+      this.restoreProgressScroll(scrollState);
     }
 
     formatDuration(seconds) {
@@ -379,5 +465,10 @@
     });
   };
 
-  $(connectActiveContestLiveLog);
+  $(function () {
+    $("#update-statistics-log").on("shown.bs.modal", function () {
+      getUpdateStatisticsViewer().scrollToInitialPosition();
+    });
+    connectActiveContestLiveLog();
+  });
 })(window);
