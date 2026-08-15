@@ -26,7 +26,7 @@ class Statistic(BaseModule):
 query GetContestInfo($id: ID!) {
   contest(id: $id, extra: ["STAFF"]) {
     scoring  { showScoreboard attemptPenalty freezingTime allowUpsolving tieBreaker }
-    scoreboard(roundId: $id) { visibility columns { id type title } }
+    scoreboard { visibility columns { id type title } }
     staff { edges { node { id } role displayName } }
   }
 }
@@ -62,8 +62,8 @@ query GetContestInfo($id: ID!) {
         scoreboard_query = """
 query GetScoreboard($id: ID!, $first: Int, $offset: Int) {
   contest(id: $id) {
-    scoreboard(roundId: $id) {
-      rows(first: $first, offset: $offset) {
+    scoreboard {
+      rows(mode: "MAIN", first: $first, offset: $offset) {
         nodes {
           member {
             id
