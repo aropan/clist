@@ -1,9 +1,9 @@
-FROM python:3.10.11 AS base
+FROM python:3.14.6-trixie@sha256:7655aadf4ac71023baa42d7e1430a61d2ca80798af2ffb71c3533baafe68695b AS base
 
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
-RUN apt update -y
+RUN apt update -y && apt upgrade -y
 RUN apt install --reinstall build-essential -y
 
 # Decode raw protobuf message while parse some resources
@@ -22,12 +22,14 @@ RUN echo "if [ -f /etc/bash_completion ]; then . /etc/bash_completion; fi" >> ~/
 RUN apt install -y lsof htop vim
 
 # Setup Python dependencies
-COPY --from=ghcr.io/astral-sh/uv:0.11.32 /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:0.12.3@sha256:2d890623d310b57771ce840f0da5eed5fc6d657da05ffaa45d82797b53fa3abc /uv /uvx /bin/
 ENV UV_PROJECT_ENVIRONMENT=/usr/local
 ENV UV_LINK_MODE=copy
 COPY pyproject.toml uv.lock .
-RUN --mount=type=cache,id=clist-uv-py310-bullseye,target=/root/.cache/uv \
+RUN --mount=type=cache,id=clist-uv-py314-trixie,target=/root/.cache/uv \
     uv sync --locked --no-install-project --inexact --compile-bytecode
+COPY src/scripts/patch_python_dependencies.py ./
+RUN python patch_python_dependencies.py && rm patch_python_dependencies.py
 
 # Curl
 COPY src/scripts/install_curl.bash src/scripts/install_curl.sums ./
@@ -42,11 +44,11 @@ WORKDIR $APPDIR
 
 
 FROM base AS dev
-ENV DJANGO_ENV_FILE .env.dev
+ENV DJANGO_ENV_FILE=.env.dev
 ENV PYTHONDONTWRITEBYTECODE=""
 ENV PYTHONPYCACHEPREFIX=/tmp/clist-pycache
 RUN apt install -y redis-server
-CMD sh -c 'redis-server --daemonize yes; scripts/watchdog.bash "python manage.py rqworker system default parse_statistics parse_accounts" "**/*.py"; python manage.py runserver 0.0.0.0:10042'
+CMD ["sh", "-c", "redis-server --daemonize yes --save '' --dir /tmp; scripts/watchdog.bash 'python manage.py rqworker system default parse_statistics parse_accounts' '**/*.py'; exec python manage.py runserver 0.0.0.0:10042"]
 
 COPY config/ipython_config.py .
 RUN ipython profile create
@@ -55,10 +57,14 @@ RUN rm ipython_config.py
 
 
 FROM base AS prod
-ENV DJANGO_ENV_FILE .env.prod
-RUN apt install -y cron redis-server logrotate
+ENV DJANGO_ENV_FILE=.env.prod
+ENV SUPERVISOR_CRON_AUTOSTART=true
+ENV SUPERVISOR_RQ_AUTOSTART=true
+RUN apt install -y cron redis-server logrotate rsync
 
 COPY src/ $APPDIR/
+RUN mkdir -p $APPDIR/logs/rqworker
+RUN chmod +x $APPDIR/scripts/start-production.bash
 RUN python -m compileall -q -j 0 $APPDIR
 
 COPY config/cron /etc/cron.d/clist
@@ -76,7 +82,7 @@ COPY config/supervisord.conf /etc/supervisord.conf
 COPY config/logrotate.conf /etc/logrotate.d/clist
 RUN chmod 0644 /etc/logrotate.d/clist
 
-CMD supervisord -c /etc/supervisord.conf
+CMD ["scripts/start-production.bash"]
 
 
 FROM nginx:stable-alpine AS nginx
@@ -93,7 +99,7 @@ RUN crontab /etc/cron.d/nginx
 CMD crond && nginx -g "daemon off;"
 
 
-FROM postgres:14.3-alpine AS postgres
+FROM postgres:18-alpine3.24 AS postgres
 # pg_repack
 RUN apk add --no-cache --virtual .build-deps \
     gcc \
@@ -108,10 +114,10 @@ RUN apk add --no-cache --virtual .build-deps \
     util-linux \
     gawk
 RUN cd /tmp \
-    && git clone --depth 1 --branch ver_1.5.1 https://github.com/reorg/pg_repack.git \
+    && git clone --depth 1 --branch ver_1.5.3 https://github.com/reorg/pg_repack.git \
     && cd pg_repack \
-    && make \
-    && make install \
+    && make with_llvm=no \
+    && make with_llvm=no install \
     && apk del .build-deps \
     && rm -rf /tmp/pg_repack
 # numfmt
@@ -130,13 +136,14 @@ COPY config/postgres/postgresql.conf /usr/src/clist/config/postgres/postgresql.c
 RUN chown -R postgres:postgres /usr/src/clist/config/postgres
 RUN chmod 644 /usr/src/clist/config/postgres/postgresql.conf
 
-CMD supervisord -c /etc/supervisord.conf
+CMD ["supervisord", "-c", "/etc/supervisord.conf"]
 
 
 FROM postgres AS backup
 RUN apk add --no-cache python3 py3-pip \
-    && python3 -m pip install --no-cache-dir rich==13.7.1
+    && python3 -m venv /opt/clist-backup \
+    && /opt/clist-backup/bin/pip install --no-cache-dir rich==15.0.0
 COPY --chmod=755 src/scripts/backup_postgres.py /usr/local/bin/backup-postgres
 
-ENTRYPOINT ["python3", "/usr/local/bin/backup-postgres"]
+ENTRYPOINT ["/opt/clist-backup/bin/python", "/usr/local/bin/backup-postgres"]
 CMD []

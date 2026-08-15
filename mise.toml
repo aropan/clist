@@ -4,14 +4,14 @@ min_version = "2026.7.13"
 lockfile = true
 
 [env]
-_.python.venv = ".venv/clist"
+_.python.venv = ".venv"
 
 [tools]
-"aqua:astral-sh/ruff" = "0.12.7"
-"aqua:biomejs/biome" = "2.5.5"
+"aqua:astral-sh/ruff" = "0.16.2"
+"aqua:biomejs/biome" = "2.5.7"
 
 [tools."github:PHP-CS-Fixer/PHP-CS-Fixer"]
-version = "3.95.15"
+version = "3.95.18"
 asset_pattern = "php-cs-fixer.phar"
 bin = "php-cs-fixer"
 

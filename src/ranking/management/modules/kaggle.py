@@ -44,7 +44,7 @@ class Statistic(BaseModule):
         cookiejar = MozillaCookieJar(cls.CURL_COOKIE_FILE_)
         try:
             cookiejar.load(ignore_discard=True, ignore_expires=True)
-        except (LoadError, OSError):
+        except LoadError, OSError:
             return None
         return next((cookie.value for cookie in cookiejar if cookie.name == "XSRF-TOKEN"), None)
 

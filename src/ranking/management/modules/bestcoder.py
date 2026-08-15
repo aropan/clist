@@ -7,12 +7,11 @@ import re
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from urllib.parse import urljoin
 
-from ratelimiter import RateLimiter
-
 from logify import live as tqdm
 from ranking.management.modules import conf
 from ranking.management.modules.common import REQ, BaseModule, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings
+from utils.ratelimiter import RateLimiter
 
 
 class Statistic(BaseModule):

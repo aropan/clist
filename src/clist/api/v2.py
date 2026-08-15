@@ -347,7 +347,8 @@ class StatisticsResource(BaseModelResource):
             qs = qs.filter(account__coders=coder_id)
 
         qs = (
-            qs.annotate(new_rating=Cast(KeyTextTransform("new_rating", "addition"), IntegerField()))
+            qs
+            .annotate(new_rating=Cast(KeyTextTransform("new_rating", "addition"), IntegerField()))
             .annotate(old_rating=Cast(KeyTextTransform("old_rating", "addition"), IntegerField()))
             .annotate(rating_change=Cast(KeyTextTransform("rating_change", "addition"), IntegerField()))
         )

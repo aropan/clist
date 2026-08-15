@@ -119,7 +119,7 @@ def process_access_token(request, service, access_token):
     for data_uri in service.data_uri.split():
         data_field = None
         url = data_uri % access_token
-        if match := re.search("\[([^\]]+?)\]$", url):
+        if match := re.search(r"\[([^\]]+?)\]$", url):
             data_field = match.group(1)
             url = url[: match.start()]
         response = requests.get(url, headers=headers)

@@ -56,7 +56,7 @@ class OAuth20Authentication(Authentication):
                     decoded_body = request.body.decode("utf8")
                     try:
                         key = json.loads(decoded_body)["oauth_consumer_key"]
-                    except (ValueError, KeyError):
+                    except ValueError, KeyError:
                         pass
             if not key:
                 log.info("OAuth20Authentication. No consumer_key found.")

@@ -2,13 +2,81 @@ from datetime import timedelta
 from types import SimpleNamespace
 from unittest import mock
 
-from django.contrib.auth.models import AnonymousUser
+from django.contrib.auth.models import AnonymousUser, User
 from django.test import RequestFactory, SimpleTestCase, TestCase, override_settings
+from django.urls import reverse
 from django.utils import timezone
 
 from clist.models import Contest, Resource
 from ranking.models import Account, Statistics
+from true_coders.models import Coder
 from true_coders.views import change, get_ratings_data, search
+
+
+class SettingsViewTest(TestCase):
+    tabs = (
+        "preferences",
+        "social",
+        "accounts",
+        "filters",
+        "notifications",
+        "lists",
+        "chats",
+        "calendars",
+        "subscriptions",
+    )
+
+    def setUp(self):
+        self.user = User.objects.create_superuser(username="settings-test", password="test-password")
+        self.coder = Coder.objects.create(user=self.user, username=self.user.username, country=None)
+        self.client.force_login(self.user)
+
+    def assert_all_tabs(self, response, expected_active_tab):
+        assert response.status_code == 200
+        content = response.content.decode()
+        rendered_tabs = [tab for tab in self.tabs if f'id="{tab}-tab"' in content]
+        active_tabs = [tab for tab in self.tabs if f'id="{tab}-tab" class="tab-pane active"' in content]
+        assert rendered_tabs == list(self.tabs)
+        assert active_tabs == [expected_active_tab]
+
+    def test_default_url_renders_all_tabs(self):
+        response = self.client.get(reverse("coder:settings"))
+
+        self.assert_all_tabs(response, "preferences")
+        for tab in self.tabs:
+            assert f'href="#{tab}-tab" data-toggle="tab"' in response.content.decode()
+
+    def test_each_url_renders_all_tabs_with_requested_tab_active(self):
+        for tab in self.tabs:
+            with self.subTest(tab=tab):
+                response = self.client.get(reverse("coder:settings", kwargs={"tab": tab}))
+
+                self.assert_all_tabs(response, tab)
+
+    def test_accounts_support_account_without_country(self):
+        with mock.patch.object(Resource, "update_icon"):
+            resource = Resource.objects.create(
+                host="settings-account.example",
+                enable=True,
+                url="https://settings-account.example/",
+            )
+        account = Account.objects.create(
+            resource=resource,
+            key="countryless-account",
+            country=None,
+            info={"custom_countries_": {"BY": "BPR"}},
+        )
+        account.coders.add(self.coder)
+
+        response = self.client.get(reverse("coder:settings"))
+
+        self.assert_all_tabs(response, "preferences")
+        assert "countryless-account" in response.content.decode()
+
+    def test_notification_post_to_default_url_renders_notifications_on_error(self):
+        response = self.client.post(reverse("coder:settings"), {"action": "notification"})
+
+        self.assert_all_tabs(response, "notifications")
 
 
 @override_settings(DEFAULT_COUNT_QUERY_=10, DEFAULT_COUNT_LIMIT_=100, THEMES_=["default"])

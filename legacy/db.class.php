@@ -16,7 +16,7 @@ class db
     public function __construct()
     {
         $db_conf = parse_ini_file('/run/secrets/db_conf');
-        $this->host = $db_conf['POSTGRES_HOST'];
+        $this->host = getenv('POSTGRES_HOST') ?: $db_conf['POSTGRES_HOST'];
         $this->dbname = $db_conf['POSTGRES_DB'];
         $this->port = $db_conf['POSTGRES_PORT'];
         $this->username = $db_conf['POSTGRES_USER'];

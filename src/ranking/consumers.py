@@ -53,7 +53,7 @@ class LiveLogConsumer(AsyncJsonWebsocketConsumer):
             params = parse_qs(self.scope["query_string"].decode())
             event_log_id = int(params["event_log_id"][0])
             after_seq = max(int(params.get("after_seq", [0])[0]), 0)
-        except (KeyError, TypeError, ValueError):
+        except KeyError, TypeError, ValueError:
             await self.close(code=4400)
             return
 

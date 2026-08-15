@@ -18,7 +18,7 @@ from django.urls import reverse
 from django.utils.timezone import now
 from pytimeparse.timeparse import timeparse
 from sql_util.utils import SubqueryCount
-from telegram.constants import MAX_MESSAGE_LENGTH
+from telegram.constants import MessageLimit
 
 from clist.api.v2 import ContestResource
 from clist.models import Contest, Resource
@@ -27,8 +27,9 @@ from notification.models import Subscription
 from notification.utils import compose_message_by_problems
 from ranking.models import ParseStatistics, Statistics
 from tg.models import Chat, History
+from tg.transport import telegram_transport
 
-logging.basicConfig(level=logging.DEBUG)
+MAX_MESSAGE_LENGTH = int(MessageLimit.MAX_TEXT_LENGTH)
 
 
 class ArgumentParserError(Exception):
@@ -63,14 +64,21 @@ def escape(*args):
     return tuple(map(md_escape, args))
 
 
-class Bot(telegram.Bot):
+class Bot:
     ADMIN_CHAT_ID = settings.TELEGRAM_ADMIN_CHAT_ID
 
-    def __init__(self, *args, **kw):
-        if settings.TELEGRAM_TOKEN is not None:
-            super().__init__(settings.TELEGRAM_TOKEN, *args, **kw)
+    def __init__(self, transport=None):
+        self._transport = transport or telegram_transport
         self.logger = logging.getLogger("telegrambot")
-        self.logger.setLevel(logging.DEBUG)
+
+    def _request(self, method, *args, **kwargs):
+        return self._transport.request(method, *args, **kwargs)
+
+    def _send_telegram_message(self, *args, **kwargs):
+        return self._request("send_message", *args, **kwargs)
+
+    def delete_message(self, chat_id, message_id):
+        return self._request("delete_message", chat_id=chat_id, message_id=message_id)
 
     @property
     def coder_chat(self):
@@ -276,7 +284,7 @@ class Bot(telegram.Bot):
         if self.chat is False:
             msg = "This command should be used in chat rooms."
         else:
-            admins = self.getChatAdministrators(self.chat_id)
+            admins = self._request("get_chat_administrators", chat_id=self.chat_id)
             if not any(str(admin.user.id) == self.from_id for admin in admins):
                 msg = 'You are not admin in "%s" chat.' % self.chat_title
             elif self.chat is None:
@@ -724,7 +732,10 @@ class Bot(telegram.Bot):
         except NeedHelpError as e:
             yield "If you need help, please:\n```help\n" + str(e) + "\n```"
         except Exception as e:
-            self.sendMessage(self.ADMIN_CHAT_ID, "Query: %s\n\n%s" % (raw_query, format_exc()))
+            self._send_telegram_message(
+                chat_id=self.ADMIN_CHAT_ID,
+                text="Query: %s\n\n%s" % (raw_query, format_exc()),
+            )
             yield "Oops, I'm having a little trouble:\n" + escape(str(e))
 
     def process_message(self, text):
@@ -759,7 +770,7 @@ class Bot(telegram.Bot):
                 chat_id, thread_id = chat_id.split(":", 1)
                 thread_id = as_number(thread_id)
                 if thread_id is not None:
-                    msg["reply_to_message_id"] = thread_id
+                    msg["message_thread_id"] = thread_id
             msg["chat_id"] = chat_id
 
         msg["disable_web_page_preview"] = True
@@ -768,14 +779,14 @@ class Bot(telegram.Bot):
         if "reply_markup" not in msg:
             msg["reply_markup"] = telegram.ReplyKeyboardRemove()
         if "reply_to" in msg and msg.pop("reply_to"):
-            msg["reply_to_message_id"] = self.message["message_id"]
+            msg["reply_parameters"] = telegram.ReplyParameters(message_id=self.message["message_id"])
 
         chat_type = getattr(self, "chat_type", None)
         if reply_markup is False or chat_type is None or chat_type in ["group", "supergroup", "channel"]:
             msg.pop("reply_markup", None)
 
         try:
-            ret = self.sendMessage(parse_mode="Markdown", **msg)
+            ret = self._send_telegram_message(parse_mode="Markdown", **msg)
         except Exception as e:
             self.logger.warning(f"message = {msg}")
             self.logger.error(f"Exception send message {e}")
@@ -785,7 +796,7 @@ class Bot(telegram.Bot):
                 self.logger.warning(f"Chat {chat_id} not found. Deleted {delete_info}")
                 raise e
             elif "can't parse entities" in error_message:
-                ret = self.sendMessage(**msg)
+                ret = self._send_telegram_message(**msg)
             else:
                 raise e
         self.last_message = ret
@@ -853,7 +864,8 @@ class Bot(telegram.Bot):
                     self.send_message(msg)
                     was_messaging = True
             if not has_command and self.coder_chat and self.coder_chat.settings.get("_forwarding"):
-                self.forwardMessage(
+                self._request(
+                    "forward_message",
                     chat_id=self.coder_chat.settings.get("_forwarding"),
                     from_chat_id=self.from_id,
                     message_id=self.message["message_id"],
@@ -868,15 +880,18 @@ class Bot(telegram.Bot):
             self.logger.info("Exception incoming message:\n%s\n%s" % (format_exc(), raw_data))
             self.logger.error(f"Exception incoming message: {e}")
             try:
-                self.sendMessage(
-                    self.ADMIN_CHAT_ID,
-                    "What need from me?",
-                    reply_to_message_id=self.message["message_id"],
+                self._send_telegram_message(
+                    chat_id=self.ADMIN_CHAT_ID,
+                    text="What need from me?",
+                    reply_parameters=telegram.ReplyParameters(message_id=self.message["message_id"]),
                 )
             except Exception:
                 pass
             if hasattr(self, "from_id"):
-                self.sendMessage(self.from_id, "Thanks, but I do not know what I should do about it.")
+                self._send_telegram_message(
+                    chat_id=self.from_id,
+                    text="Thanks, but I do not know what I should do about it.",
+                )
 
     def get_commands(self):
         return "\n".join(
@@ -899,17 +914,24 @@ class Bot(telegram.Bot):
             )
         )
 
+    @property
+    def webhook_url(self):
+        return settings.HTTPS_HOST_URL_ + reverse("telegram:incoming")
+
+    def get_webhook_info(self):
+        return self._request("get_webhook_info")
+
     def webhook(self):
-        url = settings.HTTPS_HOST_URL_ + reverse("telegram:incoming")
+        url = self.webhook_url
         self.logger.info("webhook url = %s" % url)
-        return self.setWebhook(url)
+        return self._request("set_webhook", url=url)
 
     def unwebhook(self):
         self.logger.info("unwebhook")
-        return self.setWebhook(None)
+        return self._request("delete_webhook")
 
     def create_topic(self, chat_id, title):
-        return self.createForumTopic(chat_id=chat_id, name=title)
+        return self._request("create_forum_topic", chat_id=chat_id, name=title)
 
     def delete_topic(self, chat_id, thread_id):
-        return self.delete_forum_topic(chat_id=chat_id, message_thread_id=thread_id)
+        return self._request("delete_forum_topic", chat_id=chat_id, message_thread_id=thread_id)

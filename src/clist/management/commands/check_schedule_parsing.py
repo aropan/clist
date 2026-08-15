@@ -126,7 +126,8 @@ class Command(BaseCommand):
             recent_produced_at = {}
             if rids_to_query:
                 recent_produced_at = dict(
-                    Contest.objects.filter(resource_id__in=rids_to_query, auto_updated__gte=now - window)
+                    Contest.objects
+                    .filter(resource_id__in=rids_to_query, auto_updated__gte=now - window)
                     .values_list("resource_id")
                     .annotate(last=Max("auto_updated"))
                 )
@@ -145,7 +146,7 @@ class Command(BaseCommand):
                 try:
                     n_parsed = int(entry.get("n_contests_parsed", 0))
                     n_upserted = int(entry.get("n_contests_upserted", 0))
-                except (ValueError, TypeError):
+                except ValueError, TypeError:
                     continue
 
                 if rid not in resources_state or not isinstance(resources_state[rid], dict):

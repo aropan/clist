@@ -12,7 +12,7 @@ from time import sleep
 import tqdm
 import yaml
 from django.conf import settings
-from django.core.mail.backends.smtp import EmailBackend
+from django.core import mail as django_mail
 from django.core.mail.message import EmailMultiAlternatives
 from django.core.management.base import BaseCommand
 from django.db.models import Prefetch, Q
@@ -21,7 +21,7 @@ from django.utils.timezone import now
 from django_print_sql import print_sql_decorator
 from filelock import FileLock
 from requests.exceptions import ConnectionError
-from telegram.error import BadRequest, ChatMigrated, Unauthorized
+from telegram.error import BadRequest, ChatMigrated, Forbidden
 from webpush import send_user_notification
 from webpush.utils import WebPushException
 
@@ -101,14 +101,14 @@ class Command(BaseCommand):
                 try:
                     response = self.TELEGRAM_BOT.send_message(message, args[0], reply_markup=False)
                     response = response.to_dict()
-                except (Unauthorized, BadRequest) as e:
+                except (Forbidden, BadRequest) as e:
                     error_message = str(e).lower()
                     to_delete = any(msg in error_message for msg in ["chat not found", "bot was kicked from"])
                     if to_delete and delete_notification(e):
                         return "removed"
                     raise e
                 except ChatMigrated as e:
-                    new_chat_id = str(e).strip().split()[-1]
+                    new_chat_id = e.new_chat_id
                     notification = kwargs["notification"]
                     notification.method = f"telegram:{new_chat_id}"
                     notification.save()
@@ -117,8 +117,8 @@ class Command(BaseCommand):
                     if not coder.settings.get("telegram", {}).get("unauthorized", False):
                         response = self.TELEGRAM_BOT.send_message(message, coder.chat.chat_id, reply_markup=False)
                         response = response.to_dict()
-                except Unauthorized as e:
-                    if "bot was blocked by the user" in str(e):
+                except Forbidden as e:
+                    if "bot was blocked by the user" in str(e).lower():
                         coder.chat.delete()
                     else:
                         coder.settings.setdefault("telegram", {})["unauthorized"] = True
@@ -129,17 +129,16 @@ class Command(BaseCommand):
             if self.n_messages_sent % 20 == 0:
                 if self.n_messages_sent:
                     sleep(10)
-                self.email_connection = EmailBackend()
+                self.email_connection = django_mail.mailers.default
             mail = EmailMultiAlternatives(
                 subject=subject,
                 body=message,
                 from_email="CLIST <noreply@clist.by>",
                 to=[coder.user.email],
                 bcc=["noreply@clist.by"],
-                connection=self.email_connection,
                 alternatives=[(message, "text/html")],
             )
-            mail.send()
+            self.email_connection.send_messages([mail])
             self.n_messages_sent += 1
             sleep(2)
         elif method == settings.NOTIFICATION_CONF.WEBBROWSER:

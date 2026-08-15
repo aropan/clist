@@ -168,7 +168,7 @@ class Proxer:
         try:
             with open(self.file_name, "r") as fo:
                 self._data = load(fo)
-        except (IOError, ValueError):
+        except IOError, ValueError:
             self._data = {}
         self._data.setdefault("proxies", {})
         self._data.setdefault("sources", {})
@@ -752,7 +752,7 @@ class requester:
             if response_content_type and response_content_type.startswith("application/json"):
                 try:
                     return dumps(loads(cache_page), indent=4), "text"
-                except (TypeError, UnicodeDecodeError, ValueError):
+                except TypeError, UnicodeDecodeError, ValueError:
                     pass
 
             if isinstance(cache_page, bytes):
@@ -839,7 +839,7 @@ class requester:
             try:
                 with open(file_cache_metadata) as f:
                     metadata = load(f)
-            except (OSError, ValueError):
+            except OSError, ValueError:
                 pass
         cached_code = metadata.get("code") or 200
         cached_failure = metadata.get("failed", cached_code >= 400)

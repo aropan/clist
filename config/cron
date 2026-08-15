@@ -1,20 +1,22 @@
 PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 DJANGO_ENV_FILE=.env.prod
 
-20,35,55  *  *  *  *    env  MONITOR_NAME=calendar-update         /usr/src/clist/run-manage.bash update_google_calendars
-*/1       *  *  *  *    env  MONITOR_NAME=creating-notifications  /usr/src/clist/run-manage.bash notification_to_task
-*/1       *  *  *  *    env  MONITOR_NAME=sending-notifications   /usr/src/clist/run-manage.bash sendout_tasks
-*/1       *  *  *  *    env  MONITOR_NAME=parsing-statistics      /usr/src/clist/run-manage.bash parse_statistic --split-by-resource
-*/1       *  *  *  *                                              /usr/src/clist/run-manage.bash parse_live_statistics
-0         2  *  *  *                                              /usr/src/clist/run-manage.bash detect_major_contests
-*/3       *  *  *  *    env  MONITOR_NAME=parsing-accounts        /usr/src/clist/run-manage.bash parse_accounts_infos --split-by-resource
-30        *  *  *  *    env  MONITOR_NAME=parse-archive-problems  /usr/src/clist/run-manage.bash parse_archive_problems
-*/1       *  *  *  *    env  MONITOR_NAME=checking-logs           /usr/src/clist/run-manage.bash check_logs
-*/15      *  *  *  *    env  MONITOR_NAME=check-schedule-parsing  /usr/src/clist/run-manage.bash check_schedule_parsing
-*/15      *  *  *  *    env  MONITOR_NAME=set-account-rank        /usr/src/clist/run-manage.bash set_account_rank
-*/20      *  *  *  *    env  MONITOR_NAME=set-country-fields      /usr/src/clist/run-manage.bash set_country_fields
-15        *  *  *  *    env  MONITOR_NAME=update-auto-rating      /usr/src/clist/run-manage.bash update_auto_rating
-0         1  *  *  *                                              /usr/src/clist/run-manage.bash set_coder_n_fields
+20,35,55  *    *    *    *    env  MONITOR_NAME=calendar-update         /usr/src/clist/run-manage.bash update_google_calendars
+10        4    *    *    *    env  MONITOR_NAME=calendar-public-access  /usr/src/clist/run-manage.bash ensure_google_calendars_public
+*/1       *    *    *    *    env  MONITOR_NAME=creating-notifications  /usr/src/clist/run-manage.bash notification_to_task
+*/1       *    *    *    *    env  MONITOR_NAME=sending-notifications   /usr/src/clist/run-manage.bash sendout_tasks
+*/1       *    *    *    *    env  MONITOR_NAME=parsing-statistics      /usr/src/clist/run-manage.bash parse_statistic --split-by-resource
+*/1       *    *    *    *                                              /usr/src/clist/run-manage.bash parse_live_statistics
+0         2    *    *    *                                              /usr/src/clist/run-manage.bash detect_major_contests
+*/3       *    *    *    *    env  MONITOR_NAME=parsing-accounts        /usr/src/clist/run-manage.bash parse_accounts_infos --split-by-resource
+30        *    *    *    *    env  MONITOR_NAME=parse-archive-problems  /usr/src/clist/run-manage.bash parse_archive_problems
+*/1       *    *    *    *    env  MONITOR_NAME=checking-logs           /usr/src/clist/run-manage.bash check_logs
+17        */2  *    *    *                                              /usr/src/clist/run-manage.bash ensure_telegram_webhook
+*/15      *    *    *    *    env  MONITOR_NAME=check-schedule-parsing  /usr/src/clist/run-manage.bash check_schedule_parsing
+*/15      *    *    *    *    env  MONITOR_NAME=set-account-rank        /usr/src/clist/run-manage.bash set_account_rank
+*/20      *    *    *    *    env  MONITOR_NAME=set-country-fields      /usr/src/clist/run-manage.bash set_country_fields
+15        *    *    *    *    env  MONITOR_NAME=update-auto-rating      /usr/src/clist/run-manage.bash update_auto_rating
+0         1    *    *    *                                              /usr/src/clist/run-manage.bash set_coder_n_fields
 
 # # 58 3 14-20 * * [ "$(date '+\%u')" -eq 4 ] && cd $PROJECT_DIR && run-one ./manage.py runscript calculate_account_contests >logs/command/calculate_account_contests.log 2>&1
 # 58 4 * * 4 cd $PROJECT_DIR && run-one ./manage.py runscript calculate_coder_n_accounts_and_coder_n_contests >logs/command/calculate_coder_n_accounts_and_coder_n_contests.log 2>&1

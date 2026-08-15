@@ -16,7 +16,6 @@ from urllib.parse import urljoin, urlparse
 import arrow
 import yaml
 from django.db import transaction
-from ratelimiter import RateLimiter
 
 from clist.templatetags.extras import as_number, get_item, is_improved_solution, is_solved
 from logify import live as tqdm
@@ -25,6 +24,7 @@ from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGe
 from ranking.utils import clear_problems_fields, create_upsolving_statistic
 from utils.logger import suppress_db_logging_context
 from utils.mathutils import round_sig
+from utils.ratelimiter import RateLimiter
 from utils.timetools import datetime_from_timestamp
 
 

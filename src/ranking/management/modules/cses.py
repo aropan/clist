@@ -127,10 +127,11 @@ class Statistic(BaseModule):
             list_name = task_list.group("name")
             list_page = task_list.group("page")
 
-            matches = re.finditer(
-                '<a[^>]*href="(?P<url>[^"]*/task/[^"]*)"[^>]*>(?P<name>[^<]*)</a>\s*<span[^>]*>(?P<detail>[^<]*)</span>',
-                list_page,
-            )  # noqa
+            pattern = (
+                r'<a[^>]*href="(?P<url>[^"]*/task/[^"]*)"[^>]*>(?P<name>[^<]*)</a>'
+                r"\s*<span[^>]*>(?P<detail>[^<]*)</span>"
+            )
+            matches = re.finditer(pattern, list_page)
             for match in matches:
                 if len(ret) == limit:
                     break

@@ -64,13 +64,12 @@ class Command(BaseCommand):
                             subject,
                             message,
                             to=job["email"],
-                            connection=connection,
                         )
                         msg.attach_alternative(message, "text/html")
 
                         for i in range(n_attempet):
                             try:
-                                result = msg.send()
+                                result = connection.send_messages([msg])
                                 if result:
                                     done += 1
                                     time.sleep(time_wait_on_success)

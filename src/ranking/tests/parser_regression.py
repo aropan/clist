@@ -20,12 +20,12 @@ from django.core.management import call_command
 from django.db.models import F
 from django.test import TestCase
 from lazy_object_proxy import Proxy as LazyProxy
-from ratelimiter import RateLimiter
 
 from clist.models import Contest
 from ranking.management.modules.common import REQ
 from ranking.management.modules.excepts import FailOnGetResponse
 from utils.lazy import LazyObject
+from utils.ratelimiter import RateLimiter
 from utils.requester import requester
 
 PARSER_FIXTURES_ROOT = Path(__file__).parent / "fixtures" / "parsers"
@@ -496,7 +496,8 @@ def contest_standings_context(contest):
     from ranking.models import Statistics
 
     statistics = (
-        Statistics.objects.filter(contest=contest)
+        Statistics.objects
+        .filter(contest=contest)
         .select_related("account")
         .order_by(F("place_as_int").asc(nulls_last=True), "pk")
     )

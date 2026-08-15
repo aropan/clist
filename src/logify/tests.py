@@ -32,7 +32,7 @@ from logify.live import (
     tqdm,
     trange,
 )
-from logify.models import EventLog, EventStatus
+from logify.models import SUPERSEDED_EVENT_ERROR, EventLog, EventStatus
 from logify.rq import fail_live_event_logs, interrupt_live_event_logs, interrupt_stale_event_logs
 from logify.templatetags.logify import can_view_live_updates
 from ranking.models import Stage
@@ -51,13 +51,124 @@ class EventLogJobTest(TestCase):
 
         assert event_log.job_id == "parse_statistics_example-com"
 
+    @mock.patch("logify.models.get_current_job", return_value=None)
+    def test_create_generates_job_id_outside_rq(self, get_current_job):
+        event_log = EventLog.objects.create(name="test", related=self.related)
+
+        assert event_log.job_id == f"event_test_auth_user_{self.related.pk}"
+
+    @mock.patch("logify.models.get_current_job", return_value=None)
+    def test_new_execution_interrupts_previous_execution_outside_rq(self, get_current_job):
+        previous = EventLog.objects.create(
+            name="test",
+            related=self.related,
+            status=EventStatus.IN_PROGRESS,
+        )
+
+        current = EventLog.objects.create(
+            name="test",
+            related=self.related,
+            status=EventStatus.IN_PROGRESS,
+        )
+
+        previous.refresh_from_db()
+        assert previous.status == EventStatus.INTERRUPTED
+        assert previous.error == SUPERSEDED_EVENT_ERROR
+        assert previous.elapsed is not None
+        assert current.status == EventStatus.IN_PROGRESS
+        assert current.job_id == previous.job_id
+
+    @mock.patch("logify.models.get_current_job", return_value=None)
+    def test_new_execution_interrupts_legacy_execution_without_job_id(self, get_current_job):
+        previous = EventLog.objects.create(
+            name="test",
+            related=self.related,
+            status=EventStatus.IN_PROGRESS,
+        )
+        EventLog.objects.filter(pk=previous.pk).update(job_id=None)
+
+        EventLog.objects.create(
+            name="test",
+            related=self.related,
+            status=EventStatus.IN_PROGRESS,
+        )
+
+        previous.refresh_from_db()
+        assert previous.status == EventStatus.INTERRUPTED
+        assert previous.error == SUPERSEDED_EVENT_ERROR
+        assert previous.elapsed is not None
+
+    @mock.patch("logify.models.get_current_job")
+    def test_rq_job_id_does_not_interrupt_other_logs_from_same_job(self, get_current_job):
+        get_current_job.return_value = SimpleNamespace(id="parse_statistics_example-com")
+        first = EventLog.objects.create(
+            name="test",
+            related=self.related,
+            status=EventStatus.IN_PROGRESS,
+        )
+
+        second = EventLog.objects.create(
+            name="test",
+            related=self.related,
+            status=EventStatus.IN_PROGRESS,
+        )
+
+        first.refresh_from_db()
+        assert first.status == EventStatus.IN_PROGRESS
+        assert second.status == EventStatus.IN_PROGRESS
+        assert second.job_id == first.job_id
+
+    @mock.patch("logify.models.is_job_id_active", return_value=False)
+    def test_new_rq_execution_interrupts_inactive_previous_job(self, is_job_active):
+        previous = EventLog.objects.create(
+            name="test",
+            related=self.related,
+            status=EventStatus.IN_PROGRESS,
+            job_id="previous-job",
+        )
+
+        current = EventLog.objects.create(
+            name="test",
+            related=self.related,
+            status=EventStatus.IN_PROGRESS,
+            job_id="current-job",
+        )
+
+        previous.refresh_from_db()
+        assert previous.status == EventStatus.INTERRUPTED
+        assert previous.error == SUPERSEDED_EVENT_ERROR
+        assert current.status == EventStatus.IN_PROGRESS
+        is_job_active.assert_called_once_with("previous-job")
+
+    @mock.patch("logify.models.is_job_id_active", return_value=True)
+    def test_new_rq_execution_preserves_active_previous_job(self, is_job_active):
+        previous = EventLog.objects.create(
+            name="test",
+            related=self.related,
+            status=EventStatus.IN_PROGRESS,
+            job_id="previous-job",
+        )
+
+        EventLog.objects.create(
+            name="test",
+            related=self.related,
+            status=EventStatus.IN_PROGRESS,
+            job_id="current-job",
+        )
+
+        previous.refresh_from_db()
+        assert previous.status == EventStatus.IN_PROGRESS
+        assert previous.error is None
+        is_job_active.assert_called_once_with("previous-job")
+
     def test_related_is_checks_related_model(self):
         event_log = EventLog.objects.create(name="test", related=self.related)
 
         assert event_log.related_is(User)
         assert not event_log.related_is(Resource)
 
-    def test_interrupt_in_progress_only_affects_matching_job(self):
+    @mock.patch("logify.models.is_job_id_active", return_value=True)
+    def test_interrupt_in_progress_only_affects_matching_job(self, is_job_active):
         stale = EventLog.objects.create(
             name="test",
             related=self.related,
@@ -98,6 +209,7 @@ class EventLogJobTest(TestCase):
             related=self.related,
             status=EventStatus.IN_PROGRESS,
         )
+        EventLog.objects.filter(pk=without_job.pk).update(job_id=None)
 
         n_interrupted = EventLog.env_objects.interrupt_in_progress(
             None,

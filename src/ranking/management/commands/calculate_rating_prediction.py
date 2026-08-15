@@ -116,7 +116,8 @@ def get_old_ratings(contest):
 
     rating_field = resource.rating_prediction.get("rating_field", "new_rating")
     latest_rating = (
-        Statistics.objects.filter(
+        Statistics.objects
+        .filter(
             contest__start_time__lt=contest.start_time,
             contest__resource=resource,
             account__in=accounts,
@@ -144,7 +145,8 @@ def get_old_ratings(contest):
     n_contests_filter = Q(contest__start_time__lt=contest.start_time, skip_in_stats=False)
     n_contests_filter &= Q(contest__is_rated=True) | Q(contest__is_rated__isnull=True)
     statistics = (
-        Statistics.objects.filter(
+        Statistics.objects
+        .filter(
             contest=contest,
             account__in=accounts,
         )

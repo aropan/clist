@@ -9,7 +9,7 @@ datasources:
     user: grafana_reader
     isDefault: false
     editable: false
-    version: 2
+    version: 3
     secureJsonData:
       password: $GF_POSTGRES_READER_PASSWORD
     jsonData:

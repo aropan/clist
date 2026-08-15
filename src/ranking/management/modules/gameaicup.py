@@ -22,13 +22,13 @@ from django.utils import timezone
 from django.utils.safestring import mark_safe
 from flatten_dict import flatten
 from prettytable import PrettyTable
-from ratelimiter import RateLimiter
 
 from clist.templatetags.extras import get_item, normalize_field
 from logify import live as tqdm
 from ranking.management.modules.common import REQ, BaseModule
 from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse, InitModuleException
 from ranking.models import StatisticsLog
+from utils.ratelimiter import RateLimiter
 from utils.timetools import parse_datetime
 from utils.tools import deep_iter
 

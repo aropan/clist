@@ -24,6 +24,7 @@ from scripts.backup_postgres import (
     expired_backup_directories,
     remove_in_progress,
     sanitize_text,
+    validate_dump_versions,
     write_checksums,
 )
 
@@ -81,6 +82,26 @@ def test_config_requires_connection_environment(monkeypatch: pytest.MonkeyPatch)
 
     with pytest.raises(BackupError, match="POSTGRES_HOST"):
         config_from_args(parser.parse_args([]))
+
+
+def test_newer_pg_dump_can_dump_older_server() -> None:
+    validate_dump_versions(client_major=18, server_major=14)
+    validate_dump_versions(client_major=18, server_major=18)
+
+
+def test_older_pg_dump_cannot_dump_newer_server() -> None:
+    with pytest.raises(BackupError, match="older than"):
+        validate_dump_versions(client_major=14, server_major=18)
+
+
+def test_main_reports_backup_error_on_stderr(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setattr(backup_postgres, "config_from_args", Mock(side_effect=BackupError("expected failure")))
+
+    assert backup_postgres.main([]) == 1
+
+    assert "expected failure" in capsys.readouterr().err
 
 
 def test_password_is_only_passed_via_environment(backup_config: BackupConfig) -> None:

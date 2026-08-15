@@ -16,7 +16,6 @@ from datetime import timedelta
 import arrow
 from django.utils.timezone import now
 from first import first
-from ratelimiter import RateLimiter
 
 from clist.templatetags.extras import as_number, get_problem_key, is_solved
 from logify.live import tqdm
@@ -25,6 +24,7 @@ from ranking.management.modules.common import LOG, REQ, BaseModule, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse, ProxyLimitReached
 from ranking.utils import clear_problems_fields, create_upsolving_statistic
 from utils.lazy import LazyObject
+from utils.ratelimiter import RateLimiter
 
 eps = 1e-9
 rate_limiter = RateLimiter(max_calls=4, period=1)
@@ -430,10 +430,10 @@ class Statistic(BaseModule):
             try:
                 page = self._get(info["url"])
                 match = re.search(
-                    '<span[^>]*class="lang-[a-z]+"[^>]*>\s*(<script[^<]*>\s*</script>\s*)?<p>\s*(?:配点|Score)\s*(?:：|:)\s*<var>\s*(?P<score>[0-9]+)\s*</var>\s*(?:点|points)\s*</p>',
+                    r'<span[^>]*class="lang-[a-z]+"[^>]*>\s*(<script[^<]*>\s*</script>\s*)?<p>\s*(?:配点|Score)\s*(?:：|:)\s*<var>\s*(?P<score>[0-9]+)\s*</var>\s*(?:点|points)\s*</p>',  # noqa: RUF001
                     page,
                     re.I,
-                )  # noqa
+                )
                 if match:
                     info["full_score"] = int(match.group("score"))
             except FailOnGetResponse as e:

@@ -184,14 +184,12 @@ field can be allowed in `meta.json` with
 never allow an actual credential. Recorded `Set-Cookie` values and URL userinfo are
 replaced with explicit redaction placeholders before validation and storage.
 
-When selecting schedule fixtures, prefer resource hosts already present in
-`src/ranking/tests/fixtures/parsers/*/*/db.json`: those resources have known contest
-data even when their current schedule page is temporarily empty. The recorder's
-full-list fallback can then capture historical schedule output. The current set
-covers every enabled resource in that standings-fixture inventory that has a PHP
-module, except `facebook.com/hackercup`, whose public JavaScript is rejected by the
-credential scanner. `stats.ioinformatics.org` is regexp-only and `icpc.global` is
-disabled; `kattis.com` remains as an additional wrapper/year-dependent fixture.
+Add or refresh a deterministic offline fixture whenever a PHP schedule module is
+introduced or its output intentionally changes. Prefer public schedule responses
+that can be recorded without credentials, and use the recorder's full-list fallback
+when the normal schedule view is empty. Treat `legacy/tests/fixtures/` and the test
+runner output as the source of truth for current coverage instead of maintaining a
+resource-specific inventory here.
 
 Limitations: regexp-only resources (`clist_resource.regexp`, parsed inline in
 `update.php`) are not covered; two identical requests in one run replay the same

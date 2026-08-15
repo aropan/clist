@@ -67,7 +67,7 @@ class Statistic(BaseModule):
 
         ucup_contests_url = "https://contest.ucup.ac/contests"
         page = REQ.get(ucup_contests_url)
-        regex = '<td[^>]*>\s*<a[^>]*href="(?P<href>[^"]*/contest/[0-9]+/?)"[^>]*>(?P<title>[^<]*)</a>'
+        regex = r'<td[^>]*>\s*<a[^>]*href="(?P<href>[^"]*/contest/[0-9]+/?)"[^>]*>(?P<title>[^<]*)</a>'
         matches = re.finditer(regex, page)
         for match in matches:
             url = urllib.parse.urljoin(ucup_contests_url, match.group("href").rstrip("/") + "/standings/")

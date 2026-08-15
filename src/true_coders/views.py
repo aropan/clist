@@ -87,7 +87,6 @@ from ranking.models import (
     Account,
     AccountRenaming,
     AccountVerification,
-    Module,
     Rating,
     Statistics,
     VerifiedAccount,
@@ -106,7 +105,8 @@ logger = logging.getLogger(__name__)
 
 def get_medals_for_profile_context(statistics):
     qs = (
-        statistics.select_related("contest")
+        statistics
+        .select_related("contest")
         .filter(addition__medal__isnull=False)
         .order_by("-contest__end_time", "-contest_id")
     )
@@ -202,7 +202,8 @@ def get_profile_context(request, statistics, writers, resources):
     context_params["upsolving"] = upsolving_filter
 
     rated_stats = (
-        statistics.filter(
+        statistics
+        .filter(
             Q(addition__new_rating__isnull=False)
             | Q(addition__rating_change__isnull=False)
             | Q(addition___rating_data__isnull=False)
@@ -212,7 +213,8 @@ def get_profile_context(request, statistics, writers, resources):
     )
 
     external_ratings = (
-        statistics.filter(
+        statistics
+        .filter(
             contest__resource__has_rating_history=True,
             contest__resource__info__ratings__external=True,
             account__info___rating_data__isnull=False,
@@ -688,7 +690,8 @@ def _get_data_mixed_profile(request, query, is_team=False):
             accounts = accounts.annotate(verified=Exists("verified_accounts", filter=Q(coder__in=coders)))
 
         resources = (
-            Resource.objects.prefetch_related(
+            Resource.objects
+            .prefetch_related(
                 Prefetch(
                     "account_set",
                     queryset=accounts,
@@ -754,7 +757,8 @@ def get_ratings_data(
     resources = {r.pk: r for r in Resource.objects.filter(has_rating_history=True)}
 
     base_qs = (
-        statistics.annotate(date=F("contest__end_time"))
+        statistics
+        .annotate(date=F("contest__end_time"))
         .annotate(name=F("contest__title"))
         .annotate(key=F("contest__key"))
         .annotate(kind=F("contest__kind"))
@@ -770,7 +774,8 @@ def get_ratings_data(
     )
 
     qs = (
-        base_qs.annotate(rating_change=Cast(KeyTextTransform("rating_change", "addition"), IntegerField()))
+        base_qs
+        .annotate(rating_change=Cast(KeyTextTransform("rating_change", "addition"), IntegerField()))
         .annotate(new_rating=Cast(KeyTextTransform("new_rating", "addition"), IntegerField()))
         .annotate(old_rating=Cast(KeyTextTransform("old_rating", "addition"), IntegerField()))
         .annotate(is_unrated=Cast(KeyTextTransform("is_unrated", "contest__info"), IntegerField()))
@@ -841,7 +846,8 @@ def get_ratings_data(
 
     if with_global:
         global_qs = (
-            base_qs.annotate(rating_change=F("global_rating_change"))
+            base_qs
+            .annotate(rating_change=F("global_rating_change"))
             .annotate(new_rating=F("new_global_rating"))
             .annotate(old_rating=Value(None, IntegerField(null=True)))
             .annotate(is_unrated=Value(0, IntegerField()))
@@ -984,38 +990,37 @@ def ratings(request, username=None, key=None, host=None, query=None):
 
 @login_required
 def settings(request, tab=None):
+    is_notification_action = request.method == "POST" and request.POST.get("action") == "notification"
+    tab = "notifications" if is_notification_action else tab or "preferences"
     coder = request.as_coder or request.user.coder
-    notification_form = NotificationForm(coder)
-    if request.method == "POST":
-        if request.POST.get("action", None) == "notification":
-            pk = request.POST.get("pk")
-            instance = Notification.objects.get(pk=pk) if pk else None
-            notification_form = NotificationForm(coder, request.POST, instance=instance)
-            if notification_form.is_valid():
-                notification = notification_form.save(commit=False)
-                if pk:
-                    notification.last_time = timezone.now()
-                if notification.method == django_settings.NOTIFICATION_CONF.TELEGRAM and not coder.chat:
-                    return HttpResponseRedirect(django_settings.HTTPS_HOST_URL_ + reverse("telegram:me"))
-                notification.coder = coder
-                notification.save()
-                request.logger.success(f"{'Updated' if pk else 'Created'} notification")
-                return HttpResponseRedirect(reverse("coder:settings", kwargs=dict(tab="notifications")))
+    if is_notification_action:
+        pk = request.POST.get("pk")
+        instance = Notification.objects.get(pk=pk) if pk else None
+        notification_form = NotificationForm(coder, request.POST, instance=instance)
+        if notification_form.is_valid():
+            notification = notification_form.save(commit=False)
+            if pk:
+                notification.last_time = timezone.now()
+            if notification.method == django_settings.NOTIFICATION_CONF.TELEGRAM and not coder.chat:
+                return HttpResponseRedirect(django_settings.HTTPS_HOST_URL_ + reverse("telegram:me"))
+            notification.coder = coder
+            notification.save()
+            request.logger.success(f"{'Updated' if pk else 'Created'} notification")
+            return HttpResponseRedirect(reverse("coder:settings", kwargs={"tab": "notifications"}))
+    else:
+        notification_form = NotificationForm(coder)
 
     resources = coder.get_ordered_resources()
     coder.filter_set.filter(resources=[], contest__isnull=True, party__isnull=True).delete()
 
-    if request.user.has_perm("my_oauth.view_disabled_services"):
-        services = Service.objects
-    else:
-        services = Service.active_objects
+    services = Service.objects if request.user.has_perm("my_oauth.view_disabled_services") else Service.active_objects
     services = services.annotate(n_tokens=Count("token")).order_by("-n_tokens")
 
     selected_resource = request.get_resource()
     selected_account = request.GET.get("account") if selected_resource else None
 
     categories = coder.get_categories()
-    custom_categories = {c.get_notification_method(): c.title for c in coder.chat_set.filter(is_group=True)}
+    custom_categories = {chat.get_notification_method(): chat.title for chat in coder.chat_set.filter(is_group=True)}
 
     my_lists = CoderList.filter_for_manager(coder)
     my_lists = my_lists.annotate(n_records=SubqueryCount("values"))
@@ -1027,11 +1032,16 @@ def settings(request, tab=None):
     joined_chats = coder.chats.order_by("-modified")
     joined_chats = joined_chats.annotate(n_coders=SubqueryCount("coders"))
     joined_chats = joined_chats.annotate(n_accounts=SubqueryCount("accounts"))
-    chats_fields = ["chat_id", "title", "name", "n_coders", "n_accounts"]
 
     subscriptions = coder.subscription_set.order_by("-modified")
     subscriptions = subscriptions.prefetch_related("coders__user", "accounts__resource")
-    subscriptions = subscriptions.select_related("contest__resource")
+    subscriptions = subscriptions.select_related(
+        "resource",
+        "contest__resource",
+        "exclude_contest__resource",
+        "coder_list",
+        "coder_chat",
+    )
 
     return render(
         request,
@@ -1041,13 +1051,13 @@ def settings(request, tab=None):
             "selected_resource": selected_resource,
             "selected_account": selected_account,
             "coder": coder,
-            "tokens": {t.service_id: t for t in coder.token_set.all()},
+            "tokens": {token.service_id: token for token in coder.token_set.all()},
             "services": services,
             "my_lists": my_lists,
             "chats": {
                 "owned": owned_chats,
                 "joined": joined_chats,
-                "fields": chats_fields,
+                "fields": ["chat_id", "title", "name", "n_coders", "n_accounts"],
             },
             "categories": categories,
             "calendars": coder.calendar_set.order_by("-modified"),
@@ -1057,7 +1067,6 @@ def settings(request, tab=None):
             "coder_notifications": coder.notification_set.order_by("method"),
             "notifications": coder.get_notifications(),
             "notification_form": notification_form,
-            "modules": Module.objects.select_related("resource").order_by("resource__id").all(),
             "ace_calendars": django_settings.ACE_CALENDARS_,
             "custom_countries": django_settings.CUSTOM_COUNTRIES_,
             "past_calendar_actions": django_settings.PAST_CALENDAR_ACTIONS_,
@@ -1094,7 +1103,7 @@ def change(request):
 
     try:
         coder_id = int(request.POST.get("pk", -1))
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return HttpResponseBadRequest("invalid pk")
     if coder.id != coder_id:
         return HttpResponseBadRequest("invalid pk")
@@ -1628,7 +1637,7 @@ def change(request):
                 resource_id = int(request.POST.get("resource"))
             else:
                 account_id = int(request.POST.get("id"))
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             return HttpResponseBadRequest("invalid account or resource id")
 
         try:
@@ -1982,7 +1991,7 @@ def search(request, **kwargs):
     try:
         count = int(request.GET.get("count", django_settings.DEFAULT_COUNT_QUERY_))
         page = int(request.GET.get("page", 1))
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return HttpResponseBadRequest("count and page must be positive integers")
     if count < 1 or page < 1:
         return HttpResponseBadRequest("count and page must be positive integers")
@@ -2095,7 +2104,8 @@ def search(request, **kwargs):
         coder_accounts = coder.account_set.filter(resource=OuterRef("pk"))
 
         qs = (
-            Resource.objects.annotate(has_coder_account=Exists(coder_accounts))
+            Resource.objects
+            .annotate(has_coder_account=Exists(coder_accounts))
             .annotate(has_multi=F("has_multi_account"))
             .annotate(
                 disabled=Case(
@@ -2395,14 +2405,16 @@ def party(request, slug, tab="ranking"):
     party = get_object_or_404(Party.objects.for_user(request.user), slug=slug)
 
     party_contests = (
-        Contest.objects.filter(ratings__party=party)
+        Contest.objects
+        .filter(ratings__party=party)
         .annotate(has_statistics=Exists("statistics"))
         .order_by("-end_time", "-id")
     )
 
     filt = Q(ratings__party=party, statistics__account__coders=OuterRef("pk"))
     coders = (
-        party.coders.annotate(n_participations=SubqueryCount("account__resource__contest", filter=filt))
+        party.coders
+        .annotate(n_participations=SubqueryCount("account__resource__contest", filter=filt))
         .order_by("-n_participations")
         .select_related("user")
     )
@@ -2422,7 +2434,8 @@ def party(request, slug, tab="ranking"):
     future = contests.filter(end_time__gt=timezone.now()).order_by("start_time")
 
     statistics = (
-        Statistics.objects.filter(
+        Statistics.objects
+        .filter(
             account__coders__in=party.coders.all(),
             contest__in=party_contests.filter(start_time__lt=timezone.now()),
             contest__end_time__lt=timezone.now(),
@@ -2893,7 +2906,8 @@ def accounts(request, template="accounts.html"):
 
         statistics_filter = filtered_stats["contest_filter"] & filtered_stats["adv_filter"]
         accounts = (
-            accounts.prefetch_related(Prefetch("statistics_set", prefetch_stats, to_attr="selected_stats"))
+            accounts
+            .prefetch_related(Prefetch("statistics_set", prefetch_stats, to_attr="selected_stats"))
             .annotate(has_statistic=Exists("statistics", filter=statistics_filter))
             .filter(has_statistic=True)
         )

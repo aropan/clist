@@ -1270,7 +1270,7 @@ class Problem(BaseModel):
             models.Index(fields=["resource_id", "key"]),
             models.Index(fields=["resource_id", "divisions"]),
             models.Index(fields=["resource_id", "kinds"]),
-            GistIndexTrgrmOps(fields=["name"]),
+            GistIndexTrgrmOps(fields=["name"], name="clist_problem_name_gist"),
         ]
 
     def save(self, *args, **kwargs):

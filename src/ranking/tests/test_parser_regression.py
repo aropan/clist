@@ -15,7 +15,6 @@ import pytest
 from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
 from lazy_load import lz
-from ratelimiter import RateLimiter
 
 from clist.models import Contest, Resource
 from ranking.management.modules import common
@@ -33,6 +32,7 @@ from ranking.tests.parser_regression import (
     use_parser_cache,
     write_json,
 )
+from utils.ratelimiter import RateLimiter
 from utils.requester import requester
 
 
@@ -410,7 +410,7 @@ class ParserRegressionHelpersTest(SimpleTestCase):
 
         with (
             tempfile.TemporaryDirectory() as temporary_directory,
-            patch("ratelimiter.time.sleep") as sleep,
+            patch("utils.ratelimiter.time.sleep") as sleep,
             use_parser_cache(common, temporary_directory, allow_network=False),
         ):
             assert limited_call() == "result"
@@ -429,7 +429,7 @@ class ParserRegressionHelpersTest(SimpleTestCase):
 
         with (
             tempfile.TemporaryDirectory() as temporary_directory,
-            patch("ratelimiter.time.sleep") as sleep,
+            patch("utils.ratelimiter.time.sleep") as sleep,
             use_parser_cache(common, temporary_directory, allow_network=True),
         ):
             assert limited_call() == "result"

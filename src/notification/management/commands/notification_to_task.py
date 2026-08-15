@@ -47,7 +47,8 @@ class Command(BaseCommand):
         methods = options.get("methods")
 
         updates = (
-            Contest.visible.filter(start_time__gte=timezone.now())
+            Contest.visible
+            .filter(start_time__gte=timezone.now())
             .filter(Q(notification_timing=None) | Q(modified__gt=F("notification_timing")))
             .order_by("start_time")
         )

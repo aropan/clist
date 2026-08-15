@@ -9,7 +9,7 @@ from django.test import SimpleTestCase
 from rq.job import JobStatus, validate_job_id
 
 from utils import is_interactive
-from utils.rq import get_resource_job_id, is_job_active
+from utils.rq import get_resource_job_id, is_job_active, is_job_id_active
 from utils.strings import split_team_name_and_members
 from utils.test_runner import CompactTestResult, CompactTextTestRunner
 
@@ -142,6 +142,39 @@ class IsJobActiveTest(SimpleTestCase):
     def test_missing_job_without_execution_or_worker_is_inactive(self, workers):
         assert not is_job_active(self.queue, "parse_statistics_example-com", job=None)
         workers.assert_called_once_with(queue=self.queue)
+
+
+class IsJobIdActiveTest(SimpleTestCase):
+    @mock.patch("utils.rq.is_job_active", return_value=True)
+    @mock.patch("utils.rq.django_rq.get_queue")
+    def test_uses_job_origin_queue(self, get_queue, is_active):
+        system_queue = mock.Mock()
+        parse_queue = mock.Mock()
+        job = mock.Mock(origin="parse_statistics")
+        system_queue.fetch_job.return_value = job
+        get_queue.side_effect = lambda name: {
+            "system": system_queue,
+            "default": mock.Mock(),
+            "parse_statistics": parse_queue,
+            "parse_accounts": mock.Mock(),
+        }[name]
+
+        assert is_job_id_active("job-id")
+        is_active.assert_called_once_with(parse_queue, "job-id", job)
+
+    @mock.patch("utils.rq.is_job_active", side_effect=[False, True])
+    @mock.patch("utils.rq.django_rq.get_queue")
+    def test_checks_registries_when_job_hash_is_missing(self, get_queue, is_active):
+        queues = {name: mock.Mock() for name in ("system", "default", "parse_statistics", "parse_accounts")}
+        for queue in queues.values():
+            queue.fetch_job.return_value = None
+        get_queue.side_effect = queues.__getitem__
+
+        assert is_job_id_active("missing-job-id")
+        assert is_active.call_args_list == [
+            mock.call(queues["system"], "missing-job-id", job=None),
+            mock.call(queues["default"], "missing-job-id", job=None),
+        ]
 
 
 class SplitTeamNameAndMembersTest(SimpleTestCase):

@@ -6,10 +6,9 @@ import json
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from urllib.parse import urljoin
 
-from ratelimiter import RateLimiter
-
 from ranking.management.modules.common import REQ, BaseModule
 from ranking.management.modules.excepts import FailOnGetResponse
+from utils.ratelimiter import RateLimiter
 
 
 class Statistic(BaseModule):

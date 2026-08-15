@@ -488,8 +488,14 @@ function get_calendar_authorization()
         return false;
     }
     $credentials = json_decode(file_get_contents(CALENDARCREDENTIALSFILE), true);
-    $token = $credentials['token_response'];
-    return "{$token['token_type']} {$token['access_token']}";
+    if (isset($credentials['token'])) {
+        return "Bearer {$credentials['token']}";
+    }
+    $token = $credentials['token_response'] ?? null;
+    if (!$token || empty($token['access_token'])) {
+        return false;
+    }
+    return ($token['token_type'] ?? 'Bearer') . " {$token['access_token']}";
 }
 
 function get_xpath_from_string($page)

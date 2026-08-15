@@ -17,7 +17,6 @@ import requests
 from django.db import transaction
 from django.db.models import Q
 from first import first
-from ratelimiter import RateLimiter
 
 from clist.templatetags.extras import as_number, get_item, is_improved_solution, is_solved, slug
 from logify import live as tqdm
@@ -26,6 +25,7 @@ from ranking.management.modules.common import LOG, REQ, BaseModule, CustomReques
 from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse, ProxyLimitReached
 from ranking.utils import clear_problems_fields, create_upsolving_statistic
 from utils.mathutils import max_with_none
+from utils.ratelimiter import RateLimiter
 from utils.timetools import parse_datetime
 
 
@@ -639,7 +639,7 @@ class Statistic(BaseModule):
             while max_page is None or last_page < max_page:
                 try:
                     data = fetch_submissions(last_page)
-                except (FailOnGetResponse, ProxyLimitReached):
+                except FailOnGetResponse, ProxyLimitReached:
                     state["last_page"] = last_page
                     break
                 if progress_bar is None:

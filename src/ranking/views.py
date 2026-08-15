@@ -84,7 +84,8 @@ from utils.timetools import parse_datetime
 @context_pagination()
 def standings_list(request, template="standings_list.html"):
     contests = (
-        Contest.objects.annotate_favorite(request.user)
+        Contest.objects
+        .annotate_favorite(request.user)
         .annotate_active_executions()
         .select_related("resource", "stage")
         .annotate(has_module=Exists(Module.objects.filter(resource=OuterRef("resource_id"))))
@@ -1879,7 +1880,7 @@ def solutions(request, sid, problem_key):
                 stat.update(source_code)
             except NotImplementedError:
                 return HttpResponseBadRequest("Not implemented")
-            except (ExceptionParseStandings, FailOnGetResponse):
+            except ExceptionParseStandings, FailOnGetResponse:
                 return HttpResponseNotFound("Unable to obtain a solution")
             except ProxyLimitReached:
                 return HttpResponseNotFound("Proxy limit reached")

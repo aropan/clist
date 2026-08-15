@@ -3,3 +3,14 @@
 **/__pycache__
 **/*.pyc
 **/*.pyo
+.env.*
+**/.env.*
+src/pyclist/conf.py
+src/mediafiles
+src/sharedfiles
+src/staticfiles
+src/logs
+src/**/tests
+legacy/tests
+logs
+volumes

@@ -65,7 +65,7 @@
     <div id="ranking-tab" class="tab-pane{% if tab == "ranking" %} active{% endif %}">
         {% if user and user.is_authenticated %}{% if not user.first_name or not user.last_name %}
         <div class="alert alert-warning text-center">
-            Fill in your first last and last name in <a href="{% url 'coder:settings' 'social' %}#social-tab">social settings</a>.
+            Fill in your first last and last name in <a href="{% url 'coder:settings' 'social' %}">social settings</a>.
         </div>
         {% endif %}{% endif %}
 

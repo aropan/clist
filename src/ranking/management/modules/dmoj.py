@@ -13,11 +13,11 @@ from pprint import pprint
 from urllib.parse import quote_plus, urlparse
 
 import arrow
-from ratelimiter import RateLimiter
 
 from logify import live as tqdm
 from ranking.management.modules.common import REQ, BaseModule
 from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse
+from utils.ratelimiter import RateLimiter
 
 
 class Statistic(BaseModule):

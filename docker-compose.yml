@@ -8,9 +8,12 @@ services:
       clist_network:
         ipv4_address: 10.42.0.102
     volumes:
+      - ./src/.env.prod:/usr/src/clist/.env.prod:ro
+      - ./src/pyclist/conf.py:/usr/src/clist/pyclist/conf.py:ro
       - static_files:/usr/src/clist/staticfiles/
       - media_files:/usr/src/clist/mediafiles/
       - shared_files:/usr/src/clist/sharedfiles/
+      - redis_data:/var/lib/redis/
       - ./logs/production:/usr/src/clist/logs/
       - ./legacy/logs/:/usr/src/clist/logs/legacy/
       - ./logs/postgres/:/usr/src/clist/logs/postgres/
@@ -48,7 +51,13 @@ services:
     mem_limit: 1g
     restart: unless-stopped
   redis:
-    image: redis
+    image: redis:8-trixie
+    command:
+      - redis-server
+      - --save
+      - ""
+      - --appendonly
+      - "no"
     networks:
       - clist_network
     restart: unless-stopped
@@ -71,7 +80,7 @@ services:
       - monitoring_conf
     restart: unless-stopped
   pgadmin:
-    image: dpage/pgadmin4:latest
+    image: dpage/pgadmin4:9
     networks:
       - clist_network
     volumes:
@@ -100,7 +109,7 @@ services:
     mem_limit: 512m
     restart: unless-stopped
   healthchecks:
-    image: healthchecks/healthchecks:latest
+    image: healthchecks/healthchecks:v4.3
     networks:
       - clist_network
     volumes:
@@ -123,7 +132,7 @@ services:
       clist_network:
         ipv4_address: 10.42.0.105
     volumes:
-      - postgres_data:/var/lib/postgresql/data/
+      - postgres_data:/var/lib/postgresql/
       - ./src/scripts/:/usr/src/clist/scripts/
       - ./logs/postgres/:/var/log/
     env_file:
@@ -182,7 +191,7 @@ services:
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --max-log-backups 14; sleep 1d & wait $${!}; done;'"
     restart: unless-stopped
   netdata:
-    image: netdata/netdata:latest
+    image: netdata/netdata:v2
     networks:
       - clist_network
     hostname: netdata.clist.by
@@ -208,7 +217,7 @@ services:
       - ./.env.netdata
     restart: unless-stopped
   loki:
-    image: grafana/loki:latest
+    image: grafana/loki:3.7
     networks:
       - clist_network
     command:
@@ -217,21 +226,24 @@ services:
       - ./config/loki/local-config.yaml:/etc/loki/local-config.yaml:ro
       - loki_data:/loki
     restart: unless-stopped
-  promtail:
-    image: grafana/promtail:latest
+  alloy:
+    image: grafana/alloy:v1.18.0
     networks:
       - clist_network
     command:
-      - "--config.file=/etc/promtail/promtail-config.yml"
+      - run
+      - "--server.http.listen-addr=0.0.0.0:12345"
+      - "--storage.path=/var/lib/alloy/data"
+      - /etc/alloy/config.alloy
     volumes:
-      - ./config/promtail/promtail-config.yml:/etc/promtail/promtail-config.yml:ro
+      - ./config/alloy/config.alloy:/etc/alloy/config.alloy:ro
       - ./logs/nginx/nginx:/var/log/nginx:ro
-      - promtail_positions:/var/promtail
+      - alloy_data:/var/lib/alloy/data
     depends_on:
       - loki
     restart: unless-stopped
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:13.1
     networks:
       - clist_network
     volumes:
@@ -241,7 +253,7 @@ services:
       - ./.env.grafana
     depends_on:
       - loki
-      - promtail
+      - alloy
     restart: unless-stopped
 
 networks:
@@ -268,6 +280,12 @@ volumes:
       type: none
       o: bind
       device: ./volumes/postgres_data
+  redis_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./volumes/redis_data
   pgadmin_data:
     driver: local
     driver_opts:
@@ -334,9 +352,9 @@ volumes:
       type: none
       o: bind
       device: ./volumes/loki_data
-  promtail_positions:
+  alloy_data:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ./volumes/promtail_positions
+      device: ./volumes/alloy_data

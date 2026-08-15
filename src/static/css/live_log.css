@@ -13,6 +13,7 @@
 
   .container__left {
     width: 100%;
+    min-width: 0;
     flex-direction: column;
   }
 

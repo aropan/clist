@@ -66,7 +66,7 @@
     <div class="form-group">
         <label for="codeforces">Codeforces handle</label>
         <input id="codeforces-handle" name="codeforces-handle" class="form-control" placeholder="Enter codeforces handle">
-        <small class="form-text text-muted">Optional. Other handles  can be added <a href="{% url 'coder:settings' %}#accounts-tab">here</a>.</small>
+        <small class="form-text text-muted">Optional. Other handles  can be added <a href="{% url 'coder:settings' 'accounts' %}">here</a>.</small>
     </div>
     {% endif %}
     {% endwith %}

@@ -6,10 +6,9 @@ import re
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 
-from ratelimiter import RateLimiter
-
 from logify.live import tqdm
 from ranking.management.modules.common import REQ, BaseModule
+from utils.ratelimiter import RateLimiter
 
 
 class Statistic(BaseModule):

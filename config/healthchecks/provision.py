@@ -97,6 +97,11 @@ MONITORS = {
         timedelta(minutes=35),
         "update_google_calendars: syncs Google calendars at :20, :35 and :55.",
     ),
+    "calendar-public-access": (
+        "10 4 * * *",
+        timedelta(hours=2),
+        "ensure_google_calendars_public: restores public read access to managed calendars daily.",
+    ),
     "parse-archive-problems": (
         "30 * * * *",
         timedelta(minutes=40),

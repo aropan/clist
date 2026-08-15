@@ -6,13 +6,14 @@
 line-length = 120
 
 # Keep CLI, editor, and CI formatting results identical
-required-version = "==0.12.7"
+required-version = "==0.16.2"
 
-# Assume Python 3.10+ (change this to match your actual dev environment)
-target-version = "py310"
+# Match the production Python version
+target-version = "py314"
 
 # Directories to exclude from linting and formatting
 extend-exclude = [
+    ".agents", # Skill documentation contains illustrative, intentionally unformatted snippets
     "*/migrations", # Ignore Django migrations
 ]
 
@@ -41,24 +42,26 @@ select = [
 ]
 
 # Rules to ignore
-extend-ignore = [
-    "E203", # whitespace before ':' (often conflicts with formatters)
-    "E402", # module level import not at top of file
-    "B905", # zip without strict=True
-    "RET504", # unnecessary assign before return
+ignore = [
+    "whitespace-before-punctuation", # E203: often conflicts with formatters
+    "module-import-not-at-top-of-file", # E402
+    "zip-without-explicit-strict", # B905
+    "unnecessary-assign", # RET504
 ]
 
 # Rules that Ruff shouldn't try to fix automatically
 unfixable = [
-    "F401", # Don't auto-remove unused imports (useful when you're still developing a file)
+    "unused-import", # F401: don't auto-remove imports while developing a file
 ]
 
 # Per-file ignores allow you to ignore specific rules for specific files
 [lint.per-file-ignores]
 # Allow unused imports in __init__.py files
-"__init__.py" = ["F401"]
+"__init__.py" = ["unused-import"]
+# IPython injects the configuration object before evaluating this file
+"config/ipython_config.py" = ["undefined-name"]
 # Allow long lines in Django migrations
-"*/migrations/*" = ["E501"]
+"*/migrations/*" = ["line-too-long"]
 
 [format]
 # Enable preview features for formatting

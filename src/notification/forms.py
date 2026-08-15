@@ -11,7 +11,7 @@ class NotificationForm(ModelForm):
         model = Notification
         exclude = ["coder", "last_time", "secret"]
         help_texts = {
-            "method": ('You can <a href="/settings#filtres-tab">configure filters</a> for each method'),
+            "method": ('You can <a href="/settings/filters/">configure filters</a> for each method'),
             "before": ("How much before event to send notifications"),
             "period": ("Frequency of notifications"),
             "with_updates": ("Notify about updates"),

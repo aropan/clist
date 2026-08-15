@@ -528,7 +528,7 @@ class Statistic(BaseModule):
                                 break
 
                             v = v.replace("\n", " ")
-                            v = re.sub("^[0-9]+\s+", "", v)  # FIXME just remove number prefix
+                            v = re.sub(r"^[0-9]+\s+", "", v)  # FIXME just remove number prefix
                             if "cphof" in standings_url:
                                 member = vs.column.node.xpath(".//a/text()")[0].strip()
                                 row["member"] = f"{member} {season}"

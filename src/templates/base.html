@@ -34,7 +34,7 @@
 
         {% block begin-head %}{% endblock %}
 
-        <script src="{% static_ts 'js/jquery-3.6.0.min.js' %}"></script>
+        <script src="{% static_ts 'js/jquery-3.7.1.min.js' %}"></script>
         <script src="{% static_ts 'js/jquery-ui.min.js' %}"></script>
         <link href="{% static_ts 'css/jquery-ui.min.css' %}" rel="stylesheet">
         <script src="{% static_ts 'js/ie-emulation-modes-warning.js' %}"></script>
@@ -106,7 +106,7 @@
 
         <div class="container__main body-wrapper">
             {% block container %}
-            <div{% if not fullscreen %} class="container-fluid container__left"{% endif %}>
+            <div class="container__left{% if not fullscreen %} container-fluid{% endif %}">
             {% block banner %}
                 {% for b in banners %}
                     {% if b.template %}

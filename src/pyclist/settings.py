@@ -14,10 +14,12 @@ import os
 import warnings
 from datetime import datetime
 
+import fontawesomefree
 import pycountry
 import sentry_sdk
 from django.contrib.gis.geoip2 import GeoIP2
 from django.core.paginator import UnorderedObjectListWarning
+from django.utils.csp import CSP
 from django.utils.translation import gettext_lazy as _
 from environ import Env
 from pytz import utc
@@ -43,14 +45,21 @@ ADMINS = conf.ADMINS
 
 MANAGERS = ADMINS
 
-EMAIL_HOST = conf.EMAIL_HOST
-EMAIL_HOST_USER = conf.EMAIL_HOST_USER
-EMAIL_HOST_PASSWORD = conf.EMAIL_HOST_PASSWORD
-EMAIL_PORT = conf.EMAIL_PORT
-EMAIL_USE_TLS = conf.EMAIL_USE_TLS
+MAILERS = {
+    "default": {
+        "BACKEND": "django.core.mail.backends.smtp.EmailBackend",
+        "OPTIONS": {
+            "host": conf.EMAIL_HOST,
+            "port": conf.EMAIL_PORT,
+            "username": conf.EMAIL_HOST_USER,
+            "password": conf.EMAIL_HOST_PASSWORD,
+            "use_tls": conf.EMAIL_USE_TLS,
+        },
+    },
+}
 
-SERVER_EMAIL = "Clist <%s>" % EMAIL_HOST_USER
-DEFAULT_FROM_EMAIL = "Clist <%s>" % EMAIL_HOST_USER
+SERVER_EMAIL = f"Clist <{conf.EMAIL_HOST_USER}>"
+DEFAULT_FROM_EMAIL = f"Clist <{conf.EMAIL_HOST_USER}>"
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.8/howto/deployment/checklist/
@@ -85,8 +94,9 @@ INSTALLED_APPS = (
     "django.contrib.staticfiles",
     "django.contrib.admindocs",
     "django.contrib.humanize",
+    "django.contrib.postgres",
     "django.contrib.sitemaps",
-    "clist",
+    "clist.apps.ClistConfig",
     "ranking",
     "tastypie",
     "my_oauth",
@@ -100,7 +110,6 @@ INSTALLED_APPS = (
     "events",
     "django_countries",
     "el_pagination",
-    "django_static_fontawesome",
     "django_extensions",
     "django_user_agents",
     "django_json_widget",
@@ -114,7 +123,6 @@ INSTALLED_APPS = (
     "django_rq",
     "notes",
     "logify",
-    "fontawesomefree",
     "corsheaders",
     "submissions",
     "modeltranslation",
@@ -139,7 +147,7 @@ MIDDLEWARE = (
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django_user_agents.middleware.UserAgentMiddleware",
-    "csp.middleware.CSPMiddleware",
+    "django.middleware.csp.ContentSecurityPolicyMiddleware",
     "pyclist.middleware.UpdateCoderLastActivity",
     "pyclist.middleware.CustomRequestMiddleware",
     "pyclist.middleware.RequestIsAjaxFunction",
@@ -258,7 +266,7 @@ RQ_SHOW_ADMIN_LINK = True
 # https://docs.djangoproject.com/en/1.8/ref/settings/#databases
 
 
-DATABASES_ = {"postgresql": {"ENGINE": "django.db.backends.postgresql_psycopg2"}}
+DATABASES_ = {"postgresql": {"ENGINE": "django.db.backends.postgresql"}}
 if not PYLINT_ENV:
     DATABASES_["postgresql"].update({
         "NAME": env("POSTGRES_DB"),
@@ -314,18 +322,25 @@ USE_TZ = True
 
 
 STATIC_URL = "/static/"
-STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
-STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
+STATIC_ROOT = env("STATIC_ROOT", default=os.path.join(BASE_DIR, "staticfiles"))
+FONTAWESOME_STATIC_ROOT = os.path.join(os.path.dirname(fontawesomefree.__file__), "static", "fontawesomefree")
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "static"),
+    ("fontawesomefree/css", os.path.join(FONTAWESOME_STATIC_ROOT, "css")),
+    ("fontawesomefree/webfonts", os.path.join(FONTAWESOME_STATIC_ROOT, "webfonts")),
+]
 REPO_STATIC_ROOT = os.path.join(BASE_DIR, "static/")
 STATIC_JSON_TIMEZONES = os.path.join(BASE_DIR, "static", "json", "timezones.json")
 RESOURCES_ICONS_SIZES = [32, 64]
 
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
-    "staticfiles": {"BACKEND": "static_compress.CompressedStaticFilesStorage"},
+    "staticfiles": {"BACKEND": "servestatic.storage.CompressedStaticFilesStorage"},
 }
 
-STATIC_COMPRESS_METHODS = ["gz"]
+SERVESTATIC_USE_GZIP = True
+SERVESTATIC_USE_BROTLI = False
+SERVESTATIC_USE_ZSTD = False
 
 
 MEDIA_URL = "/media/"
@@ -371,11 +386,6 @@ LOGGING = {
         "null": {
             "level": "DEBUG",
             "class": "logging.NullHandler",
-        },
-        "mail_admins": {
-            "level": "ERROR",
-            "filters": ["require_debug_false"],
-            "class": "django.utils.log.AdminEmailHandler",
         },
         "console_debug": {
             "level": "DEBUG",
@@ -444,12 +454,19 @@ LOGGING = {
             )
         },
         "django": {
-            "handlers": ["mail_admins"],
+            "handlers": [],
             "level": "ERROR",
+            "propagate": True,
         },
         "telegrambot": {
             "handlers": ["telegrambot"],
             "level": "DEBUG",
+        },
+        "httpx": {
+            "level": "WARNING",
+        },
+        "httpcore": {
+            "level": "WARNING",
         },
         "django.db.backends": {
             "handlers": ["db"],
@@ -644,6 +661,24 @@ WEBPUSH_SETTINGS = conf.WEBPUSH_SETTINGS
 # OAUTH2 PROVIDER
 OAUTH2_PROVIDER = {
     "DEFAULT_SCOPES": ["read"],
+    "COMPLIANT_BCP_RFC9700_IMPLICIT_GRANT": True,
+    "COMPLIANT_BCP_RFC9700_PASSWORD_GRANT": True,
+    "COMPLIANT_BCP_RFC9700_PKCE_METHOD": True,
+    "COMPLIANT_BCP_RFC9700_ACCESS_TOKEN_TRANSPORT": True,
+    "COMPLIANT_BCP_RFC9700_AUTHZ_RESPONSE_ISS": True,
+    "COMPLIANT_BCP_RFC9700_TOKEN_STORAGE": True,
+    "COMPLIANT_BCP_RFC9700_REFRESH_TOKEN": True,
+    "REFRESH_TOKEN_REUSE_PROTECTION": True,
+    "REFRESH_TOKEN_GRACE_PERIOD_SECONDS": 0,
+    "ROTATE_REFRESH_TOKEN": True,
+    "COMPLIANT_BCP_RFC9700_PKCE_REQUIRED": True,
+    "PKCE_REQUIRED": True,
+    "COMPLIANT_BCP_RFC9700_REDIRECT_URI_MATCHING": True,
+    "ALLOW_URI_WILDCARDS": False,
+    # Native clients use exact localhost/127.0.0.1 callbacks. Django OAuth Toolkit
+    # has no per-host scheme setting, so disallowing HTTP globally would break them.
+    "ALLOWED_REDIRECT_URI_SCHEMES": ["http", "https"],
+    "COMPLIANT_BCP_RFC9700_REDIRECT_URI_SCHEME": False,
 }
 
 
@@ -654,13 +689,17 @@ SECURE_HSTS_SECONDS = 15768000
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 
+# HTTP to HTTPS redirects are enforced by nginx before requests reach Django.
+# clist.E001 replaces OAuth Toolkit's scheme-only check with a host-aware audit.
+SILENCED_SYSTEM_CHECKS = ["security.W008", "oauth2_provider.W008"]
+
 # CORS
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_URLS_REGEX = "^/api/.*$"
 
 # Content Security Policy
-CSP_DEFAULT_SRC = ("'self'", "'unsafe-inline'", "'unsafe-eval'", "https:", "data:")
-CSP_SCRIPT_SRC = ("'self'", "'unsafe-inline'", "'unsafe-eval'")
+CSP_DEFAULT_SRC = (CSP.SELF, CSP.UNSAFE_INLINE, CSP.UNSAFE_EVAL, "https:", "data:")
+CSP_SCRIPT_SRC = (CSP.SELF, CSP.UNSAFE_INLINE, CSP.UNSAFE_EVAL)
 CSP_IMG_SRC = CSP_DEFAULT_SRC
 CSP_CONNECT_SRC = CSP_DEFAULT_SRC
 
@@ -685,6 +724,13 @@ CSP_SCRIPT_SRC += ("https://static.cloudflareinsights.com",)
 
 # CSP Yandex form
 CSP_SCRIPT_SRC += ("https://forms.yandex.ru",)
+
+SECURE_CSP = {
+    "default-src": CSP_DEFAULT_SRC,
+    "script-src": CSP_SCRIPT_SRC,
+    "img-src": CSP_IMG_SRC,
+    "connect-src": CSP_CONNECT_SRC,
+}
 
 # X-XSS-Protection
 SECURE_BROWSER_XSS_FILTER = True

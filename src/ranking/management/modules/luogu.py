@@ -6,11 +6,10 @@ from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from urllib.parse import urljoin
 
-from ratelimiter import RateLimiter
-
 from clist.templatetags.extras import camel_to_snake, get_item
 from ranking.management.modules.common import REQ, BaseModule
 from ranking.management.modules.excepts import FailOnGetResponse
+from utils.ratelimiter import RateLimiter
 
 
 class Statistic(BaseModule):

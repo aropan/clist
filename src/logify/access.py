@@ -52,7 +52,8 @@ def get_active_live_event_logs(user, *, limit=100):
     if limit <= 0:
         return []
     event_logs = (
-        EventLog.env_objects.filter(is_live_stream=True, status__in=ACTIVE_LIVE_STATUSES)
+        EventLog.env_objects
+        .filter(is_live_stream=True, status__in=ACTIVE_LIVE_STATUSES)
         .select_related("content_type")
         .order_by("-created")
     )
@@ -86,7 +87,8 @@ def get_live_event_log_for_contest(user, contest):
         job_id__isnull=False,
     ).values("job_id")
     event_logs = (
-        EventLog.env_objects.filter(
+        EventLog.env_objects
+        .filter(
             is_live_stream=True,
             name="parse_statistic",
             status__in=ACTIVE_LIVE_STATUSES,

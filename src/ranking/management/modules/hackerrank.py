@@ -9,12 +9,11 @@ from contextlib import ExitStack
 from time import sleep
 from urllib.parse import urljoin
 
-from ratelimiter import RateLimiter
-
 from clist.templatetags.extras import as_number, get_problem_key
 from logify.live import tqdm
 from ranking.management.modules.common import LOG, REQ, UNCHANGED, BaseModule, utc_now
 from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse
+from utils.ratelimiter import RateLimiter
 
 
 class Statistic(BaseModule):

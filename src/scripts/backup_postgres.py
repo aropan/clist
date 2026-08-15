@@ -13,7 +13,6 @@ import re
 import shutil
 import signal
 import subprocess
-import sys
 import threading
 import time
 from collections import deque
@@ -153,6 +152,13 @@ def nonnegative_int(value: str) -> int:
     if parsed < 0:
         raise argparse.ArgumentTypeError("must be at least 0")
     return parsed
+
+
+def validate_dump_versions(client_major: int, server_major: int) -> None:
+    if client_major < server_major:
+        raise BackupError(
+            f"pg_dump major version {client_major} is older than PostgreSQL server major version {server_major}"
+        )
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -332,7 +338,7 @@ def read_complete_manifest(candidate: Path) -> dict[str, Any] | None:
     try:
         with manifest_path.open(encoding="utf-8") as source:
             manifest = json.load(source)
-    except (OSError, json.JSONDecodeError):
+    except OSError, json.JSONDecodeError:
         return None
     if not isinstance(manifest, dict):
         return None
@@ -617,11 +623,7 @@ class BackupApplication:
             status.update("Checking PostgreSQL versions…")
             self.client_major = self.client.client_major_version()
             server_major, self.server_version = self.client.server_major_version()
-            if self.client_major != server_major:
-                raise BackupError(
-                    f"pg_dump major version {self.client_major} does not match "
-                    f"PostgreSQL server major version {server_major}"
-                )
+            validate_dump_versions(self.client_major, server_major)
 
             status.update("Discovering databases and table statistics…")
             databases = []
@@ -718,7 +720,7 @@ class BackupApplication:
         try:
             os.killpg(process.pid, signal.SIGTERM)
             process.wait(timeout=10)
-        except (ProcessLookupError, subprocess.TimeoutExpired):
+        except ProcessLookupError, subprocess.TimeoutExpired:
             if process.poll() is None:
                 with contextlib.suppress(ProcessLookupError):
                     os.killpg(process.pid, signal.SIGKILL)
@@ -1105,6 +1107,7 @@ def translated_signals() -> Iterator[None]:
 def main(argv: Sequence[str] | None = None) -> int:
     os.umask(0o077)
     console = Console()
+    error_console = Console(stderr=True)
     try:
         args = build_parser().parse_args(argv)
         config = config_from_args(args)
@@ -1112,18 +1115,18 @@ def main(argv: Sequence[str] | None = None) -> int:
         with translated_signals():
             application.run()
     except BackupInterrupted as exc:
-        console.print(f"[bold yellow]{escape(str(exc))}[/bold yellow]", file=sys.stderr)
+        error_console.print(f"[bold yellow]{escape(str(exc))}[/bold yellow]")
         return 130
     except BackupError as exc:
-        console.print(f"[bold red]Backup failed:[/bold red] {escape(str(exc))}", file=sys.stderr)
+        error_console.print(f"[bold red]Backup failed:[/bold red] {escape(str(exc))}")
         return 1
     except KeyboardInterrupt:
-        console.print("[bold yellow]Backup interrupted[/bold yellow]", file=sys.stderr)
+        error_console.print("[bold yellow]Backup interrupted[/bold yellow]")
         return 130
     except Exception as exc:
         password = os.environ.get("POSTGRES_PASSWORD", "")
         message = sanitize_text(str(exc), [password]) or exc.__class__.__name__
-        console.print(f"[bold red]Backup failed unexpectedly:[/bold red] {escape(message)}", file=sys.stderr)
+        error_console.print(f"[bold red]Backup failed unexpectedly:[/bold red] {escape(message)}")
         return 1
     return 0
 

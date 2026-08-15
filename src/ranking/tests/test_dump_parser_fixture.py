@@ -12,14 +12,14 @@ from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
 
 from clist.models import Contest, ContestSeries, Resource
-from ranking.management.commands.dump_parser_fixture import (
+from ranking.models import Account, Module, Statistics
+from ranking.tests.parser_fixture_command import (
     Command,
     SelectedStatistics,
     contest_coverage_key,
     load_fixture_coverage,
     load_fixture_metadata,
 )
-from ranking.models import Account, Module, Statistics
 from ranking.tests.parser_regression import (
     PARSER_FIXTURES_ROOT,
     discover_parser_fixtures,
@@ -116,7 +116,7 @@ class ParserFixtureValidationTest(SimpleTestCase):
             }
         ])
 
-        with patch("ranking.management.commands.dump_parser_fixture.serializers.serialize", return_value=serialized):
+        with patch("ranking.tests.parser_fixture_command.serializers.serialize", return_value=serialized):
             fixture = Command().serialize_database_fixture(contest)
 
         assert "writers" not in fixture[0]["fields"]
@@ -669,7 +669,7 @@ class ParserFixtureRecordingTest(SimpleTestCase):
         with tempfile.TemporaryDirectory() as temporary_directory:
             fixture_path = Path(temporary_directory) / "example.com" / "contest"
             with (
-                patch("ranking.management.commands.dump_parser_fixture.get_standings", side_effect=get_standings),
+                patch("ranking.tests.parser_fixture_command.get_standings", side_effect=get_standings),
                 pytest.raises(AssertionError, match="unexpected network access"),
             ):
                 command.record_fixture(object(), fixture_path)
@@ -702,7 +702,7 @@ class ParserFixtureRecordingTest(SimpleTestCase):
         with tempfile.TemporaryDirectory() as temporary_directory:
             fixture_path = Path(temporary_directory) / "1" / "2"
             with (
-                patch("ranking.management.commands.dump_parser_fixture.get_standings", side_effect=get_standings),
+                patch("ranking.tests.parser_fixture_command.get_standings", side_effect=get_standings),
                 patch.object(command, "make_fixture_owned_by_workspace_user"),
             ):
                 command.record_fixture(object(), fixture_path)
@@ -746,7 +746,7 @@ class ParserFixtureRecordingTest(SimpleTestCase):
         with tempfile.TemporaryDirectory() as temporary_directory:
             fixture_path = Path(temporary_directory) / "1" / "2"
             with (
-                patch("ranking.management.commands.dump_parser_fixture.get_standings", side_effect=get_standings),
+                patch("ranking.tests.parser_fixture_command.get_standings", side_effect=get_standings),
                 patch.object(command, "make_fixture_owned_by_workspace_user"),
             ):
                 command.record_fixture(object(), fixture_path)
@@ -771,8 +771,8 @@ class ParserFixtureRecordingTest(SimpleTestCase):
             (fixture_path / "db.json").write_text("{}")
 
             with (
-                patch("ranking.management.commands.dump_parser_fixture.PARSER_FIXTURES_ROOT", fixtures_root),
-                patch("ranking.management.commands.dump_parser_fixture.settings.BASE_DIR", workspace_root),
+                patch("ranking.tests.parser_fixture_command.PARSER_FIXTURES_ROOT", fixtures_root),
+                patch("ranking.tests.parser_fixture_command.settings.BASE_DIR", workspace_root),
                 patch("utils.filesystem.os.geteuid", return_value=0),
                 patch("utils.filesystem.os.chown") as chown,
                 patch("utils.filesystem.path_owner", return_value=PathOwner(workspace_root, 1000, 1000)),
@@ -811,8 +811,8 @@ class ParserFixtureRecordingTest(SimpleTestCase):
             fixture_path.mkdir(parents=True)
 
             with (
-                patch("ranking.management.commands.dump_parser_fixture.PARSER_FIXTURES_ROOT", fixtures_root),
-                patch("ranking.management.commands.dump_parser_fixture.settings.BASE_DIR", workspace_root),
+                patch("ranking.tests.parser_fixture_command.PARSER_FIXTURES_ROOT", fixtures_root),
+                patch("ranking.tests.parser_fixture_command.settings.BASE_DIR", workspace_root),
                 patch("utils.filesystem.os.geteuid", return_value=0),
                 patch("utils.filesystem.os.chown") as chown,
                 patch("utils.filesystem.path_owner", return_value=PathOwner(workspace_root, 0, 0)),
@@ -1032,7 +1032,7 @@ class ParserFixtureSuggestionsTest(TestCase):
             )
 
             with patch(
-                "ranking.management.commands.dump_parser_fixture.discover_parser_fixtures",
+                "ranking.tests.parser_fixture_command.discover_parser_fixtures",
                 return_value=[fixture_path],
             ):
                 assert Command().fixture_path_for_recording(newer) == fixture_path
@@ -1050,7 +1050,7 @@ class ParserFixtureSuggestionsTest(TestCase):
         command.record_fixture = Mock(side_effect=record_fixture)
         with (
             patch(
-                "ranking.management.commands.dump_parser_fixture.load_fixture_coverage",
+                "ranking.tests.parser_fixture_command.load_fixture_coverage",
                 return_value=(set(), set()),
             ),
             pytest.raises(CommandError, match="failed to record 1 of 2 fixtures"),
@@ -1078,7 +1078,7 @@ class ParserFixtureSuggestionsTest(TestCase):
         command = Command(stdout=stdout)
 
         with patch(
-            "ranking.management.commands.dump_parser_fixture.load_fixture_coverage",
+            "ranking.tests.parser_fixture_command.load_fixture_coverage",
             return_value=(
                 {contest_coverage_key(newer), contest_coverage_key(old_annual)},
                 {(old_annual.resource_id, old_annual.pk)},
@@ -1099,7 +1099,7 @@ class ParserFixtureSuggestionsTest(TestCase):
         command.record_fixture = Mock()
 
         with patch(
-            "ranking.management.commands.dump_parser_fixture.load_fixture_coverage",
+            "ranking.tests.parser_fixture_command.load_fixture_coverage",
             return_value=(
                 {contest_coverage_key(newer)},
                 {(new_annual.resource_id, new_annual.pk)},
@@ -1129,7 +1129,7 @@ class ParserFixtureSuggestionsTest(TestCase):
         command.record_fixture = Mock(side_effect=record_fixture)
         with (
             patch(
-                "ranking.management.commands.dump_parser_fixture.load_fixture_coverage",
+                "ranking.tests.parser_fixture_command.load_fixture_coverage",
                 return_value=(set(), set()),
             ),
             pytest.raises(CommandError, match="failed to record 1 of 2 fixtures"),
@@ -1156,7 +1156,7 @@ class ParserFixtureSuggestionsTest(TestCase):
         command.record_fixture = Mock(side_effect=record_fixture)
         with (
             patch(
-                "ranking.management.commands.dump_parser_fixture.load_fixture_coverage",
+                "ranking.tests.parser_fixture_command.load_fixture_coverage",
                 return_value=(set(), set()),
             ),
             pytest.raises(CommandError, match=r"failed to record 1 of 1 attempted fixtures \(1 skipped\)"),
@@ -1181,7 +1181,7 @@ class ParserFixtureSuggestionsTest(TestCase):
         command.record_fixture = Mock(side_effect=record_fixture)
         with (
             patch(
-                "ranking.management.commands.dump_parser_fixture.load_fixture_coverage",
+                "ranking.tests.parser_fixture_command.load_fixture_coverage",
                 return_value=(set(), set()),
             ),
             pytest.raises(CommandError, match=r"failed to record 1 of 1 attempted fixtures \(1 skipped\)"),

@@ -7,11 +7,10 @@ from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from urllib.parse import urljoin
 
-from ratelimiter import RateLimiter
-
 from clist.templatetags.extras import as_number
 from ranking.management.modules.common import REQ, BaseModule, parsed_table
 from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse
+from utils.ratelimiter import RateLimiter
 
 
 class Statistic(BaseModule):

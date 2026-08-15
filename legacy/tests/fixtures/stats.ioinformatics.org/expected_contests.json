@@ -1,0 +1,501 @@
+[
+    {
+        "end_time": "02 August 1996",
+        "host": "stats.ioinformatics.org",
+        "key": "8",
+        "rid": 82,
+        "start_time": "25 July 1996",
+        "timezone": "UTC",
+        "title": "8th International Olympiad in Informatics. Hungary",
+        "unchanged": [
+            "duration_in_secs"
+        ],
+        "url": "https://stats.ioinformatics.org/olympiads/1996"
+    },
+    {
+        "end_time": "02 August 2015",
+        "host": "stats.ioinformatics.org",
+        "key": "27",
+        "rid": 82,
+        "start_time": "26 July 2015",
+        "timezone": "UTC",
+        "title": "27th International Olympiad in Informatics. Kazakhstan",
+        "unchanged": [
+            "duration_in_secs"
+        ],
+        "url": "https://stats.ioinformatics.org/olympiads/2015"
+    },
+    {
+        "end_time": "03 August 2025",
+        "host": "stats.ioinformatics.org",
+        "key": "37",
+        "rid": 82,
+        "start_time": "27 July 2025",
+        "timezone": "UTC",
+        "title": "37th International Olympiad in Informatics. Bolivia",
+        "unchanged": [
+            "duration_in_secs"
+        ],
+        "url": "https://stats.ioinformatics.org/olympiads/2025"
+    },
+    {
+        "end_time": "03 July 1995",
+        "host": "stats.ioinformatics.org",
+        "key": "7",
+        "rid": 82,
+        "start_time": "26 June 1995",
+        "timezone": "UTC",
+        "title": "7th International Olympiad in Informatics. Netherlands",
+        "unchanged": [
+            "duration_in_secs"
+        ],
+        "url": "https://stats.ioinformatics.org/olympiads/1995"
+    },
+    {
+        "end_time": "04 August 2017",
+        "host": "stats.ioinformatics.org",
+        "key": "29",
+        "rid": 82,
+        "start_time": "28 July 2017",
+        "timezone": "UTC",
+        "title": "29th International Olympiad in Informatics. Iran",
+        "unchanged": [
+            "duration_in_secs"
+        ],
+        "url": "https://stats.ioinformatics.org/olympiads/2017"
+    },
+    {
+        "end_time": "04 September 2023",
+        "host": "stats.ioinformatics.org",
+        "key": "35",
+        "rid": 82,
+        "start_time": "28 August 2023",
+        "timezone": "UTC",
+        "title": "35th International Olympiad in Informatics. Hungary",
+        "unchanged": [
+            "duration_in_secs"
+        ],
+        "url": "https://stats.ioinformatics.org/olympiads/2023"
+    },
+    {
+        "end_time": "07 December 1997",
+        "host": "stats.ioinformatics.org",
+        "key": "9",
+        "rid": 82,
+        "start_time": "30 November 1997",
+        "timezone": "UTC",
+        "title": "9th International Olympiad in Informatics. South Africa",
+        "unchanged": [
+            "duration_in_secs"
+        ],
+        "url": "https://stats.ioinformatics.org/olympiads/1997"
+    },
+    {
+        "end_time": "08 September 2018",
+        "host": "stats.ioinformatics.org",
+        "key": "30",
+        "rid": 82,
+        "start_time": "01 September 2018",
+        "timezone": "UTC",
+        "title": "30th International Olympiad in Informatics. Japan",
+        "unchanged": [
+            "duration_in_secs"
+        ],
+        "url": "https://stats.ioinformatics.org/olympiads/2018"
+    },
+    {
+        "end_time": "08 September 2024",
+        "host": "stats.ioinformatics.org",
+        "key": "36",
+        "rid": 82,
+        "start_time": "01 September 2024",
+        "timezone": "UTC",
+        "title": "36th International Olympiad in Informatics. Egypt",
+        "unchanged": [
+            "duration_in_secs"
+        ],
+        "url": "https://stats.ioinformatics.org/olympiads/2024"
+    },
+    {
+        "end_time": "10 July 1994",
+        "host": "stats.ioinformatics.org",
+        "key": "6",
+        "rid": 82,
+        "start_time": "03 July 1994",
+        "timezone": "UTC",
+        "title": "6th International Olympiad in Informatics. Sweden",
+        "unchanged": [
+            "duration_in_secs"
+        ],
+        "url": "https://stats.ioinformatics.org/olympiads/1994"
+    },
+    {
+        "end_time": "11 August 2019",
+        "host": "stats.ioinformatics.org",
+        "key": "31",
+        "rid": 82,
+        "start_time": "04 August 2019",
+        "timezone": "UTC",
+        "title": "31st International Olympiad in Informatics. Azerbaijan",
+        "unchanged": [
+            "duration_in_secs"
+        ],
+        "url": "https://stats.ioinformatics.org/olympiads/2019"
+    },
+    {
+        "end_time": "12 September 1998",
+        "host": "stats.ioinformatics.org",
+        "key": "10",
+        "rid": 82,
+        "start_time": "05 September 1998",
+        "timezone": "UTC",
+        "title": "10th International Olympiad in Informatics. Portugal",
+        "unchanged": [
+            "duration_in_secs"
+        ],
+        "url": "https://stats.ioinformatics.org/olympiads/1998"
+    },
+    {
+        "end_time": "13 July 2013",
+        "host": "stats.ioinformatics.org",
+        "key": "25",
+        "rid": 82,
+        "start_time": "06 July 2013",
+        "timezone": "UTC",
+        "title": "25th International Olympiad in Informatics. Australia",
+        "unchanged": [
+            "duration_in_secs"
+        ],
+        "url": "https://stats.ioinformatics.org/olympiads/2013"
+    },
+    {
+        "end_time": "15 August 2009",
+        "host": "stats.ioinformatics.org",
+        "key": "21",
+        "rid": 82,
+        "start_time": "08 August 2009",
+        "timezone": "UTC",
+        "title": "21st International Olympiad in Informatics. Bulgaria",
+        "unchanged": [
+            "duration_in_secs"
+        ],
+        "url": "https://stats.ioinformatics.org/olympiads/2009"
+    },
+    {
+        "end_time": "15 August 2022",
+        "host": "stats.ioinformatics.org",
+        "key": "34",
+        "rid": 82,
+        "start_time": "07 August 2022",
+        "timezone": "UTC",
+        "title": "34th International Olympiad in Informatics. Indonesia",
+        "unchanged": [
+            "duration_in_secs"
+        ],
+        "url": "https://stats.ioinformatics.org/olympiads/2022"
+    },
+    {
+        "end_time": "16 August 2026",
+        "host": "stats.ioinformatics.org",
+        "info": {
+            "parse": {
+                "website": "https://ioi2026.uz/"
+            }
+        },
+        "key": "38",
+        "rid": 82,
+        "start_time": "09 August 2026",
+        "timezone": "UTC",
+        "title": "38th International Olympiad in Informatics. Uzbekistan",
+        "unchanged": [
+            "duration_in_secs"
+        ],
+        "url": "https://stats.ioinformatics.org/olympiads/2026"
+    },
+    {
+        "end_time": "16 October 1999",
+        "host": "stats.ioinformatics.org",
+        "key": "11",
+        "rid": 82,
+        "start_time": "09 October 1999",
+        "timezone": "UTC",
+        "title": "11st International Olympiad in Informatics. Türkiye",
+        "unchanged": [
+            "duration_in_secs"
+        ],
+        "url": "https://stats.ioinformatics.org/olympiads/1999"
+    },
+    {
+        "end_time": "18 September 2004",
+        "host": "stats.ioinformatics.org",
+        "key": "16",
+        "rid": 82,
+        "start_time": "11 September 2004",
+        "timezone": "UTC",
+        "title": "16th International Olympiad in Informatics. Greece",
+        "unchanged": [
+            "duration_in_secs"
+        ],
+        "url": "https://stats.ioinformatics.org/olympiads/2004"
+    },
+    {
+        "end_time": "19 August 2016",
+        "host": "stats.ioinformatics.org",
+        "key": "28",
+        "rid": 82,
+        "start_time": "12 August 2016",
+        "timezone": "UTC",
+        "title": "28th International Olympiad in Informatics. Russia",
+        "unchanged": [
+            "duration_in_secs"
+        ],
+        "url": "https://stats.ioinformatics.org/olympiads/2016"
+    },
+    {
+        "end_time": "19 May 1989",
+        "host": "stats.ioinformatics.org",
+        "key": "1",
+        "rid": 82,
+        "start_time": "16 May 1989",
+        "timezone": "UTC",
+        "title": "1st International Olympiad in Informatics. Bulgaria",
+        "unchanged": [
+            "duration_in_secs"
+        ],
+        "url": "https://stats.ioinformatics.org/olympiads/1989"
+    },
+    {
+        "end_time": "19 September 2020",
+        "host": "stats.ioinformatics.org",
+        "key": "32",
+        "rid": 82,
+        "start_time": "13 September 2020",
+        "timezone": "UTC",
+        "title": "32nd International Olympiad in Informatics. Singapore",
+        "unchanged": [
+            "duration_in_secs"
+        ],
+        "url": "https://stats.ioinformatics.org/olympiads/2020"
+    },
+    {
+        "end_time": "20 August 2006",
+        "host": "stats.ioinformatics.org",
+        "key": "18",
+        "rid": 82,
+        "start_time": "13 August 2006",
+        "timezone": "UTC",
+        "title": "18th International Olympiad in Informatics. Mexico",
+        "unchanged": [
+            "duration_in_secs"
+        ],
+        "url": "https://stats.ioinformatics.org/olympiads/2006"
+    },
+    {
+        "end_time": "20 July 2014",
+        "host": "stats.ioinformatics.org",
+        "key": "26",
+        "rid": 82,
+        "start_time": "13 July 2014",
+        "timezone": "UTC",
+        "title": "26th International Olympiad in Informatics. Taiwan",
+        "unchanged": [
+            "duration_in_secs"
+        ],
+        "url": "https://stats.ioinformatics.org/olympiads/2014"
+    },
+    {
+        "end_time": "21 August 2010",
+        "host": "stats.ioinformatics.org",
+        "key": "22",
+        "rid": 82,
+        "start_time": "14 August 2010",
+        "timezone": "UTC",
+        "title": "22nd International Olympiad in Informatics. Canada",
+        "unchanged": [
+            "duration_in_secs"
+        ],
+        "url": "https://stats.ioinformatics.org/olympiads/2010"
+    },
+    {
+        "end_time": "21 July 1990",
+        "host": "stats.ioinformatics.org",
+        "key": "2",
+        "rid": 82,
+        "start_time": "15 July 1990",
+        "timezone": "UTC",
+        "title": "2nd International Olympiad in Informatics. Soviet Union",
+        "unchanged": [
+            "duration_in_secs"
+        ],
+        "url": "https://stats.ioinformatics.org/olympiads/1990"
+    },
+    {
+        "end_time": "21 July 1992",
+        "host": "stats.ioinformatics.org",
+        "key": "4",
+        "rid": 82,
+        "start_time": "11 July 1992",
+        "timezone": "UTC",
+        "title": "4th International Olympiad in Informatics. Germany",
+        "unchanged": [
+            "duration_in_secs"
+        ],
+        "url": "https://stats.ioinformatics.org/olympiads/1992"
+    },
+    {
+        "end_time": "21 July 2001",
+        "host": "stats.ioinformatics.org",
+        "key": "13",
+        "rid": 82,
+        "start_time": "14 July 2001",
+        "timezone": "UTC",
+        "title": "13rd International Olympiad in Informatics. Finland",
+        "unchanged": [
+            "duration_in_secs"
+        ],
+        "url": "https://stats.ioinformatics.org/olympiads/2001"
+    },
+    {
+        "end_time": "22 August 2007",
+        "host": "stats.ioinformatics.org",
+        "key": "19",
+        "rid": 82,
+        "start_time": "15 August 2007",
+        "timezone": "UTC",
+        "title": "19th International Olympiad in Informatics. Croatia",
+        "unchanged": [
+            "duration_in_secs"
+        ],
+        "url": "https://stats.ioinformatics.org/olympiads/2007"
+    },
+    {
+        "end_time": "23 August 2003",
+        "host": "stats.ioinformatics.org",
+        "key": "15",
+        "rid": 82,
+        "start_time": "16 August 2003",
+        "timezone": "UTC",
+        "title": "15th International Olympiad in Informatics. United States of America",
+        "unchanged": [
+            "duration_in_secs"
+        ],
+        "url": "https://stats.ioinformatics.org/olympiads/2003"
+    },
+    {
+        "end_time": "23 August 2008",
+        "host": "stats.ioinformatics.org",
+        "key": "20",
+        "rid": 82,
+        "start_time": "16 August 2008",
+        "timezone": "UTC",
+        "title": "20th International Olympiad in Informatics. Egypt",
+        "unchanged": [
+            "duration_in_secs"
+        ],
+        "url": "https://stats.ioinformatics.org/olympiads/2008"
+    },
+    {
+        "end_time": "25 August 2002",
+        "host": "stats.ioinformatics.org",
+        "key": "14",
+        "rid": 82,
+        "start_time": "18 August 2002",
+        "timezone": "UTC",
+        "title": "14th International Olympiad in Informatics. Republic of Korea",
+        "unchanged": [
+            "duration_in_secs"
+        ],
+        "url": "https://stats.ioinformatics.org/olympiads/2002"
+    },
+    {
+        "end_time": "25 August 2005",
+        "host": "stats.ioinformatics.org",
+        "key": "17",
+        "rid": 82,
+        "start_time": "18 August 2005",
+        "timezone": "UTC",
+        "title": "17th International Olympiad in Informatics. Poland",
+        "unchanged": [
+            "duration_in_secs"
+        ],
+        "url": "https://stats.ioinformatics.org/olympiads/2005"
+    },
+    {
+        "end_time": "25 June 2021",
+        "host": "stats.ioinformatics.org",
+        "key": "33",
+        "rid": 82,
+        "start_time": "19 June 2021",
+        "timezone": "UTC",
+        "title": "33rd International Olympiad in Informatics. Singapore",
+        "unchanged": [
+            "duration_in_secs"
+        ],
+        "url": "https://stats.ioinformatics.org/olympiads/2021"
+    },
+    {
+        "end_time": "25 May 1991",
+        "host": "stats.ioinformatics.org",
+        "key": "3",
+        "rid": 82,
+        "start_time": "19 May 1991",
+        "timezone": "UTC",
+        "title": "3rd International Olympiad in Informatics. Greece",
+        "unchanged": [
+            "duration_in_secs"
+        ],
+        "url": "https://stats.ioinformatics.org/olympiads/1991"
+    },
+    {
+        "end_time": "25 October 1993",
+        "host": "stats.ioinformatics.org",
+        "key": "5",
+        "rid": 82,
+        "start_time": "16 October 1993",
+        "timezone": "UTC",
+        "title": "5th International Olympiad in Informatics. Argentina",
+        "unchanged": [
+            "duration_in_secs"
+        ],
+        "url": "https://stats.ioinformatics.org/olympiads/1993"
+    },
+    {
+        "end_time": "29 July 2011",
+        "host": "stats.ioinformatics.org",
+        "key": "23",
+        "rid": 82,
+        "start_time": "22 July 2011",
+        "timezone": "UTC",
+        "title": "23rd International Olympiad in Informatics. Thailand",
+        "unchanged": [
+            "duration_in_secs"
+        ],
+        "url": "https://stats.ioinformatics.org/olympiads/2011"
+    },
+    {
+        "end_time": "30 September 2000",
+        "host": "stats.ioinformatics.org",
+        "key": "12",
+        "rid": 82,
+        "start_time": "23 September 2000",
+        "timezone": "UTC",
+        "title": "12nd International Olympiad in Informatics. China",
+        "unchanged": [
+            "duration_in_secs"
+        ],
+        "url": "https://stats.ioinformatics.org/olympiads/2000"
+    },
+    {
+        "end_time": "30 September 2012",
+        "host": "stats.ioinformatics.org",
+        "key": "24",
+        "rid": 82,
+        "start_time": "23 September 2012",
+        "timezone": "UTC",
+        "title": "24th International Olympiad in Informatics. Italy",
+        "unchanged": [
+            "duration_in_secs"
+        ],
+        "url": "https://stats.ioinformatics.org/olympiads/2012"
+    }
+]

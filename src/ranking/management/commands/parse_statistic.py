@@ -2354,7 +2354,8 @@ class Command(BaseCommand):
 
         if current_job := get_current_job():
             event_log = (
-                EventLog.env_objects.filter(
+                EventLog.env_objects
+                .filter(
                     job_id=current_job.id,
                     name="parse_statistic",
                     status=EventStatus.NONE,

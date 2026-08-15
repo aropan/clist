@@ -66,7 +66,7 @@ Shared VS Code formatter selection and format-on-save settings live in
 [`.vscode/settings.json`](../.vscode/settings.json). The extension recommendations
 are optional and do not affect other editors.
 
-Mise activates the existing `.venv/clist` virtualenv when entering the project.
+Mise activates the existing `.venv` virtualenv when entering the project.
 The shared workspace settings disable legacy Python extension activation. Keep
 executable paths and the current Python Environments activation setting in VS
 Code user settings because they are machine-specific:
@@ -89,5 +89,5 @@ Use only `editor.formatOnSave`; do not also enable `php-cs-fixer.onsave`.
 ## Where to run
 
 Run formatter tasks from the host through `mise run`. Application and test
-commands can continue using the `clist` virtualenv activated by mise or the
+commands can continue using the project virtualenv activated by mise or the
 container.

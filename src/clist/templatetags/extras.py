@@ -32,6 +32,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.safestring import mark_safe
 from django.utils.timezone import now
 from django_countries.fields import countries
+from geoip2.errors import AddressNotFoundError
 from ipware import get_client_ip
 from unidecode import unidecode
 
@@ -1348,6 +1349,8 @@ def time_in_seconds_format(timeline, seconds, num=2):
 
 @register.filter
 def allow_custom_countries(request, country):
+    if not country:
+        return False
     if country.code in settings.FILTER_CUSTOM_COUNTRIES_:
         geo_country_code = get_geo_country_code(request)
         if geo_country_code in settings.FILTER_CUSTOM_COUNTRIES_[country.code]:
@@ -1358,23 +1361,28 @@ def allow_custom_countries(request, country):
 @register.filter
 def get_geo_country_code(request):
     client_ip, routable = get_client_ip(request)
-    if not client_ip:
-        return
-    return settings.GEOIP.country_code(client_ip)
+    if not client_ip or not routable:
+        return None
+    try:
+        return settings.GEOIP.country_code(client_ip)
+    except AddressNotFoundError:
+        return None
 
 
 def get_custom_country(request, country, custom_countries):
     user = getattr(request, "user", None)
-    if not custom_countries or country.code not in custom_countries:
-        return
+    if not country or not custom_countries or country.code not in custom_countries:
+        return None
     if not user or not user.is_authenticated:
-        return
+        return None
     if not allow_custom_countries(request, country):
-        return
+        return None
     return custom_countries[country.code]
 
 
 def get_country_from(context, country, custom_countries):
+    if not country:
+        return None
     country_code = get_custom_country(context["request"], country, custom_countries) or country.code
     setattr(country, "flag_code", country_code)
     return country

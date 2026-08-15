@@ -1,20 +1,86 @@
+import logging
+
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
-from django.db import models
+from django.db import models, transaction
 from django.utils import timezone
 from rq import get_current_job
 
 from logify.event_status import EventStatus
 from pyclist.models import BaseManager, BaseModel
+from utils.rq import is_job_id_active
+
+SUPERSEDED_EVENT_ERROR = "Superseded by a newer execution"
+logger = logging.getLogger(__name__)
+
+
+def get_event_job_id(name, related):
+    related_type = related._meta.label_lower.replace(".", "_")
+    return f"event_{name}_{related_type}_{related.pk}"
 
 
 class EventLogManager(BaseManager):
     def create(self, *args, **kwargs):
         kwargs.setdefault("environment", settings.ENVIRONMENT)
-        if current_job := get_current_job():
-            kwargs.setdefault("job_id", current_job.id)
-        return super().create(*args, **kwargs)
+        related = kwargs.get("related")
+        operation_job_id = None
+        if related is not None:
+            if related.pk is None:
+                raise ValueError("EventLog requires a saved related object")
+            operation_job_id = get_event_job_id(kwargs["name"], related)
+
+        if not kwargs.get("job_id"):
+            if current_job := get_current_job():
+                kwargs["job_id"] = current_job.id
+            else:
+                if operation_job_id is None:
+                    raise ValueError("EventLog requires a saved related object to generate job_id")
+                kwargs["job_id"] = operation_job_id
+
+        if operation_job_id is None:
+            return super().create(*args, **kwargs)
+
+        now = timezone.now()
+        content_type = ContentType.objects.get_for_model(related)
+        operation = models.Q(
+            name=kwargs["name"],
+            content_type=content_type,
+            object_id=related.pk,
+        )
+        active_statuses = (EventStatus.NONE, EventStatus.IN_PROGRESS)
+        previous_job_ids = (
+            self
+            .filter(operation, environment=kwargs["environment"], status__in=active_statuses)
+            .exclude(job_id__in=("", operation_job_id, kwargs["job_id"]))
+            .exclude(job_id__isnull=True)
+            .values_list("job_id", flat=True)
+            .distinct()
+        )
+        stale_job_ids = []
+        for previous_job_id in previous_job_ids:
+            try:
+                active = is_job_id_active(previous_job_id)
+            except Exception:
+                logger.exception("Failed to check whether RQ job %s is active", previous_job_id)
+                continue
+            if not active:
+                stale_job_ids.append(previous_job_id)
+
+        previous_execution = models.Q(job_id__in=("", operation_job_id, *stale_job_ids)) | models.Q(job_id__isnull=True)
+        with transaction.atomic():
+            self.filter(
+                operation,
+                previous_execution,
+                environment=kwargs["environment"],
+                status__in=active_statuses,
+            ).update(
+                status=EventStatus.INTERRUPTED,
+                error=SUPERSEDED_EVENT_ERROR,
+                elapsed=now - models.F("created"),
+                modified=now,
+            )
+            return super().create(*args, **kwargs)
 
     def get_queryset(self):
         return super().get_queryset().select_related("content_type").prefetch_related("related")

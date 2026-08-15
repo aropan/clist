@@ -18,9 +18,6 @@
     CATEGORIES = [ {% for c in categories %}{% if forloop.counter0 %}, {% endif %}{'id': '{{ c.id }}', 'text': '{{ c.text }}'}{% endfor %} ]
     EVENT_DESCRIPTIONS = [ {% for id, text in event_description.choices %}{% if forloop.counter0 %}, {% endif %}{'id': '{{ id }}', 'text': '{{ text }}'}{% endfor %} ]
 
-    ACCOUNTS_RESOURCES = [ {% for m in modules %}{% if forloop.counter0 %}, {% endif %}{'id': '{{ m.resource.id }}', 'text': '{{ m.resource.host }}'}{% endfor %} ]
-    ACCOUNTS = [ {% for a in coder.account_set_order_by_pk %}{% if forloop.counter0 %}, {% endif %}{{ a.dict|jsonify }}{% endfor %} ]
-
     {% get_countries as countries %}
     COUNTRIES = { {% for c in countries %}{% if forloop.counter0 %}, {% endif %} '{{ c.code }}': '{{ c.name }}' {% endfor %} }
 

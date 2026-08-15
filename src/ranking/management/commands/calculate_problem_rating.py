@@ -92,7 +92,8 @@ def get_solved(result, problem, not_full_multiplier=1e-3):
 
 def account_get_old_rating(account, before):
     ret = (
-        account.statistics_set.filter(contest__end_time__lt=before.end_time)
+        account.statistics_set
+        .filter(contest__end_time__lt=before.end_time)
         .filter(Q(addition__new_rating__isnull=False) | Q(addition__old_rating__isnull=False))
         .filter(contest__stage__isnull=True)
         .filter(contest__kind=before.kind)
@@ -108,7 +109,8 @@ def account_get_old_rating(account, before):
 
 def account_get_n_contests(account, before):
     ret = (
-        account.statistics_set.filter(contest__end_time__lt=before.end_time)
+        account.statistics_set
+        .filter(contest__end_time__lt=before.end_time)
         .filter(contest__stage__isnull=True)
         .filter(contest__kind=before.kind)
         .count()

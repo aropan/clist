@@ -1,7 +1,6 @@
 from collections import Counter
 
 import humanfriendly
-from csp.decorators import csp_exempt
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
@@ -14,6 +13,7 @@ from django.template.loader import get_template
 from django.utils.timezone import now, timedelta
 from django.views.decorators.cache import cache_page
 from django.views.decorators.clickjacking import xframe_options_exempt
+from django.views.decorators.csp import csp_override
 from django_countries import countries
 from el_pagination.decorators import page_templates
 from phonenumber_field.phonenumber import PhoneNumber
@@ -50,7 +50,8 @@ def event(request, slug, tab=None, template="event.html", extra_context=None):
     if participant:
         join_requests = participant.joinrequest_set.all()
         team = (
-            event.team_set.filter(participants__pk=participant.pk)
+            event.team_set
+            .filter(participants__pk=participant.pk)
             .prefetch_related("joinrequest_set", "participants")
             .first()
         )
@@ -251,7 +252,8 @@ def event(request, slug, tab=None, template="event.html", extra_context=None):
         elif query in ["accept-team", "reject-team"]:
             request_id = int(request.POST.get("request_id"))
             join_request = (
-                JoinRequest.objects.filter(pk=request_id)
+                JoinRequest.objects
+                .filter(pk=request_id)
                 .filter(Q(team__author=participant) | Q(team__coach=participant))
                 .first()
             )
@@ -460,13 +462,13 @@ def team_admin_view(request, slug, team_id):
             message = request.POST["message"]
             emails = list(map(str.strip, request.POST["emails"].split(",")))
             with event.email_backend() as connection:
-                EmailMessage(
+                email = EmailMessage(
                     subject,
                     message,
                     from_email=event.email_conf["from_email"],
                     to=emails,
-                    connection=connection,
-                ).send()
+                )
+                connection.send_messages([email])
         return redirect("events:team-details", slug=slug, team_id=team_id)
 
     return render(
@@ -486,7 +488,7 @@ def team_admin_view(request, slug, team_id):
 
 @cache_page(1 if settings.DEBUG else 30 * 60)
 @xframe_options_exempt
-@csp_exempt
+@csp_override({})
 def frame(request, slug, status):
     event = get_object_or_404(Event, slug=slug)
     statuses = []

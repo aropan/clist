@@ -1,18 +1,14 @@
-# -*- coding: utf-8 -*-
-
 from datetime import datetime, timedelta
 
 from django.core.management.base import BaseCommand
 from django.utils import timezone
-from googleapiclient.http import BatchHttpRequest
-from legacy.api.google_calendar.common import service
 from pytz import UTC
 from traceback_with_variables import prints_exc
 
 from clist.models import Contest, Resource
+from legacy.api.google_calendar.acl import ensure_calendar_public
+from legacy.api.google_calendar.common import service
 from utils.attrdict import AttrDict
-
-batch = BatchHttpRequest()
 
 
 def get_all_calendars():
@@ -55,6 +51,7 @@ def create_resource_calendar(resource, calendarId=None):
         entry = service.calendars().insert(body=body).execute()
         resource.uid = entry["id"]
         resource.save(update_fields=["uid"])
+        ensure_calendar_public(service, resource.uid)
 
 
 def create_contest_event(calendarId, contest, eventId=None):

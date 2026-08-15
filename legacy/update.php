@@ -143,18 +143,9 @@ foreach ($resources as $resource) {
             $contest['start_time'] = str_replace('<br>', ' ', $contest['start_time']);
             $contest['end_time'] = str_replace('<br>', ' ', $contest['end_time']);
 
-            if ($resource['host'] == 'stats.ioinformatics.org') {
-                $no = $match['no'];
-                $contest['title'] = $no . ending_ordinal($no) . ' International Olympiad in Informatics' . '. ' . $match['country'];
-            }
-
             if ($resource['host'] == 'icfpcontest.org') {
                 $contest['start_time'] = str_replace(' at ', ' ', $contest['start_time']);
                 $contest['end_time'] = str_replace(' at ', ' ', $contest['end_time']);
-            }
-
-            if ($resource['host'] == 'stats.ioinformatics.org') {
-                $contest['url'] = '/' . $contest['url'];
             }
 
             if ($resource['host'] == 'acm.hdu.edu.cn' && empty($contest['duration'])) {
@@ -452,9 +443,6 @@ foreach ($contests as $i => $contest) {
     foreach ($contest as $field => $value) {
         $fields .= ",$field";
         $values .= ",'$value'";
-        if ($contest['host'] == 'stats.ioinformatics.org' && $field == 'duration_in_secs') {
-            continue;
-        }
         if ($unchanged && in_array($field, $unchanged)) {
             continue;
         }

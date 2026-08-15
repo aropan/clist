@@ -1,0 +1,212 @@
+loki.process "nginx_access" {
+	forward_to = [loki.write.default.receiver]
+
+	stage.json {
+		expressions = {
+			args                   = "args",
+			body_bytes_sent        = "body_bytes_sent",
+			bytes_sent             = "bytes_sent",
+			cf_connecting_ip       = "cf_connecting_ip",
+			cf_ipcountry           = "cf_ipcountry",
+			cf_ray                 = "cf_ray",
+			cf_verified_bot        = "cf_verified_bot",
+			cf_visitor             = "cf_visitor",
+			fwd_for                = "http_x_forwarded_for",
+			host                   = "host",
+			ip                     = "remote_addr",
+			limit_req_key          = "limit_req_key",
+			limit_req_status       = "limit_req_status",
+			method                 = "request_method",
+			protocol               = "server_protocol",
+			referer                = "http_referer",
+			request_time           = "request_time",
+			status                 = "status",
+			ts                     = "\"@timestamp\"",
+			upstream_addr          = "upstream_addr",
+			upstream_response_time = "upstream_response_time",
+			upstream_status        = "upstream_status",
+			uri                    = "uri",
+			user_agent             = "http_user_agent",
+		}
+	}
+
+	stage.template {
+		source   = "level"
+		template = "{{ if regexMatch \"^5\" .status }}error{{ else if regexMatch \"^4\" .status }}warn{{ else }}info{{ end }}"
+	}
+
+	stage.regex {
+		expression = "(?i)(?P<search_engine>Googlebot|Bingbot|Yandex\\w*|Baiduspider|DuckDuckBot|Sogou\\w*|Exabot|Slurp|facebookexternalhit|AhrefsBot|mj12bot|SemrushBot|DotBot|PetalBot|meta-webindexer|Applebot|Amazonbot|Twitterbot)"
+		source     = "user_agent"
+	}
+
+	stage.regex {
+		expression = "(?i)(?P<ai_bot>GPTBot|ChatGPT|Claude\\w*|Anthropic|CCBot|Google-Extended|OAI-SearchBot|PerplexityBot|Bytespider|cohere|Diffbot|FacebookBot|Applebot-Extended|Timpibot|Grok\\w*|YouBot|Gemini\\w*|Bard-Ai|meta-externalagent|DataForSeoBot)"
+		source     = "user_agent"
+	}
+
+	stage.timestamp {
+		source = "ts"
+		format = "RFC3339"
+	}
+
+	stage.labels {
+		values = {
+			host   = null,
+			level  = null,
+			method = null,
+			status = null,
+		}
+	}
+
+	stage.regex {
+		expression = "(?P<section>^/[^/]+/)"
+		source     = "uri"
+	}
+
+	stage.structured_metadata {
+		values = {
+			ai_bot                 = null,
+			args                   = null,
+			body_bytes_sent        = null,
+			bytes_sent             = null,
+			cf_connecting_ip       = null,
+			cf_ipcountry           = null,
+			cf_ray                 = null,
+			cf_verified_bot        = null,
+			cf_visitor             = null,
+			fwd_for                = null,
+			ip                     = null,
+			limit_req_key          = null,
+			limit_req_status       = null,
+			protocol               = null,
+			referer                = null,
+			request_time           = null,
+			search_engine          = null,
+			section                = null,
+			upstream_addr          = null,
+			upstream_response_time = null,
+			upstream_status        = null,
+			uri                    = null,
+			user_agent             = null,
+		}
+	}
+}
+
+discovery.relabel "nginx_access" {
+	targets = [{
+		__address__ = "localhost",
+		__path__    = "/var/log/nginx/*clist-prod-access*.json",
+		env         = "prod",
+	}, {
+		__address__ = "localhost",
+		__path__    = "/var/log/nginx/*clist-dev-access*.json",
+		env         = "dev",
+	}, {
+		__address__ = "localhost",
+		__path__    = "/var/log/nginx/*clist-legacy-access*.json",
+		env         = "legacy",
+	}]
+
+	rule {
+		target_label = "service"
+		replacement  = "nginx"
+	}
+
+	rule {
+		target_label = "log_type"
+		replacement  = "access"
+	}
+}
+
+loki.source.file "nginx_access" {
+	targets    = discovery.relabel.nginx_access.output
+	forward_to = [loki.process.nginx_access.receiver]
+
+	file_match {
+		enabled = true
+	}
+	legacy_positions_file = "/var/lib/alloy/data/positions.yaml"
+}
+
+loki.process "nginx_error" {
+	forward_to = [loki.write.default.receiver]
+
+	stage.regex {
+		expression = "(?P<ts>\\d{4}/\\d{2}/\\d{2} \\d{2}:\\d{2}:\\d{2}) \\[(?P<level>\\w+)] (?P<pid>\\d+#\\d+): \\*(?P<conn>\\d+) (?P<message>.*?), client: (?P<client>[0-9.]+)(, server: (?P<server>[^,]+))?(, request: \"(?P<request>[^\"]+)\")?(, upstream: \"(?P<upstream>[^\"]+)\")?(, host: \"(?P<host>[^\"]+)\")?"
+	}
+
+	stage.timestamp {
+		source            = "ts"
+		format            = "2006/01/02 15:04:05"
+		action_on_failure = "skip"
+	}
+
+	stage.labels {
+		values = {
+			host  = null,
+			level = null,
+		}
+	}
+
+	stage.structured_metadata {
+		values = {
+			client   = null,
+			conn     = null,
+			message  = null,
+			pid      = null,
+			request  = null,
+			server   = null,
+			upstream = null,
+		}
+	}
+
+	stage.output {
+		source = "message"
+	}
+}
+
+discovery.relabel "nginx_error" {
+	targets = [{
+		__address__ = "localhost",
+		__path__    = "/var/log/nginx/*clist-prod-error*.log",
+		env         = "prod",
+	}, {
+		__address__ = "localhost",
+		__path__    = "/var/log/nginx/*clist-dev-error*.log",
+		env         = "dev",
+	}, {
+		__address__ = "localhost",
+		__path__    = "/var/log/nginx/*clist-legacy-error*.log",
+		env         = "legacy",
+	}]
+
+	rule {
+		target_label = "service"
+		replacement  = "nginx"
+	}
+
+	rule {
+		target_label = "log_type"
+		replacement  = "error"
+	}
+}
+
+loki.source.file "nginx_error" {
+	targets    = discovery.relabel.nginx_error.output
+	forward_to = [loki.process.nginx_error.receiver]
+
+	file_match {
+		enabled = true
+	}
+	legacy_positions_file = "/var/lib/alloy/data/positions.yaml"
+}
+
+loki.write "default" {
+	endpoint {
+		url        = "http://loki:3100/loki/api/v1/push"
+		batch_wait = "500ms"
+		batch_size = "256KiB"
+	}
+	external_labels = {}
+}

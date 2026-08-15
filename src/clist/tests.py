@@ -5,14 +5,139 @@ from unittest import mock
 
 import pytest
 import yaml
+from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
+from django.core.exceptions import ValidationError
 from django.core.management import call_command
 from django.core.management.base import CommandError
-from django.test import RequestFactory, TestCase
+from django.test import RequestFactory, SimpleTestCase, TestCase, override_settings
 from django.utils import timezone
+from geoip2.errors import AddressNotFoundError
+from oauth2_provider.checks import validate_bcp_configuration
+from oauth2_provider.models import Application
 
+from clist.api.paginator import EstimatedCountPaginator
 from clist.models import Resource
+from clist.oauth_application import check_oauth_application_redirect_uris
+from clist.templatetags.extras import (
+    allow_custom_countries,
+    get_country_from,
+    get_custom_country,
+    get_geo_country_code,
+)
 from clist.views import get_view_contests
+
+
+class CountryTemplateTagsTest(SimpleTestCase):
+    def setUp(self):
+        self.request = RequestFactory().get("/")
+        self.request.user = AnonymousUser()
+
+    def test_missing_country_is_supported(self):
+        assert allow_custom_countries(self.request, None) is False
+        assert get_custom_country(self.request, None, {"BY": "BPR"}) is None
+        assert get_country_from({"request": self.request}, None, {"BY": "BPR"}) is None
+
+    def test_non_routable_ip_skips_geoip_lookup(self):
+        geoip = mock.Mock()
+        with (
+            mock.patch("clist.templatetags.extras.get_client_ip", return_value=("127.0.0.1", False)),
+            override_settings(GEOIP=geoip),
+        ):
+            assert get_geo_country_code(self.request) is None
+
+        geoip.country_code.assert_not_called()
+
+    def test_unknown_routable_ip_is_supported(self):
+        geoip = mock.Mock()
+        geoip.country_code.side_effect = AddressNotFoundError("address is absent")
+        with (
+            mock.patch("clist.templatetags.extras.get_client_ip", return_value=("192.0.2.1", True)),
+            override_settings(GEOIP=geoip),
+        ):
+            assert get_geo_country_code(self.request) is None
+
+
+class LoggingSettingsTest(SimpleTestCase):
+    def test_django_errors_do_not_use_email_handler(self):
+        assert "mail_admins" not in settings.LOGGING["handlers"]
+
+        django_logger = settings.LOGGING["loggers"]["django"]
+        assert django_logger["handlers"] == []
+        assert django_logger["propagate"] is True
+
+        root_handlers = settings.LOGGING["loggers"][""]["handlers"]
+        assert "console_info" in root_handlers
+        assert "production" in root_handlers
+
+
+class OAuthSettingsTest(SimpleTestCase):
+    def test_generic_redirect_scheme_warning_is_replaced_by_project_check(self):
+        messages = validate_bcp_configuration(None)
+
+        assert {message.id for message in messages} == {"oauth2_provider.W008"}
+        assert "oauth2_provider.W008" in settings.SILENCED_SYSTEM_CHECKS
+
+
+class OAuthApplicationRedirectURIValidationTest(TestCase):
+    @staticmethod
+    def make_application(redirect_uris, **kwargs):
+        return Application(
+            name="test application",
+            client_type=Application.CLIENT_PUBLIC,
+            authorization_grant_type=Application.GRANT_AUTHORIZATION_CODE,
+            redirect_uris=redirect_uris,
+            **kwargs,
+        )
+
+    def test_https_and_loopback_http_redirects_are_allowed(self):
+        redirect_uris = (
+            "https://example.com/callback",
+            "http://localhost:8000/callback",
+            "http://127.0.0.1:8000/callback",
+            "http://[::1]:8000/callback",
+        )
+        for redirect_uri in redirect_uris:
+            with self.subTest(redirect_uri=redirect_uri):
+                self.make_application(redirect_uri).full_clean()
+
+    def test_non_loopback_http_redirects_are_rejected(self):
+        redirect_uris = (
+            "http://example.com/callback",
+            "http://localhost.example.com/callback",
+            "http://127.0.0.1.example.com/callback",
+        )
+        for redirect_uri in redirect_uris:
+            with self.subTest(redirect_uri=redirect_uri), pytest.raises(ValidationError) as error:
+                self.make_application(redirect_uri).full_clean()
+
+            assert "redirect_uris" in error.value.error_dict
+
+    def test_non_loopback_post_logout_redirect_is_rejected(self):
+        application = self.make_application(
+            "https://example.com/callback",
+            post_logout_redirect_uris="http://example.com/logout",
+        )
+
+        with pytest.raises(ValidationError) as error:
+            application.full_clean()
+
+        assert "post_logout_redirect_uris" in error.value.error_dict
+
+    def test_pre_save_rejects_direct_model_save(self):
+        with pytest.raises(ValidationError):
+            self.make_application("http://example.com/callback").save()
+
+        assert Application.objects.count() == 0
+
+    def test_deploy_check_audits_existing_applications(self):
+        application = self.make_application("https://example.com/callback")
+        application.save()
+        Application.objects.filter(pk=application.pk).update(redirect_uris="http://example.com/callback")
+
+        messages = check_oauth_application_redirect_uris(None)
+
+        assert {message.id for message in messages} == {"clist.E001"}
 
 
 class GetViewContestsTestCase(TestCase):
@@ -21,6 +146,19 @@ class GetViewContestsTestCase(TestCase):
         request.user = AnonymousUser()
         request.get_resources = lambda: []
         assert get_view_contests(request, coder=None) == []
+
+
+class EstimatedCountPaginatorTest(TestCase):
+    def test_postgres_estimated_count(self):
+        paginator = EstimatedCountPaginator(
+            {"total_count": "true"},
+            Application.objects.all(),
+        )
+
+        estimated_count = paginator.get_estimated_count()
+
+        assert isinstance(estimated_count, int)
+        assert estimated_count >= 0
 
 
 class CheckScheduleParsingTestCase(TestCase):

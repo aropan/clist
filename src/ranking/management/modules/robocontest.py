@@ -10,7 +10,6 @@ from urllib.parse import urljoin
 import arrow
 from django.db import transaction
 from django.db.models import OuterRef
-from ratelimiter import RateLimiter
 from sql_util.utils import Exists
 
 from clist.templatetags.extras import (
@@ -26,6 +25,7 @@ from logify import live as tqdm
 from ranking.management.modules.common import REQ, BaseModule, parsed_table
 from ranking.management.modules.excepts import ExceptionParseAccounts, ExceptionParseStandings, FailOnGetResponse
 from ranking.utils import create_upsolving_statistic
+from utils.ratelimiter import RateLimiter
 
 
 def process_submissions_page(resource, page):

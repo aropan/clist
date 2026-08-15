@@ -12,7 +12,6 @@ from urllib.parse import urljoin
 
 from django.utils import timezone
 from ipwhois import IPWhois
-from ratelimiter import RateLimiter
 
 from clist.templatetags.extras import as_number, get_item, is_improved_solution
 from logify import live as tqdm
@@ -21,6 +20,7 @@ from ranking.management.modules.common import LOG, REQ, BaseModule, parsed_table
 from ranking.management.modules.common.locator import Locator
 from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse
 from utils.mathutils import max_with_none
+from utils.ratelimiter import RateLimiter
 from utils.timetools import parse_datetime
 
 

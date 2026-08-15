@@ -9,13 +9,13 @@ from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from urllib.parse import urljoin, urlparse
 
 import yaml
-from ratelimiter import RateLimiter
 
 from clist.templatetags.extras import as_number, get_item
 from logify.live import tqdm
 from ranking.management.modules import conf
 from ranking.management.modules.common import LOG, REQ, BaseModule
 from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse
+from utils.ratelimiter import RateLimiter
 from utils.strings import strip_tags
 
 

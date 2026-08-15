@@ -32,7 +32,7 @@ class Event(BaseModel):
     team_size = models.IntegerField(default=3)
 
     def email_backend(self):
-        return EmailBackend(**self.email_conf["connection"])
+        return EmailBackend(alias=f"event-{self.pk}", **self.email_conf["connection"])
 
     def __str__(self):
         return "%s" % (self.name)
@@ -334,7 +334,7 @@ class Login(BaseModel):
     password = models.CharField(max_length=256, null=False)
     is_sent = models.BooleanField(default=False)
 
-    def send_email(self, **kwargs):
+    def send_email(self, connection=None):
         if self.is_sent:
             return
         event = self.team.event
@@ -346,9 +346,9 @@ class Login(BaseModel):
         to = []
         for m in self.team.ordered_participants:
             to.append(m.email)
-        msg = EmailMultiAlternatives(subject, message, to=to, **kwargs)
+        msg = EmailMultiAlternatives(subject, message, to=to)
         msg.attach_alternative(message, "text/html")
-        result = msg.send()
+        result = connection.send_messages([msg]) if connection else msg.send(using="default")
         if result:
             self.is_sent = True
             self.save()

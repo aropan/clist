@@ -10,9 +10,9 @@ coder profiles, ratings, and notifications.
 
 ## Two codebases, side by side
 
-- **`src/`** — the **modern app**: **Django 5.1 / Python 3.10+**, served via Docker
-  Compose, with Redis + RQ workers and PostgreSQL. This is where almost all new work
-  happens.
+- **`src/`** — the **modern app**: **Django 6.1 / Python 3.14**, served via Docker
+  Compose, with Redis + RQ workers and PostgreSQL 18. This is where almost all new
+  work happens.
 - **`legacy/`** — the **original PHP application** (Smarty templates, custom DB layer)
   still serving parts of the site in production. Treat it as legacy: change it only when
   a task explicitly targets it, and match the existing PHP style when you do.

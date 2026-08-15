@@ -9,10 +9,10 @@ from pprint import pprint  # noqa
 
 import coloredlogs
 import dateutil.parser
-from ratelimiter import RateLimiter
 
 from ranking.management.modules.common import REQ, BaseModule
 from ranking.management.modules.excepts import ExceptionParseStandings
+from utils.ratelimiter import RateLimiter
 
 logger = logging.getLogger(__name__)
 coloredlogs.install(logger=logger)

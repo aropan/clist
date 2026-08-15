@@ -73,7 +73,8 @@ class Command(BaseCommand):
                 major_contests = resource.major_contests()
                 rated_major_contests = major_contests.filter(is_rated=True)
                 accounts = (
-                    Account.objects.filter(resource=resource)
+                    Account.objects
+                    .filter(resource=resource)
                     .filter(Q(statistics__skip_in_stats__isnull=True) | Q(statistics__skip_in_stats=False))
                     .filter(statistics__contest__in=rated_major_contests)
                     .annotate(

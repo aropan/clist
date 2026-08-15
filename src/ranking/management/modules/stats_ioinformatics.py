@@ -15,9 +15,16 @@ from ranking.management.modules.common import REQ, BaseModule, parsed_table
 from ranking.management.modules.excepts import InitModuleException
 
 
+def get_official_ranking_base_url(info):
+    ranking_url = info.get("_official_website_ranking")
+    if not ranking_url and (website := info.get("parse", {}).get("website")):
+        ranking_url = website.replace("//", "//ranking.", 1)
+    return ranking_url
+
+
 class Statistic(BaseModule):
     def __init__(self, **kwargs):
-        super(Statistic, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         if "//stats.ioinformatics.org/olympiads/" not in self.url:
             raise InitModuleException(f"Url {self.url} should be contains stats.ioinformatics.org/olympiads")
 
@@ -165,13 +172,7 @@ class Statistic(BaseModule):
                 return None
             return response
 
-        ranking_url = self.info.get("_official_website_ranking")
-        if not ranking_url:
-            page = REQ.get(self.url)
-            sample = re.search(r'<a[^>]*href="(?P<href>[^"]*)"[^>]*>\s*official\s*website<\s*/a>', page, re.I)
-            if sample:
-                ranking_url = sample.group("href").replace("//", "//ranking.")
-
+        ranking_url = get_official_ranking_base_url(self.info)
         if ranking_url:
             ranking_url = REQ.geturl(ranking_url)
             users = get_ranking_url("users/")
@@ -180,10 +181,10 @@ class Statistic(BaseModule):
 
         if users:
             team_data = {}
-            team_data.update(self.info.get("_official_specific_team_data") or {})
             teams = get_ranking_url("teams/")
             for team, team_info in teams.items():
                 team_data[team] = {"country": team_info["name"]}
+            team_data.update(self.info.get("_official_specific_team_data") or {})
 
             def get_alpha_substring_multiset(value):
                 ret = Multiset()
@@ -206,9 +207,17 @@ class Statistic(BaseModule):
             user_mapping = dict()
             rows = {k: v["name"] for k, v in result.items() if "name" in v}
             rows_sets = dict()
-            for member, name in rows.items():
+            name_data = self.info.get("_official_specific_name_data") or {}
+
+            def row_name_hash(member, name):
                 name_set = get_alpha_substring_multiset(name)
                 name_set_hash = multiset_hash(name_set)
+                if member in name_data:
+                    name_set_hash = (name_data[member]["user"], name_set_hash)
+                return name_set_hash
+
+            for member, name in rows.items():
+                name_set_hash = row_name_hash(member, name)
                 assert name_set_hash not in rows_sets
                 rows_sets[name_set_hash] = member
 
@@ -216,8 +225,7 @@ class Statistic(BaseModule):
                 user_mapping[user] = member
 
                 if member in rows:
-                    name_set = get_alpha_substring_multiset(rows[member])
-                    name_set_hash = multiset_hash(name_set)
+                    name_set_hash = row_name_hash(member, rows[member])
                     rows_sets.pop(name_set_hash)
                     rows.pop(member)
 
@@ -238,6 +246,12 @@ class Statistic(BaseModule):
                     info_team = info["team"]
                     info_set = get_alpha_substring_multiset(info_name)
                     info_set_hash = multiset_hash(info_set)
+                    user_info_set_hash = (user, info_set_hash)
+
+                    if user_info_set_hash in rows_sets:
+                        add_mapping(user, rows_sets[user_info_set_hash], info_team)
+                        continue
+
                     if info_set_hash in rows_sets:
                         add_mapping(user, rows_sets[info_set_hash], info_team)
                         continue

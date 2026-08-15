@@ -4,9 +4,8 @@ from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from urllib.parse import urljoin
 
-from ratelimiter import RateLimiter
-
 from ranking.management.modules.common import REQ, BaseModule
+from utils.ratelimiter import RateLimiter
 from utils.timetools import parse_datetime
 
 

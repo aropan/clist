@@ -5,11 +5,10 @@ from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from urllib.parse import urljoin
 
-from ratelimiter import RateLimiter
-
 from logify.live import tqdm
 from ranking.management.modules.common import LOG, REQ, BaseModule
 from ranking.management.modules.excepts import ExceptionParseStandings
+from utils.ratelimiter import RateLimiter
 
 
 class Statistic(BaseModule):

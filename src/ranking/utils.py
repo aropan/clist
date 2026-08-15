@@ -558,7 +558,8 @@ def update_stage(self):
     exclude_advances = {}
     if advances and advances.get("exclude_stages"):
         qs = (
-            Statistics.objects.filter(contest__stage__in=advances["exclude_stages"], addition___advance__isnull=False)
+            Statistics.objects
+            .filter(contest__stage__in=advances["exclude_stages"], addition___advance__isnull=False)
             .values("account__key", "addition___advance", "contest__title")
             .order_by("contest__end_time", "contest__id")
         )

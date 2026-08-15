@@ -123,7 +123,7 @@
       "n_team_accounts": 0,
       "n_university_accounts": 0,
       "parse_url": null,
-      "path": null,
+      "path": "module/stats.ioinformatics.org/index.php",
       "problem_archive_update_time": null,
       "problem_rating_predictor": {},
       "problem_url": null,
@@ -160,7 +160,7 @@
       "rating_prediction": null,
       "rating_update_time": null,
       "ratings": [],
-      "regexp": "#<tr>\\s*<td[^>]*>\\s*<a[^>]*>\\s*(?P<key>(?P<no>[0-9]+))\\s*</a>\\s*</td><td[^>]*>\\s*<a[^>]*href=\"(?P<url>[^>]*)\"[^>]*>\\s*[0-9]{2,4}\\s*</a>\\s*</td><td[^>]*>(?P<start_time>[^<]*) &ndash; (?P<end_time>[^<]*)</td><td[^>]*>\\s*<a[^>]*>(?P<country>[^<]*)</a>\\s*</td>#",
+      "regexp": null,
       "short_host": "ioi",
       "skip_for_contests_chart": false,
       "statistics_fields": {
