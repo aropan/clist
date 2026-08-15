@@ -8,9 +8,6 @@ css/bootstrap-editable.css linguist-vendored
 js/bootstrap-editable.js linguist-vendored
 js/bootstrap-editable.min.js linguist-vendored
 
-css/Chart.min.css linguist-vendored
-js/Chart.min.js linguist-vendored
-
 css/BootstrapXL.css linguist-vendored
 
 css/awesome-bootstrap-checkbox.css linguist-vendored
@@ -21,22 +18,15 @@ js/bootbox.min.js linguist-vendored
 
 fullcalendar/** linguist-vendored
 
-css/select2.css linguist-vendored
 css/select2.min.css linguist-vendored
 js/i18n/** linguist-vendored
-js/select2.js linguist-vendored
-js/select2.full.js linguist-vendored
 js/select2.full.min.js linguist-vendored
-js/select2.js linguist-vendored
-js/select2.min.js linguist-vendored
 
 js/AddCalEvent.js linguist-vendored
 css/AddCalEvent.css linguist-vendored
 
 js/daterangepicker.js linguist-vendored
 css/daterangepicker-bs3.css linguist-vendored
-
-js/jquery.cookie.js linguist-vendored
 
 js/jquery.timeago.js linguist-vendored
 

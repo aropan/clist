@@ -2,6 +2,7 @@ from django.conf import settings
 from django.conf.urls import include
 from django.conf.urls.static import static as url_static
 from django.contrib import admin
+from django.contrib.sitemaps.views import index as sitemap_index
 from django.contrib.sitemaps.views import sitemap
 from django.templatetags.static import static
 from django.urls import path, re_path
@@ -32,7 +33,13 @@ urlpatterns = [
     re_path(r"^googleee727737cf7b6a5a.html$", TemplateView.as_view(template_name="googleee727737cf7b6a5a.html")),
     re_path(r"^webpush/", include("webpush.urls")),
     path("o/", include("oauth2_provider.urls", namespace="oauth2_provider")),
-    path("sitemap.xml", sitemap, {"sitemaps": sitemaps}, name="django.contrib.sitemaps.views.sitemap"),
+    path("sitemap.xml", sitemap_index, {"sitemaps": sitemaps}, name="django.contrib.sitemaps.views.index"),
+    path(
+        "sitemap-<section>.xml",
+        sitemap,
+        {"sitemaps": sitemaps},
+        name="django.contrib.sitemaps.views.sitemap",
+    ),
     re_path(r"^privacy/$", TemplateView.as_view(template_name="privacy.html"), name="privacy"),
     re_path(r"^terms/$", TemplateView.as_view(template_name="terms.html"), name="terms"),
     re_path(r"^favicon/$", RedirectView.as_view(url=static("img/favicon/favicon-32x32.png")), name="favicon"),

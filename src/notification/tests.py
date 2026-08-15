@@ -1,12 +1,27 @@
 from datetime import timedelta
-from unittest.mock import Mock
+from tempfile import TemporaryDirectory
+from unittest.mock import Mock, patch
 
 from django.conf import settings
-from django.test import SimpleTestCase
+from django.core.management import call_command
+from django.test import SimpleTestCase, TestCase
 from django.utils.timezone import now
 from telegram.error import BadRequest, ChatMigrated, Forbidden
 
 from notification.management.commands.sendout_tasks import Command
+from notification.models import Subscription, Task
+
+
+class SendoutTasksCleanupTest(TestCase):
+    def test_cleanup_does_not_evaluate_notification_prefetches(self):
+        subscription = Subscription.objects.create(method=settings.NOTIFICATION_CONF.TELEGRAM)
+        task = Task.objects.create(notification=subscription, is_sent=True)
+        Task._base_manager.filter(pk=task.pk).update(modified=now() - timedelta(days=2))
+
+        with TemporaryDirectory() as temp_dir, patch.object(Command, "CONFIG_FILE", f"{temp_dir}/config.yaml"):
+            call_command("sendout_tasks", "--dryrun")
+
+        assert not Task._base_manager.filter(pk=task.pk).exists()
 
 
 class TelegramSendoutTest(SimpleTestCase):

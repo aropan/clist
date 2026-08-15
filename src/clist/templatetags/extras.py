@@ -622,7 +622,7 @@ def get_country_name(code):
 
 @register.filter
 def get_country_code(name):
-    if name is None or is_country_code(name):
+    if not name or is_country_code(name):
         return name
     return countries.by_name(name) or countries.alpha2(name)
 
@@ -2201,8 +2201,18 @@ def format_optional(value, prefix="", suffix=""):
     return f"{prefix}{html.escape(str(value))}{suffix}" if value is not None and value != "" else ""
 
 
-def format_score(value):
-    return scoreformat(value)
+def format_score(value, cache=None):
+    if cache is None:
+        return scoreformat(value)
+    key = type(value), value
+    try:
+        return cache[key]
+    except KeyError:
+        formatted = scoreformat(value)
+        cache[key] = formatted
+        return formatted
+    except TypeError:
+        return scoreformat(value)
 
 
 def format_verdict(verdict, test):
@@ -2233,7 +2243,7 @@ def format_upsolving_icon(upsolving_stat):
 
 
 @register.simple_tag(takes_context=True)
-def standings_statistic_problem_detail(context, small, stat=None):
+def standings_statistic_problem_detail(context, small, stat=None, scoreformat_cache=None):
     upsolving_small = small
     stat = get_default_dict(stat or context["stat"], "")
     result_html = []
@@ -2306,7 +2316,7 @@ def standings_statistic_problem_detail(context, small, stat=None):
         timestamp_up = html.escape(str(stat_virtual_start_ts))
         result_html.append(f'<span class="countdown" data-timestamp-up="{timestamp_up}">{countdown_str}</span>')
     elif best_score_cond:
-        result_html.append(f'<small class="text-muted">{format_score(stat_best_score)}</small>')
+        result_html.append(f'<small class="text-muted">{format_score(stat_best_score, scoreformat_cache)}</small>')
     else:
         upsolving_small = False
 
@@ -2325,7 +2335,7 @@ def standings_statistic_problem_detail(context, small, stat=None):
         if stat_upsolving.get("binary") is not None:
             result_html.append(format_upsolving_icon(stat_upsolving))
         elif (upsolving_result := stat_upsolving.get("result")) is not None:
-            result_html.append(f"{format_score(upsolving_result)}")
+            result_html.append(f"{format_score(upsolving_result, scoreformat_cache)}")
         if not is_solved(stat_upsolving) and (upsolving_verdict := stat_upsolving.get("verdict")):
             result_html.append(f" {format_verdict(upsolving_verdict, stat_upsolving.get('test'))}")
 
@@ -2347,7 +2357,7 @@ def standings_statistic_problem_detail(context, small, stat=None):
 
 
 @register.simple_tag(takes_context=True)
-def standings_statistic_problem(context):
+def standings_statistic_problem(context, scoreformat_cache=None):
     stat = get_default_dict(context["stat"], "")
     if not stat:
         return mark_safe("<div>&#183;</div>")
@@ -2399,7 +2409,9 @@ def standings_statistic_problem(context):
             or stat.get("verdict")
             or stat.get("language")
         ):
-            tooltip_title = standings_statistic_problem_detail(context, small=False, stat=stat)
+            tooltip_title = standings_statistic_problem_detail(
+                context, small=False, stat=stat, scoreformat_cache=scoreformat_cache
+            )
             tooltip_attrs = f' title=\'{tooltip_title}\' data-toggle="tooltip" data-placement="top" data-html="true"'
             html_parts.append(tooltip_attrs)
     html_parts.append(">")
@@ -2473,7 +2485,9 @@ def standings_statistic_problem(context):
             f'<span{title_attr} class="small countdown" data-timestamp="{stat["start_time"]}">{countdown_val}</span>'
         )
     elif display_val := (
-        stat.get("result_name") if with_result_name and stat.get("result_name") else scoreformat(stat["result"])
+        stat.get("result_name")
+        if with_result_name and stat.get("result_name")
+        else format_score(stat["result"], scoreformat_cache)
     ):
         result_class = (
             f' class="{stat["result_name_class"]}"' if with_result_name and stat.get("result_name_class") else ""
@@ -2507,7 +2521,9 @@ def standings_statistic_problem(context):
             extra_info_html = "".join(f"{html.escape(str(info))}<br/>" for info in stat["extra_info"])
             extra_info_title = f' data-toggle="tooltip" data-placement="top" data-html="true" title="{extra_info_html}"'
         prefix = "+" if extra_score_val > 0 else ""
-        html_parts.append(f'<div class="inline"{extra_info_title}>{prefix}{scoreformat(extra_score_val)}</div>')
+        html_parts.append(
+            f'<div class="inline"{extra_info_title}>{prefix}{format_score(extra_score_val, scoreformat_cache)}</div>'
+        )
 
     if with_detail:
         if stat.get("penalty_score") is not None:
@@ -2524,7 +2540,9 @@ def standings_statistic_problem(context):
     html_parts.append("</div>")
 
     if with_detail or ("result" not in stat and "extra_score" not in stat):
-        html_parts.append(standings_statistic_problem_detail(context, small=True, stat=stat))
+        html_parts.append(
+            standings_statistic_problem_detail(context, small=True, stat=stat, scoreformat_cache=scoreformat_cache)
+        )
 
     languages = get_list(request.GET, "languages")
     if stat.get("language") and languages:
@@ -2551,7 +2569,8 @@ def standings_statistic_problems(context):
     problems = context["problems"]
     addition = context["addition"]
     addition_problems = addition.get("problems", {})
-    tag = context["tag"]
+    tag = "td"
+    scoreformat_cache = context.get("standings_scoreformat_cache")
 
     html_parts = []
     for problem in problems:
@@ -2561,7 +2580,7 @@ def standings_statistic_problems(context):
         context["key"] = key
         context["stat"] = stat
         attributes = standings_statistic_problem_attributes(context)
-        content = standings_statistic_problem(context)
+        content = standings_statistic_problem(context, scoreformat_cache=scoreformat_cache)
         html_parts.append(f"<{tag} {attributes}>{content}</{tag}>")
         del context["problem"]
         del context["key"]

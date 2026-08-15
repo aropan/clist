@@ -35,7 +35,13 @@ from django.db.models import (
 )
 from django.db.models.fields.json import KeyTextTransform
 from django.db.models.functions import Cast
-from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, HttpResponseRedirect, JsonResponse
+from django.http import (
+    HttpResponse,
+    HttpResponseBadRequest,
+    HttpResponseForbidden,
+    HttpResponseRedirect,
+    JsonResponse,
+)
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -97,10 +103,15 @@ from tg.models import Chat
 from true_coders.models import AccessLevel, Coder, CoderList, Filter, ListGroup, ListValue, Organization, Party
 from true_coders.utils import add_query_to_chat, add_query_to_list, get_or_set_upsolving_filter
 from utils.chart import make_chart
+from utils.db import get_order_by
 from utils.json_field import JSONF, IntegerJSONF, JsonJSONF
 from utils.regex import get_icontains_filter, get_iregex_filter, verify_regex
 
 logger = logging.getLogger(__name__)
+
+PROFILE_CONTESTS_PAGING_TEMPLATE = "profile_contests_paging.html"
+PROFILE_WRITERS_PAGING_TEMPLATE = "profile_writers_paging.html"
+PROFILE_PAGING_TEMPLATES = frozenset({PROFILE_CONTESTS_PAGING_TEMPLATE, PROFILE_WRITERS_PAGING_TEMPLATE})
 
 
 def get_medals_for_profile_context(statistics):
@@ -139,9 +150,12 @@ def get_medals_for_profile_context(statistics):
     }
 
 
-def get_profile_context(request, statistics, writers, resources):
+def get_profile_context(request, statistics, writers, resources, template):
+    skip_aggregates = template in PROFILE_PAGING_TEMPLATES
+    with_writers = template != PROFILE_CONTESTS_PAGING_TEMPLATE
     context = {}
-    context.update(get_medals_for_profile_context(statistics))
+    if not skip_aggregates:
+        context.update(get_medals_for_profile_context(statistics))
     context_params = context.setdefault("params", {})
 
     statistics = statistics.select_related("contest", "contest__resource", "account").order_by(
@@ -201,57 +215,61 @@ def get_profile_context(request, statistics, writers, resources):
         statistics = statistics.filter(Q(skip_in_stats=False) | Q(contest__stage__isnull=False))
     context_params["upsolving"] = upsolving_filter
 
-    rated_stats = (
-        statistics
-        .filter(
-            Q(addition__new_rating__isnull=False)
-            | Q(addition__rating_change__isnull=False)
-            | Q(addition___rating_data__isnull=False)
+    history_resources = []
+    if not skip_aggregates:
+        rated_stats = (
+            statistics
+            .filter(
+                Q(addition__new_rating__isnull=False)
+                | Q(addition__rating_change__isnull=False)
+                | Q(addition___rating_data__isnull=False)
+            )
+            .order_by()
+            .distinct("contest__resource__host", "contest__kind", "account_id")
         )
-        .order_by()
-        .distinct("contest__resource__host", "contest__kind", "account_id")
-    )
 
-    external_ratings = (
-        statistics
-        .filter(
-            contest__resource__has_rating_history=True,
-            contest__resource__info__ratings__external=True,
-            account__info___rating_data__isnull=False,
+        external_ratings = (
+            statistics
+            .filter(
+                contest__resource__has_rating_history=True,
+                contest__resource__info__ratings__external=True,
+                account__info___rating_data__isnull=False,
+            )
+            .order_by()
+            .distinct("contest__resource__host", "account_id")
         )
-        .order_by()
-        .distinct("contest__resource__host", "account_id")
-    )
 
-    kinds_resources = collections.defaultdict(dict)
-    major_kind = None
-    for stat in rated_stats.union(external_ratings):
-        account_id = stat.account_id
-        resource = stat.contest.resource
-        kind = stat.contest.kind
-        kind = major_kind if resource.is_major_kind(kind) or get_item(resource, "info.ratings.external") else kind
-        kind_resource_key = (kind, account_id)
-        kinds_resources[resource.pk][kind_resource_key] = {
-            "host": resource.host,
-            "pk": resource.pk,
-            "icon": resource.icon_file.name,
-            "kind": kind,
-            "account_pk": account_id,
-            "account_name": stat.account.short_display(resource=resource, name=stat.addition.get("name")),
-        }
-    history_resources = list()
-    for resource in resources.filter(has_rating_history=True):
-        values = list(kinds_resources[resource.pk].values())
-        values.sort(key=lambda x: (x["kind"] != major_kind, x["kind"], x["account_pk"]))
-        history_resources.extend(values)
+        kinds_resources = collections.defaultdict(dict)
+        major_kind = None
+        for stat in rated_stats.union(external_ratings):
+            account_id = stat.account_id
+            resource = stat.contest.resource
+            kind = stat.contest.kind
+            kind = major_kind if resource.is_major_kind(kind) or get_item(resource, "info.ratings.external") else kind
+            kind_resource_key = (kind, account_id)
+            kinds_resources[resource.pk][kind_resource_key] = {
+                "host": resource.host,
+                "pk": resource.pk,
+                "icon": resource.icon_file.name,
+                "kind": kind,
+                "account_pk": account_id,
+                "account_name": stat.account.short_display(resource=resource, name=stat.addition.get("name")),
+            }
+        for resource in resources.filter(has_rating_history=True):
+            values = list(kinds_resources[resource.pk].values())
+            values.sort(key=lambda x: (x["kind"] != major_kind, x["kind"], x["account_pk"]))
+            history_resources.extend(values)
 
     resources = list(resources)
     search_resource = resources[0] if len(resources) == 1 else None
 
-    if search_resource:
-        writers = writers.filter(resource=search_resource)
-    writers = writers.order_by("-end_time", "-id")
-    writers = writers.annotate(has_statistics=Exists("statistics"))
+    if with_writers:
+        if search_resource:
+            writers = writers.filter(resource=search_resource)
+        writers = writers.order_by("-end_time", "-id")
+        writers = writers.annotate(has_statistics=Exists("statistics"))
+    else:
+        writers = writers.none()
 
     if not search_resource:
         statistics = statistics.filter(contest__invisible=False)
@@ -291,7 +309,7 @@ def get_profile_context(request, statistics, writers, resources):
         "two_columns": len(resources) > 1,
         "history_resources": history_resources,
         "has_combined_history": len({hr["pk"] for hr in history_resources}) > 1,
-        "show_history_ratings": not filters,
+        "show_history_ratings": not skip_aggregates and not filters,
         "search_resource": search_resource,
         "timezone": get_timezone(request),
         "timeformat": get_timeformat(request),
@@ -299,11 +317,11 @@ def get_profile_context(request, statistics, writers, resources):
         "has_rating_prediction_field": has_rating_prediction_field,
     })
 
-    qs = statistics.annotate(date=F("contest__start_time"))
-    qs = qs.filter(place__isnull=False).order_by()
-    qs = qs.filter(contest__resource__skip_for_contests_chart=False)
-    contests_chart = make_chart(qs, field="date", n_bins=21, norm_value=timedelta(days=1))
-    context["contests_chart"] = contests_chart
+    if not skip_aggregates:
+        qs = statistics.annotate(date=F("contest__start_time"))
+        qs = qs.filter(place__isnull=False).order_by()
+        qs = qs.filter(contest__resource__skip_for_contests_chart=False)
+        context["contests_chart"] = make_chart(qs, field="date", n_bins=21, norm_value=timedelta(days=1))
 
     return context
 
@@ -444,7 +462,7 @@ def coders(request, template="coders.html"):
         context["row_number_operator"] = "__gt" if order == "desc" else "__lt"
 
     if order in ["asc", "desc"]:
-        orderby = [getattr(F(o), order)(nulls_last=True) for o in orderby]
+        orderby = [get_order_by(o, order) for o in orderby]
     elif order:
         request.logger.error(f"Not found `{order}` order for sorting")
     main_field = "global_rating" if django_settings.ENABLE_GLOBAL_RATING_ else "n_contests"
@@ -465,15 +483,21 @@ def coders(request, template="coders.html"):
 
 
 @page_templates((
-    ("profile_contests_paging.html", "contest_page"),
-    ("profile_writers_paging.html", "writers_page"),
+    (PROFILE_CONTESTS_PAGING_TEMPLATE, "contest_page"),
+    (PROFILE_WRITERS_PAGING_TEMPLATE, "writers_page"),
 ))
 def profile(request, username, template="profile_coder.html", extra_context=None):
-    coder = get_object_or_404(Coder, username=username)
+    coder = get_object_or_404(Coder.objects.select_related("user"), username=username)
     data = _get_data_mixed_profile(request, [username])
-    context = get_profile_context(request, data["statistics"], data["writers"], data["resources"])
+    context = get_profile_context(
+        request,
+        data["statistics"],
+        data["writers"],
+        data["resources"],
+        template=template,
+    )
     context["coder"] = coder
-    if coder.has_global_rating and len(context["resources"]) > 1:
+    if context["show_history_ratings"] and coder.has_global_rating and len(context["resources"]) > 1:
         context["history_resources"].insert(0, dict(django_settings.CLIST_RESOURCE_DICT_))
 
     if request.user.is_authenticated and request.user.coder == coder:
@@ -544,15 +568,21 @@ def account_context(request, key, host):
 
 
 @page_templates((
-    ("profile_contests_paging.html", "contest_page"),
-    ("profile_writers_paging.html", "writers_page"),
+    (PROFILE_CONTESTS_PAGING_TEMPLATE, "contest_page"),
+    (PROFILE_WRITERS_PAGING_TEMPLATE, "writers_page"),
 ))
 def account(request, key, host, template="profile_account.html", extra_context=None):
     context = account_context(request, key, host)
     account = context["account"]
 
     data = _get_data_mixed_profile(request, [account.resource.host + ":" + account.key])
-    profile_context = get_profile_context(request, data["statistics"], data["writers"], data["resources"])
+    profile_context = get_profile_context(
+        request,
+        data["statistics"],
+        data["writers"],
+        data["resources"],
+        template=template,
+    )
     context.update(profile_context)
 
     if extra_context is not None:
@@ -613,6 +643,7 @@ def _get_data_mixed_profile(request, query, is_team=False):
     writers_filter = Q()
     accounts_filter = Q()
     profiles = []
+    profile_references = []
 
     if not isinstance(query, (list, tuple)):
         query = accounts_split(query)
@@ -630,6 +661,7 @@ def _get_data_mixed_profile(request, query, is_team=False):
     account_prefilter = Q()
     team_accounts = Account.objects.all()
     n_coder = 0
+    primary_coder = None
     for v in query:
         if ":" in v:
             if is_team:
@@ -639,7 +671,8 @@ def _get_data_mixed_profile(request, query, is_team=False):
             resource = Resource.objects.filter(Q(host=host) | Q(short_host=host)).first()
             if not resource:
                 continue
-            account_prefilter |= Q(key=key, resource=resource)
+            account_prefilter |= Q(resource=resource, key=key)
+            profile_references.append((resource.pk, key))
         elif n_coder and not is_team:
             request.logger.warning(f"Coder {v} was skipped: only the first one is used")
         else:
@@ -647,6 +680,7 @@ def _get_data_mixed_profile(request, query, is_team=False):
             if not coder:
                 request.logger.warning(f"Coder {v} was skipped: not found")
                 continue
+            primary_coder = coder
             if is_team:
                 team_accounts = team_accounts.filter(coders=coder)
             elif n_accounts == 0:
@@ -658,15 +692,32 @@ def _get_data_mixed_profile(request, query, is_team=False):
                 statistics_filter |= Q(account__in=accounts)
                 writers_filter |= Q(writers__in=accounts)
                 accounts_filter |= Q(pk__in={a.pk for a in accounts})
-            profiles.append(coder)
+            profile_references.append(coder)
             n_coder += 1
 
+    accounts_by_key = {}
     if account_prefilter:
-        for account in Account.objects.filter(account_prefilter):
-            statistics_filter |= Q(account=account)
-            writers_filter |= Q(writers=account)
-            accounts_filter |= Q(pk=account.pk)
-            profiles.append(account)
+        accounts = Account.objects.select_related("resource").filter(account_prefilter)
+        accounts_by_key = {(account.resource_id, account.key): account for account in accounts}
+
+    account_ids = set()
+    for profile_reference in profile_references:
+        if isinstance(profile_reference, tuple):
+            profile = accounts_by_key.get(profile_reference)
+            if profile is None:
+                continue
+        else:
+            profile = profile_reference
+        if not isinstance(profile, Account):
+            profiles.append(profile)
+            continue
+        if profile.pk in account_ids:
+            continue
+        account_ids.add(profile.pk)
+        statistics_filter |= Q(account=profile)
+        writers_filter |= Q(writers=profile)
+        accounts_filter |= Q(pk=profile.pk)
+        profiles.append(profile)
 
     if chat_id := request.POST.get("chat"):
         add_query_to_chat(request, chat_id=chat_id, profiles=profiles)
@@ -686,7 +737,7 @@ def _get_data_mixed_profile(request, query, is_team=False):
         writers = Contest.objects.filter(writers_filter).select_related("resource").order_by("-end_time", "-id")
         accounts = Account.priority_objects.filter(accounts_filter)
         if n_coder:
-            coders = profiles if is_team else [coder]
+            coders = profiles if is_team else [primary_coder]
             accounts = accounts.annotate(verified=Exists("verified_accounts", filter=Q(coder__in=coders)))
 
         resources = (
@@ -714,23 +765,35 @@ def _get_data_mixed_profile(request, query, is_team=False):
 
 
 @page_templates((
-    ("profile_contests_paging.html", "contest_page"),
-    ("profile_writers_paging.html", "writers_page"),
+    (PROFILE_CONTESTS_PAGING_TEMPLATE, "contest_page"),
+    (PROFILE_WRITERS_PAGING_TEMPLATE, "writers_page"),
 ))
 @context_pagination()
 def profiles(request, query, template="profile_mixed.html"):
     data = _get_data_mixed_profile(request, query)
-    context = get_profile_context(request, data["statistics"], data["writers"], data["resources"])
+    context = get_profile_context(
+        request,
+        data["statistics"],
+        data["writers"],
+        data["resources"],
+        template=template,
+    )
     context["profiles"] = data["profiles"]
     context["query"] = query
     return template, context
 
 
-@page_templates((("profile_contests_paging.html", "contest_page"),))
+@page_templates(((PROFILE_CONTESTS_PAGING_TEMPLATE, "contest_page"),))
 @context_pagination()
 def team(request, query, template="profile_team.html"):
     data = _get_data_mixed_profile(request, query, is_team=True)
-    context = get_profile_context(request, data["statistics"], data["writers"], data["resources"])
+    context = get_profile_context(
+        request,
+        data["statistics"],
+        data["writers"],
+        data["resources"],
+        template=template,
+    )
     context["two_columns"] = False
     context["history_resources"] = False
     context["coders"] = data["profiles"]
@@ -754,7 +817,7 @@ def get_ratings_data(
         if resource:
             statistics = statistics.filter(contest__resource__host=resource)
 
-    resources = {r.pk: r for r in Resource.objects.filter(has_rating_history=True)}
+    resources = {r.pk: r for r in Resource.objects.select_related("module").filter(has_rating_history=True)}
 
     base_qs = (
         statistics
@@ -946,7 +1009,9 @@ def get_ratings_data(
         resource_info for resource_info in ratings["data"]["resources"].values() if "account_pk" in resource_info
     ]
     accounts_ids = {resource_info["account_pk"] for resource_info in account_resources}
-    accounts_names = {a.pk: a.short_display() for a in Account.objects.filter(pk__in=accounts_ids)}
+    accounts_names = {
+        a.pk: a.short_display() for a in Account.objects.select_related("resource").filter(pk__in=accounts_ids)
+    }
     for resource_info in account_resources:
         account_pk = resource_info["account_pk"]
         resource_info["account_name"] = accounts_names[account_pk]
@@ -2773,37 +2838,52 @@ def view_list(request, uuid):
 
 def filter_contests_with_advanced_to_stats(request, params):
     contests_ids = request.GET.getlist("contest")
-    contests_ids = [r for r in contests_ids if r]
+    contests_ids = list(dict.fromkeys(r for r in contests_ids if r))
     if not contests_ids:
-        return
+        return None
 
     contests = Contest.objects.filter(pk__in=contests_ids)
     params["contests"] = contests
 
     contest_filter = Q(contest__in=contests_ids)
     contest_filter &= Q(addition___no_update_n_contests__isnull=True) | Q(addition___no_update_n_contests=False)
+    account_statistics_filter = Q(statistics__contest__in=contests_ids)
+    account_statistics_filter &= Q(statistics__addition___no_update_n_contests__isnull=True) | Q(
+        statistics__addition___no_update_n_contests=False
+    )
     stats = Statistics.objects.filter(contest_filter)
 
-    adv_options = stats.distinct("addition___advance__next").values_list("addition___advance__next", flat=True)
-    advanced = request.GET.getlist("advanced")
-    params["advanced_filter"] = {
-        "values": advanced,
-        "options": ["true", "false"] + [a for a in adv_options if a],
-        "noajax": True,
-        "nomultiply": True,
-        "nogroupby": True,
-    }
-
     adv_filter = Q()
-    for adv in advanced:
-        if adv not in params["advanced_filter"]["options"]:
-            continue
-        if adv in ["true", "false"]:
-            adv_filter |= Q(advanced=adv == "true")
-        else:
-            adv_filter |= Q(addition___advance__next=adv, advanced=True)
-        params["advanced_filter"]["value"] = bool(advanced)
+    account_adv_filter = Q()
+    if contests.filter(with_advance=True).exists():
+        adv_options = (
+            stats
+            .filter(addition___advance__next__isnull=False)
+            .order_by()
+            .values_list("addition___advance__next", flat=True)
+            .distinct()
+        )
+        advanced = request.GET.getlist("advanced")
+        params["advanced_filter"] = {
+            "values": advanced,
+            "options": ["true", "false", *adv_options],
+            "noajax": True,
+            "nomultiply": True,
+            "nogroupby": True,
+        }
+
+        for adv in advanced:
+            if adv not in params["advanced_filter"]["options"]:
+                continue
+            if adv in ["true", "false"]:
+                adv_filter |= Q(advanced=adv == "true")
+                account_adv_filter |= Q(statistics__advanced=adv == "true")
+            else:
+                adv_filter |= Q(addition___advance__next=adv, advanced=True)
+                account_adv_filter |= Q(statistics__addition___advance__next=adv, statistics__advanced=True)
+            params["advanced_filter"]["value"] = bool(advanced)
     stats = stats.filter(adv_filter)
+    account_statistics_filter &= account_adv_filter
 
     accounts = Account.objects.annotate(has_contest_stat=Exists(stats.filter(account_id=OuterRef("id")))).filter(
         has_contest_stat=True
@@ -2814,6 +2894,8 @@ def filter_contests_with_advanced_to_stats(request, params):
         "adv_filter": adv_filter,
         "statistics": stats,
         "accounts": accounts,
+        "account_statistics_filter": account_statistics_filter,
+        "single_contest": len(contests_ids) == 1,
     }
 
 
@@ -2904,19 +2986,25 @@ def accounts(request, template="accounts.html"):
         stats = filtered_stats["statistics"]
         prefetch_stats = stats.select_related("contest").order_by("contest_id")
 
-        statistics_filter = filtered_stats["contest_filter"] & filtered_stats["adv_filter"]
-        accounts = (
-            accounts
-            .prefetch_related(Prefetch("statistics_set", prefetch_stats, to_attr="selected_stats"))
-            .annotate(has_statistic=Exists("statistics", filter=statistics_filter))
-            .filter(has_statistic=True)
-        )
-        subquery = stats.filter(account=OuterRef("pk"))
-        subquery = subquery.order_by("contest__start_time", "contest_id", "place_as_int")
-        subquery = subquery[:1]
-        accounts = accounts.annotate(selected_time=Subquery(subquery.values("contest__start_time")))
-        accounts = accounts.annotate(selected_contest=Subquery(subquery.values("contest_id")))
-        accounts = accounts.annotate(selected_place=Subquery(subquery.values("place_as_int")))
+        accounts = accounts.prefetch_related(Prefetch("statistics_set", prefetch_stats, to_attr="selected_stats"))
+        if filtered_stats["single_contest"]:
+            # Statistics is unique by (account, contest), so this join cannot duplicate accounts and PostgreSQL can
+            # choose the best side to scan first for the requested ordering.
+            accounts = accounts.filter(filtered_stats["account_statistics_filter"])
+            accounts = accounts.annotate(selected_time=F("statistics__contest__start_time"))
+            accounts = accounts.annotate(selected_contest=F("statistics__contest_id"))
+            accounts = accounts.annotate(selected_place=F("statistics__place_as_int"))
+        else:
+            statistics_filter = filtered_stats["contest_filter"] & filtered_stats["adv_filter"]
+            accounts = accounts.alias(has_statistic=Exists("statistics", filter=statistics_filter)).filter(
+                has_statistic=True
+            )
+            subquery = stats.filter(account=OuterRef("pk"))
+            subquery = subquery.order_by("contest__start_time", "contest_id", "place_as_int")
+            subquery = subquery[:1]
+            accounts = accounts.annotate(selected_time=Subquery(subquery.values("contest__start_time")))
+            accounts = accounts.annotate(selected_contest=Subquery(subquery.values("contest_id")))
+            accounts = accounts.annotate(selected_place=Subquery(subquery.values("place_as_int")))
 
     if account_type := Account.get_type(account_type_value := request.GET.get("account_type")):
         accounts = accounts.filter(account_type=account_type)
@@ -3005,7 +3093,7 @@ def accounts(request, template="accounts.html"):
     context["fields_types"] = fields_types
 
     # sort select
-    sort_options = fixed_fields + custom_values
+    sort_options = ["account", *fixed_fields, *custom_values]
     orderby = request.get_filtered_list("sort_column", options=sort_options)
     order = request.GET.get("sort_order") if orderby else None
     sort_select = {"options": sort_options, "rev_order": True, "nomultiply": len(orderby) <= 1}
@@ -3042,8 +3130,11 @@ def accounts(request, template="accounts.html"):
             order_fields.append(f"info__{order_field}")
         elif order_field:
             request.logger.error(f"Not found `{order_field}` column for sorting")
-    if params.get("advanced_filter"):
-        order_fields.extend(["selected_time", "selected_contest", "selected_place"])
+    if filtered_stats and not order_fields:
+        if filtered_stats["single_contest"]:
+            order_fields.append("selected_place")
+        else:
+            order_fields.extend(["selected_time", "selected_contest", "selected_place"])
     orderby = order_fields if not order_fields or isinstance(order_fields, list) else [order_fields]
 
     if orderby:
@@ -3051,7 +3142,7 @@ def accounts(request, template="accounts.html"):
         context["row_number_operator"] = "__gt" if order == "desc" else "__lt"
 
     if order in ["asc", "desc"]:
-        orderby = [getattr(F(o), order)(nulls_last=True) for o in orderby]
+        orderby = [get_order_by(o, order) for o in orderby]
     elif order:
         request.logger.warning(f"Not found `{order}` order for sorting")
     orderby = orderby or ["-created"]

@@ -25,7 +25,7 @@ from sql_util.utils import Exists, SubqueryCount, SubquerySum
 from clist.models import Contest, Resource
 from clist.templatetags.extras import get_item, get_statistic_stats, has_season
 from clist.utils import update_account_by_coders
-from pyclist.indexes import DescNullsLastIndex, ExpressionIndex, GistIndexTrgrmOps
+from pyclist.indexes import DescNullsLastIndex, ExpressionIndex, GinIndexTrgrmOps
 from pyclist.models import BaseManager, BaseModel
 from ranking.enums import AccountType
 from true_coders.models import Coder, Party
@@ -287,8 +287,8 @@ class Account(BaseModel):
             models.Index(fields=["resource", "name"]),
             models.Index(fields=["resource", "country"]),
             models.Index(fields=["resource", "updated"], condition=Q(updated__isnull=False), name="account_updated"),
-            GistIndexTrgrmOps(fields=["key"]),
-            GistIndexTrgrmOps(fields=["name"]),
+            GinIndexTrgrmOps(fields=["key"]),
+            GinIndexTrgrmOps(fields=["name"]),
             ExpressionIndex(expressions=[Upper("key")]),
             ExpressionIndex(expressions=[F("resource"), Upper("key")]),
             DescNullsLastIndex(fields=["resource", "rating"]),
@@ -305,6 +305,7 @@ class Account(BaseModel):
             DescNullsLastIndex(fields=["resource", "-n_contests"]),
             DescNullsLastIndex(fields=["resource", "n_writers"]),
             DescNullsLastIndex(fields=["resource", "-n_writers"]),
+            models.Index(fields=["resource", "-created"]),
             DescNullsLastIndex(fields=["resource", "updated"]),
             DescNullsLastIndex(fields=["resource", "-updated"]),
             DescNullsLastIndex(fields=["resource", "resource_rank"]),
@@ -335,6 +336,7 @@ class Account(BaseModel):
             DescNullsLastIndex(fields=["country", "-last_submission"]),
             DescNullsLastIndex(fields=["country", "-n_contests"]),
             DescNullsLastIndex(fields=["country", "-n_writers"]),
+            models.Index(fields=["country", "-created"]),
             DescNullsLastIndex(fields=["country", "-updated"]),
             DescNullsLastIndex(fields=["country", "resource_rank"]),
             DescNullsLastIndex(fields=["country", "-resource_rank"]),
@@ -425,8 +427,8 @@ class AccountRenaming(BaseModel):
 
     class Meta:
         indexes = [
-            GistIndexTrgrmOps(fields=["old_key"]),
-            GistIndexTrgrmOps(fields=["new_key"]),
+            GinIndexTrgrmOps(fields=["old_key"]),
+            GinIndexTrgrmOps(fields=["new_key"]),
             models.Index(fields=["resource", "old_key"]),
             models.Index(fields=["resource", "new_key"]),
         ]

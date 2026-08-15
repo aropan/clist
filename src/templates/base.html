@@ -26,7 +26,7 @@
         <meta property="og:title" content="{% block full_ogtitle %}{% block ogtitle %}{% endblock %}{% include "filter_title.html" with pretext="for" %} - CLIST{% endblock %}">
         <title>{% block full_title %}{% block title %}{% endblock %}{% include "filter_title.html" with pretext="for" %} - CLIST{% endblock %}</title>
 
-        <link rel="canonical" href="{% block canonical %}{% if request.canonical_url %}{{ request.canonical_url }}{% else %}{{ request.scheme }}://{{ request.get_host }}{{ request.path }}{% endif %}{% endblock %}">
+        <link rel="canonical" href="{% block canonical %}{% if request.canonical_url %}{{ request.canonical_url }}{% else %}{{ request.scheme }}://{{ request.get_host }}{{ request.path|urlencode:"/" }}{% endif %}{% endblock %}">
 
         {% if not DEBUG and not nocounter %}
         {% include "counter/base.html" %}

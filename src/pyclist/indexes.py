@@ -1,8 +1,22 @@
-from django.contrib.postgres.indexes import GistIndex
+from django.contrib.postgres.indexes import GinIndex, GistIndex
 from django.db import models
 from django.db.backends.utils import names_digest, split_identifier
 
 GIST_INDEX_TRGRM_OPS_SEP = " || "
+
+
+class GinIndexTrgrmOps(GinIndex):
+    """Trigram GIN index that keeps Django's automatic index naming."""
+
+    def __init__(self, *expressions, **kwargs):
+        kwargs.pop("opclasses", None)
+        super().__init__(*expressions, **kwargs)
+        self.opclasses = ["gin_trgm_ops"] * len(self.fields)
+
+    def deconstruct(self):
+        path, args, kwargs = super().deconstruct()
+        kwargs.pop("opclasses", None)
+        return path, args, kwargs
 
 
 class GistIndexTrgrmOps(GistIndex):
@@ -74,9 +88,7 @@ class ExpressionIndex(models.Index):
         )
 
         compiler = model._meta.default_manager.all().query.get_compiler(connection=schema_editor.connection)
-        statement.parts["columns"] = ", ".join(
-            "({})".format(self.compile_expression(e, compiler)) for e in self.expressions
-        )
+        statement.parts["columns"] = ", ".join(f"({self.compile_expression(e, compiler)})" for e in self.expressions)
         return statement
 
     def compile_expression(self, expression, compiler):

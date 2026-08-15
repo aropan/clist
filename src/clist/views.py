@@ -51,6 +51,7 @@ from ranking.models import Account, CountryAccount, Rating, Statistics
 from ranking.utils import get_participation_contests
 from true_coders.models import Coder, CoderList, CoderProblem, Filter, Party
 from utils.chart import TooManyBinsException, make_bins, make_chart
+from utils.db import get_order_by
 from utils.json_field import JSONF
 from utils.regex import get_iregex_filter
 from utils.timetools import get_timeformat, get_timezone
@@ -649,7 +650,7 @@ def resource(request, resource, template="resource.html", extra_context=None):
     page_template = extra_context.get("page_template")
     now = timezone.now()
     resource = Resource.get(resource)
-    request.set_canonical(reverse("clist:resource", args=[resource.pk]))
+    request.set_canonical(reverse("clist:resource", args=[resource.host]))
 
     action = request.POST.get("action")
     if action:
@@ -1268,7 +1269,7 @@ def problems(request, template="problems.html"):
         sort_select["values"] = [sort_field]
         if sort_field in custom_info_fields:
             sort_field = f"info__{sort_field}"
-        orderby = getattr(F(sort_field), sort_order)(nulls_last=True)
+        orderby = get_order_by(sort_field, sort_order)
         problems = problems.order_by(orderby)
 
     # hidden fields

@@ -19,8 +19,10 @@ services:
       - ./logs/postgres/:/usr/src/clist/logs/postgres/
       - ./legacy/api/:/usr/src/clist/legacy/api/
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     secrets:
       - db_conf
       - monitoring_conf
@@ -43,8 +45,10 @@ services:
       - ./logs/postgres/:/usr/src/clist/logs/postgres/
       - ./legacy/api/:/usr/src/clist/legacy/api/
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     secrets:
       - db_conf
       - monitoring_conf
@@ -60,6 +64,11 @@ services:
       - "no"
     networks:
       - clist_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
     restart: unless-stopped
   legacy:
     build:
@@ -74,7 +83,8 @@ services:
       - ./src/scripts:/usr/src/legacy/scripts:ro
       - shared_files:/sharedfiles/
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     secrets:
       - db_conf
       - monitoring_conf
@@ -91,7 +101,8 @@ services:
       - PGADMIN_CONFIG_SESSION_COOKIE_SECURE=True
       - GUNICORN_CMD_ARGS=--forwarded-allow-ips="*"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     restart: unless-stopped
   bugsink:
     image: bugsink/bugsink:2
@@ -104,7 +115,8 @@ services:
     env_file:
       - ./.env.bugsink
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     cpus: 1.0
     mem_limit: 512m
     restart: unless-stopped
@@ -119,7 +131,8 @@ services:
     env_file:
       - ./.env.healthchecks
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     cpus: 0.5
     mem_limit: 384m
     restart: unless-stopped
@@ -137,6 +150,12 @@ services:
       - ./logs/postgres/:/var/log/
     env_file:
       - ./.env.db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready --quiet --host 127.0.0.1 --port 5432 --username \"$$POSTGRES_USER\" --dbname \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 10s
     shm_size: 4GB
     restart: unless-stopped
   backup:
@@ -156,7 +175,8 @@ services:
       - BACKUP_ROOT=/backups
       - BACKUP_DISPLAY_ROOT=${CLIST_BACKUP_DIR:-/var/backups/clist}
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     init: true
   nginx:
     build:

@@ -5,7 +5,7 @@ from urllib.parse import urlparse
 
 from django.apps import apps
 from django.conf import settings
-from django.db.models import F, Q
+from django.db.models import Q
 from django.http import HttpResponseBadRequest, HttpResponseRedirect, JsonResponse
 from django.urls import NoReverseMatch, reverse
 from django.utils.timezone import now
@@ -14,7 +14,7 @@ from el_pagination.decorators import page_templates
 from clist.templatetags.extras import allowed_redirect, is_yes, timestamp_to_datetime, url_transform
 from pyclist.decorators import context_pagination, extra_context_without_pagination, superuser_required
 from utils.chart import make_chart
-from utils.db import get_delete_info
+from utils.db import get_delete_info, get_order_by
 from utils.timetools import parse_duration
 
 
@@ -144,9 +144,9 @@ def update_context_by_source(request, context):
     sort_field = request.get_filtered_value("sort", sort_field_select["options"])
     if sort_field:
         sort_order = request.get_filtered_value("sort_order", ["asc", "desc"])
-        order_by = getattr(F(sort_field), sort_order)(nulls_last=True)
+        order_by = get_order_by(sort_field, sort_order)
     elif x_axis:
-        order_by = F(x_axis).desc(nulls_last=True)
+        order_by = get_order_by(x_axis, "desc")
     else:
         order_by = None
     if order_by:

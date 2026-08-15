@@ -1,87 +1,88 @@
 from django.contrib.sitemaps import Sitemap
-from django.db.models import Max
+from django.db.models.functions import Greatest
 from django.urls import reverse
+from django.utils.timezone import now as timezone_now
 from sql_util.utils import SubqueryMax
 
 from clist.models import Contest, Resource
-from clist.templatetags.extras import slug
-from ranking.models import Statistics
+from true_coders.models import Coder
 
 
 class BaseSitemap(Sitemap):
     protocol = "https"
     abstract = True
+    limit = 1000
 
 
 class StaticViewSitemap(BaseSitemap):
-    priority = 1
-    changefreq = "daily"
-
     def items(self):
-        return [
+        items = [
             "clist:main",
             "clist:resources",
+            "clist:resources_account_ratings",
+            "clist:resources_country_ratings",
             "ranking:standings_list",
             "clist:problems",
             "coder:coders",
+            "clist:links",
             "clist:api:latest:index",
         ]
+        return items[: self.limit]
 
     def location(self, item):
         return reverse(item)
 
 
 class StandingsSitemap(BaseSitemap):
-    limit = 1000
-
     def items(self):
-        return Contest.objects.filter(n_statistics__gt=0).order_by("-end_time", "-id")
-
-    def priority(self, contest):
-        return round(0.7 + (0.2 if "medal" in contest.info.get("fields", []) else 0.0), 2)
+        return (
+            Contest.objects
+            .filter(n_statistics__gt=0, invisible=False, end_time__lt=timezone_now())
+            .annotate(freshness=Greatest("end_time", "created"))
+            .order_by("-freshness", "-id")
+            .values_list("id", "slug", "parsed_time", "end_time", named=True)
+        )[: self.limit]
 
     def lastmod(self, contest):
-        return contest.updated
+        return contest.parsed_time or contest.end_time
 
     def location(self, contest):
-        return reverse("ranking:standings", args=(slug(contest.title), contest.pk))
+        return reverse("ranking:standings", args=(contest.slug, contest.id))
 
 
-class UpdatedStandingsSitemap(StandingsSitemap):
-    priority = 0.6
-
-    def items(self):
-        return super().items().order_by("-updated")
-
-
-class AccountsSitemap(BaseSitemap):
-    limit = 1000
+class CodersSitemap(BaseSitemap):
+    value_limit = 700
 
     def items(self):
-        return Statistics.objects.filter(place_as_int__lte=3).order_by("-created").select_related("account", "resource")
+        fields = ("id", "username", "lastmod", "modified")
+        candidates = Coder.objects.filter(n_contests__gte=10).annotate(lastmod=SubqueryMax("account__last_activity"))
+        items = {}
+        for queryset, count in (
+            (candidates.order_by("-n_contests", "-id"), self.value_limit),
+            (candidates.order_by("-created", "-id"), self.limit),
+        ):
+            for coder in queryset.values_list(*fields, named=True)[:count]:
+                items.setdefault(coder.id, coder)
+                if len(items) == self.limit:
+                    return list(items.values())
+        return list(items.values())
 
-    def priority(self, stat):
-        return round(0.5 - 0.1 * (stat.place_as_int - 1) / 10 + (0.4 if "medal" in stat.addition else 0.0), 2)
+    def lastmod(self, coder):
+        return coder.lastmod or coder.modified
 
-    def lastmod(self, stat):
-        return stat.created
-
-    def location(self, stat):
-        return reverse("coder:account", args=(stat.account.key, stat.resource.host))
+    def location(self, coder):
+        return reverse("coder:profile", args=(coder.username,))
 
 
 class ResourcesSitemap(BaseSitemap):
-    max_priority = None
-
     def items(self):
-        self.max_priority = Resource.priority_objects.aggregate(Max("priority"))["priority__max"]
-        return Resource.priority_objects.annotate(lastmod=SubqueryMax("contest__parsed_time"))
-
-    def priority(self, resource):
-        ret = resource.priority
-        if self.max_priority:
-            ret /= self.max_priority
-        return ret
+        resources = (
+            Resource.objects
+            .filter(n_contests__gt=0)
+            .only("id", "host", "modified")
+            .annotate(lastmod=SubqueryMax("contest__parsed_time"))
+        )
+        return resources[: self.limit]
 
     def lastmod(self, resource):
         return resource.lastmod or resource.modified
@@ -93,7 +94,6 @@ class ResourcesSitemap(BaseSitemap):
 sitemaps = {
     "static": StaticViewSitemap,
     "standings": StandingsSitemap,
-    "updated_standings": UpdatedStandingsSitemap,
-    "accounts": AccountsSitemap,
+    "coders": CodersSitemap,
     "resources": ResourcesSitemap,
 }

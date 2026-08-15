@@ -363,7 +363,7 @@ class Statistic(BaseModule):
                     row["place"] = place
 
                 medal_percentage = []
-                n_participants = len(result)
+                n_participants = self.info.get("_official_n_participants") or len(result)
                 last = 0
                 for medal, divider in (("gold", 12), ("silver", 4), ("bronze", 2), ("honorable", 1)):
                     curr = (n_participants - 1) // divider + 1

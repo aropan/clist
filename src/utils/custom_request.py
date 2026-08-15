@@ -4,9 +4,9 @@ from functools import partial
 from typing import Optional
 
 from django.contrib import messages
-from django.db.models import F
 
 from clist.models import Contest, Resource
+from utils.db import get_order_by
 
 
 class RequestLogger:
@@ -28,7 +28,7 @@ def get_sort_field(self, options, orders=("asc", "desc"), field="sort", order_fi
             method = "EMPTY"
     value = self.get_filtered_value(field, options=options, default_first=True, method=method)
     order = self.get_filtered_value(order_field, options=orders, default_first=True, method=method)
-    return getattr(F(value), order)(nulls_last=True)
+    return get_order_by(value, order)
 
 
 def get_resource(self, field="resource", method="GET") -> Optional[Resource]:

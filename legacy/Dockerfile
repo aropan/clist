@@ -6,7 +6,7 @@ RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 RUN apt update -y
 RUN docker-php-ext-install iconv
 RUN apt install -y libicu-dev && docker-php-ext-install intl
-RUN apt install -y libpq-dev && docker-php-ext-configure pgsql -with-pgsql=/usr/local/pgsql && docker-php-ext-install pgsql
+RUN apt install -y libpq-dev postgresql-client && docker-php-ext-configure pgsql -with-pgsql=/usr/local/pgsql && docker-php-ext-install pgsql
 
 # Freeze time() for offline schedule parser fixture replay (tests/run.php)
 RUN apt install -y faketime
@@ -35,4 +35,6 @@ RUN crontab /etc/cron.d/clist
 ENV APPDIR=/usr/src/legacy
 WORKDIR $APPDIR
 
-CMD bash -c "cron && php-fpm"
+COPY src/scripts/wait-for-postgres.bash /usr/local/bin/wait-for-postgres.bash
+
+CMD ["bash", "-c", "bash /usr/local/bin/wait-for-postgres.bash && cron && exec php-fpm"]

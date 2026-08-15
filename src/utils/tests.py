@@ -2,13 +2,22 @@ import io
 import logging
 import sys
 import unittest
+from datetime import UTC, datetime
 from unittest import mock
 
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.sessions.models import Session
 from django.core.management.commands.test import Command as TestCommand
-from django.test import SimpleTestCase
+from django.db import connection
+from django.db.models import F
+from django.test import SimpleTestCase, TestCase
+from django.test.utils import CaptureQueriesContext
 from rq.job import JobStatus, validate_job_id
 
+from clist.models import Resource
 from utils import is_interactive
+from utils.chart import make_chart
+from utils.db import get_order_by
 from utils.rq import get_resource_job_id, is_job_active, is_job_id_active
 from utils.strings import split_team_name_and_members
 from utils.test_runner import CompactTestResult, CompactTextTestRunner
@@ -18,6 +27,125 @@ class IsInteractiveTest(SimpleTestCase):
     def test_buffered_stdout_is_not_interactive(self):
         with mock.patch("sys.stdout", io.StringIO()):
             assert not is_interactive()
+
+
+class PostgresIContainsTest(SimpleTestCase):
+    def test_direct_value_uses_ilike_without_upper(self):
+        sql = str(ContentType.objects.filter(app_label__icontains="Utils").query)
+
+        assert '"django_content_type"."app_label"::text ILIKE %Utils%' in sql
+        assert "UPPER(" not in sql
+
+    def test_expression_uses_ilike_with_escaped_pattern(self):
+        sql = str(ContentType.objects.filter(app_label__icontains=F("model")).query)
+
+        assert '"django_content_type"."app_label"::text ILIKE' in sql
+        assert '"django_content_type"."model"' in sql
+        assert "UPPER(" not in sql
+
+
+class GetOrderByTest(SimpleTestCase):
+    def test_non_nullable_timestamp_uses_database_default_null_order(self):
+        for field in ("created", "modified"):
+            with self.subTest(field=field):
+                ordering = get_order_by(field, "desc")
+                assert ordering.expression.name == field
+                assert ordering.descending is True
+                assert ordering.nulls_last is None
+                sql = str(Resource.objects.order_by(ordering).query)
+                assert "DESC NULLS LAST" not in sql
+
+    def test_other_fields_keep_nulls_last(self):
+        ordering = get_order_by("rating", "asc")
+
+        assert ordering.expression.name == "rating"
+        assert ordering.descending is False
+        assert ordering.nulls_last is True
+
+    def test_invalid_order_is_rejected(self):
+        with self.assertRaisesMessage(ValueError, "Invalid order: random"):
+            get_order_by("created", "random")
+
+
+class MakeChartTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.content_types = ContentType.objects.bulk_create([
+            ContentType(app_label="utils_chart_alpha", model="entry"),
+            ContentType(app_label="utils_chart_zulu", model="entry"),
+        ])
+        cls.started_at = datetime(2026, 1, 1, tzinfo=UTC)
+        cls.finished_at = datetime(2026, 1, 2, tzinfo=UTC)
+        Session.objects.bulk_create([
+            Session(session_key="utils-chart-start", session_data="", expire_date=cls.started_at),
+            Session(session_key="utils-chart-finish", session_data="", expire_date=cls.finished_at),
+        ])
+
+    @staticmethod
+    def assert_bounds_query(queries):
+        sql = queries[0]["sql"].upper()
+        assert "MIN(" in sql
+        assert "MAX(" in sql
+
+    @staticmethod
+    def data_queries(queries):
+        return [query for query in queries if not query["sql"].lstrip().upper().startswith("EXPLAIN")]
+
+    def test_empty_queryset_uses_one_bounds_query(self):
+        logger = mock.Mock()
+        queryset = ContentType.objects.filter(app_label="utils_chart_missing")
+
+        with CaptureQueriesContext(connection) as queries:
+            context = make_chart(queryset, "id", logger=logger)
+
+        queries = self.data_queries(queries)
+        assert len(queries) == 1
+        assert context is None
+        self.assert_bounds_query(queries)
+        logger.warning.assert_called_once_with("Empty histogram, field = id")
+
+    def test_numeric_chart_uses_one_bounds_query_before_histogram(self):
+        queryset = ContentType.objects.filter(app_label__startswith="utils_chart_")
+        src = min(content_type.pk for content_type in self.content_types)
+        dst = max(content_type.pk for content_type in self.content_types)
+
+        with CaptureQueriesContext(connection) as queries:
+            context = make_chart(queryset, "id", bins=[src, dst])
+
+        queries = self.data_queries(queries)
+        assert len(queries) == 2
+        self.assert_bounds_query(queries)
+        assert context["x_from"] == src
+        assert context["x_to"] == dst
+        assert sum(row["value"] for row in context["data"]) == 2
+
+    def test_datetime_chart_preserves_time_bounds(self):
+        queryset = Session.objects.filter(session_key__startswith="utils-chart-")
+
+        with CaptureQueriesContext(connection) as queries:
+            context = make_chart(queryset, "expire_date", bins=[self.started_at, self.finished_at])
+
+        queries = self.data_queries(queries)
+        assert len(queries) == 2
+        self.assert_bounds_query(queries)
+        assert context["x_type"] == "time"
+        assert context["x_from"] == self.started_at.timestamp()
+        assert context["x_to"] == self.finished_at.timestamp()
+        assert sum(row["value"] for row in context["data"]) == 2
+
+    def test_string_chart_preserves_lexical_bounds(self):
+        queryset = ContentType.objects.filter(app_label__startswith="utils_chart_")
+
+        with CaptureQueriesContext(connection) as queries:
+            context = make_chart(queryset, "app_label")
+
+        queries = self.data_queries(queries)
+        assert len(queries) == 3
+        self.assert_bounds_query(queries)
+        assert "x_from" not in context
+        assert "x_to" not in context
+        assert context["bins"] == ["utils_chart_alpha", "utils_chart_zulu", "utils_chart_zulu"]
+        assert sum(row["value"] for row in context["data"]) == 2
 
 
 class CompactTestRunnerTest(SimpleTestCase):

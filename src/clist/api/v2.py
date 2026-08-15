@@ -25,6 +25,7 @@ from clist.templatetags.extras import timezone as set_timezone
 from pyclist.context_processors import coder_time_info
 from ranking.models import Account, Statistics
 from true_coders.models import Coder, Filter
+from utils.db import get_order_by
 from utils.timetools import parse_duration
 
 
@@ -79,7 +80,7 @@ class BaseModelResource(CommmonBaseModuelResource):
                 else:
                     order = "asc"
                 has_id_field |= field == "id"
-                new_ordering.append(getattr(F(field), order)(nulls_last=True))
+                new_ordering.append(get_order_by(field, order))
             if not has_id_field:
                 new_ordering.append("id")
             ret = ret.order_by(*new_ordering)

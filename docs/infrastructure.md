@@ -22,6 +22,15 @@ How CLIST is containerized and operated. **High-risk area** — change only with
 | `bugsink` | Self-hosted error tracking (sentry-sdk compatible), DB in `db`; env in `.env.bugsink` |
 | `healthchecks` | Self-hosted cron monitoring (pinged by both cron runners), DB in `db`; env in `.env.healthchecks` |
 
+PostgreSQL and Redis expose Compose health checks. Database-dependent services
+start only after PostgreSQL accepts connections, and `prod`, `dev` and `legacy`
+additionally run their own PostgreSQL wait loop before starting application
+processes. The in-container wait is
+intentional: unlike `docker compose up`, Docker restart policies do not reevaluate
+Compose dependency conditions after a daemon or host restart. Nginx remains
+independent so static files, certificate challenges and monitoring endpoints are not
+blocked by an application database outage.
+
 ## PostgreSQL backups
 
 The `backup` Compose profile creates an online logical backup of every connectable
@@ -160,7 +169,7 @@ service defined in Compose before restarting the monitoring stack.
 
 ## Dockerfile ([`Dockerfile`](../Dockerfile))
 
-Multi-stage: `base` (Python 3.14.6, installs locked deps via `uv`) → `dev` / `prod` /
+Multi-stage: `base` (Python 3.14.7, installs locked deps via `uv`) → `dev` / `prod` /
 `nginx` / `postgres` / backup tools. The `dev` stage runs `redis-server`,
 `watchdog.bash rqworker`, then `manage.py runserver 0.0.0.0:10042`.
 Before starting supervisord, the production stage builds static files in an isolated

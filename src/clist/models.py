@@ -35,7 +35,7 @@ from scipy.stats import randint, uniform
 from clist.templatetags.extras import get_item, get_problem_key, slug
 from clist.utils import similar_contests_queryset, update_accounts_by_coders
 from logify.models import EventLog, EventStatus
-from pyclist.indexes import GistIndexTrgrmOps
+from pyclist.indexes import GinIndexTrgrmOps
 from pyclist.models import BaseManager, BaseModel
 from pyclist.storage import OverwriteStorage
 from ranking.enums import AccountType
@@ -183,8 +183,8 @@ class Resource(BaseModel):
 
     class Meta:
         indexes = [
-            GistIndexTrgrmOps(fields=["host"]),
-            GistIndexTrgrmOps(fields=["short_host"]),
+            GinIndexTrgrmOps(fields=["host"]),
+            GinIndexTrgrmOps(fields=["short_host"]),
         ]
 
         permissions = contest_and_resource_permissions
@@ -692,7 +692,7 @@ class Contest(BaseModel):
             models.Index(fields=["resource", "-n_statistics"]),
             models.Index(fields=["resource", "-n_problems"]),
             models.Index(fields=["title"]),
-            GistIndexTrgrmOps(fields=["title"]),
+            GinIndexTrgrmOps(fields=["title"]),
         ]
 
         permissions = contest_and_resource_permissions
@@ -1270,7 +1270,8 @@ class Problem(BaseModel):
             models.Index(fields=["resource_id", "key"]),
             models.Index(fields=["resource_id", "divisions"]),
             models.Index(fields=["resource_id", "kinds"]),
-            GistIndexTrgrmOps(fields=["name"], name="clist_problem_name_gist"),
+            GinIndexTrgrmOps(fields=["key"]),
+            GinIndexTrgrmOps(fields=["name"]),
         ]
 
     def save(self, *args, **kwargs):

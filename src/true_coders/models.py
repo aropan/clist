@@ -20,7 +20,7 @@ from phonenumber_field.modelfields import PhoneNumberField
 from sql_util.utils import Exists, SubquerySum
 
 from clist.models import Contest, Problem, ProblemVerdict, Resource
-from pyclist.indexes import GistIndexTrgrmOps
+from pyclist.indexes import GinIndexTrgrmOps
 from pyclist.models import BaseManager, BaseModel
 from utils.signals import update_foreign_key_n_field_on_change
 from utils.strings import generate_secret
@@ -52,7 +52,7 @@ class Coder(BaseModel):
 
     class Meta:
         indexes = [
-            GistIndexTrgrmOps(fields=["username"]),
+            GinIndexTrgrmOps(fields=["username"]),
         ]
 
     def __str__(self):
@@ -503,6 +503,8 @@ class CoderList(BaseModel):
 
     @staticmethod
     def filter_for_coder_and_uuids(coder, uuids, logger=None):
+        if coder is None and not uuids:
+            return CoderList.objects.none(), []
         qs = CoderList.filter_for_coder(coder=coder)
         active_filter = Q(owner=coder) | Q(uuid__in=uuids)
         if coder:
@@ -517,23 +519,23 @@ class CoderList(BaseModel):
         qs = qs.filter(active_filter)
         used_uuids = set(map(str, qs.values_list("uuid", flat=True)))
         filtered_uuids = []
-        for uuid in uuids:
-            if uuid in used_uuids:
-                filtered_uuids.append(uuid)
+        for uuid_value in uuids:
+            if uuid_value in used_uuids:
+                filtered_uuids.append(uuid_value)
             elif logger:
-                logger.warning(f'Ignore list with uuid = "{uuid}"')
+                logger.warning(f'Ignore list with uuid = "{uuid_value}"')
         return qs, filtered_uuids
 
     @staticmethod
     def coders_and_accounts_ids(uuids, coder=None, logger=None):
         coders = set()
         accounts = set()
-        for uuid in uuids:
+        for uuid_value in uuids:
             try:
-                coder_list = CoderList.filter_for_coder(coder).prefetch_related("values").get(uuid=uuid)
+                coder_list = CoderList.filter_for_coder(coder).prefetch_related("values").get(uuid=uuid_value)
             except Exception:
                 if logger:
-                    logger.warning(f'Ignore list with uuid = "{uuid}"')
+                    logger.warning(f'Ignore list with uuid = "{uuid_value}"')
                 continue
             for v in coder_list.related_values:
                 if v.coder:

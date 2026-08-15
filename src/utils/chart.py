@@ -139,12 +139,13 @@ def make_chart(
 
     qs = qs.filter(value__isnull=False)
 
-    if not qs.exists():
+    bounds = qs.aggregate(src=Min("value"), dst=Max("value"))
+    src = bounds["src"]
+    dst = bounds["dst"]
+    if src is None:
         logger.warning(f"Empty histogram, field = {field}")
         return
 
-    src = qs.earliest("value").value
-    dst = qs.latest("value").value
     if isinstance(src, datetime):
         context["x_type"] = "time"
         context["x_from"] = src.timestamp()

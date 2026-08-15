@@ -3,6 +3,17 @@
 
 from django.apps import apps
 from django.db import transaction
+from django.db.models import F
+
+NON_NULLABLE_ORDER_FIELDS = frozenset({"created", "modified"})
+
+
+def get_order_by(field, order):
+    """Build ordering without explicit NULLS LAST for non-nullable BaseModel timestamps."""
+    if order not in {"asc", "desc"}:
+        raise ValueError(f"Invalid order: {order}")
+    kwargs = {} if field in NON_NULLABLE_ORDER_FIELDS else {"nulls_last": True}
+    return getattr(F(field), order)(**kwargs)
 
 
 def dictfetchall(cursor):

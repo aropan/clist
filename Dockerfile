@@ -1,4 +1,4 @@
-FROM python:3.14.6-trixie@sha256:7655aadf4ac71023baa42d7e1430a61d2ca80798af2ffb71c3533baafe68695b AS base
+FROM python:3.14.7-trixie@sha256:20f4b272cb5d0f462c84645f8127d82e6fcfdc4006f4dd7f8859a5be4d5ef7a5 AS base
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
@@ -48,7 +48,7 @@ ENV DJANGO_ENV_FILE=.env.dev
 ENV PYTHONDONTWRITEBYTECODE=""
 ENV PYTHONPYCACHEPREFIX=/tmp/clist-pycache
 RUN apt install -y redis-server
-CMD ["sh", "-c", "redis-server --daemonize yes --save '' --dir /tmp; scripts/watchdog.bash 'python manage.py rqworker system default parse_statistics parse_accounts' '**/*.py'; exec python manage.py runserver 0.0.0.0:10042"]
+CMD ["sh", "-c", "bash scripts/wait-for-postgres.bash; redis-server --daemonize yes --save '' --dir /tmp; scripts/watchdog.bash 'python manage.py rqworker system default parse_statistics parse_accounts' '**/*.py'; exec python manage.py runserver 0.0.0.0:10042"]
 
 COPY config/ipython_config.py .
 RUN ipython profile create

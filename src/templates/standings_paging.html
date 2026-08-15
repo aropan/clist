@@ -2,22 +2,22 @@
 
 {% lazy_paginate per_page,per_page_more statistics using 'standings_paging' %}{% get_pages %}
 
-{% with rev=my_statistics_rev|default:False %}
+{% with rev=my_statistics_rev|default:False resource=contest.resource %}
 
 {% if not my_statistics or not rev %}
 {% include "standings_paging_previous.html" %}
 {% endif %}
 
-{% preload_statistics statistics contest.resource as preload_statistics_data %}
+{% preload_statistics statistics resource as preload_statistics_data %}
 {% with statistics_chained=statistics|pass_arg:my_statistics|chain_rev:rev|chain:virtual_start_statistics %}
 {% for statistic in statistics_chained %}
 
-{% with tag="td" %}
+{% with statistic_id=statistic.id statistic_my_stat=statistic.my_stat statistic_floating=statistic.floating statistic_virtual_start=statistic.virtual_start %}
 {% with addition=statistic.addition_replacement|default:statistic.addition place=statistic.addition_replacement.place|default:statistic.place|default:unspecified_place %}
-{% if statistic.my_stat and statistic.floating and not rev %}{% include "standings_paging_next.html" %}{% endif %}
+{% if statistic_my_stat and statistic_floating and not rev %}{% include "standings_paging_next.html" %}{% endif %}
 <tr
-    class="stat-cell {{ statistic.id }}{% if statistic.my_stat %} my-stat info starred{% endif %}{% if statistic.floating %} floating hidden{% endif %}{% if statistic.id == request.GET.find_me|toint %} find-me-row info starred{% endif %}{% if versus_statistic_id == statistic.id %} success{% endif %}{% if statistic.virtual_start %} info starred virtual-start-statistic{% endif %}"
-data-statistic-id="{{ statistic.id }}"
+    class="stat-cell {{ statistic_id }}{% if statistic_my_stat %} my-stat info starred{% endif %}{% if statistic_floating %} floating hidden{% endif %}{% if statistic_id == find_me %} find-me-row info starred{% endif %}{% if versus_statistic_id == statistic_id %} success{% endif %}{% if statistic_virtual_start %} info starred virtual-start-statistic{% endif %}"
+data-statistic-id="{{ statistic_id }}"
 {% if colored_by_group_score %}data-result="{{ statistic.solving|scoreformat }}"{% endif %}
 {% if addition.hack %}
   {% if addition.hack.successful %}data-successful-challenge="{{ addition.hack.successful }}"{% endif %}
@@ -28,7 +28,7 @@ data-place="{{ place }}"
 {% with more_penalty=addition|get_item:'_more_penalty' %}{% if more_penalty %}data-additional-penalty="{{ more_penalty }}"{% endif %}{% endwith %}
 >
   {% with advance=addition|get_item:'_advance' %}
-  <{{ tag }}
+  <td
     class="place-cell sticky-column{% if advance and not addition.medal %} advance{% if advance.class %} {{ advance.class }}{% endif %}{% endif %}"
     data-sticky-column="place-cell"
     {% if advance %}
@@ -38,13 +38,13 @@ data-place="{{ place }}"
     {% endif %}
   >
     {{ place }}
-    {% if with_row_num and not statistic.floating %}({{ forloop.counter0|add:pages.current_start_index }}){% endif %}
+    {% if with_row_num and not statistic_floating %}({{ forloop.counter0|add:pages.current_start_index }}){% endif %}
     {% if other_contests %}{{ contests_ids|get_item:statistic.contest_id }}{% endif %}
-  </{{ tag }}>
+  </td>
   {% endwith %}
   {% if data_1st_u %}
-  {% with info=participants_info|get_item:statistic.id %}
-  <{{ tag }} class="first-u-cell sticky-column" data-sticky-column="first-u-cell">
+  {% with info=participants_info|get_item:statistic_id %}
+  <td class="first-u-cell sticky-column" data-sticky-column="first-u-cell">
     {% if info.search %}
       <a
         {% if info.out_of_highlight %} class="out-of-quota"{% endif %}
@@ -65,17 +65,17 @@ data-place="{{ place }}"
       </div>
       {% endif %}{% endif %}
     {% endif %}
-  </{{ tag }}>
+  </td>
   {% endwith %}
   {% endif %}
-  <{{ tag }} class="handle-cell sticky-column
-    {% with info=participants_info|get_item:statistic.id %}
+  <td class="handle-cell sticky-column
+    {% with info=participants_info|get_item:statistic_id %}
     {% if info and info.n and not info.out_of_highlight and info.n <= standings_options.n_highlight or info and info.highlight %}bg-success{% endif %}
     {% endwith %}
   " data-sticky-column="handle-cell">
     <div class="handle-cell-flex">
       <span>
-        {% include "standings_account.html" with account=statistic.account resource=contest.resource with_coder_list=add_to_list coder_list_select=fields_to_select.list %}
+        {% include "standings_account.html" with account=statistic.account resource=resource with_coder_list=add_to_list coder_list_select=fields_to_select.list %}
         {% for resource in params.resources %}
         <div class="small">
           {% with statistic.account.resource_coders|filter_by_resource:resource as accounts %}
@@ -121,22 +121,22 @@ data-place="{{ place }}"
       </span>
       {% endif %}{% endwith %}
     </div>
-  </{{ tag }}>
+  </td>
   {% if versus_data %}
     {% with versus_data_row=versus_data.stats|get_item:statistic.account.key %}
     {% include "standings_versus_columns.html" %}
     {% endwith %}
   {% endif %}
-  <{{ tag }} class="score-cell sticky-column" data-sticky-column="score-cell">
+  <td class="score-cell sticky-column" data-sticky-column="score-cell">
     {{ statistic.addition_replacement.solving|default:statistic.solving|scoreformat }}
-  </{{ tag }}>
+  </td>
   {% if mod_penalty %}
-  <{{ tag }} class="gap-cell">
+  <td class="gap-cell">
     <div>
     {% if addition.penalty is None or statistic.solving is None %}&#183;{% else %}
     {% calc_mod_penalty info=mod_penalty contest=contest solving=statistic.solving penalty=addition.penalty %}{% endif %}
     </div>
-  </{{ tag }}>
+  </td>
   {% endif %}
 
   {% with advance_url=addition|get_item:"_advance_url" advance_medal=addition|get_item:"_advance_medal" advance_icon=addition|get_item:"_advance_icon" %}
@@ -149,7 +149,7 @@ data-place="{{ place }}"
   {% else %}
   {% define addition|get_item:field as value %}
   {% endif %}
-  <{{ tag }}{% if field in contest.resource.RATING_FIELDS %} class="rating-cell"{% else %} class="addition-{{ field }}-cell"{% endif %}>
+  <td{% if field in resource.RATING_FIELDS %} class="rating-cell"{% else %} class="addition-{{ field }}-cell"{% endif %}>
     <span{% if field == 'advance' and advance_medal %} class="trophy {{ advance_medal|lower }}-trophy"{% endif %}>
       {% if field == 'advance' and advance_url %}<a href="{{ advance_url }}">{% endif %}
       {% if field == 'new_global_rating' and statistic.new_global_rating is not None %}
@@ -159,11 +159,11 @@ data-place="{{ place }}"
           <i class="fas fa-angle-{% if statistic.global_rating_change > 0 %}up{% else %}down{% endif %}"></i>{{ statistic.global_rating_change|abs }}
         </span>
       {% else %}
-        {% include "field_value.html" with resource=contest.resource %}
+        {% include "field_value.html" with resource=resource %}
       {% endif %}
       {% if field == 'advance' and advance_url %}</a>{% endif %}
     </span>
-  </{{ tag }}>
+  </td>
   {% endfor %}
   {% endwith %}
 
@@ -176,11 +176,10 @@ data-place="{{ place }}"
   {% comment %} {% endif %} {% endcomment %}
   {% standings_statistic_problems %}
 </tr>
-{% if statistic.my_stat and statistic.floating and rev %}{% include "standings_paging_previous.html" %}{% endif %}
-{% endwith %}
+{% if statistic_my_stat and statistic_floating and rev %}{% include "standings_paging_previous.html" %}{% endif %}
 {% endwith %}
 
-{% if statistic.my_stat %}
+{% if statistic_my_stat %}
 <script>
   var selector = $('tr.my-stat.floating')
   if (!$('tr.my-stat:not(.floating)').length) {
@@ -195,6 +194,7 @@ data-place="{{ place }}"
 </script>
 {% endif %}
 
+{% endwith %}
 {% endfor %}
 {% endwith %}
 

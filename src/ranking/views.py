@@ -458,6 +458,33 @@ def _get_order_by(fields):
     return order_by
 
 
+def _get_standings_row(statistics, order, statistic_id):
+    # The id predicate must remain outside the window query, otherwise its row number is always one. Keep the inner
+    # projection narrow because Statistics, Account, and Resource contain large JSON fields that can spill the sort.
+    ranked_statistics = statistics.values("pk", "place_as_int").annotate(
+        row_number=models.Window(expression=window.RowNumber(), order_by=_get_order_by(order))
+    )
+    sql_query, sql_params = ranked_statistics.query.get_compiler(using=statistics.db).as_sql()
+    rows = Statistics.objects.raw(
+        raw_query=f"""
+        SELECT selected_statistics."id",
+               selected_statistics."place_as_int",
+               selected_statistics."solving",
+               selected_statistics."addition",
+               ranked_statistics."row_number"
+        FROM ({sql_query}) ranked_statistics
+        JOIN "ranking_statistics" selected_statistics ON selected_statistics."id" = ranked_statistics."pk"
+        WHERE ranked_statistics."pk" = %s
+        """,
+        params=[*sql_params, statistic_id],
+        using=statistics.db,
+    )
+    row = next(iter(rows), None)
+    if row is None:
+        return None
+    return {"place_as_int": row.place_as_int, "row_number": row.row_number}
+
+
 def standings_charts(request, context):
     default_n_bins = 20
     contest = context["contest"]
@@ -830,6 +857,8 @@ def render_standings_paging(contest, statistics, with_detail=True):
         "contest_timeline": contest.get_timeline_info(),
         "has_country": has_country,
         "with_detail": with_detail,
+        "standings_scoreformat_cache": {},
+        "find_me": None,
         "per_page": contest.standings_per_page,
         "per_page_more": 0,
         "mod_penalty": mod_penalty,
@@ -872,11 +901,12 @@ def get_standings_mod_penalty(contest, division, problems, statistics):
     if contest.duration_in_secs and all("time" not in k for k in contest_fields):
         if division and division != "any":
             statistics = statistics.filter(addition__division=division)
-        first = statistics.first()
+        first = statistics.values("addition", "solving").first()
         if first:
-            penalty = first.addition.get("penalty")
-            if penalty and isinstance(penalty, int) and "solved" not in first.addition:
-                return {"solving": first.solving, "penalty": penalty}
+            addition = first["addition"]
+            penalty = addition.get("penalty")
+            if penalty and isinstance(penalty, int) and "solved" not in addition:
+                return {"solving": first["solving"], "penalty": penalty}
     return None
 
 
@@ -1099,7 +1129,7 @@ def standings(request, contest, other_contests=None, template="standings.html", 
 
     order = contest.get_statistics_order()
 
-    statistics = statistics.select_related("account__resource").prefetch_related("account__coders")
+    statistics = statistics.select_related("account").prefetch_related("account__resource")
 
     has_country = (
         "country" in contest_fields
@@ -1320,9 +1350,9 @@ def standings(request, contest, other_contests=None, template="standings.html", 
     enable_timeline = False
     timeline = None
     if contest.duration_in_secs:
-        first = statistics.first()
-        if first:
-            first_problems = list(first.addition.get("problems", {}).values())
+        first_addition = statistics.values_list("addition", flat=True).first()
+        if first_addition is not None:
+            first_problems = list(first_addition.get("problems", {}).values())
             enable_timeline = all(not is_reject(p) for p in first_problems) or any("time" in p for p in first_problems)
     if enable_timeline and "timeline" in request.GET:
         timeline = request.GET.get("timeline") or "show"
@@ -1684,21 +1714,9 @@ def standings(request, contest, other_contests=None, template="standings.html", 
 
     # find me
     if find_me and groupby == "none":
-        find_me_stat = statistics.annotate(
-            row_number=models.Window(expression=window.RowNumber(), order_by=_get_order_by(order))
-        )
-        find_me_stat = find_me_stat.annotate(statistic_id=F("id"))
-        sql_query, sql_params = find_me_stat.query.sql_with_params()
-        find_me_stat = Statistics.objects.raw(
-            f"""
-            SELECT * FROM ({sql_query}) ranking_statistics WHERE "statistic_id" = %s
-            """,
-            [*sql_params, find_me],
-        )
-        find_me_stat = list(find_me_stat)
-        if find_me_stat:
-            find_me_stat = find_me_stat[0]
-            row_number = find_me_stat.row_number
+        find_me_stat = _get_standings_row(statistics, order, find_me)
+        if find_me_stat is not None:
+            row_number = find_me_stat["row_number"]
             paging_free = "querystring_key" not in request.GET and "standings_paging" not in request.GET
             if paging_free and row_number > per_page:
                 paging = (row_number - per_page - 1) // per_page_more + 2
@@ -1725,7 +1743,7 @@ def standings(request, contest, other_contests=None, template="standings.html", 
             if (
                 my_stat.place_as_int
                 and find_me_stat
-                and (not find_me_stat.place_as_int or find_me_stat.place_as_int > my_stat.place_as_int)
+                and (not find_me_stat["place_as_int"] or find_me_stat["place_as_int"] > my_stat.place_as_int)
             ):
                 context["my_statistics_rev"] = True
 
@@ -1741,7 +1759,7 @@ def standings(request, contest, other_contests=None, template="standings.html", 
     name_instead_key = contest.info.get("standings", {}).get("name_instead_key", name_instead_key)
     context["name_instead_key"] = name_instead_key
 
-    virtual_start = VirtualStart.objects.filter(contest=contest, coder=coder).first()
+    virtual_start = VirtualStart.objects.filter(contest=contest, coder=coder).first() if coder else None
     with_virtual_start = bool(virtual_start and virtual_start.is_active() and enable_timeline)
     if with_virtual_start:
         timeline = None
@@ -1768,6 +1786,7 @@ def standings(request, contest, other_contests=None, template="standings.html", 
         "versus_data": versus_data,
         "versus_statistic_id": versus_statistic_id,
         "standings_options": options,
+        "standings_scoreformat_cache": {},
         "has_alternative_result": with_detail and options.get("alternative_result_field"),
         "mod_penalty": mod_penalty,
         "freeze_duration": freeze_duration,
@@ -1806,6 +1825,7 @@ def standings(request, contest, other_contests=None, template="standings.html", 
         "with_detail": with_detail,
         "with_solution": with_solution,
         "with_autoreload": with_autoreload,
+        "find_me": find_me,
         "groupby": groupby,
         "pie_limit_rows_groupby": 50,
         "labels_groupby": labels_groupby,

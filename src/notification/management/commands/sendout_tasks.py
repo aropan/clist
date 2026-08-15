@@ -199,9 +199,16 @@ class Command(BaseCommand):
             stop_email = True
         clear_email_task = False
 
-        delete_info = Task.objects.filter(
-            Q(is_sent=True, modified__lte=now() - timedelta(days=1)) | Q(created__lte=now() - timedelta(days=2))
-        ).delete()
+        # Task.objects prefetches a GenericForeignKey, but the deletion collector only needs the tasks themselves.
+        # Empty generic-prefetch batches also raise EmptyResultSet while django-print-sql is wrapping Django 6.1.
+        delete_info = (
+            Task.objects
+            .filter(
+                Q(is_sent=True, modified__lte=now() - timedelta(days=1)) | Q(created__lte=now() - timedelta(days=2))
+            )
+            .prefetch_related(None)
+            .delete()
+        )
         logger.info(f"Tasks cleared: {delete_info}")
 
         qs = Task.objects.all() if coders and options.get("force") else Task.unsent.all()

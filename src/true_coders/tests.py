@@ -1,16 +1,29 @@
+import inspect
 from datetime import timedelta
 from types import SimpleNamespace
 from unittest import mock
 
 from django.contrib.auth.models import AnonymousUser, User
+from django.db import connection
 from django.test import RequestFactory, SimpleTestCase, TestCase, override_settings
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils import timezone
 
 from clist.models import Contest, Resource
+from pyclist.middleware import CustomRequest
 from ranking.models import Account, Statistics
-from true_coders.models import Coder
-from true_coders.views import change, get_ratings_data, search
+from true_coders.models import Coder, CoderList
+from true_coders.views import (
+    PROFILE_CONTESTS_PAGING_TEMPLATE,
+    PROFILE_WRITERS_PAGING_TEMPLATE,
+    _get_data_mixed_profile,
+    change,
+    get_profile_context,
+    get_ratings_data,
+    search,
+)
+from true_coders.views import accounts as accounts_view
 
 
 class SettingsViewTest(TestCase):
@@ -111,6 +124,200 @@ class SearchPaginationTest(SimpleTestCase):
             for value in (0, -1):
                 with self.subTest(field=field, value=value):
                     assert self.get_response(**{field: value}).status_code == 400
+
+
+class ProfileLookupTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        now = timezone.now()
+        cls.resource = Resource.objects.create(
+            host="profile-lookup.example",
+            enable=True,
+            url="https://profile-lookup.example/",
+            color="#336699",
+            icon_file="resources/test.png",
+            icon_updated_at=now,
+        )
+        cls.account = Account.objects.create(resource=cls.resource, key="ShortKey")
+        cls.second_account = Account.objects.create(resource=cls.resource, key="SecondKey")
+        cls.coder = Coder.objects.create(username="ShortCoder")
+        cls.writer = Contest.objects.create(
+            resource=cls.resource,
+            title="Profile writer",
+            start_time=now - timedelta(hours=2),
+            end_time=now - timedelta(hours=1),
+            duration_in_secs=3600,
+            url="https://profile-lookup.example/contest",
+            key="profile-writer",
+            host=cls.resource.host,
+        )
+
+    def test_mixed_profile_batches_account_lookups_in_query_order(self):
+        request = CustomRequest(RequestFactory().get("/profile/"))
+        request.user = AnonymousUser()
+        query = [
+            f"{self.resource.host}:{self.second_account.key}",
+            f"{self.resource.host}:{self.account.key}",
+        ]
+
+        with CaptureQueriesContext(connection) as queries:
+            data = _get_data_mixed_profile(request, query)
+
+        account_queries = [item["sql"] for item in queries if 'FROM "ranking_account"' in item["sql"]]
+        assert len(account_queries) == 1
+        assert account_queries[0].count('"ranking_account"."key" =') == 2
+        assert data["profiles"] == [self.second_account, self.account]
+
+    def test_mixed_profile_preserves_account_and_coder_query_order(self):
+        request = CustomRequest(RequestFactory().get("/profile/"))
+        request.user = AnonymousUser()
+        query = [
+            f"{self.resource.host}:{self.second_account.key}",
+            self.coder.username,
+            f"{self.resource.host}:{self.account.key}",
+        ]
+
+        data = _get_data_mixed_profile(request, query)
+
+        assert data["profiles"] == [self.second_account, self.coder, self.account]
+
+    def test_contest_paging_context_skips_auxiliary_queries(self):
+        request = CustomRequest(RequestFactory().get("/account/"))
+        request.user = AnonymousUser()
+        request.session = {}
+
+        with (
+            mock.patch("true_coders.views.get_medals_for_profile_context") as medals,
+            mock.patch("true_coders.views.make_chart") as make_chart,
+        ):
+            context = get_profile_context(
+                request,
+                Statistics.objects.none(),
+                Contest.objects.none(),
+                Resource.objects.none(),
+                template=PROFILE_CONTESTS_PAGING_TEMPLATE,
+            )
+
+        medals.assert_not_called()
+        make_chart.assert_not_called()
+        assert context["history_resources"] == []
+        assert context["show_history_ratings"] is False
+
+    def test_writers_paging_context_keeps_writers_and_skips_aggregates(self):
+        request = CustomRequest(RequestFactory().get("/account/"))
+        request.user = AnonymousUser()
+        request.session = {}
+
+        with (
+            mock.patch("true_coders.views.get_medals_for_profile_context") as medals,
+            mock.patch("true_coders.views.make_chart") as make_chart,
+        ):
+            context = get_profile_context(
+                request,
+                Statistics.objects.none(),
+                Contest.objects.filter(pk=self.writer.pk),
+                Resource.objects.filter(pk=self.resource.pk),
+                template=PROFILE_WRITERS_PAGING_TEMPLATE,
+            )
+
+        medals.assert_not_called()
+        make_chart.assert_not_called()
+        assert list(context["writers"]) == [self.writer]
+        assert context["history_resources"] == []
+        assert context["show_history_ratings"] is False
+
+
+class CoderListFilterTest(TestCase):
+    def test_empty_anonymous_filter_uses_no_query(self):
+        with CaptureQueriesContext(connection) as queries:
+            coder_lists, uuids = CoderList.filter_for_coder_and_uuids(coder=None, uuids=[])
+            coder_lists = list(coder_lists)
+
+        assert coder_lists == []
+        assert uuids == []
+        assert len(queries) == 0
+
+
+class AccountsContestFilterTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        now = timezone.now()
+        cls.update_icon_patcher = mock.patch.object(Resource, "update_icon")
+        cls.update_icon_patcher.start()
+        cls.addClassCleanup(cls.update_icon_patcher.stop)
+        cls.resource = Resource.objects.create(
+            host="accounts-filter.example",
+            enable=True,
+            url="https://accounts-filter.example/",
+        )
+        cls.account = Account.objects.create(resource=cls.resource, key="selected")
+        cls.other_account = Account.objects.create(resource=cls.resource, key="not-selected")
+        cls.contest = Contest.objects.create(
+            resource=cls.resource,
+            title="Accounts filter contest",
+            start_time=now - timedelta(hours=2),
+            end_time=now - timedelta(hours=1),
+            duration_in_secs=3600,
+            url="https://accounts-filter.example/contest/1",
+            key="accounts-filter-1",
+            host=cls.resource.host,
+        )
+        cls.second_contest = Contest.objects.create(
+            resource=cls.resource,
+            title="Second accounts filter contest",
+            start_time=now - timedelta(hours=4),
+            end_time=now - timedelta(hours=3),
+            duration_in_secs=3600,
+            url="https://accounts-filter.example/contest/2",
+            key="accounts-filter-2",
+            host=cls.resource.host,
+        )
+        for contest in (cls.contest, cls.second_contest):
+            Statistics.objects.create(
+                account=cls.account,
+                contest=contest,
+                resource=cls.resource,
+                place="1",
+                place_as_int=1,
+            )
+
+    @staticmethod
+    def get_accounts_queryset(*contest_ids, sort=True):
+        params = {"contest": contest_ids}
+        if sort:
+            params.update({"sort_column": "account", "sort_order": "asc"})
+        request = CustomRequest(
+            RequestFactory().get(
+                "/accounts/",
+                params,
+            )
+        )
+        request.user = AnonymousUser()
+        request.as_coder = None
+        request.user_agent = SimpleNamespace(is_mobile=False)
+        _, context = inspect.unwrap(accounts_view)(request)
+        return context["accounts"]
+
+    def test_single_contest_account_order_uses_statistics_join(self):
+        accounts = self.get_accounts_queryset(self.contest.pk)
+        sql = str(accounts.query)
+
+        assert 'INNER JOIN "ranking_statistics"' in sql
+        assert 'ORDER BY "ranking_account"."key" ASC' in sql
+        assert list(accounts.values_list("pk", flat=True)) == [self.account.pk]
+
+    def test_single_contest_default_order_uses_statistics_join(self):
+        accounts = self.get_accounts_queryset(self.contest.pk, sort=False)
+        sql = str(accounts.query)
+
+        assert 'INNER JOIN "ranking_statistics"' in sql
+        assert accounts.query.order_by == ("selected_place",)
+        assert list(accounts.values_list("pk", flat=True)) == [self.account.pk]
+
+    def test_multiple_contests_do_not_duplicate_accounts(self):
+        accounts = self.get_accounts_queryset(self.contest.pk, self.second_contest.pk)
+
+        assert list(accounts.values_list("pk", flat=True)) == [self.account.pk]
 
 
 class ChangeIntegerValidationTest(SimpleTestCase):

@@ -6,7 +6,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models import Case, CharField, OuterRef, Subquery, Value, When
 from django.db.models.fields import Field
-from django.db.models.lookups import LessThan
+from django.db.models.lookups import IContains, LessThan, Lookup
 from django.urls import reverse
 from django.utils.timezone import now
 from sql_util.utils import Exists
@@ -22,6 +22,26 @@ class DateDuringLookup(LessThan):
 
 
 Field.register_lookup(DateDuringLookup, lookup_name="during")
+
+
+class PostgresIContains(IContains):
+    """Use PostgreSQL ILIKE so raw trigram indexes can serve icontains lookups."""
+
+    def as_postgresql(self, compiler, connection):
+        lhs_sql, lhs_params = Lookup.process_lhs(self, compiler, connection)
+        field_internal_type = self.lhs.output_field.get_internal_type()
+        lhs_sql = connection.ops.lookup_cast("contains", field_internal_type) % lhs_sql
+
+        rhs_sql, rhs_params = self.process_rhs(compiler, connection)
+        if self.is_simple_lookup:
+            rhs_op = f"ILIKE {rhs_sql}"
+        else:
+            rhs_op = connection.pattern_ops["contains"].format(connection.pattern_esc).format(rhs_sql)
+            rhs_op = rhs_op.replace("LIKE", "ILIKE", 1)
+        return f"{lhs_sql} {rhs_op}", (*lhs_params, *rhs_params)
+
+
+Field.register_lookup(PostgresIContains, lookup_name="icontains")
 
 
 class BaseModel(models.Model):
