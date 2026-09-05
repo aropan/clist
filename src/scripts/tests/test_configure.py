@@ -5,14 +5,14 @@ import pytest
 
 CONFIGURE_PATH = Path(__file__).resolve().parents[3] / "configure.py"
 if not CONFIGURE_PATH.is_file():
-    pytest.skip("configure.py is outside the container mount", allow_module_level=True)
-
-SPEC = importlib.util.spec_from_file_location("configure", CONFIGURE_PATH)
-if SPEC is None or SPEC.loader is None:
-    raise ImportError(f"Cannot load {CONFIGURE_PATH}")
-configure = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(configure)
-fill_template = configure.fill_template
+    pytestmark = pytest.mark.skip(reason="configure.py is outside the container mount")
+else:
+    SPEC = importlib.util.spec_from_file_location("configure", CONFIGURE_PATH)
+    if SPEC is None or SPEC.loader is None:
+        raise ImportError(f"Cannot load {CONFIGURE_PATH}")
+    configure = importlib.util.module_from_spec(SPEC)
+    SPEC.loader.exec_module(configure)
+    fill_template = configure.fill_template
 
 
 def test_fill_template_creates_missing_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

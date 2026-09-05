@@ -5,3 +5,4 @@ class AccountType(models.IntegerChoices):
     USER = 1, "User"
     UNIVERSITY = 2, "University"
     TEAM = 3, "Team"
+    MEMBER = 4, "Member"

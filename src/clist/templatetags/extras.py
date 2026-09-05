@@ -660,6 +660,15 @@ def get_rating(resource, value):
 
 @register.filter
 def get_new_rating_value(resource, value):
+    if resource is None:
+        return None
+    if isinstance(value, dict):
+        for field in resource.RATING_FIELDS:
+            if field.lower().startswith("old"):
+                continue
+            if field in value and value[field] is not None:
+                return value[field]
+        return None
     *_, value = resource.get_rating_color(value, ignore_old=True)
     return value
 
@@ -2596,6 +2605,8 @@ def resource_account_types(resource):
         ret.append("university")
     if resource is None or resource.n_team_accounts:
         ret.append("team")
+    if resource is None or resource.n_member_accounts:
+        ret.append("member")
     return ret
 
 

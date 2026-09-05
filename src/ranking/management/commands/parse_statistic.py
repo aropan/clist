@@ -53,6 +53,11 @@ from logify.rq import fail_live_event_logs, interrupt_live_event_logs, interrupt
 from notification.models import NotificationMessage, Subscription
 from notification.utils import compose_message_by_problems, compose_message_by_submissions, send_messages
 from pyclist.decorators import analyze_db_queries
+from ranking.management.commands.calculate_rating_prediction import (
+    ELO_MMR_ALGORITHM,
+    ELO_MMR_RATING_FIELDS,
+    ELO_MMR_STATE_FIELD,
+)
 from ranking.management.commands.parse_accounts_infos import rename_account
 from ranking.management.modules.common import LOG, REQ, UNCHANGED
 from ranking.management.modules.excepts import (
@@ -706,12 +711,19 @@ class Command(BaseCommand):
                         standings_options = dict(contest_options)
                         standings_options.update(standings.pop("options"))
 
-                        canonized_fixed_fields = {canonize(f) for f in standings_options.get("fixed_fields", [])}
-                        for field in contest_options.get("fixed_fields", []):
-                            canonize_field = canonize(field)
-                            if canonize_field not in canonized_fixed_fields:
-                                canonized_fixed_fields.add(canonize_field)
-                                standings_options["fixed_fields"].append(field)
+                        options_groups = [(contest_options, standings_options)]
+                        for account_type, previous_options in contest_options.get("account_type_fields", {}).items():
+                            current_options = standings_options.setdefault("account_type_fields", {}).setdefault(
+                                account_type, {}
+                            )
+                            options_groups.append((previous_options, current_options))
+                        for previous_options, current_options in options_groups:
+                            canonized_fixed_fields = {canonize(f) for f in current_options.get("fixed_fields", [])}
+                            for field in previous_options.get("fixed_fields", []):
+                                canonize_field = canonize(field)
+                                if canonize_field not in canonized_fixed_fields:
+                                    canonized_fixed_fields.add(canonize_field)
+                                    current_options.setdefault("fixed_fields", []).append(field)
 
                         if canonize(standings_options) != canonize(contest_options):
                             contest.info["standings"] = standings_options
@@ -816,6 +828,24 @@ class Command(BaseCommand):
                     lazy_fetch_accounts = standings.pop("lazy_fetch_accounts", False)
                     has_problem_stats = False
 
+                    saved_rating_additions = {}
+                    rating_calculation = contest.info.get("_rating_calculation") or {}
+                    if rating_calculation.get("algorithm") == ELO_MMR_ALGORITHM and get_item(
+                        rating_calculation, "config.save_rating"
+                    ):
+                        statistics_with_ratings = Statistics.objects.filter(
+                            contest=contest,
+                            **{f"rating_prediction__{ELO_MMR_STATE_FIELD}__algorithm": ELO_MMR_ALGORITHM},
+                        )
+                        saved_rating_additions = {
+                            account_id: {
+                                field: value for field, value in zip(ELO_MMR_RATING_FIELDS, values) if value is not None
+                            }
+                            for account_id, *values in statistics_with_ratings.values_list(
+                                "account_id", *(f"rating_prediction__{field}" for field in ELO_MMR_RATING_FIELDS)
+                            )
+                        }
+
                     results = []
                     if result or specific_users:
                         fields_set = set()
@@ -832,15 +862,7 @@ class Command(BaseCommand):
                         medals_skip = set()
                         medals_skip_places = defaultdict(int)
 
-                        additions = copy.deepcopy(contest.info.get("additions", {}))
-                        if additions:
-                            for v in result.values():
-                                for field in [v.get("member"), v.get("name")]:
-                                    v.update(OrderedDict(additions.pop(field, [])))
-                            for k, v in additions.items():
-                                if v.get("__update_only"):
-                                    continue
-                                result[k] = copy.deepcopy(v)
+                        plugin.apply_result_additions(contest, result, add_missing=True)
 
                         for r in result.values():
                             for k, v in r.items():
@@ -854,6 +876,7 @@ class Command(BaseCommand):
                                 continue
 
                             skip_result = bool(r.get("_no_update_n_contests"))
+                            skip_for_problem_stat = bool(r.get("_skip_for_problem_stat"))
                             last_activity = contest.start_time
                             if r.get("submit_time") and "timestamp" in custom_fields_types.get("submit_time", []):
                                 last_activity = datetime.fromtimestamp(r["submit_time"], tz=timezone.utc)
@@ -869,7 +892,7 @@ class Command(BaseCommand):
                                     teams_viewed.add(r["team_id"])
 
                                 solved = {"solving": 0}
-                                if is_new:
+                                if is_new and not r.get("_skip_for_n_statistics"):
                                     if r.get("division"):
                                         n_statistics[r.get("division")] += 1
                                     n_statistics["__total__"] += 1
@@ -987,7 +1010,7 @@ class Command(BaseCommand):
                                                     last_ac["time"] = v["time"]
                                                     last_ac["accounts"] = [r["member"]]
 
-                                    if r.get("_skip_for_problem_stat") or not is_new:
+                                    if skip_for_problem_stat or not is_new:
                                         continue
 
                                     p["n_teams"] = p.get("n_teams", 0) + 1
@@ -1802,6 +1825,7 @@ class Command(BaseCommand):
                             if not specific_users:
                                 update_problems_first_ac()
                             update_statistic_stats()
+                            r.update(saved_rating_additions.get(account.pk, {}))
                             defaults, addition, try_calculate_time = get_addition()
 
                             statistics_objects = Statistics.saved_objects
@@ -1962,7 +1986,7 @@ class Command(BaseCommand):
                                             short = get_problem_short(p)
                                             if not short:
                                                 continue
-                                            p.update(d_problems.get(d, {}).get(short, {}))
+                                            p.update(get_item(d_problems, (d, short), default={}))
                                             if has_problem_stats:
                                                 p.setdefault("n_total", n_statistics[d])
                                             p.get("first_ac", {}).pop("_cmp_seconds", None)

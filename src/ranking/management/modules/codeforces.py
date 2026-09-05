@@ -964,7 +964,7 @@ class Statistic(BaseModule):
                     raise ExceptionParseAccounts(f"Not found handle = {handle}")
                 location = REQ.geturl(f"https://{SUBDOMAIN}codeforces.com/profile/{handle}")
                 index = users.index(handle)
-                if urlparse(location).path.rstrip("/"):
+                if location and urlparse(location).path.rstrip("/"):
                     target = location.rstrip("/").split("/")[-1]
                     users[index] = target
                 else:

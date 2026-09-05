@@ -59,6 +59,10 @@
     <span class="badge progress-bar-info">{{ resource.n_team_accounts|intcomma }} teams</span>
     {% endif %}
 
+    {% if resource.n_member_accounts %}
+    <span class="badge progress-bar-info">{{ resource.n_member_accounts|intcomma }} members</span>
+    {% endif %}
+
     {% endif %}
 </div>
 

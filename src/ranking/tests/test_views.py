@@ -7,8 +7,15 @@ from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 
 from clist.models import Contest, Resource
+from ranking.enums import AccountType
 from ranking.models import Account, Statistics
-from ranking.views import _get_standings_row, render_standings_paging, versus
+from ranking.views import (
+    _get_standings_row,
+    get_standings_account_type,
+    get_standings_fields,
+    render_standings_paging,
+    versus,
+)
 
 
 class VersusTest(SimpleTestCase):
@@ -16,6 +23,74 @@ class VersusTest(SimpleTestCase):
         request = RequestFactory().get("/versus/", {"remove": "not-an-integer"})
         response = versus(request, "first/vs/second")
         assert response.status_code == 400
+
+
+class StandingsFieldsTest(SimpleTestCase):
+    @staticmethod
+    def create_contest(default_account_type=AccountType.USER, with_account_type=True):
+        resource = Resource(info={}, default_account_type=default_account_type)
+        return Contest(
+            resource=resource,
+            info={
+                "fields": ["n_gold"],
+                "standings": {
+                    "with_account_type": with_account_type,
+                    "account_type_fields": {"member": {"fixed_fields": ["n_gold"]}},
+                },
+            },
+        )
+
+    def test_member_account_type_adds_its_fixed_fields(self):
+        contest = self.create_contest()
+
+        member_fields = get_standings_fields(contest, division=None, with_detail=False, account_type="member")
+        user_fields = get_standings_fields(contest, division=None, with_detail=False, account_type="user")
+
+        assert "n_gold" in member_fields
+        assert "n_gold" not in user_fields
+
+    def test_account_type_is_normalized(self):
+        contest = self.create_contest()
+
+        for value in ("member", "MEMBER"):
+            with self.subTest(value=value):
+                account_type, account_type_value = get_standings_account_type(contest, value)
+                assert account_type == AccountType.MEMBER
+                assert account_type_value == "member"
+
+    def test_default_account_type_is_used(self):
+        contest = self.create_contest(default_account_type=AccountType.MEMBER)
+
+        account_type, account_type_value = get_standings_account_type(contest, None)
+
+        assert account_type == AccountType.MEMBER
+        assert account_type_value == "member"
+
+    def test_account_type_is_ignored_when_filter_is_disabled(self):
+        contest = self.create_contest(with_account_type=False)
+
+        assert get_standings_account_type(contest, "member") == (None, None)
+
+    def test_saved_rating_prediction_does_not_duplicate_rating_fields(self):
+        contest = self.create_contest()
+        contest.resource.rating_prediction = {}
+        contest.has_fixed_rating_prediction_field = True
+        contest.rating_prediction_hash = "hash"
+        contest.info["fields"].extend(["old_rating", "new_rating", "rating_change", "rating_perf"])
+        contest.info["_rating_calculation"] = {"config": {"save_rating": True}}
+
+        fields = get_standings_fields(contest, division=None, with_detail=True, account_type="member")
+
+        assert "new_rating" in fields
+        assert "rating_perf" in fields
+        assert "predicted_new_rating" not in fields
+        assert "predicted_rating_perf" not in fields
+
+        contest.info["_rating_calculation"]["config"]["save_rating"] = False
+        fields = get_standings_fields(contest, division=None, with_detail=True, account_type="member")
+
+        assert "predicted_new_rating" in fields
+        assert "predicted_rating_perf" in fields
 
 
 class StandingsRowTest(TestCase):

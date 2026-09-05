@@ -5,6 +5,7 @@ import base64
 import copy
 import gzip
 import html
+import http
 import json
 import logging
 import mimetypes
@@ -24,7 +25,6 @@ import urllib.request
 import zlib
 from contextlib import contextmanager
 from datetime import datetime, timedelta
-from distutils.util import strtobool
 from gzip import GzipFile
 from hashlib import md5
 from http.cookiejar import Cookie, MozillaCookieJar
@@ -38,6 +38,7 @@ from time import sleep
 
 import brotli
 import chardet
+from distutils.util import strtobool
 from filelock import FileLock
 from requests.models import Response
 
@@ -1090,10 +1091,12 @@ class requester:
         except urllib.error.HTTPError as e:
             raise FailOnGetResponse(e)
 
-    def geturl(self, url):
+    def geturl(self, url, time_out=None):
         try:
-            return self.opener.open(url).geturl()
-        except urllib.error.URLError:
+            if time_out is None:
+                return self.opener.open(url).geturl()
+            return self.opener.open(url, timeout=time_out).geturl()
+        except urllib.error.URLError, http.client.RemoteDisconnected:
             return None
 
     def get_link_by_text(self, text, page=None):

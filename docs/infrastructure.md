@@ -123,12 +123,12 @@ Static network `10.42.0.x`. `dev` mounts `./src/:/usr/src/clist/`.
 
 ## Routine Compose update
 
-Validate the rendered configuration, update the default services, then run the basic
+Validate the rendered configuration, update the production service, then run the basic
 application check:
 
 ```bash
 docker compose config --quiet
-docker compose up --detach --build
+docker compose up --detach --build prod
 docker compose ps
 docker compose exec -T prod python manage.py check
 ```

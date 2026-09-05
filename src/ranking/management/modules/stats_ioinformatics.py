@@ -5,21 +5,92 @@ import json
 import re
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
+from copy import deepcopy
 from urllib.parse import urljoin
 
 from first import first
 from multiset import Multiset
 
-from clist.templatetags.extras import as_number
-from ranking.management.modules.common import REQ, BaseModule, parsed_table
+from clist.templatetags.extras import as_number, get_item
+from ranking.management.modules.common import REQ, BaseModule, apply_result_additions, parsed_table
 from ranking.management.modules.excepts import InitModuleException
 
 
 def get_official_ranking_base_url(info):
     ranking_url = info.get("_official_website_ranking")
-    if not ranking_url and (website := info.get("parse", {}).get("website")):
+    if not ranking_url and (website := get_item(info, "parse.website")):
         ranking_url = website.replace("//", "//ranking.", 1)
     return ranking_url
+
+
+def parse_delegation(value, urls=()):
+    ret = {}
+    if (url := first(urls)) and (match := re.search(r"members/([^/]+)/?$", url)):
+        ret["delegation"] = match.group(1)
+    if country := re.sub(r"\s*[0-9]+$", "", value or ""):
+        ret["country"] = country
+    return ret
+
+
+def get_member_results(result, hidden_fields, score_precision=None):
+    member_fields = []
+    member_result = {}
+    for row in result.values():
+        if row.get("_no_update_n_contests"):
+            continue
+        if not (member := row.get("delegation")):
+            continue
+
+        member_row = member_result.setdefault(
+            member,
+            {
+                "member": member,
+                "_skip_for_problem_stat": True,
+                "_skip_for_n_statistics": True,
+                "_skip_subscription": True,
+                "info": {"profile_url": {"type": "members"}, "is_member": True},
+                "solving": 0,
+                "problems": {},
+                "_n_contestants": 0,
+            },
+        )
+        member_row["_n_contestants"] += 1
+        member_row["solving"] += row.get("solving", 0)
+        if country := row.get("country"):
+            member_row.setdefault("name", country)
+
+        for short, problem in row.get("problems", {}).items():
+            member_problem = member_row["problems"].setdefault(short, {"result": 0, "_n_full_score": 0})
+            problem_result = problem.get("result", 0)
+            if problem_result > 0:
+                member_problem["result"] += problem_result
+            if not problem.get("partial"):
+                member_problem["_n_full_score"] += 1
+
+        if medal := row.get("medal"):
+            medal_field = f"n_{medal}"
+            member_row[medal_field] = member_row.get(medal_field, 0) + 1
+            hidden_fields[medal_field] = True
+            if medal_field not in member_fields:
+                member_fields.append(medal_field)
+
+    precision = score_precision if score_precision is not None else 10
+    member_rows = sorted(member_result.values(), key=lambda row: row["solving"], reverse=True)
+    place = None
+    last = None
+    for idx, row in enumerate(member_rows, start=1):
+        row["solving"] = round(row["solving"], precision)
+        if last != row["solving"]:
+            last = row["solving"]
+            place = idx
+        row["place"] = place
+
+        n_contestants = row.pop("_n_contestants")
+        for problem in row["problems"].values():
+            problem["result"] = round(problem["result"], precision)
+            problem["partial"] = problem.pop("_n_full_score") < n_contestants
+
+    return member_result, member_fields
 
 
 class Statistic(BaseModule):
@@ -30,7 +101,7 @@ class Statistic(BaseModule):
 
     def get_standings(self, users=None, statistics=None, **kwargs):
         result = {}
-        hidden_fields = OrderedDict()
+        hidden_fields = {"delegation": True}
         problems_info = OrderedDict()
         year = self.start_time.year
         row_index = 0
@@ -52,6 +123,8 @@ class Statistic(BaseModule):
                 row["name"] = v.value
                 if statistics and member in statistics:
                     row["problems"] = statistics[member].get("problems", {})
+                info = row.setdefault("info", {})
+                info["profile_url"] = {"type": "people"}
 
         if not self.standings_url:
             self.standings_url = self.url.replace("/olympiads/", "/results/")
@@ -101,6 +174,9 @@ class Statistic(BaseModule):
                     assert "tasks/" in url
                     short = url.rstrip("/").rsplit("/", 1)[-1]
                     d = problems_info[short]
+                    if match := re.search(r"\.(?P<digits>[0-9]+)$", v.value.strip()):
+                        score_precision = len(match.group("digits"))
+                        global_score_precision = max(global_score_precision or 0, score_precision)
                     score = as_number(v.value, force=True)
                     if score:
                         p = problems.setdefault(short, {})
@@ -110,12 +186,12 @@ class Statistic(BaseModule):
                     row["solving"] = float(v.value)
                 elif k == "Rank":
                     row["place"] = v.value.strip("*").strip(".")
+                    if not row["place"]:
+                        row["_no_update_n_contests"] = True
                 elif k == "Contestant":
                     set_member(v, row)
-                elif k == "Country":
-                    country = re.sub(r"\s*[0-9]+$", "", v.value)
-                    if country:
-                        row["country"] = country
+                elif k in {"Country", "Member"}:
+                    row.update(parse_delegation(v.value, v.column.node.xpath(".//a/@href")))
                 else:
                     val = v.value.strip()
                     if k in ("Medal", "Award"):
@@ -126,7 +202,7 @@ class Statistic(BaseModule):
                     if val:
                         row[k.lower()] = val
             for k in row.keys():
-                hidden_fields[k] = False
+                hidden_fields.setdefault(k, False)
             result[row["member"]] = row
 
         url = self.url.replace("/olympiads/", "/contestants/")
@@ -152,11 +228,11 @@ class Statistic(BaseModule):
                     hidden_fields.setdefault(k, k not in ["country"])
 
                     href = first(v.column.node.xpath('.//a[contains(@class, "tableimglink")]/@href'))
-                    if href:
+                    if k in {"country", "member"} and v.value:
+                        row.update(parse_delegation(v.value, v.column.node.xpath(".//a/@href")))
+                    elif href:
                         value = href.strip("/").rsplit("/", 2)[-1]
                         row[k] = value
-                    elif k == "country":
-                        row[k] = re.sub(r"\s*[0-9]+$", "", v.value)
                     elif k not in row and v.value:
                         row[k] = v.value
 
@@ -165,7 +241,13 @@ class Statistic(BaseModule):
             if not ranking_url:
                 return None
             try:
-                response = REQ.get(urljoin(ranking_url, path), return_json=True, force_json=True, ignore_codes={404})
+                response = REQ.get(
+                    urljoin(ranking_url, path),
+                    return_json=True,
+                    force_json=True,
+                    ignore_codes={404},
+                    time_out=10,
+                )
             except json.decoder.JSONDecodeError:
                 return None
             if isinstance(response, dict) and response.get("__no_json"):
@@ -174,7 +256,7 @@ class Statistic(BaseModule):
 
         ranking_url = get_official_ranking_base_url(self.info)
         if ranking_url:
-            ranking_url = REQ.geturl(ranking_url)
+            ranking_url = REQ.geturl(ranking_url, time_out=5)
             users = get_ranking_url("users/")
         else:
             users = None
@@ -380,6 +462,11 @@ class Statistic(BaseModule):
                             }
                             break
 
+        member_source = deepcopy(result)
+        apply_result_additions(self.contest, member_source)
+        member_result, member_fields = get_member_results(member_source, hidden_fields, global_score_precision)
+        result.update(member_result)
+
         standings = {
             "result": result,
             "url": self.standings_url,
@@ -387,7 +474,11 @@ class Statistic(BaseModule):
             "hidden_fields": [k for k, v in hidden_fields.items() if v],
             "custom_start_time": custom_start_time if custom_start_time else None,
             "series": "ioi",
-            "options": {"score_precision": global_score_precision},
+            "options": {
+                "score_precision": global_score_precision,
+                "with_account_type": bool(member_result),
+                "account_type_fields": {"member": {"fixed_fields": member_fields}},
+            },
         }
 
         if duration_in_secs is not None:
@@ -405,7 +496,7 @@ class Statistic(BaseModule):
             page = REQ.get(url)
 
             info = {}
-            samples = re.finditer('<div[^>]*class="(?P<key>[^"]*)"[^>]*>(?P<value>[^<]*)</div>', page)
+            samples = re.finditer(r'<div[^>]*class="(?P<key>[^"]*)"[^>]*>(?P<value>[^<]*)</div>', page)
             for sample in samples:
                 key = sample.group("key").lower()
                 if key in ["sorttriangle", "mainheader"]:
@@ -413,8 +504,9 @@ class Statistic(BaseModule):
                 value = html.unescape(sample.group("value"))
                 info[key] = value
 
-            sample = re.search('<img[^>]*class="[^"]*participantflag[^"]*"[^>]*src="(?P<src>[^"]*)"[^>]*>', page)
-            if sample:
+            if sample := re.search(
+                r'<img[^>]*class="[^"]*(?:participantflag|countryflag)[^"]*"[^>]*src="(?P<src>[^"]*)"[^>]*>', page
+            ):
                 info["avatar_url"] = urljoin(url, "/" + sample.group("src").lstrip("/"))
 
             samples = re.finditer(
@@ -424,6 +516,14 @@ class Statistic(BaseModule):
             for sample in samples:
                 key = sample.group("name").lower()
                 info.setdefault("contacts", {})[key] = sample.group("href")
+
+            if account.info.get("is_member"):
+                if sample := re.search(r'<div[^>]*class="countryname"[^>]*>[^<]*<div>(?P<name>[^<]*)</div>', page):
+                    info["name"] = html.unescape(sample.group("name")).strip()
+                for sample in re.finditer(r"<li>(?P<key>[^:]*)\s*:\s*(?P<value>[0-9]+)</li>", page):
+                    key = sample.group("key").strip().lower().replace(" ", "_")
+                    value = int(sample.group("value"))
+                    info[key] = value
 
             return user, info
 

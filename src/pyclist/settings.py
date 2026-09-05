@@ -1065,6 +1065,10 @@ STANDINGS_FIELDS_ = {
     "n_gold_problems": '<span class="trophy trophy-detail gold-trophy"><i class="fas fa-trophy"></i></span>',
     "n_silver_problems": '<span class="trophy trophy-detail silver-trophy"><i class="fas fa-trophy"></i></span>',
     "n_bronze_problems": '<span class="trophy trophy-detail bronze-trophy"><i class="fas fa-trophy"></i></span>',
+    "n_gold": '<span class="trophy trophy-detail gold-trophy"><i class="fas fa-trophy"></i></span>',
+    "n_silver": '<span class="trophy trophy-detail silver-trophy"><i class="fas fa-trophy"></i></span>',
+    "n_bronze": '<span class="trophy trophy-detail bronze-trophy"><i class="fas fa-trophy"></i></span>',
+    "n_honorable": '<span class="trophy trophy-detail honorable-trophy"><i class="fas fa-fw fa-award"></i></span>',
 }
 
 STANDINGS_WITH_DETAIL_DEFAULT = True

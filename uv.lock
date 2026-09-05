@@ -457,6 +457,7 @@ dependencies = [
     { name = "django-user-agents" },
     { name = "django-webpush" },
     { name = "docutils" },
+    { name = "elo-mmr-py" },
     { name = "emoji-country-flag" },
     { name = "feedgen" },
     { name = "filelock" },
@@ -577,6 +578,7 @@ requires-dist = [
     { name = "django-user-agents", specifier = "==0.4.0" },
     { name = "django-webpush", specifier = "==0.3.6" },
     { name = "docutils", specifier = "==0.23" },
+    { name = "elo-mmr-py", specifier = "==2.0.0" },
     { name = "emoji-country-flag", specifier = "==2.1.0" },
     { name = "feedgen", specifier = "==1.0.0" },
     { name = "filelock", specifier = "==3.32.3" },
@@ -1261,6 +1263,19 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/39/a4/5180d9afc57e8fca05601dd652bdff19604c218814037fe90ffc7625a50a/docutils-0.23.tar.gz", hash = "sha256:746f5060322511280a1e50eb76846ed6bf2342984b2ac04dc42caa1a8d78799e", size = 2303823, upload-time = "2026-05-27T17:41:06.934Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/32/91/30151a39f7570f448ed84529390628a651d7f27c87d73c9b887f8189695e/docutils-0.23-py3-none-any.whl", hash = "sha256:25d013af9bf23bc1c7b2b093dff4208166c53a94786c9e447808335ef1185fea", size = 634701, upload-time = "2026-05-27T17:40:58.442Z" },
+]
+
+[[package]]
+name = "elo-mmr-py"
+version = "2.0.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/b0/39/52c0a4c6844343a21afac987683fa1b1ae5e563c96d8c0ffe2a3f14873f7/elo_mmr_py-2.0.0.tar.gz", hash = "sha256:e52cdc24f715e73bacf67e8fd793878ead8837f1a9c4a63be5ce0cc35aa6e82d", size = 134751, upload-time = "2026-08-30T08:42:39.827Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/0f/9e/20baff8e9b447593d1ece97c7d3ef4984934e664e1fcd4d07b9a4ffa1b71/elo_mmr_py-2.0.0-cp311-abi3-macosx_10_12_x86_64.whl", hash = "sha256:eac8a4849701b13a4507d5a59380a576aff98a84731150c12bd963582b09a9a7", size = 483477, upload-time = "2026-08-30T08:42:31.082Z" },
+    { url = "https://files.pythonhosted.org/packages/d8/a2/22913ba85aecd618c4b131e0abeef01f92f68733c5ee5a63d31d5c71c879/elo_mmr_py-2.0.0-cp311-abi3-macosx_11_0_arm64.whl", hash = "sha256:cb06954332433444eec6067eafb13bf89ffb8cd9db13eaf6dded19a9954d2059", size = 466558, upload-time = "2026-08-30T08:42:32.752Z" },
+    { url = "https://files.pythonhosted.org/packages/df/66/597db3d79d676ccc6ebcd984075ac2ac8265c441218d45de7a1202e4b763/elo_mmr_py-2.0.0-cp311-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:db3e7f8802a9499be188110b71ea618d9789dcbb2bebb7a2e7df9ed881e2c572", size = 492578, upload-time = "2026-08-30T08:42:34.228Z" },
+    { url = "https://files.pythonhosted.org/packages/5f/40/dde094483e0dacb643051a354e0f1e2be1b0cd9d2dc1a3c9c706700d07fd/elo_mmr_py-2.0.0-cp311-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:53b13237501afd434aab806de31c0cc263725c9816c3244b85f27973fa70af5e", size = 521122, upload-time = "2026-08-30T08:42:35.688Z" },
+    { url = "https://files.pythonhosted.org/packages/39/78/7a1a1739fe50de3e35af43acb3aa715400b31a0ae0b3095e5eef9aec7791/elo_mmr_py-2.0.0-cp311-abi3-win_amd64.whl", hash = "sha256:4373ddd52780bf27667a689175b9bed0ce3b7f6ecce3d84295ca01ec00866320", size = 435740, upload-time = "2026-08-30T08:42:37.505Z" },
 ]
 
 [[package]]

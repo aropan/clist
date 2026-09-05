@@ -30,6 +30,7 @@ from clist.templatetags.extras import (
     get_country_from,
     get_custom_country,
     get_geo_country_code,
+    get_new_rating_value,
 )
 from clist.views import get_view_contests
 from pyclist.indexes import GinIndexTrgrmOps
@@ -78,6 +79,31 @@ class StandingsFormattingTest(SimpleTestCase):
             assert format_score(10, cache) == "formatted"
 
         scoreformat.assert_called_once_with(10)
+
+
+class ResourceRatingColorTest(SimpleTestCase):
+    def test_rating_without_coloring_field_boundaries_has_no_color(self):
+        resource = Resource(
+            info={"ratings": {"chartjs": {"coloring_field": "rank"}}},
+            ratings=[{"low": 1, "high": 21, "min_rating": None}],
+        )
+
+        assert resource.get_rating_color(792, value_name="rating") == (None, None)
+
+
+class ResourceRatingValueTest(SimpleTestCase):
+    def test_missing_resource_returns_none(self):
+        assert get_new_rating_value(None, {"new_rating": 2435}) is None
+
+    def test_statistic_rating_does_not_require_resource_color_scale(self):
+        resource = Resource(ratings=[])
+
+        assert get_new_rating_value(resource, {"new_rating": 2435, "rating_change": 20}) == 2435
+
+    def test_missing_current_rating_returns_none(self):
+        resource = Resource(ratings=[])
+
+        assert get_new_rating_value(resource, {"old_rating": 2415}) is None
 
 
 class ContestStandingsPerPageTest(SimpleTestCase):

@@ -3,6 +3,7 @@ from datetime import timedelta
 from types import SimpleNamespace
 from unittest import mock
 
+from django.conf import settings as django_settings
 from django.contrib.auth.models import AnonymousUser, User
 from django.db import connection
 from django.test import RequestFactory, SimpleTestCase, TestCase, override_settings
@@ -12,6 +13,7 @@ from django.utils import timezone
 
 from clist.models import Contest, Resource
 from pyclist.middleware import CustomRequest
+from ranking.enums import AccountType
 from ranking.models import Account, Statistics
 from true_coders.models import Coder, CoderList
 from true_coders.views import (
@@ -24,6 +26,16 @@ from true_coders.views import (
     search,
 )
 from true_coders.views import accounts as accounts_view
+
+PROFILE_LINKS_MIDDLEWARE = [
+    middleware
+    for middleware in django_settings.MIDDLEWARE
+    if middleware
+    not in {
+        "pyclist.middleware.DebugPermissionOnlyMiddleware",
+        "silk.middleware.SilkyMiddleware",
+    }
+]
 
 
 class SettingsViewTest(TestCase):
@@ -227,6 +239,111 @@ class ProfileLookupTest(TestCase):
         assert context["show_history_ratings"] is False
 
 
+@override_settings(MIDDLEWARE=PROFILE_LINKS_MIDDLEWARE)
+class ProfileContestLinksTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        now = timezone.now()
+        cls.coder = Coder.objects.create(username="ProfileLinksCoder")
+
+        cls.member_resource = Resource.objects.create(
+            host="member-profile-links.example",
+            enable=True,
+            url="https://member-profile-links.example/",
+            icon_file="resources/test.png",
+            icon_updated_at=now,
+        )
+        cls.user_resource = Resource.objects.create(
+            host="user-profile-links.example",
+            enable=True,
+            url="https://user-profile-links.example/",
+            icon_file="resources/test.png",
+            icon_updated_at=now,
+        )
+        cls.member_account = Account.objects.create(
+            resource=cls.member_resource,
+            key="member-account",
+            account_type=AccountType.MEMBER,
+        )
+        cls.user_account = Account.objects.create(resource=cls.user_resource, key="user-account")
+        cls.member_account.coders.add(cls.coder)
+        cls.user_account.coders.add(cls.coder)
+
+        cls.member_contest = cls.create_contest(
+            resource=cls.member_resource,
+            title="Member contest",
+            key="member-contest",
+            end_time=now - timedelta(hours=1),
+        )
+        cls.user_contest = cls.create_contest(
+            resource=cls.user_resource,
+            title="User contest",
+            key="user-contest",
+            end_time=now - timedelta(hours=3),
+        )
+        cls.member_statistic = Statistics.objects.create(
+            account=cls.member_account,
+            contest=cls.member_contest,
+            resource=cls.member_resource,
+            place="1",
+            place_as_int=1,
+        )
+        cls.user_statistic = Statistics.objects.create(
+            account=cls.user_account,
+            contest=cls.user_contest,
+            resource=cls.user_resource,
+            place="1",
+            place_as_int=1,
+        )
+
+    @staticmethod
+    def create_contest(resource, title, key, end_time):
+        return Contest.objects.create(
+            resource=resource,
+            title=title,
+            start_time=end_time - timedelta(hours=1),
+            end_time=end_time,
+            duration_in_secs=3600,
+            url=f"https://{resource.host}/contest/{key}",
+            key=key,
+            host=resource.host,
+            n_statistics=1,
+        )
+
+    def test_non_default_account_type_is_added_to_standings_link(self):
+        profile_url = reverse("coder:profile", args=[self.coder.username])
+        response = self.client.get(profile_url)
+
+        assert response.status_code == 200
+        content = response.content.decode()
+        member_standings_url = reverse(
+            "ranking:standings",
+            args=["member-contest", self.member_contest.pk],
+        )
+        user_standings_url = reverse(
+            "ranking:standings",
+            args=["user-contest", self.user_contest.pk],
+        )
+        assert f'href="{profile_url}?resource={self.member_resource.pk}"' in content
+        assert f'href="{profile_url}?resource={self.user_resource.pk}"' in content
+        assert f'href="{member_standings_url}?account_type=member&amp;find_me={self.member_statistic.pk}"' in content
+        assert f'href="{user_standings_url}?find_me={self.user_statistic.pk}"' in content
+
+    def test_non_default_account_type_is_added_to_account_resource_link(self):
+        member_response = self.client.get(
+            reverse("coder:account", args=[self.member_account.key, self.member_resource.host])
+        )
+        user_response = self.client.get(reverse("coder:account", args=[self.user_account.key, self.user_resource.host]))
+
+        assert member_response.status_code == 200
+        assert user_response.status_code == 200
+        member_resource_url = reverse("clist:resource", args=[self.member_resource.host])
+        user_resource_url = reverse("clist:resource", args=[self.user_resource.host])
+        assert f'href="{member_resource_url}?account_type=member"' in member_response.content.decode()
+        assert f'href="{user_resource_url}"' in user_response.content.decode()
+        assert f'href="{user_resource_url}?account_type=' not in user_response.content.decode()
+
+
 class CoderListFilterTest(TestCase):
     def test_empty_anonymous_filter_uses_no_query(self):
         with CaptureQueriesContext(connection) as queries:
@@ -421,3 +538,27 @@ class RatingsDataTest(TestCase):
         resources = ratings["data"]["resources"].values()
         global_resource = next(resource_info for resource_info in resources if "account_pk" not in resource_info)
         assert "account_name" not in global_resource
+
+    def test_rating_history_includes_only_non_default_account_type(self):
+        resource = self.create_resource("account-type-rating.example")
+        contest = self.create_contest(resource, is_rated=True)
+        member = Account.objects.create(resource=resource, key="member", account_type=AccountType.MEMBER)
+        user = Account.objects.create(resource=resource, key="user")
+        for account in (member, user):
+            Statistics.objects.create(
+                account=account,
+                contest=contest,
+                resource=resource,
+                addition={"old_rating": 1500, "new_rating": 1600, "rating_change": 100},
+            )
+
+        ratings = get_ratings_data(
+            request=self.request(),
+            statistics=Statistics.objects.filter(account__in=(member, user)),
+        )
+
+        resources = ratings["data"]["resources"]
+        member_rating = resources[f"{resource.host} #{member.pk}"]["data"][0][0]
+        user_rating = resources[f"{resource.host} #{user.pk}"]["data"][0][0]
+        assert member_rating["account_type"] == "member"
+        assert "account_type" not in user_rating

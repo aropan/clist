@@ -38,6 +38,10 @@
 
     {% if has_country or fields_to_select %}{% if groupby and groupby != 'none' %}<input name="groupby" value="{{ groupby }}" type="hidden"/>{% endif %}{% endif %}
 
+    {% if contest.standings_with_account_type %}
+      {% include "account_type_filter.html" with resource=contest.resource groupby=False %}
+    {% endif %}
+
     {% include "country_filter.html" %}
 
     {% include "fields_to_select.html" %}

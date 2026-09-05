@@ -8,6 +8,7 @@ import os
 import re
 import urllib.parse
 from abc import ABCMeta, abstractmethod
+from collections import OrderedDict
 from copy import deepcopy
 from datetime import datetime, timedelta
 
@@ -55,6 +56,34 @@ UNCHANGED = "__unchanged__"
 LOG = logging.getLogger("ranking.management.modules")
 
 
+def apply_result_additions(
+    contest, result, *, match_fields=("member", "name"), add_missing=False, matched_additions=None
+):
+    """Apply manual contest result overrides and optionally append unmatched rows."""
+    if not contest or not getattr(contest, "info", None):
+        return
+    additions = deepcopy(contest.info.get("additions", {}))
+    if not additions:
+        return
+    if matched_additions is None:
+        matched_additions = set()
+
+    for row in result.values():
+        matching_values = [row.get(field) for field in match_fields]
+        for matching_value in matching_values:
+            if matching_value not in additions:
+                continue
+            addition = additions.pop(matching_value) if add_missing else additions[matching_value]
+            row.update(OrderedDict(addition))
+            matched_additions.add(matching_value)
+
+    if add_missing:
+        for member, addition in additions.items():
+            if member in matched_additions or addition.get("__update_only"):
+                continue
+            result[member] = deepcopy(addition)
+
+
 class BaseModule(object, metaclass=ABCMeta):
     def __init__(self, **kwargs):
         contest = kwargs.pop("contest", None)
@@ -74,6 +103,7 @@ class BaseModule(object, metaclass=ABCMeta):
             })
         for k, v in kwargs.items():
             setattr(self, k, v)
+        self._matched_result_additions = set()
 
     @abstractmethod
     def get_standings(self, **kwargs):
@@ -173,7 +203,11 @@ class BaseModule(object, metaclass=ABCMeta):
         raise NotImplementedError()
 
     def _parse_mebmers(self, result):
-        members_info = self.contest.get_attribute("info.standings.members")
+        contest = getattr(self, "contest", None)
+        if contest is not None:
+            members_info = contest.get_attribute("info.standings.members")
+        else:
+            members_info = get_item(self, "info.standings.members")
         if not members_info or not members_info.get("regex"):
             return
         regex = re.compile(members_info["regex"])
@@ -193,16 +227,27 @@ class BaseModule(object, metaclass=ABCMeta):
                 span_from, span_to = match.span()
                 row["name"] = (row["name"][:span_from] + row["name"][span_to:]).strip()
 
+    def apply_result_additions(self, contest, result, *, add_missing=False):
+        apply_result_additions(
+            contest,
+            result,
+            add_missing=add_missing,
+            matched_additions=self._matched_result_additions,
+        )
+
     def complete_result(self, result):
-        additions = self.info.get("additions")
-        if additions:
-            for row in result.values():
-                if row["name"] in additions:
-                    row.update(additions[row["name"]])
+        contest = getattr(self, "contest", None)
+        self._matched_result_additions.clear()
+        apply_result_additions(
+            contest if contest is not None else self,
+            result,
+            match_fields=("name",),
+            matched_additions=self._matched_result_additions,
+        )
 
         self._parse_mebmers(result)
 
-        csv_data = get_item(self.info, "standings._csv")
+        csv_data = get_item(self, "info.standings._csv")
         if csv_data:
             csv_matching = csv_data["matching"]
             addition_data = {}

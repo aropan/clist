@@ -160,6 +160,7 @@ def set_n_fields(resources, logger):
             ("n_contests", n_contests),
             ("n_university_accounts", resource.account_set.filter(account_type=AccountType.UNIVERSITY).count()),
             ("n_team_accounts", resource.account_set.filter(account_type=AccountType.TEAM).count()),
+            ("n_member_accounts", resource.account_set.filter(account_type=AccountType.MEMBER).count()),
         ):
             value = getattr(resource, field)
             if value != new_value:

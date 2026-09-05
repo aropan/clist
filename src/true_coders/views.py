@@ -832,6 +832,7 @@ def get_ratings_data(
         .annotate(division_n_problems=JsonJSONF("contest__info__problems__n_problems"))
         .annotate(cid=F("contest_id"))
         .annotate(sid=F("pk"))
+        .annotate(account_type=F("account__account_type"))
         .filter(contest__is_rated=True)
         .order_by("date")
     )
@@ -849,6 +850,7 @@ def get_ratings_data(
         "cid",
         "sid",
         "account_id",
+        "account_type",
         "name",
         "key",
         "kind",
@@ -896,6 +898,11 @@ def get_ratings_data(
             ret[k] = v
         return ret
 
+    def get_non_default_account_type(resource, account_type):
+        if resource is None or account_type == resource.default_account_type:
+            return None
+        return Account.get_type_value(account_type)
+
     qs = [
         stat
         for stat in qs
@@ -925,6 +932,7 @@ def get_ratings_data(
         if stat.get("addition___rating_data") and n_resources > 1:
             continue
 
+        account_type = stat.pop("account_type", None)
         addition = stat.pop("addition", {})
         for field, out in (("solved", "n_solved"), ("place", "place"), ("score", "score")):
             if field in stat:
@@ -949,6 +957,7 @@ def get_ratings_data(
             resource_key += f" #{stat['account_id']}"
             if not is_major_kind:
                 resource_key += f" ({stat['kind']})"
+        account_type_value = get_non_default_account_type(resource, account_type)
         default_info["fields"] = set()
 
         resource_info = ratings["data"]["resources"].setdefault(resource_key, default_info)
@@ -964,6 +973,8 @@ def get_ratings_data(
         else:
             stat.pop("addition___rating_data", None)
             stat["slug"] = slugify(stat["name"])
+            if account_type_value:
+                stat["account_type"] = account_type_value
 
             if "division" in stat:
                 division = stat["division"]

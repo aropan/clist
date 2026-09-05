@@ -326,14 +326,17 @@ class Statistic(BaseModule):
                     ("country", r'<div>\s*<a[^>]*href="[^"]*/countries/(?P<val>[^"/]*)/?"'),
                     (
                         "subdivision",
-                        r'<div[^>]*>\s*<[^>]*>\s*<a[^>]*href="[^"]*/countries(?:/[^"/]*){,2}/?"[^>]*title="(?P<val>[^"]*)"',
-                    ),  # noqa
-                    ("university", r'<div[^>]*>\s*<a[^>]*href="[^"]*/universities/[^"]*"[^>]*title="(?P<val>[^"]*)"'),
+                        r'<div[^>]*>\s*<[^>]*>\s*<a[^>]*href="[^"]*/countries/[^"/]+/[^"/]+/?"[^>]*title="(?P<val>[^"]*)"',
+                    ),
+                    (
+                        "university",
+                        r'<div[^>]*>\s*<a[^>]*href="[^"]*/(?:universities|affiliations)/[^"]*"[^>]*title="(?P<val>[^"]*)"',
+                    ),
                     ("name", r'<a[^>]*href="/users/[^"]*"[^>]*>[^<]*<span[^>]*>(?P<val>[^<]*)</span>'),
                 ):
                     entry = re.search(regex, page)
                     if entry:
-                        value = html.unescape(entry.group("val"))
+                        value = html.unescape(entry.group("val")).strip()
                         info[field] = value
 
                 regex = "<table>.*?</table>"
@@ -353,7 +356,7 @@ class Statistic(BaseModule):
                 entries = re.finditer(
                     r"""
                       <span[^>]*class="info_label"[^>]*>(?P<key>[^<]+)</span>\s*
-                      <span[^>]*class="important_number"[^>]*>(?P<value>[^<]+)</span>
+                      <span[^>]*class="[^"]*important_(?:number|text)[^"]*"[^>]*>(?P<value>[^<]+)</span>
                     """,
                     page,
                     re.VERBOSE,
@@ -367,6 +370,7 @@ class Statistic(BaseModule):
                 for regex in (
                     r"""<div[^>]*class="user-img"[^>]*url\('(?P<url>[^']*)'\)""",
                     r'<object[^>]*data="(?P<url>/images/users/[^"]*)"[^>]*>',
+                    r'<img[^>]*src="(?P<url>/images/users/[^"]*)"[^>]*>',
                 ):
                     entry = re.search(regex, page)
                     if entry:

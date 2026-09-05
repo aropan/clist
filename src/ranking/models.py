@@ -14,7 +14,7 @@ from django.core.management import call_command
 from django.db import models
 from django.db.models import F, OuterRef, Prefetch, Q, Sum
 from django.db.models.functions import Coalesce, Upper
-from django.db.models.signals import m2m_changed, post_delete, post_init, post_save, pre_save
+from django.db.models.signals import m2m_changed, post_delete, post_init, post_save, pre_delete, pre_save
 from django.dispatch import receiver
 from django.urls import reverse
 from django.utils import timezone
@@ -144,6 +144,7 @@ class Account(BaseModel):
             "raw_rating",
             "is_virtual",
             "is_team",
+            "is_member",
             "name",
             "country",
             "rank_percentile",
@@ -229,12 +230,14 @@ class Account(BaseModel):
                     self.resource.rating_update_time = timezone.now()
                     self.resource.save(update_fields=["rating_update_time"])
                 self.rating = self.info["rating"]
-                self.rating50 = self.rating / 50 if self.rating is not None else None
+                self.rating50 = int(self.rating / 50) if self.rating is not None else None
             if self.rating is None:
                 self.rating50 = None
                 self.resource_rank = None
             if self.rating != prev_rating:
-                update_fields.extend(["rating", "rating50", "resource_rank"])
+                update_fields.extend(["rating", "rating50"])
+                if self.rating is None:
+                    update_fields.append("resource_rank")
         if self.has_field("info"):
             download_avatar_url(self)
 
@@ -243,6 +246,8 @@ class Account(BaseModel):
             account_type = AccountType.UNIVERSITY
         elif self.info.get("is_team"):
             account_type = AccountType.TEAM
+        elif self.info.get("is_member"):
+            account_type = AccountType.MEMBER
         if account_type and self.account_type != account_type:
             self.account_type = account_type
             update_fields.append("account_type")
@@ -473,24 +478,65 @@ def download_avatar_url(account):
         account.info[checksum_field] = checksum_value
 
 
+ACCOUNT_TYPE_COUNTER_FIELDS = {
+    AccountType.UNIVERSITY: "n_university_accounts",
+    AccountType.TEAM: "n_team_accounts",
+    AccountType.MEMBER: "n_member_accounts",
+}
+
+
+@receiver(post_init, sender=Account)
+@receiver(pre_save, sender=Account)
+@receiver(pre_delete, sender=Account)
+def remember_account_type(signal, instance, **kwargs):
+    if signal is post_init:
+        instance._original_account_type = instance.__dict__.get("account_type", models.DEFERRED)
+    elif instance._original_account_type is models.DEFERRED:
+        if (update_fields := kwargs.get("update_fields")) is not None and "account_type" not in update_fields:
+            return
+        instance._original_account_type = (
+            Account.objects.using(kwargs["using"]).values_list("account_type", flat=True).get(pk=instance.pk)
+        )
+
+
 @receiver(post_save, sender=Account)
 @receiver(post_delete, sender=Account)
 def count_resource_accounts(signal, instance, **kwargs):
     if signal is post_delete:
-        delta = -1
-    elif signal is post_save and kwargs["created"]:
-        delta = +1
+        old_account_type = instance._original_account_type
+        new_account_type = None
+        n_accounts_delta = -1
+    elif kwargs["created"]:
+        old_account_type = None
+        new_account_type = instance.account_type
+        n_accounts_delta = 1
     else:
+        if (update_fields := kwargs.get("update_fields")) is not None and "account_type" not in update_fields:
+            return
+        old_account_type = instance._original_account_type
+        new_account_type = instance.account_type
+        n_accounts_delta = 0
+
+    instance._original_account_type = new_account_type
+    counter_deltas = {}
+    for account_type, delta in ((old_account_type, -1), (new_account_type, 1)):
+        if field := ACCOUNT_TYPE_COUNTER_FIELDS.get(account_type):
+            counter_deltas[field] = counter_deltas.get(field, 0) + delta
+    counter_deltas = {field: delta for field, delta in counter_deltas.items() if delta}
+
+    if not n_accounts_delta and not counter_deltas:
         return
-    update_fields = ["n_accounts"]
-    instance.resource.n_accounts += delta
-    if instance.account_type == AccountType.UNIVERSITY:
-        instance.resource.n_university_accounts += delta
-        update_fields.append("n_university_accounts")
-    elif instance.account_type == AccountType.TEAM:
-        instance.resource.n_team_accounts += delta
-        update_fields.append("n_team_accounts")
-    instance.resource.save(update_fields=update_fields)
+
+    updates = {field: Coalesce(F(field), 0) + delta for field, delta in counter_deltas.items()}
+    if n_accounts_delta:
+        updates["n_accounts"] = F("n_accounts") + n_accounts_delta
+    Resource.objects.filter(pk=instance.resource_id).update(**updates)
+
+    if resource := instance._state.fields_cache.get("resource"):
+        if n_accounts_delta:
+            resource.n_accounts += n_accounts_delta
+        for field, delta in counter_deltas.items():
+            setattr(resource, field, (getattr(resource, field) or 0) + delta)
 
 
 @receiver(pre_save, sender=Account)

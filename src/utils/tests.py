@@ -1,7 +1,9 @@
+import http.client
 import io
 import logging
 import sys
 import unittest
+import urllib.error
 from datetime import UTC, datetime
 from unittest import mock
 
@@ -18,6 +20,7 @@ from clist.models import Resource
 from utils import is_interactive
 from utils.chart import make_chart
 from utils.db import get_order_by
+from utils.requester import requester
 from utils.rq import get_resource_job_id, is_job_active, is_job_id_active
 from utils.strings import split_team_name_and_members
 from utils.test_runner import CompactTestResult, CompactTextTestRunner
@@ -27,6 +30,30 @@ class IsInteractiveTest(SimpleTestCase):
     def test_buffered_stdout_is_not_interactive(self):
         with mock.patch("sys.stdout", io.StringIO()):
             assert not is_interactive()
+
+
+class RequesterGetUrlTest(SimpleTestCase):
+    def setUp(self):
+        self.requester = requester.__new__(requester)
+        self.requester.opener = mock.Mock()
+        self.requester.opener.open.return_value.geturl.return_value = "https://example.com/redirected"
+
+    def test_default_call_has_no_explicit_timeout(self):
+        assert self.requester.geturl("https://example.com") == "https://example.com/redirected"
+
+        self.requester.opener.open.assert_called_once_with("https://example.com")
+
+    def test_explicit_timeout_is_forwarded(self):
+        assert self.requester.geturl("https://example.com", time_out=5) == "https://example.com/redirected"
+
+        self.requester.opener.open.assert_called_once_with("https://example.com", timeout=5)
+
+    def test_connection_errors_return_none(self):
+        for error in (urllib.error.URLError("unavailable"), http.client.RemoteDisconnected()):
+            with self.subTest(error=error):
+                self.requester.opener.open.reset_mock()
+                self.requester.opener.open.side_effect = error
+                assert self.requester.geturl("https://example.com") is None
 
 
 class PostgresIContainsTest(SimpleTestCase):

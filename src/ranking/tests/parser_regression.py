@@ -446,10 +446,10 @@ def use_parser_cache(plugin_module, cache_path, allow_network):
                 error = urllib.error.HTTPError(url, cached["code"], "cached response", {}, BytesIO())
                 raise FailOnGetResponse(error)
 
-            def cached_geturl(req, url):
+            def cached_geturl(req, url, **kwargs):
                 key = _method_cache_key("GETURL", url)
                 if allow_network:
-                    result = original_geturl(req, url)
+                    result = original_geturl(req, url, **kwargs)
                     methods_cache[key] = {"result": result}
                     write_json(methods_cache_path, methods_cache)
                     return result

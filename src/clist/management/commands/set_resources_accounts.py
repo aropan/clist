@@ -13,10 +13,69 @@ from sql_util.utils import Exists, SubqueryCount
 from tqdm import tqdm
 
 from clist.models import Resource
-from clist.templatetags.extras import medal_as_n_medal_fields, place_as_n_place_field
+from clist.templatetags.extras import get_item, medal_as_n_medal_fields, place_as_n_place_field
 from clist.utils import update_accounts_by_coders
+from ranking.models import Account
 from utils.attrdict import AttrDict
 from utils.mathutils import is_close
+
+ACCOUNT_MEDAL_FIELDS = ("n_win", "n_gold", "n_silver", "n_bronze", "n_medals", "n_other_medals")
+CUSTOM_MEDAL_FIELDS = ("n_gold", "n_silver", "n_bronze", "n_other_medals")
+
+
+def get_resource_medal_fields(resource):
+    config = resource.accounts_fields.get("medal_fields", {})
+    if not isinstance(config, dict):
+        raise ValueError(f"{resource.host} accounts_fields.medal_fields must be a mapping")
+
+    ret = {}
+    for account_type_name, fields in config.items():
+        account_type = Account.get_type(account_type_name)
+        if account_type is None:
+            raise ValueError(f"{resource.host} has unknown medal account type: {account_type_name}")
+        if not isinstance(fields, dict):
+            raise ValueError(f"{resource.host} medal fields for {account_type_name} must be a mapping")
+        if not fields:
+            raise ValueError(f"{resource.host} medal fields for {account_type_name} must not be empty")
+
+        ret[account_type] = {}
+        for account_field, addition_field in fields.items():
+            if account_field not in CUSTOM_MEDAL_FIELDS:
+                raise ValueError(f"{resource.host} has unsupported medal account field: {account_field}")
+            if not isinstance(addition_field, str) or not addition_field:
+                raise ValueError(f"{resource.host} addition field for {account_field} must be a non-empty string")
+            ret[account_type][account_field] = addition_field
+    return ret
+
+
+def get_statistic_medal_stats(statistic, custom_medal_fields):
+    ret = defaultdict(int)
+    has_medal = False
+
+    if statistic.medal:
+        for field in medal_as_n_medal_fields(medal=statistic.medal):
+            ret[field] += 1
+        has_medal = True
+
+    for account_field, addition_field in custom_medal_fields.items():
+        value = get_item(statistic.addition, addition_field)
+        if value is None:
+            continue
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or value < 0 or int(value) != value:
+            raise ValueError(
+                f"Statistic#{statistic.pk} addition.{addition_field} must be a non-negative integer, got {value!r}"
+            )
+        value = int(value)
+        if not value:
+            continue
+        ret[account_field] += value
+        if account_field != "n_other_medals":
+            ret["n_medals"] += value
+        has_medal = True
+
+    if has_medal and statistic.place_as_int == 1:
+        ret["n_win"] += 1
+    return ret
 
 
 class Command(BaseCommand):
@@ -116,6 +175,7 @@ class Command(BaseCommand):
 
                 counters = defaultdict(int)
                 statistic_filter = Q(skip_in_stats=False, contest__stage__isnull=True, contest__invisible=False)
+                medal_fields = get_resource_medal_fields(resource)
 
                 def set_n_field(count_annotation, count_field):
                     qs = accounts.annotate(count=count_annotation).exclude(**{count_field: F("count")})
@@ -133,20 +193,32 @@ class Command(BaseCommand):
                     self.logger.info(f"updated {count_field} = {counter}")
                     counters[count_field] = counter
 
-                def set_n_medal_field():
-                    statistics_with_medals = resource.statistics_set.filter(medal__isnull=False)
+                def set_n_medal_field(resource, accounts, counters, medal_fields):
+                    medal_filter = Q(medal__isnull=False)
+                    for account_type, fields in medal_fields.items():
+                        custom_medal_filter = Q()
+                        for addition_field in fields.values():
+                            lookup = addition_field.replace(".", "__")
+                            custom_medal_filter |= Q(**{f"addition__{lookup}__isnull": False})
+                        medal_filter |= Q(account__account_type=account_type) & custom_medal_filter
+
+                    statistics_with_medals = resource.statistics_set.filter(medal_filter)
                     qs = accounts.prefetch_related(Prefetch("statistics_set", queryset=statistics_with_medals))
-                    qs = qs.annotate(count=SubqueryCount("statistics", filter=Q(medal__isnull=False)))
-                    qs = qs.filter(Q(count__gt=0) | Q(n_medals__isnull=False) | Q(n_other_medals__isnull=False))
+                    qs = qs.annotate(count=SubqueryCount("statistics", filter=medal_filter))
+                    has_stored_medals = Q()
+                    for field in ACCOUNT_MEDAL_FIELDS:
+                        has_stored_medals |= Q(**{f"{field}__isnull": False})
+                    qs = qs.filter(Q(count__gt=0) | has_stored_medals)
                     counter = 0
                     with tqdm(desc="updating n_medals") as pbar:
                         for a in qs:
                             medal_stats = defaultdict(int)
+                            custom_medal_fields = medal_fields.get(a.account_type, {})
                             for s in a.statistics_set.all():
-                                for field in medal_as_n_medal_fields(medal=s.medal, place=s.place_as_int):
-                                    medal_stats[field] += 1
+                                for field, value in get_statistic_medal_stats(s, custom_medal_fields).items():
+                                    medal_stats[field] += value
                             updated_fields = []
-                            for field in ("n_win", "n_gold", "n_silver", "n_bronze", "n_medals", "n_other_medals"):
+                            for field in ACCOUNT_MEDAL_FIELDS:
                                 value = medal_stats.get(field)
                                 if not is_close(value, getattr(a, field)):
                                     setattr(a, field, value)
@@ -238,8 +310,8 @@ class Command(BaseCommand):
                         name="n_stats",
                     )
 
-                if resource.has_statistic_medal:
-                    set_n_medal_field()
+                if resource.has_statistic_medal or medal_fields:
+                    set_n_medal_field(resource, accounts, counters, medal_fields)
 
                 if resource.has_statistic_place is not False:
                     set_n_place_field()

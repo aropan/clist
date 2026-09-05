@@ -2,7 +2,7 @@
 {% lazy_paginate 10,100 statistics using "contest_page" %}
 
 {% for statistic in statistics %}
-{% with contest=statistic.contest resource=statistic.contest.resource %}
+{% with contest=statistic.contest resource=statistic.contest.resource account_type=statistic.account.get_account_type_display|lower %}
 <tr class="contest{% if statistic.addition.medal %} {{ statistic.addition.medal|lower }}-medal{% endif %}{% if contest.is_running %} success{% endif %}" id="cid-{{ contest.id }}">
     <td class="hidden-xs">
     {% with division=statistic.addition.division %}
@@ -49,7 +49,7 @@
 
     <td>
         {% with rating_value=resource|get_new_rating_value:statistic.addition with_rating_change=statistics_fields.values|contains:"rating_change"|iffalse %}
-        {% if not rating_value and statistic.rating_prediction.new_rating and contest.is_rated is not False and not has_rating_prediction_field %}
+        {% if rating_value is None and statistic.rating_prediction.new_rating is not None and contest.is_rated is not False and not has_rating_prediction_field %}
             <span class="rating-prediction-label">{% icon_to "rating_prediction" %}</span>
             {% include "field_value.html" with statistic=statistic addition=statistic.addition resource=resource field="rating_prediction_new_rating" value=statistic.rating_prediction.new_rating with_rating_change=True %}
         {% else %}
@@ -92,7 +92,7 @@
         <a{% if not search_resource and not params.resources %} href="{% url_transform request resource=resource.pk %}"{% endif %} title="{{ resource.host }}" data-toggle="tooltip"><img src="{{ resource.icon_file.name|media_size:'32x32' }}" width="16" height="16"/></a>
 
         {% if contest.invisible %}<i class="far fa-eye-slash"></i>{% endif %}
-        <a href="{% url 'ranking:standings' contest.title|slug contest.pk %}{% if not without_findme %}?find_me={{ statistic.pk }}{% endif %}">{{ contest.title }}</a>
+        <a href="{% url 'ranking:standings' contest.title|slug contest.pk %}{% if statistic.account.account_type != resource.default_account_type %}?account_type={{ account_type }}{% if not without_findme %}&amp;find_me={{ statistic.pk }}{% endif %}{% elif not without_findme %}?find_me={{ statistic.pk }}{% endif %}">{{ contest.title }}</a>
         {% if statistic.addition.hack %}
         {% with hack=statistic.addition.hack %}
         <span class="badge progress-bar-warning"{% if hack.title %} data-toggle="tooltip" data-placement="top" title="{{ hack.title|title }}"{% endif %}>

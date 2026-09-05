@@ -40,6 +40,7 @@ dependencies = [
     "django-cleanup==9.0.0",
     "django-el-pagination==4.1.2",
     "django-tastypie-swagger @ git+https://github.com/appfluence/django-tastypie-swagger@763f8f027ec5cc6e20c33812cd8dec5b32404583",
+    "Elo-MMR-Py==2.0.0",
     "pytest-django==4.14.0",
     "phonenumbers==9.0.36",
     "psycopg[binary]==3.3.4",

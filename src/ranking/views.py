@@ -949,14 +949,29 @@ def get_standings_problems(contest, division):
     return problems
 
 
+def get_standings_account_type(contest, value):
+    if not contest.standings_with_account_type():
+        return None, None
+
+    account_type = Account.get_type(value) or contest.resource.default_account_type
+    return account_type, Account.get_type_value(account_type)
+
+
 def get_standings_fields(
-    contest, division, with_detail, hidden_fields=None, hidden_fields_values=None, view_private_fields=None
+    contest,
+    division,
+    with_detail,
+    hidden_fields=None,
+    hidden_fields_values=None,
+    view_private_fields=None,
+    account_type=None,
 ):
     contest_fields = contest.info.get("fields", [])
     fields_values = contest.info.get("fields_values", {})
     options = contest.info.get("standings", {})
+    account_type_fields = get_item(options, ("account_type_fields", account_type), default={}) if account_type else {}
     divisions_order = get_standings_divisions_order(contest)
-    division_addition = contest.info.get("divisions_addition", {}).get(division, {})
+    division_addition = get_item(contest.info, ("divisions_addition", division), default={})
     inplace_division = "_division_addition" in contest_fields
 
     fixed_fields = (
@@ -969,6 +984,7 @@ def get_standings_fields(
         fixed_fields += ("rating_change",)
     if division == "any":
         fixed_fields += ("division",)
+    fixed_fields += tuple(account_type_fields.get("fixed_fields", []))
 
     fields = OrderedDict()
     for k in fixed_fields:
@@ -1011,7 +1027,9 @@ def get_standings_fields(
         if k not in hidden_fields:
             hidden_fields.append(k)
 
-    if contest.has_rating_prediction and with_detail:
+    rating_calculation = contest.info.get("_rating_calculation") or {}
+    rating_prediction_config = rating_calculation.get("config") or {}
+    if contest.has_rating_prediction and with_detail and not rating_prediction_config.get("save_rating"):
         for field in predicted_fields:
             if field not in fields and "rating_change" not in field:
                 fields[field] = field
@@ -1120,6 +1138,7 @@ def standings(request, contest, other_contests=None, template="standings.html", 
         statistics = Statistics.objects.filter(contest=contest)
 
     options = copy.deepcopy(contest.info.get("standings", {}))
+    account_type, account_type_value = get_standings_account_type(contest, request.GET.get("account_type"))
 
     per_page = 50 if contests_ids else contest.standings_per_page
     per_page_more = per_page if find_me else 200
@@ -1163,7 +1182,7 @@ def standings(request, contest, other_contests=None, template="standings.html", 
             order.remove("place_as_int")
             order.append("place_as_int")
 
-    division_addition = contest.info.get("divisions_addition", {}).get(division, {})
+    division_addition = get_item(contest.info, ("divisions_addition", division), default={})
 
     # FIXME extra per_page
     if (
@@ -1203,6 +1222,7 @@ def standings(request, contest, other_contests=None, template="standings.html", 
         hidden_fields=hidden_fields,
         hidden_fields_values=hidden_fields_values,
         view_private_fields=view_private_fields,
+        account_type=account_type_value,
     )
     if "global_rating" in hidden_fields_values:
         fields["new_global_rating"] = "new_global_rating"
@@ -1402,6 +1422,9 @@ def standings(request, contest, other_contests=None, template="standings.html", 
 
     params = {}
 
+    if account_type is not None:
+        params["account_type"] = account_type_value
+
     # filter by division
     if divisions_order:
         params["division"] = division
@@ -1440,6 +1463,10 @@ def standings(request, contest, other_contests=None, template="standings.html", 
                 search, "account__key", "account__name", suffix=suffix, logger=request.logger
             )  # FIXME: add addition__name
             statistics = statistics.filter(cond)
+
+    # filter by account type
+    if account_type is not None:
+        statistics = statistics.filter(account__account_type=account_type)
 
     # filter by country
     countries = request.GET.getlist("country")

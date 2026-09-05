@@ -227,6 +227,9 @@ function create_chart_config(resource_info, dates, y_field = "new_rating", is_ad
             continue;
           }
           params = "";
+          if (rating["account_type"]) {
+            params += "&account_type=" + rating["account_type"];
+          }
           if (rating["division"]) {
             params += "&division=" + rating["division"];
           }

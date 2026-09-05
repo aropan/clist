@@ -126,6 +126,7 @@ class Resource(BaseModel):
     n_rating_accounts = models.IntegerField(default=None, null=True, blank=True)
     n_university_accounts = models.IntegerField(default=None, null=True, blank=True)
     n_team_accounts = models.IntegerField(default=None, null=True, blank=True)
+    n_member_accounts = models.IntegerField(default=None, null=True, blank=True)
     icon_file = models.ImageField(upload_to="resources", null=True, blank=True, storage=OverwriteStorage())
     icon_url = models.CharField(max_length=255, null=True, blank=True)
     icon_updated_at = models.DateTimeField(null=True, blank=True)
@@ -240,6 +241,8 @@ class Resource(BaseModel):
                             continue
                         if not curr_rating or curr_rating["min_rating"] < rating["min_rating"]:
                             curr_rating = rating
+                    if not curr_rating and not next_rating:
+                        return None, None
                     if not curr_rating:
                         curr_rating = next_rating
                         value = curr_rating["low"]
@@ -546,7 +549,7 @@ class Resource(BaseModel):
         return self.problems_fields.get("types", {})
 
     def has_account_types(self):
-        return self.n_university_accounts or self.n_team_accounts
+        return self.n_university_accounts or self.n_team_accounts or self.n_member_accounts
 
 
 class BaseContestManager(BaseManager):
@@ -910,6 +913,10 @@ class Contest(BaseModel):
         ret = get_item(self.resource, "info.standings.timeline", {})
         ret.update(get_item(self, "info.standings.timeline", {}))
         return ret
+
+    def standings_with_account_type(self):
+        ret = get_item(self.resource, "info.standings.with_account_type")
+        return ret or get_item(self, "info.standings.with_account_type")
 
     def has_timeline(self):
         return bool(self.get_timeline_info())
