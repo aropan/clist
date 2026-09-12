@@ -1092,7 +1092,7 @@ function update_table_sticky_side(side) {
   var attr_width = "sticky-" + side + "-width";
   $("table").data(attr_width, 0);
 
-  var columns = $("tr:nth-child(1) th.sticky-" + side + "-column");
+  var columns = $("tr th.sticky-" + side + "-column");
   if (side == "right") {
     columns = $(columns.get().reverse());
   }
@@ -1105,8 +1105,8 @@ function update_table_sticky_side(side) {
 
     var container = table.closest(".table-responsive");
     var rows = container
-      .find('tr:not(".endless_container")')
-      .find("td,th")
+      .find('tr:not(".endless_container") td,th')
+      .filter(":not(.ignore_sticky_side)")
       .filter(":nth-child(" + (index_column + 1) + ")");
 
     rows.each(function () {

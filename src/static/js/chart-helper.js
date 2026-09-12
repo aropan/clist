@@ -33,6 +33,7 @@ function create_chart_config(resource_info, dates, y_field = "new_rating", is_ad
   var datasets_labels = get_or_default(datasets_infos["labels"], []);
   var coloring_field = get_or_default(resource_info["coloring_field"], "new_rating");
   var with_url = !get_or_default(resource_info["without_url"], false);
+  var with_outline = get_or_default(resource_info["outline"], false);
 
   var title_text = resource_info["host"];
   if (resource_info["account_name"]) {
@@ -87,7 +88,7 @@ function create_chart_config(resource_info, dates, y_field = "new_rating", is_ad
         }),
       };
       var ret = [dataset];
-      if (get_or_default(resource_info["outline"], false)) {
+      if (with_outline) {
         var border = { ...dataset };
         border["borderWidth"] += 1;
         border["borderColor"] = "black";
@@ -274,7 +275,7 @@ function create_chart_config(resource_info, dates, y_field = "new_rating", is_ad
                   text: label,
                   hidden: hidden,
                   fillStyle: datasets_colors[index],
-                  datasetIndex: index,
+                  datasetIndex: with_outline ? index * 2 : index,
                 };
               });
               return ret;

@@ -16,6 +16,7 @@ import pytz
 from lazy_load import lz
 
 from clist.templatetags.extras import as_number, get_item
+from ranking.management.modules.excepts import ExceptionParseStandings
 from utils import parsed_table  # noqa
 from utils.requester import requester
 
@@ -104,6 +105,7 @@ class BaseModule(object, metaclass=ABCMeta):
         for k, v in kwargs.items():
             setattr(self, k, v)
         self._matched_result_additions = set()
+        self._complete_result_additions = None
 
     @abstractmethod
     def get_standings(self, **kwargs):
@@ -227,7 +229,60 @@ class BaseModule(object, metaclass=ABCMeta):
                 span_from, span_to = match.span()
                 row["name"] = (row["name"][:span_from] + row["name"][span_to:]).strip()
 
+    def prepare_result_additions(self, contest, standings):
+        """Check source keys and apply complete overrides before result transformations."""
+        self._complete_result_additions = None
+        if not get_item(contest, "info.additions_complete"):
+            return
+        result = standings.setdefault("result", {})
+        additions = deepcopy(contest.info.get("additions") or {})
+        if not additions:
+            raise ExceptionParseStandings("additions_complete requires nonempty additions")
+        new_keys = result.keys() - additions.keys()
+        missing_keys = additions.keys() - result.keys()
+        if new_keys or missing_keys:
+            raise ExceptionParseStandings(
+                f"Complete additions mismatch: new keys={sorted(new_keys)}, missing keys={sorted(missing_keys)}"
+            )
+        if standings.get("action"):
+            raise ExceptionParseStandings("Standings action conflicts with complete additions")
+        complete_additions = {}
+        for source, row in result.items():
+            addition = additions[source]
+            if row.get("member") != source:
+                raise ExceptionParseStandings(f"Source member differs from result key: {source}")
+            member = addition.get("member")
+            if not isinstance(member, str) or not member:
+                raise ExceptionParseStandings(f"Missing target member in additions for {source}")
+            if member in complete_additions:
+                raise ExceptionParseStandings(f"Duplicate target member in additions: {member}")
+            complete_additions[member] = (row, addition)
+            if member != source:
+                row["_old_key"] = source
+        apply_result_additions(contest, result, match_fields=("member",))
+        result.clear()
+        result.update({member: row for member, (row, _) in complete_additions.items()})
+        self._complete_result_additions = complete_additions
+
     def apply_result_additions(self, contest, result, *, add_missing=False):
+        if self._complete_result_additions is not None:
+            if result.keys() != self._complete_result_additions.keys():
+                raise ExceptionParseStandings("Result keys changed after complete additions")
+            for member, (expected_row, addition) in self._complete_result_additions.items():
+                row = result[member]
+                if row is not expected_row:
+                    raise ExceptionParseStandings(f"Result row changed after complete additions: {member}")
+                effective_row = {
+                    field: value.replace(chr(0), "") if isinstance(value, str) else value
+                    for field, value in row.items()
+                }
+                effective_row.update(get_item(contest, "info.parse.addition", {}))
+                for field, value in addition.items():
+                    if not field.startswith("__") and effective_row.get(field) != value:
+                        raise ExceptionParseStandings(f"Complete additions conflict for {member}: field={field}")
+                if effective_row.get("action"):
+                    raise ExceptionParseStandings(f"Account action conflicts with additions: {member}")
+            return
         apply_result_additions(
             contest,
             result,
@@ -238,12 +293,14 @@ class BaseModule(object, metaclass=ABCMeta):
     def complete_result(self, result):
         contest = getattr(self, "contest", None)
         self._matched_result_additions.clear()
-        apply_result_additions(
-            contest if contest is not None else self,
-            result,
-            match_fields=("name",),
-            matched_additions=self._matched_result_additions,
-        )
+        contest = contest if contest is not None else self
+        if not get_item(contest, "info.additions_complete"):
+            apply_result_additions(
+                contest,
+                result,
+                match_fields=("name",),
+                matched_additions=self._matched_result_additions,
+            )
 
         self._parse_mebmers(result)
 

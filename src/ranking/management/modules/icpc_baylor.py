@@ -301,7 +301,7 @@ class Statistic(BaseModule):
             hidden_fields = set(self.info.get("hidden_fields", [])) | {"region"}
             force_parse_table = self.info.get("standings", {}).get("force_parse_table")
             problems_info = OrderedDict()
-            has_more_members = False
+            has_resource_more_members = False
 
             if "zibada" in standings_url and not force_parse_table:
                 names = None
@@ -370,7 +370,7 @@ class Statistic(BaseModule):
                         more_members = names[int(tid)][1] or []
                         for more_member in more_members:
                             _, more_member = more_member.split(":", 1)
-                            has_more_members = True
+                            has_resource_more_members = True
                             team.setdefault("_more_members", []).append({
                                 "account": more_member,
                                 "resource": 1,
@@ -444,166 +444,287 @@ class Statistic(BaseModule):
 
                 problems_info = OrderedDict(sorted(problems_info.items()))
             else:
-                if is_icpc_api_standings_url:
-                    page = re.sub(r"</table>\s*<table>\s*(<tr[^>]*>\s*<t[^>]*>)", r"\1", page, flags=re.I)
-
                 regex = """(?:<table[^>]*(?:id=["']standings|class=["'][^"']*scoreboard)[^>]*>|"content":"[^"]*<table[^>]*>|<table[^>]*class="[^"]*(?:table[^"]*){3}"[^>]*>).*?</table>|<TABLE>.*?</TABLE>"""  # noqa
-                match = re.search(regex, page, re.DOTALL)
-                if match:
-                    html_table = match.group(0)
-                    table = parsed_table.ParsedTable(html_table, with_not_full_row=is_icpc_api_standings_url)
-                else:
-                    table = []
+                if is_icpc_api_standings_url:
+                    page = html.unescape(page)
+                    page = re.sub(r"</table>\s*<table>\s*(<tr[^>]*>\s*<t[^>]*>)", r"\1", page, flags=re.I)
+                    regex = "<table[^>]*>.*?</table>"
+
                 time_divider = 1
-                last_place = None
-                is_ineligible = False
-                is_honorable_mention = False
-                participant_type = None
-                for r in table:
-                    row = {}
-                    problems = row.setdefault("problems", {})
-                    for k, vs in r.items():
-                        if isinstance(vs, list):
-                            v = " ".join(i.value for i in vs if i.value)
-                        else:
-                            v = vs.value
-                        k = k.lower().strip(".")
-                        v = v.strip()
+                asterisk_represent_solved = "* represents accepted solution" in page
 
-                        if is_honorable_mention:
-                            new_row = dict(member=f"{v} {season}", name=v)
-                            result[new_row["member"]] = new_row
-                            continue
+                def process_team_name(v, row, season):
+                    if "place" not in row and (match := re.search(r"^(\d+)\.\s*", v)):
+                        row["place"] = int(match.group(1))
+                        v = v[match.end() :].strip()
 
-                        if re.search("honorable mention|in alphabetical order", v, re.I):
-                            is_honorable_mention = True
+                    v = html.unescape(v).strip()
 
-                        if k in ("rank", "rk", "place"):
-                            if not isinstance(vs, list):
-                                classes = vs.column.attrs.get("class", "").split()
-                                medal = vs.column.node.xpath(".//img/@alt")
-                                if medal and medal[0].endswith("medal"):
-                                    row["medal"] = medal[0].split()[0].lower()
-                                for medal, ending in (("gold", "🥇"), ("silver", "🥈"), ("bronze", "🥉")):
-                                    if v.endswith(ending):
-                                        row["medal"] = medal
-                                        v = v[: -len(ending)].strip()
-                                    if f"{medal}-medal" in classes:
-                                        row["medal"] = medal
-                            if not v:
-                                break
-                            row["place"] = v
-                        elif k in ("team", "name", "university"):
+                    v = v.replace(r"\n", " ")
+                    v = re.sub(r"\s+", " ", v)
+                    v = re.sub(r"\s*•", ",", v)
+
+                    # remove non participant information from team name
+                    v = re.sub(r"\s*\b(?:coach|advisor|reserve)\s*:?\s*[^,)]*", "", v, flags=re.IGNORECASE)
+                    v = re.sub(r"\(\s*,+", "(", v)
+                    v = re.sub(r",+\s*\)", ")", v)
+                    v = re.sub(r",(\s*,)+", ",", v)
+                    v = v.replace("()", "").strip()
+
+                    # remove prefix team id
+                    v = re.sub(r"^\([0-9]+\)\s+", "", v).strip()
+                    v = re.sub(r"^[0-9]+\.\s+", "", v).strip()
+
+                    v = re.sub(r"^[0-9]+\s+", "", v)  # FIXME just remove number prefix
+
+                    if re.search(r"^(total judged runs|total solutions)$", v, re.IGNORECASE):
+                        return False
+
+                    if members_match := re.search(r"\((.*?)\)$", v):
+                        v = v[: members_match.start()].strip()
+                        if len(members := members_match.group(1).split(",")) > 1:
+                            row["_members"] = [
+                                {"name": re.sub(r"^team\s*:\s*", "", member.strip(), flags=re.IGNORECASE)}
+                                for member in members
+                            ]
+                    row["member"] = f"{v} {season}"
+                    row["name"] = v
+                    return True
+
+                def process_standings_table(table):
+                    last_place = None
+                    is_ineligible = False
+                    participant_type = None
+                    for r in table:
+                        row = {}
+                        problems = row.setdefault("problems", {})
+                        for k, vs in r.items():
                             if isinstance(vs, list):
-                                for el in vs:
-                                    images = el.column.node.xpath(".//img[@src]")
-                                    if images:
-                                        for img in images:
-                                            src = img.attrib["src"]
-                                            if "flags/" in src:
-                                                row["country"] = img.attrib["title"]
-                                            else:
-                                                logo = urljoin(standings_url, src)
-                                                row.setdefault("info", {}).setdefault("logo", logo)
-                                    spans = el.column.node.xpath(".//span")
-                                    for span in spans:
-                                        classes = span.attrib.get("class", "")
-                                        if "badge" in classes.split() and "warning" in classes:
-                                            participant_type = span.text.strip()
-                                            v = cut_prefix(v, participant_type)
-                                for el in vs:
-                                    region = el.column.node.xpath('.//*[contains(@class, "badge")]')
-                                    if region:
-                                        region = " ".join([s.strip() for s in region[0].xpath("text()")])
-                                    if region:
-                                        if is_regional:
-                                            if region.lower() == "ineligible":
-                                                is_ineligible = True
-                                        elif region != participant_type:
-                                            row["region"] = region
-                                        v = cut_prefix(v, region)
-
-                            tr = vs[0] if isinstance(vs, list) else vs
-                            if tr.row.node.attrib.get("id") in ["scoresummary"]:
-                                break
-
-                            v = v.replace("\n", " ")
-                            v = re.sub(r"^[0-9]+\s+", "", v)  # FIXME just remove number prefix
-                            if "cphof" in standings_url:
-                                member = vs.column.node.xpath(".//a/text()")[0].strip()
-                                row["member"] = f"{member} {season}"
+                                v = " ".join(i.value for i in vs if i.value)
                             else:
-                                row["member"] = f"{v} {season}"
-                            row["name"] = v
-                        elif k in ("time", "penalty", "total time (min)", "minutes"):
-                            if v and v != "?":
-                                row["penalty"] = int(v)
-                        elif k in ("slv", "solved", "# solved", "="):
-                            row["solving"] = int(v)
-                        elif k == "score":
-                            if " " in v:
-                                row["solving"], row["penalty"] = map(int, v.split())
-                            elif v != "?":
-                                row["solving"] = int(v)
-                        elif len(k) == 1:
-                            k = k.title()
-                            if k not in problems_info:
-                                problems_info[k] = {"short": k}
-                                if "title" in vs.header.attrs:
-                                    title = vs.header.attrs["title"]
-                                    extra_prefix = "problem "
-                                    if title.startswith(extra_prefix):
-                                        title = title[len(extra_prefix) :].strip()
-                                    problems_info[k]["name"] = title
-
-                            v = re.sub(r"([0-9]+)\s+([0-9]+)\s+tr.*", r"\2 \1", v)
-                            v = re.sub("tr[a-z]*", "", v)
-                            v = re.sub("-*", "", v)
-                            v = re.sub(r"([0-9]+)/([0-9]+)", r"\1 \2", v)
+                                v = vs.value
+                            orig_k = k
+                            k = k.lower().strip(".")
+                            parts_k = k.split()
                             v = v.strip()
-                            v = v.rstrip("/")
-                            if not v or v == "0" or v == ".":
-                                continue
 
-                            class_attr = vs.column.attrs.get("class", "")
+                            if k in ("rank", "rk", "place", "pl"):
+                                if not isinstance(vs, list):
+                                    classes = vs.column.attrs.get("class", "").split()
+                                    medal = vs.column.node.xpath(".//img/@alt")
+                                    if medal and medal[0].endswith("medal"):
+                                        row["medal"] = medal[0].split()[0].lower()
+                                    for medal, ending in (("gold", "🥇"), ("silver", "🥈"), ("bronze", "🥉")):
+                                        if v.endswith(ending):
+                                            row["medal"] = medal
+                                            v = v[: -len(ending)].strip()
+                                        if f"{medal}-medal" in classes:
+                                            row["medal"] = medal
+                                if not v:
+                                    break
+                                row["place"] = v
+                            elif k in ("team", "name", "university", "team name", "team, university"):
+                                if isinstance(vs, list):
+                                    for el in vs:
+                                        images = el.column.node.xpath(".//img[@src]")
+                                        if images:
+                                            for img in images:
+                                                src = img.attrib["src"]
+                                                if "flags/" in src:
+                                                    row["country"] = img.attrib["title"]
+                                                else:
+                                                    logo = urljoin(standings_url, src)
+                                                    row.setdefault("info", {}).setdefault("logo", logo)
+                                        spans = el.column.node.xpath(".//span")
+                                        for span in spans:
+                                            classes = span.attrib.get("class", "")
+                                            if "badge" in classes.split() and "warning" in classes:
+                                                participant_type = span.text.strip()
+                                                v = cut_prefix(v, participant_type)
+                                    for el in vs:
+                                        region = el.column.node.xpath('.//*[contains(@class, "badge")]')
+                                        if region:
+                                            region = " ".join([s.strip() for s in region[0].xpath("text()")])
+                                        if region:
+                                            if is_regional:
+                                                if region.lower() == "ineligible":
+                                                    is_ineligible = True
+                                            elif region != participant_type:
+                                                row["region"] = region
+                                            v = cut_prefix(v, region)
 
-                            p = problems.setdefault(k, {})
-                            if ("+" in v or "pending" in class_attr) and not v.startswith("+"):
-                                v = v.replace(" ", "")
-                                p["result"] = f"?{v}"
-                            elif " " in v:
-                                pnt, time = v.split()
-                                if not pnt.startswith("+"):
-                                    pnt = int(pnt)
-                                    pnt = "+" if pnt == 1 else f"+{pnt - 1}"
-                                if ":" in time:
-                                    times = list(map(int, time.split(":")))
-                                    time = reduce(lambda x, y: x * 60 + y, times)
-                                    p["time_in_seconds"] = time
-                                    time = round(time / 60)
-                                p["result"] = pnt
-                                p["time"] = int(time)
-                                if (
-                                    "solvedfirst" in class_attr
-                                    or "firstYes" in class_attr
-                                    or vs.column.node.xpath('.//*[contains(@class, "score_first")]')
-                                ):
-                                    p["first_ac"] = True
-                            else:
-                                p["result"] = f"-{v}"
-                    if row.get("place"):
-                        last_place = row["place"]
-                    elif last_place:
-                        row["place"] = last_place
-                    if is_ineligible or participant_type and participant_type.lower() in {"companies"}:
-                        row.pop("place")
-                        row.pop("medal")
-                        for problem in problems.values():
-                            problem.pop("first_ac", None)
-                        row["_no_update_n_contests"] = True
-                    if "member" not in row or row["member"].startswith(" "):
-                        continue
-                    result[row["member"]] = row
+                                tr = vs[0] if isinstance(vs, list) else vs
+                                if tr.row.node.attrib.get("id") in ["scoresummary"]:
+                                    break
+
+                                if not process_team_name(v, row, season):
+                                    continue
+
+                                if "cphof" in standings_url:
+                                    member = vs.column.node.xpath(".//a/text()")[0].strip()
+                                    row["member"] = f"{member} {season}"
+                                if row["member"] in result:
+                                    row = {**result[row["member"]], **row}
+                            elif k in (
+                                "time",
+                                "penalty",
+                                "total time (min)",
+                                "minutes",
+                                "total",
+                                "min",
+                                "total time",
+                                "penalty points",
+                            ) or (k == "score" and "solving" in row):
+                                if not v:
+                                    continue
+                                if ":" in v:
+                                    m, s = map(int, v.split(":"))
+                                    v = m * 60 + s
+                                    row["penalty"] = int(v)
+                                if v != "?":
+                                    row["penalty"] = int(v)
+                            elif k in ("slv", "solved", "# solved", "=", "# sol", "problems solved"):
+                                if not v:
+                                    continue
+                                row["solving"] = int(v)
+                            elif k == "score":
+                                if " " in v:
+                                    row["solving"], row["penalty"] = map(int, v.split())
+                                elif v != "?":
+                                    row["solving"] = int(v)
+                            elif (
+                                (problem_done := (problem_finish_runs := False))
+                                or len(k) == 1
+                                or re.match(r"^([a-z]{3}|#[0-9])$", orig_k)
+                                or (
+                                    problem_done := (
+                                        len(parts_k) == 2
+                                        and len(parts_k[0]) == 1
+                                        and parts_k[1] in ("done", "pnlty")
+                                        and (k := parts_k[0])
+                                    )
+                                )
+                                or (
+                                    problem_finish_runs := (
+                                        len(parts_k) == 4
+                                        and len(parts_k[1]) == 1
+                                        and (parts_k[2], parts_k[3]) == ("finish", "runs")
+                                        and (k := parts_k[1])
+                                    )
+                                )
+                            ):
+                                k = k.title()
+                                if k not in problems_info:
+                                    problems_info[k] = {"short": k}
+                                    if "title" in vs.header.attrs:
+                                        title = vs.header.attrs["title"]
+                                        extra_prefix = "problem "
+                                        if title.startswith(extra_prefix):
+                                            title = title[len(extra_prefix) :].strip()
+                                        problems_info[k]["name"] = title
+
+                                v = re.sub(r"([0-9]+)\s+([0-9]+)\s+tr.*", r"\2 \1", v)
+                                v = re.sub("tr[a-z]*", "", v)
+                                v = re.sub("-*", "", v)
+                                v = re.sub(r"([0-9]+)/([0-9]+)", r"\1 \2", v)
+                                v = v.strip()
+                                v = v.rstrip("/")
+                                if not v or v == "0" or v == "000" or v == "0:00" or v == ".":
+                                    continue
+
+                                class_attr = vs.column.attrs.get("class", "")
+
+                                p = problems.setdefault(k, {})
+                                if ("+" in v or "pending" in class_attr) and not v.startswith("+"):
+                                    v = v.replace(" ", "")
+                                    p["result"] = f"?{v}"
+                                elif problem_done and ":" in v:
+                                    m, s = map(int, v.split(":"))
+                                    v = m * 60 + s
+                                    if parts_k[1] == "pnlty":
+                                        p["result"] += f"{v // 20}"
+                                    else:
+                                        p["result"] = "+"
+                                        p["time"] = v
+                                elif problem_finish_runs and ":" in v:
+                                    solve_time, penalty_time = v.split()
+                                    p["result"] = "+"
+                                    m, s = map(int, solve_time.split(":"))
+                                    p["time"] = m * 60 + s
+                                    m, s = map(int, penalty_time.split(":"))
+                                    if m or s:
+                                        p["result"] += f"{(m * 60 + s) // 20}"
+                                elif " " in v:
+                                    pnt, time = v.split()
+                                    if not pnt.startswith("+"):
+                                        pnt = int(pnt)
+                                        pnt = "+" if pnt == 1 else f"+{pnt - 1}"
+                                    if ":" in time:
+                                        times = list(map(int, time.split(":")))
+                                        time = reduce(lambda x, y: x * 60 + y, times)
+                                        p["time_in_seconds"] = time
+                                        time = round(time / 60)
+                                    p["result"] = pnt
+                                    p["time"] = int(time)
+                                    if (
+                                        "solvedfirst" in class_attr
+                                        or "firstYes" in class_attr
+                                        or vs.column.node.xpath('.//*[contains(@class, "score_first")]')
+                                    ):
+                                        p["first_ac"] = True
+                                elif asterisk_represent_solved:
+                                    v = int(v[:-1]) - 1 if v.endswith("*") else -int(v)
+                                    p["result"] = "+" if v == 0 else f"{v:+}"
+                                elif v == "Y":
+                                    p["result"] = "+"
+                                    p["binary"] = True
+                                elif v.isdigit() and self.start_time.year < 2000:
+                                    p["result"] = "+"
+                                    p["binary"] = True
+                                    p["time"] = int(v)
+                                else:
+                                    p["result"] = f"-{v}"
+                        if row.get("place"):
+                            last_place = row["place"]
+                        elif last_place:
+                            row["place"] = last_place
+                        if is_ineligible or participant_type and participant_type.lower() in {"companies"}:
+                            row.pop("place")
+                            row.pop("medal")
+                            for problem in problems.values():
+                                problem.pop("first_ac", None)
+                            row["_no_update_n_contests"] = True
+                        if "member" not in row or row["member"].startswith(" "):
+                            continue
+                        result[row["member"]] = row
+
+                tables = re.findall(regex, page, re.DOTALL | re.IGNORECASE)
+                for table in reversed(tables):
+                    table = parsed_table.ParsedTable(table, with_not_full_row=is_icpc_api_standings_url)
+                    process_standings_table(table)
+                    if result:
+                        break
+
+                honorable_mention_regex = re.compile(r"honorable mention in random order", re.I)
+                if honorable_mention_regex.search(page):
+                    LOG.info("Honorable Mention in random order found")
+                    place = len(result) + 1
+                    matches = re.finditer(r"<(?:th|td)[^>]*>(?P<content>[^<]*)<", page, re.DOTALL | re.IGNORECASE)
+                    is_honorable_mention = False
+                    for match in matches:
+                        content = match.group("content").strip()
+                        if honorable_mention_regex.search(content):
+                            is_honorable_mention = True
+                            continue
+                        if not is_honorable_mention:
+                            continue
+                        row = {}
+                        if not process_team_name(content, row, season):
+                            continue
+                        if not row.get("_members") or row["member"] in result:
+                            continue
+                        row["place"] = place
+                        result[row["member"]] = row
 
                 elements = etree.HTML(page).xpath(
                     '//div[@class="card-header"]/following-sibling::div[@class="card-body"]//li'
@@ -668,7 +789,7 @@ class Statistic(BaseModule):
                             hidden_fields.add(k)
                             row[k] = v
 
-            if has_more_members:
+            if has_resource_more_members:
                 for team, row in result.items():
                     added_members = {(m["account"], m["resource"]) for m in row.get("_members", [])}
                     more_members = row.pop("_more_members", [])
@@ -767,7 +888,7 @@ class Statistic(BaseModule):
                     continue
                 for p_name, problem in team.get("problems", {}).items():
                     p_info = problems_info[p_name]
-                    if not problem["result"].startswith("+"):
+                    if not problem["result"].startswith("+") or "time" not in problem:
                         continue
                     time = problem["time"]
                     if "_first_ac_time" not in p_info or time < p_info["_first_ac_time"]:
@@ -782,7 +903,7 @@ class Statistic(BaseModule):
                     continue
                 for p_name, problem in team.get("problems", {}).items():
                     p_info = problems_info[p_name]
-                    if problem["result"].startswith("+"):
+                    if problem["result"].startswith("+") and "time" in problem:
                         if p_info.get("has_first_ac") and not problem.get("first_ac"):
                             continue
                         if problem["time"] == p_info["_first_ac_time"]:

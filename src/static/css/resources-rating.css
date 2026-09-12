@@ -1,5 +1,5 @@
-#resources-rating table td,
-#resources-rating table th {
+table.table td,
+table.table th {
   text-align: center;
   vertical-align: middle !important;
 }
@@ -13,9 +13,9 @@
 }
 
 #resources-rating .hover {
-  background-color: #dff0d8;
+  background-color: #dff0d8 !important;
 }
 
 #resources-rating .fixed {
-  background-color: #d9edf7;
+  background-color: #d9edf7 !important;
 }

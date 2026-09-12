@@ -2,11 +2,13 @@ from datetime import timedelta
 from unittest import mock
 
 from django.db import connection
-from django.test import RequestFactory, SimpleTestCase, TestCase
+from django.test import RequestFactory, SimpleTestCase, TestCase, override_settings
 from django.test.utils import CaptureQueriesContext
+from django.urls import reverse
 from django.utils import timezone
 
 from clist.models import Contest, Resource
+from clist.tests import MIDDLEWARE_WITHOUT_DEBUG_TOOLING
 from ranking.enums import AccountType
 from ranking.models import Account, Statistics
 from ranking.views import (
@@ -23,6 +25,56 @@ class VersusTest(SimpleTestCase):
         request = RequestFactory().get("/versus/", {"remove": "not-an-integer"})
         response = versus(request, "first/vs/second")
         assert response.status_code == 400
+
+
+@override_settings(MIDDLEWARE=MIDDLEWARE_WITHOUT_DEBUG_TOOLING)
+class VersusRatingTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        now = timezone.now()
+        cls.resource = Resource.objects.create(
+            host="versus-rating.example.com",
+            enable=True,
+            url="https://versus-rating.example.com/",
+            has_rating_history=True,
+            color="#336699",
+            icon_file="resources/test.png",
+            icon_updated_at=now,
+        )
+        cls.contest = Contest.objects.create(
+            resource=cls.resource,
+            title="Versus rating",
+            start_time=now - timedelta(hours=2),
+            end_time=now - timedelta(hours=1),
+            duration_in_secs=3600,
+            url="https://versus-rating.example.com/contest",
+            key="versus-rating",
+            host=cls.resource.host,
+            parsed_time=now,
+            is_rated=True,
+        )
+        cls.accounts = [Account.objects.create(resource=cls.resource, key=key) for key in ("first", "second")]
+        for place, account in enumerate(cls.accounts, start=1):
+            Statistics.objects.create(
+                account=account,
+                contest=cls.contest,
+                resource=cls.resource,
+                place=str(place),
+                place_as_int=place,
+                solving=3 - place,
+                addition={"old_rating": 1500, "rating_change": place * 10, "new_rating": 1500 + place * 10},
+            )
+
+    def test_different_accounts_share_resource_rating_chart(self):
+        query = "/vs/".join(f"{self.resource.host}:{account.key}" for account in self.accounts)
+
+        response = self.client.get(reverse("ranking:versus", args=[query]))
+
+        assert response.status_code == 200
+        ratings = response.context["versus_data"]["ratings"]
+        assert set(ratings["resources"]) == {self.resource.host}
+        assert len(ratings["resources"][self.resource.host]["data"]) == 2
+        assert response.content.count(b'class="rating_history"') == 1
 
 
 class StandingsFieldsTest(SimpleTestCase):

@@ -802,7 +802,15 @@ def team(request, query, template="profile_team.html"):
 
 
 def get_ratings_data(
-    request, username=None, key=None, host=None, statistics=None, date_from=None, date_to=None, with_global=False
+    request,
+    username=None,
+    key=None,
+    host=None,
+    statistics=None,
+    date_from=None,
+    date_to=None,
+    with_global=False,
+    split_by_account=True,
 ):
     if statistics is None:
         if username is not None:
@@ -952,9 +960,10 @@ def get_ratings_data(
             default_info["host"] = resource.host
             default_info["colors"] = resource.ratings
             default_info["icon"] = resource.icon_file.name
-            default_info["account_pk"] = stat["account_id"]
             resource_key = resource.host
-            resource_key += f" #{stat['account_id']}"
+            if split_by_account:
+                default_info["account_pk"] = stat["account_id"]
+                resource_key += f" #{stat['account_id']}"
             if not is_major_kind:
                 resource_key += f" ({stat['kind']})"
         account_type_value = get_non_default_account_type(resource, account_type)
@@ -1002,8 +1011,10 @@ def get_ratings_data(
                 default_info["host"] = resource.host
                 default_info["colors"] = resource.ratings
                 default_info["icon"] = resource.icon_file.name
-                default_info["account_pk"] = stat.account_id
-                resource_key = f"{resource.host} #{stat.account_id}"
+                resource_key = resource.host
+                if split_by_account:
+                    default_info["account_pk"] = stat.account_id
+                    resource_key += f" #{stat.account_id}"
                 resource_info = ratings["data"]["resources"].setdefault(resource_key, default_info)
                 resource_info.setdefault("data", [])
                 data = resource.plugin.Statistic.get_rating_history(

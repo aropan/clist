@@ -215,6 +215,156 @@ class EloMmrRatingPredictionTest(TestCase):
         assert account.rating is None
         assert not any(field in statistic.addition for field in ELO_MMR_RATING_FIELDS)
 
+    def create_decay_history(self, resource):
+        contests = [
+            self.create_contest(resource, key=f"final-{index}", days_ago=(5 - index) * 365) for index in range(4)
+        ]
+        first, _ = self.create_statistic(contests[0], "university:first", 1, AccountType.UNIVERSITY)
+        second, _ = self.create_statistic(contests[0], "university:second", 2, AccountType.UNIVERSITY)
+        third, _ = self.create_statistic(contests[1], "university:third", 2, AccountType.UNIVERSITY)
+        for contest, accounts in (
+            (contests[1], (second,)),
+            (contests[2], (second, third)),
+            (contests[3], (first, second)),
+        ):
+            for place, account in enumerate(accounts, start=1):
+                Statistics.objects.create(
+                    resource=resource, contest=contest, account=account, place=str(place), place_as_int=place
+                )
+            contest.n_statistics = 2
+            contest.save(update_fields=["n_statistics"])
+        return contests, (first, second, third)
+
+    def test_decay_only_reduces_inactive_account_rating(self):
+        resource = self.create_resource(account_type="university", rating_decay=50)
+        contests, (first, second, third) = self.create_decay_history(resource)
+        statistic_ids = set(Statistics.objects.filter(resource=resource).values_list("pk", flat=True))
+
+        call_command("calculate_rating_prediction", contest=contests[-1].pk, stdout=StringIO())
+
+        first_result = Statistics.objects.get(contest=contests[0], account=first)
+        returned_result = Statistics.objects.get(contest=contests[-1], account=first)
+        assert returned_result.addition["old_rating"] == first_result.addition["new_rating"]
+        assert returned_result.rating_prediction["n_contests"] == 2
+        assert returned_result.rating_prediction[ELO_MMR_STATE_FIELD]["player_state"]["type"] == "delta"
+        for account in (first, second, third):
+            account.refresh_from_db()
+            last_result = Statistics.objects.filter(account=account).order_by("-contest__start_time").first()
+            decay = 50 if account == third else 0
+            assert account.rating == last_result.addition["new_rating"] - decay
+            assert account.rating_prediction["rating_decay"] == decay
+            assert account.rating_prediction["contest"] == last_result.contest_id
+            assert account.rating_prediction["time"] == int(contests[-1].end_time.timestamp())
+            assert account.rating_update_time == contests[-1].end_time
+            assert account.rating_prediction["new_rating"] == (
+                account.rating_prediction["old_rating"] + account.rating_prediction["rating_change"]
+            )
+        assert set(Statistics.objects.filter(resource=resource).values_list("pk", flat=True)) == statistic_ids
+
+        with mock.patch(
+            "ranking.management.commands.calculate_rating_prediction.Command.save_elo_mmr_accounts"
+        ) as save_accounts:
+            call_command("calculate_rating_prediction", contest=contests[-1].pk, stdout=StringIO())
+        save_accounts.assert_not_called()
+
+    def test_changing_or_disabling_decay_replays_the_entire_history(self):
+        resource = self.create_resource(account_type="university")
+        contests, accounts = self.create_decay_history(resource)
+        call_command("calculate_rating_prediction", contest=contests[0].pk, stdout=StringIO())
+        original = dict(Account.objects.filter(pk__in=[a.pk for a in accounts]).values_list("pk", "rating"))
+
+        for decay in (50, 25, 0):
+            resource.rating_prediction["rating_decay"] = decay
+            resource.save(update_fields=["rating_prediction"])
+            replay = calculate_elo_mmr_replay(resource, timezone.now(), start_time=contests[-1].start_time)
+            assert len(replay.snapshots) == len(contests)
+            call_command("calculate_rating_prediction", contest=contests[-1].pk, stdout=StringIO())
+            actual = dict(Account.objects.filter(pk__in=[a.pk for a in accounts]).values_list("pk", "rating"))
+            assert actual == {int(key): final["prediction"]["new_rating"] for key, final in replay.final.items()}
+        assert actual == original
+
+    def test_decay_starts_only_after_first_participation(self):
+        resource = self.create_resource(account_type="university", rating_decay=50)
+        contests, _ = self.create_decay_history(resource)
+        late_account, debut = self.create_statistic(contests[2], "university:late", 3, AccountType.UNIVERSITY)
+        never_participated = Account.objects.create(
+            resource=resource, key="university:never", account_type=AccountType.UNIVERSITY
+        )
+
+        earlier = calculate_elo_mmr_replay(resource, now=contests[1].end_time + timedelta(hours=1))
+        assert str(late_account.pk) not in earlier.final
+        assert str(never_participated.pk) not in earlier.final
+
+        call_command("calculate_rating_prediction", contest=contests[-1].pk, stdout=StringIO())
+
+        late_account.refresh_from_db()
+        debut.refresh_from_db()
+        never_participated.refresh_from_db()
+        assert debut.addition["old_rating"] == resource.rating_prediction["initial_rating"]
+        assert debut.rating_prediction["n_contests"] == 1
+        assert late_account.rating == debut.addition["new_rating"] - 50
+        assert late_account.rating_prediction["rating_decay"] == 50
+        assert Statistics.objects.filter(account=late_account).count() == 1
+        assert never_participated.rating is None
+        assert never_participated.rating_prediction is None
+        assert not Statistics.objects.filter(account=never_participated).exists()
+
+    def test_decay_stops_at_zero_and_returning_account_uses_last_competitive_rating(self):
+        resource = self.create_resource(account_type="university", rating_decay=2000)
+        contests, (first, _, _) = self.create_decay_history(resource)
+        before_return = calculate_elo_mmr_replay(resource, now=contests[2].end_time + timedelta(hours=1))
+        first_rating = before_return.snapshots[0].rankings[0]["prediction"]["new_rating"]
+        assert before_return.final[str(first.pk)]["prediction"]["new_rating"] == 0
+        assert before_return.final[str(first.pk)]["prediction"]["rating_decay"] == first_rating
+
+        call_command("calculate_rating_prediction", contest=contests[-1].pk, stdout=StringIO())
+
+        returned = Statistics.objects.get(account=first, contest=contests[-1])
+        assert returned.addition["old_rating"] == first_rating
+        assert returned.addition["new_rating"] > 0
+        assert Statistics.objects.get(account=first, contest=contests[0]).addition["new_rating"] == first_rating
+        assert not Account.objects.filter(resource=resource, rating__lt=0).exists()
+        assert Statistics.objects.filter(resource=resource).count() == 8
+
+    def test_rating_with_decay_is_not_negative_after_participation(self):
+        resource = self.create_resource(initial_rating=0, rating_decay=20)
+        contest = self.create_contest(resource)
+        self.create_statistic(contest, "winner", 1)
+        account, statistic = self.create_statistic(contest, "loser", 2)
+
+        call_command("calculate_rating_prediction", contest=contest.pk, stdout=StringIO())
+
+        statistic.refresh_from_db()
+        account.refresh_from_db()
+        assert account.rating == statistic.addition["new_rating"] == 0
+        assert statistic.rating_prediction["rating_perf"] < 0
+        player = statistic.rating_prediction[ELO_MMR_STATE_FIELD]["player_state"]["player"]
+        assert player["approx_posterior"]["mu"] == 0
+        assert player["event_history"][-1]["rating_mu"] == 0
+
+    def test_invalidating_final_undoes_its_decay_without_creating_statistics(self):
+        resource = self.create_resource(account_type="university", rating_decay=50)
+        contests, (_, _, third) = self.create_decay_history(resource)
+        call_command("calculate_rating_prediction", contest=contests[0].pk, stdout=StringIO())
+        third.refresh_from_db()
+        decayed_rating = third.rating
+
+        Statistics.objects.filter(contest=contests[-1]).update(skip_in_stats=True)
+        call_command("calculate_rating_prediction", contest=contests[-1].pk, stdout=StringIO())
+
+        third.refresh_from_db()
+        assert third.rating == decayed_rating + 50
+        assert third.rating_prediction["rating_decay"] == 0
+        assert third.rating_update_time == contests[-2].end_time
+        assert Statistics.objects.filter(resource=resource).count() == 8
+
+    def test_invalid_rating_decay_is_rejected(self):
+        resource = self.create_resource()
+        for value in (-1, float("inf"), float("nan"), None, "50"):
+            resource.rating_prediction["rating_decay"] = value
+            with self.assertRaisesMessage(ValueError, "rating_decay must be a finite non-negative number"):
+                get_elo_mmr_settings(resource)
+
     def test_reparse_of_old_contest_recalculates_later_contests(self):
         resource = self.create_resource()
         first_contest = self.create_contest(resource, key="contest-1", days_ago=10)

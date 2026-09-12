@@ -1183,3 +1183,7 @@ tr:not(.info) .sticky-right-column {
 table.table-scrolling .endless_container td {
   text-align: left;
 }
+
+table.table.table-scrolling .text-align-left {
+  text-align: left;
+}

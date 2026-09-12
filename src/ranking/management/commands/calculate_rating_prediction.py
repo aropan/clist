@@ -3,6 +3,7 @@
 import copy
 import hashlib
 import json
+import math
 import tempfile
 from collections import defaultdict
 from logging import getLogger
@@ -238,11 +239,15 @@ def get_elo_mmr_settings(resource):
     rate_kwargs = {"mu_noob": config["initial_rating"]}
     if "sig_noob" in config:
         rate_kwargs["sig_noob"] = config["sig_noob"]
+    rating_decay = config.get("rating_decay", 0)
+    if not isinstance(rating_decay, (int, float)) or not math.isfinite(rating_decay) or rating_decay < 0:
+        raise ValueError("rating_decay must be a finite non-negative number")
     return AttrDict({
         "account_type": account_type,
         "account_type_name": account_type_name,
         "initial_rating": config["initial_rating"],
         "rate_kwargs": rate_kwargs,
+        "rating_decay": rating_decay,
         "save_rating": config["save_rating"],
         "system": system,
     })
@@ -500,9 +505,31 @@ def get_elo_mmr_checkpoint(resource, rated_contests, start_index, account_type=N
     return {**checkpoint, "players": players}, previous_contest.rating_prediction_hash
 
 
+def apply_elo_mmr_rating_floor(checkpoint, participants):
+    changed = False
+    for participant in participants:
+        player = checkpoint["players"][participant]
+        rating = player["approx_posterior"]["mu"]
+        new_rating = max(0, rating)
+        rating_delta = new_rating - rating
+        if not rating_delta:
+            continue
+        # Translate the entire skill distribution to keep future ratings consistent with the visible floor.
+        player["normal_factor"]["mu"] += rating_delta
+        player["approx_posterior"]["mu"] = new_rating
+        for factor in player["logistic_factors"]:
+            factor["mu"] += rating_delta
+        player["event_history"][-1]["rating_mu"] = round(new_rating)
+        changed = True
+    return changed
+
+
 def calculate_elo_mmr_replay(resource, now, start_time=None):
     settings = get_elo_mmr_settings(resource)
     contests = list(Contest.objects.filter(resource=resource).order_by("start_time", "pk"))
+    # Changes to account decay must invalidate calculation metadata saved with the previous configuration.
+    if settings.rating_decay or any(get_item(c, "info._rating_calculation.config.rating_decay") for c in contests):
+        start_time = None
     rated_contests = get_elo_mmr_rated_contests(resource, now, settings.account_type)
 
     rated_contest_ids = [contest.pk for contest, _, _, _ in rated_contests]
@@ -556,6 +583,9 @@ def calculate_elo_mmr_replay(resource, now, start_time=None):
             checkpoint = json.loads(checkpoint_path.read_text(encoding="utf8"))
             if checkpoint["contests_processed"] != contest_index + 1:
                 raise ValueError("unexpected Elo-MMR checkpoint contest index")
+            if settings.rating_decay and apply_elo_mmr_rating_floor(checkpoint, participants):
+                checkpoint_path.write_text(json.dumps(checkpoint, separators=(",", ":")), encoding="utf8")
+                rater = elo_mmr_py.Rater.load(checkpoint_path)
 
             hash_payload = {
                 "calculation_version": ELO_MMR_CALCULATION_VERSION,
@@ -566,6 +596,9 @@ def calculate_elo_mmr_replay(resource, now, start_time=None):
                 "time": int(contest.end_time.timestamp()),
                 "standings": standings,
             }
+            if settings.rating_decay:
+                hash_payload["rating_decay_floor"] = 0
+                hash_payload["rating_decay_mode"] = "account_only"
             input_hash = hashlib.sha256(
                 json.dumps(hash_payload, sort_keys=True, separators=(",", ":")).encode("utf8")
             ).hexdigest()
@@ -580,6 +613,7 @@ def calculate_elo_mmr_replay(resource, now, start_time=None):
                 old_rating = (
                     event_history[-2]["rating_mu"] if len(event_history) > 1 else round(settings.initial_rating)
                 )
+                previous_player = previous_players.get(participant)
                 new_rating = event["rating_mu"]
                 player_state = {
                     "algorithm": ELO_MMR_ALGORITHM,
@@ -588,7 +622,7 @@ def calculate_elo_mmr_replay(resource, now, start_time=None):
                     "checkpoint_format_version": elo_mmr_py.CHECKPOINT_FORMAT_VERSION,
                     "player_state_format_version": ELO_MMR_PLAYER_STATE_FORMAT_VERSION,
                     "input_hash": input_hash,
-                    "player_state": make_elo_mmr_player_state(previous_players.get(participant), player),
+                    "player_state": make_elo_mmr_player_state(previous_player, player),
                 }
                 player_state["state_hash"] = get_elo_mmr_player_state_hash(player)
                 statistic = participants[participant]
@@ -646,7 +680,17 @@ def calculate_elo_mmr_replay(resource, now, start_time=None):
                 "n_contests": len(event_history),
             },
         }
-        final[participant] = {"contest": contest, **ranking}
+        rating_time = contest.end_time
+        if settings.rating_decay:
+            prediction = dict(latest[participant]["prediction"])
+            prediction.pop(ELO_MMR_STATE_FIELD)
+            missed_contests = len(rated_contests) - event["contest_index"] - 1
+            prediction["new_rating"] = round(max(0, event["rating_mu"] - settings.rating_decay * missed_contests))
+            prediction["rating_decay"] = event["rating_mu"] - prediction["new_rating"]
+            prediction["rating_change"] = prediction["new_rating"] - prediction["old_rating"]
+            ranking["prediction"] = prediction
+            rating_time = rated_contests[-1][0].end_time
+        final[participant] = {"contest": contest, "rating_time": rating_time, **ranking}
         leaderboard.append(ranking)
 
     return AttrDict({
@@ -1055,14 +1099,15 @@ class Command(BaseCommand):
                 continue
 
             contest = final["contest"]
+            rating_time = min(final["rating_time"], now)
             prediction = dict(final["prediction"])
-            prediction["time"] = int(min(contest.end_time, now).timestamp())
+            prediction["time"] = int(rating_time.timestamp())
             prediction["contest"] = contest.pk
             account.rating_prediction = prediction
             update_fields = ["rating_prediction"]
             if replay.settings.save_rating:
                 account.info = {**(account.info or {}), "rating": prediction["new_rating"]}
-                account.rating_update_time = min(contest.end_time, now)
+                account.rating_update_time = rating_time
                 update_fields.extend(["info", "rating_update_time"])
             account.save(update_fields=update_fields)
 

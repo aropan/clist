@@ -3,8 +3,10 @@
 import json
 import math
 import random
+import tempfile
 from dataclasses import dataclass
 from logging import getLogger
+from pathlib import Path
 
 import elo_mmr_py
 import numpy as np
@@ -17,6 +19,7 @@ from clist.models import Resource
 from ranking.management.commands.calculate_rating_prediction import (
     ELO_MMR_ALGORITHM,
     ELO_MMR_SYSTEM_SETTINGS,
+    apply_elo_mmr_rating_floor,
     get_elo_mmr_rated_contests,
     get_elo_mmr_settings,
 )
@@ -131,14 +134,25 @@ def evaluate_elo_mmr_parameters(rated_contests, config, parameters):
         sig_noob=parameters.sig_noob,
     )
     metrics = []
-    for contest_index, (contest, standings, _, native_contest) in enumerate(rated_contests):
-        current_ratings = rater.ratings
-        ratings = {
-            participant: current_ratings[participant].mu if participant in current_ratings else config["initial_rating"]
-            for participant, _, _ in standings
-        }
-        metrics.append(calculate_contest_prediction_metrics(contest_index, contest, standings, ratings))
-        rater.add(native_contest)
+    apply_rating_floor = bool(config.get("rating_decay"))
+    with tempfile.TemporaryDirectory(prefix="clist-elo-mmr-optimize-") as temporary_directory:
+        checkpoint_path = Path(temporary_directory) / "checkpoint.json"
+        for contest_index, (contest, standings, participants, native_contest) in enumerate(rated_contests):
+            current_ratings = rater.ratings
+            ratings = {
+                participant: current_ratings[participant].mu
+                if participant in current_ratings
+                else config["initial_rating"]
+                for participant, _, _ in standings
+            }
+            metrics.append(calculate_contest_prediction_metrics(contest_index, contest, standings, ratings))
+            rater.add(native_contest)
+            if apply_rating_floor:
+                rater.save(checkpoint_path)
+                checkpoint = json.loads(checkpoint_path.read_text(encoding="utf8"))
+                if apply_elo_mmr_rating_floor(checkpoint, participants):
+                    checkpoint_path.write_text(json.dumps(checkpoint, separators=(",", ":")), encoding="utf8")
+                    rater = elo_mmr_py.Rater.load(checkpoint_path)
     return metrics
 
 

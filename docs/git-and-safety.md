@@ -9,7 +9,8 @@
 ## Operations that need explicit approval
 
 Ask first: `git add`, `git commit`, `git push`, `git reset`, `git checkout`, `git rebase`,
-`git clean`. Branch off `master` before committing; never `git reset --hard` or
+`git clean`. Create or switch branches only when the user explicitly asks; a request
+to commit changes applies to the current branch. Never `git reset --hard` or
 `git clean -fd` unless explicitly requested.
 
 ## Commit style

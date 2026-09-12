@@ -18,11 +18,11 @@
 <div id="resources-rating" class="row row-flex row-flex-sm">
   {% for resource in resources %}
   {% if resource.accounts.exists %}
-  <div class="col-sm-6 col-md-4 col-lg-3">
+  <div class="col-sm-6 col-md-4">
     <div class="panel panel-default table-responsive">
         <table class="table table-hover table-condensed table-striped">
             <tr>
-              <th class="host" colspan="100%">
+              <th class="host ignore_sticky_side" colspan="100%">
                 <a class="lead" href="{% url 'clist:resource' resource.host %}">
                   <img src="{{ resource.icon_file.name|media_size:'64x64' }}" width="24" height="24"/>
                   {{ resource.host }}
@@ -30,9 +30,9 @@
               </th>
             </tr>
             <tr>
-              <th>N</th>
-              <th>Handle</th>
-              <th>Rating</th>
+              <th class="no-stretch sticky-left-column">N</th>
+              <th data-table-scrolling-class="text-align-left">Handle</th>
+              <th class="no-stretch sticky-right-column">Rating</th>
             </tr>
             {% include 'resources_account_rating_paging.html' with resource=resource %}
         </table>
@@ -41,5 +41,7 @@
   {% endif %}
   {% endfor %}
 </div>
+<script>update_table_sticky()</script>
+<script>$(window).resize(update_table_sticky)</script>
 
 {% endblock %}

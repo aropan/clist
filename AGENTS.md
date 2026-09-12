@@ -27,6 +27,8 @@ Gemini, Copilot, Cursor, Codex, and any other agent read the same rules.
 - **Never run destructive or outward-facing commands without explicit
   approval**: no `git push`, `git reset --hard`, `git clean -fd`, no `rm -rf`,
   no `DROP`/`DELETE`/`TRUNCATE`, no deploys, no `docker ... prune`.
+- Create or switch branches **only when the user explicitly asks**. A request
+  to commit changes does not imply creating a separate branch.
 - Commit or push **only when the user asks**.
 - **Never print or commit secrets** — see
   [docs/git-and-safety.md](docs/git-and-safety.md#off-limits).

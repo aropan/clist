@@ -549,6 +549,7 @@ class Command(BaseCommand):
                     contest = locked_contest
 
                     has_standings_result = bool(standings.get("result"))
+                    plugin.prepare_result_additions(contest, standings)
 
                     if standings_filters := get_item(contest, "info.standings.filters"):
                         result = standings.setdefault("result", {})
@@ -814,6 +815,7 @@ class Command(BaseCommand):
                         contest_log_counter = sum_data(contest_log_counter, standings_counters)
 
                     parse_info = contest.info.get("parse", {})
+                    plugin.apply_result_additions(contest, result, add_missing=bool(result or specific_users))
                     resource_statistics = resource.info.get("statistics") or {}
                     wait_rating = resource_statistics.get("wait_rating", {})
                     has_hidden = standings.pop("has_hidden", False)
@@ -861,8 +863,6 @@ class Command(BaseCommand):
                         hidden_fields = set()
                         medals_skip = set()
                         medals_skip_places = defaultdict(int)
-
-                        plugin.apply_result_additions(contest, result, add_missing=True)
 
                         for r in result.values():
                             for k, v in r.items():

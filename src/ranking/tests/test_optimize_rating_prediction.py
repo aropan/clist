@@ -10,8 +10,14 @@ from django.test import TestCase
 from django.utils import timezone
 
 from clist.models import Contest, Resource
+from ranking.management.commands.calculate_rating_prediction import (
+    calculate_elo_mmr_replay,
+    get_elo_mmr_rated_contests,
+)
 from ranking.management.commands.optimize_rating_prediction import (
+    OptimizationParameters,
     calculate_contest_prediction_metrics,
+    evaluate_elo_mmr_parameters,
     sample_parameters,
 )
 from ranking.models import Account, Statistics
@@ -89,6 +95,37 @@ class OptimizeRatingPredictionTest(TestCase):
 
         assert correct.log_loss < equal.log_loss < wrong.log_loss
         assert correct.rank_rmse < equal.rank_rmse < wrong.rank_rmse
+
+    def test_optimizer_uses_competitive_ratings_independently_of_account_decay(self):
+        resource = self.create_resource()
+        resource.rating_prediction.update(rating_decay=50, sig_noob=350)
+        accounts, contests = self.create_history(resource, n_contests=4)
+        third = Account.objects.create(resource=resource, key="third")
+        for contest in contests:
+            Statistics.objects.create(resource=resource, contest=contest, account=third, place="3", place_as_int=3)
+        Statistics.objects.filter(account=accounts[0], contest__in=contests[1:3]).update(skip_in_stats=True)
+        rated_contests = get_elo_mmr_rated_contests(resource, timezone.now())
+        parameters = OptimizationParameters(weight_limit=0.3, sig_limit=80, sig_noob=350, annual_drift=0)
+
+        predicted_ratings = []
+        for rating_decay in (50, 2000):
+            resource.rating_prediction["rating_decay"] = rating_decay
+            with mock.patch(
+                "ranking.management.commands.optimize_rating_prediction.calculate_contest_prediction_metrics",
+                wraps=calculate_contest_prediction_metrics,
+            ) as metrics:
+                evaluate_elo_mmr_parameters(rated_contests, resource.rating_prediction, parameters)
+
+            replay = calculate_elo_mmr_replay(resource, timezone.now())
+            for snapshot, call in zip(replay.snapshots, metrics.call_args_list):
+                ratings = call.args[3]
+                for ranking in snapshot.rankings:
+                    assert ranking["prediction"]["old_rating"] == round(ratings[str(ranking["account_id"])])
+            first_rating = replay.snapshots[0].rankings[0]["prediction"]["new_rating"]
+            predicted_rating = round(metrics.call_args_list[-1].args[3][str(accounts[0].pk)])
+            assert predicted_rating == first_rating
+            predicted_ratings.append(predicted_rating)
+        assert predicted_ratings[0] == predicted_ratings[1]
 
     def test_small_annual_drift_range_is_respected(self):
         ranges = AttrDict({

@@ -3,6 +3,7 @@ from types import SimpleNamespace
 
 from django.test import SimpleTestCase
 
+from clist.models import Contest, Resource
 from ranking.management.modules.common import BaseModule, apply_result_additions
 
 
@@ -94,3 +95,24 @@ class ApplyResultAdditionsTest(SimpleTestCase):
         }
         assert list(result["member-1"])[-2:] == ["second", "first"]
         assert contest.info["additions"]["Team Name"] == {"second": 2, "first": 1}
+
+    def test_complete_overrides_are_deferred_until_source_keys_are_checked(self):
+        contest = Contest(
+            resource=Resource(),
+            info={
+                "additions_complete": True,
+                "additions": {"original": {"member": "corrected", "name": "Corrected Name"}},
+            },
+        )
+        module = DummyModule()
+        module.contest = contest
+        result = {"original": {"member": "original", "name": "original"}}
+
+        module.complete_result(result)
+
+        assert result["original"]["member"] == "original"
+        assert result["original"]["name"] == "original"
+        module.prepare_result_additions(contest, {"result": result})
+        module.apply_result_additions(contest, result, add_missing=True)
+        assert list(result) == ["corrected"]
+        assert result["corrected"]["name"] == "Corrected Name"

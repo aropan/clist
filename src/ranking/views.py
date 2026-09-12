@@ -2184,7 +2184,13 @@ def get_versus_data(request, query, fields_to_select):
     for filt in filters:
         qs = Statistics.objects.filter(filt, place__isnull=False)
 
-        ratings_data = get_ratings_data(request=request, statistics=qs, date_from=date_from, date_to=date_to)
+        ratings_data = get_ratings_data(
+            request=request,
+            statistics=qs,
+            date_from=date_from,
+            date_to=date_to,
+            split_by_account=False,
+        )
 
         infos.append({
             "score": 0,
