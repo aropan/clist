@@ -1,4 +1,5 @@
 import os
+import re
 from datetime import UTC, datetime, timedelta
 from tempfile import TemporaryDirectory
 from unittest.mock import Mock, patch
@@ -9,9 +10,17 @@ from django.test import SimpleTestCase, TestCase
 from django.utils.timezone import now
 from telegram.error import BadRequest, ChatMigrated, Forbidden
 
+from clist.models import Contest, Resource
+from clist.templatetags.extras import md_url
 from notification.management.commands.check_logs import Command as CheckLogsCommand
 from notification.management.commands.sendout_tasks import Command
 from notification.models import Subscription, Task
+from notification.utils import (
+    CUSTOM_MESSAGE_PLACEHOLDERS,
+    compose_message_by_custom_messages,
+    render_custom_message,
+)
+from ranking.models import Account, Statistics
 
 
 class CheckLogsTest(SimpleTestCase):
@@ -277,3 +286,79 @@ class TelegramSendoutTest(SimpleTestCase):
         assert [task.response for task in tasks] == [{"message_id": 1}, {"message_id": 2}]
         for task in tasks:
             task.save.assert_called_once_with()
+
+
+class CustomSubscriptionMessagesTest(TestCase):
+    def setUp(self):
+        self.resource = Resource.objects.create(
+            host="custom-messages.example",
+            enable=True,
+            url="https://custom-messages.example",
+        )
+        current_time = now()
+        self.contest = Contest.objects.create(
+            resource=self.resource,
+            title="Spring Challenge",
+            start_time=current_time - timedelta(days=2),
+            end_time=current_time - timedelta(days=1),
+            url="https://custom-messages.example/contest",
+            key="spring-challenge",
+            host=self.resource.host,
+        )
+        self.account = Account.objects.create(resource=self.resource, key="player")
+        self.statistic = Statistics.objects.create(
+            account=self.account,
+            contest=self.contest,
+            resource=self.resource,
+            place="1",
+            place_as_int=1,
+            solving=1,
+        )
+
+    def test_every_placeholder_renders_a_markdown_link(self):
+        for name in CUSTOM_MESSAGE_PLACEHOLDERS:
+            rendered = render_custom_message(f"{{{name}}}", self.statistic)
+            assert re.fullmatch(r"\[[^]]+\]\(https://[^)]+\)", rendered), (name, rendered)
+
+        account_url = md_url(f"/standings/{self.contest.pk}/?find_me={self.statistic.pk}")
+        contest_url = md_url(f"/standings/{self.contest.pk}/")
+        score_history_url = md_url(f"/score-history/{self.statistic.pk}/")
+        assert render_custom_message("{account}", self.statistic) == f"[player]({account_url})"
+        assert render_custom_message("{contest}", self.statistic) == f"[Spring Challenge]({contest_url})"
+        assert render_custom_message("{score_history}", self.statistic) == f"[score history]({score_history_url})"
+
+    def test_unknown_placeholder_is_kept_as_is(self):
+        rendered = render_custom_message("{account} moved to {unknown} league", self.statistic)
+        assert rendered.endswith(" moved to {unknown} league")
+
+    def test_subscription_account_name_overrides_account_text(self):
+        subscription = Mock()
+        subscription.account_name.return_value = "Team Alpha"
+        rendered = render_custom_message("{account}", self.statistic, subscription)
+        assert rendered.startswith("[Team Alpha](")
+
+    def test_messages_of_one_row_are_joined(self):
+        custom_messages = [
+            {"type": "league_change", "message": "{account} moved to `Bronze` league"},
+            {"type": "best_place", "message": "{account} improved place `2` -> `1`"},
+        ]
+        message = compose_message_by_custom_messages(statistic=self.statistic, custom_messages=custom_messages)
+        assert len(message.split("\n")) == 2
+        assert "moved to `Bronze` league" in message
+        assert "improved place `2` -> `1`" in message
+
+    def test_message_without_custom_names_matches_general_message(self):
+        custom_messages = [{"type": "best_place", "message": "{account} improved place `2` -> `1`"}]
+        general_message = compose_message_by_custom_messages(
+            statistic=self.statistic,
+            custom_messages=custom_messages,
+        )
+        subscription = Mock(locale="en")
+        subscription.account_name.return_value = None
+        message = compose_message_by_custom_messages(
+            statistic=self.statistic,
+            custom_messages=custom_messages,
+            subscription=subscription,
+            general_message=general_message,
+        )
+        assert message == general_message

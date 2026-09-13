@@ -22,6 +22,7 @@ from django.core.cache import cache
 from django.utils.safestring import mark_safe
 from django.utils.timezone import now
 
+from clist.templatetags.extras import md_escape
 from logify import live as tqdm
 from ranking.management.modules.common import REQ, BaseModule
 from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse
@@ -146,7 +147,8 @@ class Statistic(BaseModule):
         now_timestamp = int(now().timestamp())
         with PoolExecutor(max_workers=8) as executor:
             hidden_fields = {"league_index", "agent_id", "rank"}
-            hidden_scoring_fields = ["_agent_id", "_league_index", "_solving"]
+            hidden_scoring_fields = ["_league_index", "_solving"]
+            progress_fields = ["_agent_id", "_league", "_best_place"]
             result = {}
             has_percentage = False
 
@@ -217,7 +219,7 @@ class Statistic(BaseModule):
 
                     stat = (statistics or {}).get(handle)
                     if stat:
-                        for field in ["codinpoints", "_score_history"] + hidden_scoring_fields:
+                        for field in ["codinpoints", "_score_history", *progress_fields, *hidden_scoring_fields]:
                             if field in stat and field not in r:
                                 r[field] = stat[field]
 
@@ -398,7 +400,6 @@ class Statistic(BaseModule):
                             score_percentage["delta_rank"] = r["place"] - percentage_place
                         continue
 
-                    updated = r.get("agent_id") != r.get("_agent_id")
                     for hidden_field in hidden_scoring_fields:
                         field = hidden_field.lstrip("_")
                         if field in r:
@@ -406,9 +407,50 @@ class Statistic(BaseModule):
                         else:
                             r.pop(hidden_field, None)
 
+                    if requested_users is not None:
+                        continue
+
+                    place = r["place"]
+                    league = r.get("league")
+                    previous_league = r.get("_league")
+                    previous_best_place = r.get("_best_place")
+                    agent_updated = r.get("agent_id") != r.get("_agent_id")
+                    league_changed = league != previous_league
+
+                    if previous_best_place is not None:
+                        if league_changed and league and previous_league:
+                            message = (
+                                f"{{account}} moved to `{md_escape(league)}` league"
+                                f" from `{md_escape(previous_league)}`, place `{place}`. {{contest}}"
+                            )
+                            r.setdefault("_subscription_messages", []).append({
+                                "type": "league_change",
+                                "message": message,
+                            })
+                        elif not league_changed and agent_updated and place < previous_best_place:
+                            in_league = f" in `{md_escape(league)}` league" if league else ""
+                            message = (
+                                f"{{account}} improved place `{previous_best_place}` → `{place}`"
+                                f"{in_league}. {{contest}}"
+                            )
+                            r.setdefault("_subscription_messages", []).append({
+                                "type": "best_place",
+                                "message": message,
+                            })
+
+                    if previous_best_place is None or league_changed:
+                        r["_best_place"] = place
+                    elif agent_updated:
+                        r["_best_place"] = min(previous_best_place, place)
+                    r["_league"] = league
+                    if "agent_id" in r:
+                        r["_agent_id"] = r["agent_id"]
+                    else:
+                        r.pop("_agent_id", None)
+
                     score_history = r.setdefault("_score_history", [])
                     if (
-                        not updated
+                        not agent_updated
                         and score_history
                         and score_history[-1]["score"] == r["solving"]
                         and score_history[-1]["rank"] == r["place"]
@@ -421,7 +463,7 @@ class Statistic(BaseModule):
                         "score": r["solving"],
                         "rank": r["place"],
                         **({"league": r["league"]} if "league" in r else {}),
-                        **({"updated": True} if updated else {}),
+                        **({"updated": True} if agent_updated else {}),
                     })
 
         fixed_fields = [

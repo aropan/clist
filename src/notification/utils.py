@@ -49,6 +49,47 @@ def lazy_compose_message(func):
     return wrapper
 
 
+def compose_account_message(statistic, subscription=None):
+    standings_url = reverse("ranking:standings_by_id", args=[statistic.contest_id]) + f"?find_me={statistic.pk}"
+    account_name = statistic.account_name
+    if subscription and (name := subscription.account_name(statistic.account)):
+        account_name = name
+    account_message = f"[{md_url_text(account_name)}]({md_url(standings_url)})"
+    if statistic.account.country:
+        account_message = flag.flag(statistic.account.country.code) + account_message
+    return account_message
+
+
+def compose_contest_message(statistic, subscription=None):
+    standings_url = reverse("ranking:standings_by_id", args=[statistic.contest_id])
+    return f"[{md_url_text(statistic.contest.title)}]({md_url(standings_url)})"
+
+
+def compose_score_history_message(statistic, subscription=None):
+    score_history_url = reverse("ranking:score-history", args=[statistic.pk])
+    return f"[score history]({md_url(score_history_url)})"
+
+
+CUSTOM_MESSAGE_PLACEHOLDERS = {
+    "account": compose_account_message,
+    "contest": compose_contest_message,
+    "score_history": compose_score_history_message,
+}
+
+
+def render_custom_message(message, statistic, subscription=None):
+    def replace(match):
+        compose = CUSTOM_MESSAGE_PLACEHOLDERS.get(match.group("name"))
+        return compose(statistic, subscription) if compose else match.group(0)
+
+    return re.sub(r"\{(?P<name>\w+)\}", replace, message)
+
+
+@lazy_compose_message
+def compose_message_by_custom_messages(statistic, custom_messages, subscription, locale):
+    return "\n".join(render_custom_message(m["message"], statistic, subscription) for m in custom_messages)
+
+
 @lazy_compose_message
 def compose_message_by_problems(
     problem_shorts,
@@ -123,13 +164,7 @@ def compose_message_by_problems(
     if previous_place and has_solving_diff:
         place_message = "%s->%s" % (previous_place, statistic.place)
 
-    standings_url = reverse("ranking:standings_by_id", args=[statistic.contest_id]) + f"?find_me={statistic.pk}"
-    account_name = statistic.account_name
-    if subscription and (name := subscription.account_name(statistic.account)):
-        account_name = name
-    account_message = "[%s](%s)" % (md_url_text(account_name), md_url(standings_url))
-    if statistic.account.country:
-        account_message = flag.flag(statistic.account.country.code) + account_message
+    account_message = compose_account_message(statistic, subscription)
 
     suffix_message = ""
     if has_solving_diff:

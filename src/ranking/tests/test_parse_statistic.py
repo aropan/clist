@@ -10,7 +10,9 @@ from django.test import SimpleTestCase, TestCase, override_settings
 from django.utils import timezone
 
 from clist.models import Contest, Resource
+from clist.templatetags.extras import md_url_text
 from clist.tests import MIDDLEWARE_WITHOUT_DEBUG_TOOLING
+from notification.models import Subscription, Task
 from ranking.management.commands import parse_statistic
 from ranking.management.commands.calculate_rating_prediction import ELO_MMR_RATING_FIELDS
 from ranking.management.commands.parse_statistic import Command, get_standings_log_summary, log_long_operation
@@ -18,6 +20,7 @@ from ranking.management.modules.common import BaseModule
 from ranking.models import Account, AccountRenaming, AccountType, Module, Statistics
 from ranking.tests import test_calculate_rating_prediction
 from ranking.utils import rename_account
+from true_coders.models import Coder
 
 
 class ParseStatisticDiagnosticsTest(SimpleTestCase):
@@ -558,3 +561,104 @@ class CompleteResultAdditionsTest(TestCase):
                 self.contest.save(update_fields=["info"])
                 self.rows.pop(source)
                 self.additions.pop(source)
+
+
+CUSTOM_MESSAGES = [{"type": "league_change", "message": "{account} moved to `Bronze` league. {contest}"}]
+
+
+class CustomSubscriptionMessagesParseTest(TestCase):
+    def setUp(self):
+        ParseStatisticConcurrencyTest.setUp(self)
+        self.coder = Coder.objects.create(username="subscriber")
+        self.account = Account.objects.create(resource=self.resource, key="player")
+
+    def subscribe(self, method="telegram:100", **fields):
+        subscription = Subscription.objects.create(coder=self.coder, method=method, **fields)
+        return subscription
+
+    def parse(self, **row):
+        rows = {"player": {"member": "player", "place": 1, "solving": 10, **row}}
+
+        class Statistic(BaseModule):
+            def get_standings(inner_self, **kwargs):
+                return {"result": copy.deepcopy(rows)}
+
+        return ParseStatisticConcurrencyTest.run_with_plugin(self, Statistic, without_subscriptions=False)
+
+    def sent_messages(self):
+        return list(Task.objects.filter(message__isnull=False).values_list("message", flat=True))
+
+    def test_row_without_custom_messages_does_not_send_anything(self):
+        self.subscribe().accounts.add(self.account)
+
+        self.parse()
+
+        assert self.sent_messages() == []
+
+    def test_skip_subscription_row_does_not_send_anything(self):
+        self.subscribe().accounts.add(self.account)
+
+        self.parse(_subscription_messages=CUSTOM_MESSAGES, _skip_subscription=True)
+
+        assert self.sent_messages() == []
+
+    def test_recipient_matched_twice_gets_single_message(self):
+        self.subscribe().accounts.add(self.account)
+        self.subscribe(top_n=10)
+
+        self.parse(_subscription_messages=CUSTOM_MESSAGES)
+
+        assert len(self.sent_messages()) == 1
+
+    def test_top_n_subscriber_receives_message(self):
+        other_coder = Coder.objects.create(username="top-watcher")
+        Subscription.objects.create(coder=other_coder, method="telegram:200", top_n=10)
+
+        self.parse(_subscription_messages=CUSTOM_MESSAGES)
+
+        assert len(self.sent_messages()) == 1
+
+    def test_message_is_sent_with_rendered_links(self):
+        self.subscribe().accounts.add(self.account)
+
+        self.parse(_subscription_messages=CUSTOM_MESSAGES)
+
+        statistic = Statistics.objects.get(contest=self.contest, account=self.account)
+        (message,) = self.sent_messages()
+        assert f"/standings/{self.contest.pk}/?find_me={statistic.pk}" in message
+        assert "moved to `Bronze` league." in message
+        assert md_url_text(self.contest.title) in message
+        assert "{" not in message
+        assert "}" not in message
+
+    def test_subscription_excluded_by_base_filter_does_not_compose_message(self):
+        subscription = self.subscribe(exclude_contest=self.contest)
+        subscription.accounts.add(self.account)
+
+        target = "ranking.management.commands.parse_statistic.compose_message_by_custom_messages"
+        with mock.patch(target) as compose:
+            self.parse(_subscription_messages=CUSTOM_MESSAGES)
+
+        compose.assert_not_called()
+        assert self.sent_messages() == []
+
+    def test_message_of_previous_parse_is_not_carried_over(self):
+        self.subscribe().accounts.add(self.account)
+
+        self.parse(_subscription_messages=CUSTOM_MESSAGES)
+        assert len(self.sent_messages()) == 1
+
+        self.parse()
+
+        statistic = Statistics.objects.get(contest=self.contest, account=self.account)
+        assert "_subscription_messages" not in statistic.addition
+        assert len(self.sent_messages()) == 1
+
+    def test_custom_messages_are_stored_as_a_special_addition_field(self):
+        self.subscribe().accounts.add(self.account)
+
+        self.parse(_subscription_messages=CUSTOM_MESSAGES)
+
+        statistic = Statistics.objects.get(contest=self.contest, account=self.account)
+        assert statistic.addition["_subscription_messages"] == CUSTOM_MESSAGES
+        assert Statistics.is_special_addition_field("_subscription_messages")

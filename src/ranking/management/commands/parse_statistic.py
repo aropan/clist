@@ -51,7 +51,12 @@ from logify.live import LiveLogSession, tqdm
 from logify.models import EventLog, EventStatus
 from logify.rq import fail_live_event_logs, interrupt_live_event_logs, interrupt_stale_event_logs
 from notification.models import NotificationMessage, Subscription
-from notification.utils import compose_message_by_problems, compose_message_by_submissions, send_messages
+from notification.utils import (
+    compose_message_by_custom_messages,
+    compose_message_by_problems,
+    compose_message_by_submissions,
+    send_messages,
+)
 from pyclist.decorators import analyze_db_queries
 from ranking.management.commands.calculate_rating_prediction import (
     ELO_MMR_ALGORITHM,
@@ -1764,6 +1769,52 @@ class Command(BaseCommand):
                                     subscription.send(message=message, contest=contest)
                                     contest_log_counter["statistics_subscription"] += 1
 
+                            def process_custom_subscriptions(statistic):
+                                if skip_result or not with_subscription:
+                                    return
+                                if addition.get("_skip_subscription"):
+                                    return
+                                custom_messages = addition.get("_subscription_messages")
+                                if not custom_messages:
+                                    return
+
+                                with_top_n = (
+                                    subscription_top_n
+                                    and statistic.place_as_int
+                                    and statistic.place_as_int <= subscription_top_n
+                                )
+                                subscribed_coders = getattr(account, "subscribed_coders", None)
+                                if not account.n_subscribers and not subscribed_coders and not with_top_n:
+                                    return
+
+                                subscriptions_filter = Q()
+                                if account.n_subscribers:
+                                    subscriptions_filter |= Q(accounts=account)
+                                if subscribed_coders:
+                                    subscriptions_filter |= Q(coders__in=subscribed_coders)
+                                if with_top_n:
+                                    subscriptions_filter |= Q(top_n__gte=statistic.place_as_int)
+                                subscriptions_filter = subscriptions_filter & base_subscriptions_filter
+                                subscriptions = Subscription.for_statistics.filter(subscriptions_filter)
+
+                                kwargs = {"statistic": statistic, "custom_messages": custom_messages}
+                                subscription_message = None
+                                already_sent = set()
+                                for subscription in subscriptions:
+                                    if subscription.notification_key in already_sent:
+                                        continue
+                                    already_sent.add(subscription.notification_key)
+
+                                    if subscription_message is None:
+                                        subscription_message = compose_message_by_custom_messages(**kwargs)
+                                    message = compose_message_by_custom_messages(
+                                        subscription=subscription,
+                                        general_message=subscription_message,
+                                        **kwargs,
+                                    )
+                                    subscription.send(message=message, contest=contest)
+                                    contest_log_counter["statistics_subscription"] += 1
+
                             def process_upsolving_subscriptions(submissions, condition, subscription_model, cache):
                                 if not submissions or not condition:
                                     return
@@ -1855,6 +1906,7 @@ class Command(BaseCommand):
                                 set_matched_coders_to_members(statistic)
 
                             process_subscriptions(statistic, updates)
+                            process_custom_subscriptions(statistic)
 
                             upsolving_cache = set()
                             process_upsolving_subscriptions(
