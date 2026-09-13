@@ -1,6 +1,6 @@
 {% if versus_data_row %}
   {% with win=versus_data_row.win lose=versus_data_row.lose draw=versus_data_row.draw total=versus_data_row.total %}
-  <{{ tag }} class="versus-cell">
+  <td class="versus-cell">
     {% if versus_data_row.games %}
       <a class="versus-games" onclick="$('#versus-games-{{ statistic.pk|default:"none" }}').modal('show'); setup_versus_games_hover('#versus-games-{{ statistic.pk|default:"none" }}');">
     {% endif %}
@@ -12,9 +12,9 @@
         {% include "standings_versus_games.html" %}
       {% endif %}
     {% endif %}
-  </{{ tag }}>
-  <{{ tag }}>{% with p=win|multiply:2|add:draw q=total|multiply:2 %}{{ p|multiply:100|divide:q|floatformat:"1" }}%{% endwith %}</{{ tag }}>
-  <{{ tag }}>
+  </td>
+  <td>{% with p=win|multiply:2|add:draw q=total|multiply:2 %}{{ p|multiply:100|divide:q|floatformat:"1" }}%{% endwith %}</td>
+  <td>
     <div class="problem-progress progress" title="
       {% if win %}Number of wins: {{ win }} ({{ win|multiply:100|divide:total|floatformat:"2" }}%)<br/>{% endif %}
       {% if draw %}Number of draws: {{ draw }} ({{ draw|multiply:100|divide:total|floatformat:"2" }}%)<br/>{% endif %}
@@ -25,18 +25,18 @@
       <div class="progress-bar progress-bar-warning" style="width: {{ draw|multiply:100|divide:total|floatformat:"3" }}%"></div>
       <div class="progress-bar progress-bar-danger" style="width: {{ lose|multiply:100|divide:total|floatformat:"3" }}%"></div>
     </div>
-  </{{ tag }}>
+  </td>
   {% endwith %}
   {% for field in versus_data.fields %}
   {% with value=versus_data_row|get_item:field %}
-  <{{ tag }}>{% include "field_value.html" with resource=contest.resource %}</{{ tag }}>
+  <td>{% include "field_value.html" with resource=contest.resource %}</td>
   {% endwith %}
   {% endfor %}
 {% else %}
-  <{{ tag }}></{{ tag }}>
-  <{{ tag }}></{{ tag }}>
-  <{{ tag }}></{{ tag }}>
+  <td></td>
+  <td></td>
+  <td></td>
   {% for field in versus_data.fields %}
-  <{{ tag }}></{{ tag }}>
+  <td></td>
   {% endfor %}
 {% endif %}

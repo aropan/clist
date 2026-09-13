@@ -2,6 +2,7 @@ from datetime import timedelta
 from unittest import mock
 
 from django.db import connection
+from django.template.loader import render_to_string
 from django.test import RequestFactory, SimpleTestCase, TestCase, override_settings
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
@@ -25,6 +26,21 @@ class VersusTest(SimpleTestCase):
         request = RequestFactory().get("/versus/", {"remove": "not-an-integer"})
         response = versus(request, "first/vs/second")
         assert response.status_code == 400
+
+
+class StandingsVersusColumnsTemplateTest(SimpleTestCase):
+    def test_renders_table_cells_without_tag_context(self):
+        content = render_to_string(
+            "standings_versus_columns.html",
+            {
+                "versus_data": {"fields": []},
+                "versus_data_row": {"win": 1, "lose": 0, "draw": 0, "total": 1},
+            },
+        )
+
+        assert '<td class="versus-cell">' in content
+        assert content.count("<td") == 3
+        assert "<>" not in content
 
 
 @override_settings(MIDDLEWARE=MIDDLEWARE_WITHOUT_DEBUG_TOOLING)

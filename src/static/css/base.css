@@ -1059,7 +1059,7 @@ a[data-toggle="tooltip"][disabled],
   z-index: 10;
 }
 
-#table-inner-scroll table tr:not(.info) .sticky-column {
+#table-inner-scroll table tr:not(.active):not(.success):not(.info):not(.warning):not(.danger) .sticky-column {
   background-color: inherit;
 }
 
