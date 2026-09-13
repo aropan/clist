@@ -1,9 +1,11 @@
+import math
 import random
 from copy import deepcopy
 from datetime import timedelta
 from io import StringIO
 from unittest import mock
 
+import pytest
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import TestCase
@@ -14,6 +16,7 @@ from ranking.management.commands.calculate_rating_prediction import (
     calculate_elo_mmr_replay,
     get_elo_mmr_rated_contests,
 )
+from ranking.management.commands.optimize_rating_prediction import Command as OptimizeRatingPredictionCommand
 from ranking.management.commands.optimize_rating_prediction import (
     OptimizationParameters,
     calculate_contest_prediction_metrics,
@@ -32,26 +35,62 @@ class OptimizeRatingPredictionTest(TestCase):
         self.addCleanup(patcher.stop)
 
     @staticmethod
-    def create_resource():
+    def create_resource(**overrides):
+        rating_prediction = {
+            "algorithm": "elo_mmr_py",
+            "algorithm_version": "2.0.0",
+            "save_rating": True,
+            "system": "mmr",
+            "initial_rating": 1500.0,
+            "weight_limit": 0.3,
+            "sig_limit": 80.0,
+            "drift_per_day": 0.0,
+            "noob_delay": [],
+            "split_ties": False,
+            "subsample_size": None,
+            "subsample_bucket": 0.00001,
+        }
+        rating_prediction.update(overrides)
         return Resource.objects.create(
             host="optimize-rating.example.com",
             url="https://optimize-rating.example.com/",
             enable=True,
-            rating_prediction={
-                "algorithm": "elo_mmr_py",
-                "algorithm_version": "2.0.0",
-                "save_rating": True,
-                "system": "mmr",
-                "initial_rating": 1500.0,
-                "weight_limit": 0.3,
-                "sig_limit": 80.0,
-                "drift_per_day": 0.0,
-                "noob_delay": [],
-                "split_ties": False,
-                "subsample_size": None,
-                "subsample_bucket": 0.00001,
-            },
+            rating_prediction=rating_prediction,
         )
+
+    @staticmethod
+    def absent_participant_decay():
+        return {
+            "score_method": "icpc_itmo_rating",
+            "score_scale": 200,
+            "decay_multiplier": 0.7,
+            "maximum_missed_contests": 7,
+        }
+
+    @staticmethod
+    def create_contest(resource, index, rows):
+        end_time = timezone.now() - timedelta(days=20 - index)
+        contest = Contest.objects.create(
+            resource=resource,
+            title=f"Contest {index}",
+            start_time=end_time - timedelta(hours=5),
+            end_time=end_time,
+            duration_in_secs=None,
+            url=f"https://optimize-rating.example.com/custom-{index}",
+            host=resource.host,
+            key=f"custom-{index}",
+            n_statistics=len(rows),
+        )
+        for account, place, solving in rows:
+            Statistics.objects.create(
+                resource=resource,
+                contest=contest,
+                account=account,
+                place=str(place),
+                place_as_int=place,
+                solving=solving,
+            )
+        return contest
 
     @staticmethod
     def create_history(resource, n_contests=7):
@@ -127,6 +166,126 @@ class OptimizeRatingPredictionTest(TestCase):
             predicted_ratings.append(predicted_rating)
         assert predicted_ratings[0] == predicted_ratings[1]
 
+    def test_absent_decay_optimizer_scores_previous_final_intersection_and_replays_full_events(self):
+        resource = self.create_resource(absent_participant_decay=self.absent_participant_decay())
+        accounts = {
+            key: Account.objects.create(resource=resource, key=key) for key in ("first", "second", "third", "fourth")
+        }
+        self.create_contest(
+            resource,
+            0,
+            [
+                (accounts["first"], 1, 10),
+                (accounts["second"], 2, 5),
+                (accounts["third"], 3, 2),
+            ],
+        )
+        self.create_contest(
+            resource,
+            1,
+            [
+                (accounts["first"], 1, 10),
+                (accounts["second"], 1, 10),
+                (accounts["fourth"], 3, 1),
+            ],
+        )
+        self.create_contest(
+            resource,
+            2,
+            [
+                (accounts["first"], 1, 10),
+                (accounts["third"], 2, 5),
+                (accounts["fourth"], 3, 1),
+            ],
+        )
+        rated_contests = get_elo_mmr_rated_contests(resource, timezone.now())
+        parameters = OptimizationParameters(weight_limit=0.3, sig_limit=80, sig_noob=350, annual_drift=0)
+
+        assert str(accounts["third"].pk) in rated_contests[1].synthetic_participants
+        assert str(accounts["second"].pk) in rated_contests[2].synthetic_participants
+        with mock.patch(
+            "ranking.management.commands.optimize_rating_prediction.calculate_contest_prediction_metrics",
+            wraps=calculate_contest_prediction_metrics,
+        ) as calculate_metrics:
+            metrics = evaluate_elo_mmr_parameters(rated_contests, resource.rating_prediction, parameters)
+
+        assert [metric.contest_index for metric in metrics] == [1, 2]
+        first_metric_standings = calculate_metrics.call_args_list[0].args[2]
+        second_metric_standings = calculate_metrics.call_args_list[1].args[2]
+        assert first_metric_standings == [
+            (str(accounts["first"].pk), 0, 1),
+            (str(accounts["second"].pk), 0, 1),
+        ]
+        assert second_metric_standings == [
+            (str(accounts["first"].pk), 0, 0),
+            (str(accounts["fourth"].pk), 1, 1),
+        ]
+
+        result = OptimizeRatingPredictionCommand.evaluate_candidate(
+            rated_contests,
+            resource.rating_prediction,
+            parameters,
+            train_start=1,
+            train_stop=2,
+            half_life=8,
+        )
+        assert result.train.log_loss == metrics[0].log_loss
+        assert result.test.log_loss == metrics[1].log_loss
+
+        replay = calculate_elo_mmr_replay(resource, timezone.now())
+        for metric_call, snapshot in zip(calculate_metrics.call_args_list, replay.snapshots[1:]):
+            metric_ratings = metric_call.args[3]
+            snapshot_rankings = {str(row["account_id"]): row for row in snapshot.rankings}
+            for participant in metric_ratings:
+                assert snapshot_rankings[participant]["prediction"]["old_rating"] == round(metric_ratings[participant])
+        absent_prediction = replay.final[str(accounts["second"].pk)]["prediction"]
+        assert absent_prediction["new_rating"] <= absent_prediction["old_rating"]
+
+    def test_absent_decay_optimizer_rejects_windows_without_returning_participants(self):
+        resource = self.create_resource(absent_participant_decay=self.absent_participant_decay())
+        for contest_index in range(7):
+            accounts = [
+                Account.objects.create(resource=resource, key=f"user-{contest_index}-{index}") for index in range(2)
+            ]
+            self.create_contest(
+                resource,
+                contest_index,
+                [
+                    (accounts[0], 1, 2),
+                    (accounts[1], 2, 1),
+                ],
+            )
+
+        with self.assertRaisesMessage(CommandError, "no contest metrics selected"):
+            call_command(
+                "optimize_rating_prediction",
+                resources=[resource.host],
+                trials=1,
+                burn_in_contests=1,
+                test_contests=2,
+                stdout=StringIO(),
+            )
+
+    def test_default_optimizer_candidate_count_is_current_plus_300_trials(self):
+        parser = OptimizeRatingPredictionCommand().create_parser("manage.py", "optimize_rating_prediction")
+
+        args = parser.parse_args(["--resources", "example.com"])
+
+        assert args.trials == 300
+
+    def test_recommended_parameters_use_resource_override_precision(self):
+        parameters = OptimizationParameters(
+            weight_limit=0.456,
+            sig_limit=73.14,
+            sig_noob=123.66,
+            annual_drift=math.sqrt(0.436 * 365),
+        ).rounded()
+
+        assert parameters.weight_limit == pytest.approx(0.46)
+        assert parameters.sig_limit == pytest.approx(73.1)
+        assert parameters.sig_noob == pytest.approx(123.7)
+        assert parameters.drift_per_day == pytest.approx(0.44)
+
     def test_small_annual_drift_range_is_respected(self):
         ranges = AttrDict({
             "weight_limit": (0.1, 1.0),
@@ -176,6 +335,7 @@ class OptimizeRatingPredictionTest(TestCase):
         assert not Statistics.objects.filter(contest__in=contests, rating_prediction__isnull=False).exists()
         assert "Current" in output.getvalue()
         assert "Optimized" in output.getvalue()
+        assert "Candidate configurations: 3" in output.getvalue()
         assert "Suggested Resource.rating_prediction override" in output.getvalue()
 
     def test_command_rejects_contests_above_participant_limit(self):

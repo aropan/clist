@@ -28,6 +28,19 @@ from ranking.management.modules.common import REQ, BaseModule
 from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse
 from utils.ratelimiter import RateLimiter
 
+LEAGUE_ICONS = {
+    "wood": "🪵",
+    "bronze": "🥉",
+    "silver": "🥈",
+    "gold": "🥇",
+    "legend": "👑",
+}
+
+
+def league_message(league):
+    icon = LEAGUE_ICONS.get(league.split()[0].lower(), "")
+    return f"{icon}`{md_escape(league)}`"
+
 
 class Statistic(BaseModule):
     def get_standings(self, users=None, statistics=None, **kwargs):
@@ -420,19 +433,16 @@ class Statistic(BaseModule):
                     if previous_best_place is not None:
                         if league_changed and league and previous_league:
                             message = (
-                                f"{{account}} moved to `{md_escape(league)}` league"
-                                f" from `{md_escape(previous_league)}`, place `{place}`. {{contest}}"
+                                f"{{account}} moved to {league_message(league)} league"
+                                f" from {league_message(previous_league)}, place `{place}`"
                             )
                             r.setdefault("_subscription_messages", []).append({
                                 "type": "league_change",
                                 "message": message,
                             })
                         elif not league_changed and agent_updated and place < previous_best_place:
-                            in_league = f" in `{md_escape(league)}` league" if league else ""
-                            message = (
-                                f"{{account}} improved place `{previous_best_place}` → `{place}`"
-                                f"{in_league}. {{contest}}"
-                            )
+                            in_league = f" in {league_message(league)} league" if league else ""
+                            message = f"{{account}} improved place `{previous_best_place}` → `{place}`{in_league}"
                             r.setdefault("_subscription_messages", []).append({
                                 "type": "best_place",
                                 "message": message,

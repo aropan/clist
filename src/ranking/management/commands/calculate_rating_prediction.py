@@ -6,6 +6,7 @@ import json
 import math
 import tempfile
 from collections import defaultdict
+from dataclasses import dataclass
 from logging import getLogger
 from pathlib import Path
 
@@ -30,8 +31,9 @@ from utils.json_field import FloatJSONF
 from utils.logger import measure_time, suppress_db_logging_context
 
 ELO_MMR_ALGORITHM = "elo_mmr_py"
-ELO_MMR_CALCULATION_VERSION = "v3"
+ELO_MMR_CALCULATION_VERSION = "v4"
 ELO_MMR_STATE_FIELD = "_elo_mmr_state"
+ABSENT_PARTICIPANT_DECAY_FIELD = "_absent_participant_decay"
 ELO_MMR_PLAYER_STATE_FORMAT_VERSION = 2
 ELO_MMR_RATING_FIELDS = ("old_rating", "new_rating", "rating_change", "rating_perf")
 ELO_MMR_SYSTEM_SETTINGS = (
@@ -51,6 +53,41 @@ ELO_MMR_REQUIRED_SETTINGS = (
     "system",
     *ELO_MMR_SYSTEM_SETTINGS,
 )
+ABSENT_PARTICIPANT_DECAY_REQUIRED_SETTINGS = (
+    "score_method",
+    "score_scale",
+    "decay_multiplier",
+    "maximum_missed_contests",
+)
+ABSENT_PARTICIPANT_DECAY_OPTIONAL_SETTINGS = ("minimum_score",)
+ABSENT_PARTICIPANT_DECAY_SETTINGS = (
+    *ABSENT_PARTICIPANT_DECAY_REQUIRED_SETTINGS,
+    *ABSENT_PARTICIPANT_DECAY_OPTIONAL_SETTINGS,
+)
+
+
+@dataclass
+class EloMmrRatedContest:
+    contest: object
+    standings: list
+    participants: dict
+    native_contest: object
+    full_standings: list
+    synthetic_participants: set
+    decay_states: dict
+    last_real_participants: dict
+
+    def __iter__(self):
+        yield self.contest
+        yield self.standings
+        yield self.participants
+        yield self.native_contest
+
+    def __getitem__(self, index):
+        return tuple(self)[index]
+
+    def __len__(self):
+        return 4
 
 
 @njit
@@ -242,14 +279,63 @@ def get_elo_mmr_settings(resource):
     rating_decay = config.get("rating_decay", 0)
     if not isinstance(rating_decay, (int, float)) or not math.isfinite(rating_decay) or rating_decay < 0:
         raise ValueError("rating_decay must be a finite non-negative number")
+    absent_participant_decay = get_absent_participant_decay_settings(config)
+    if absent_participant_decay is not None and rating_decay:
+        raise ValueError("absent_participant_decay cannot be combined with a positive rating_decay")
     return AttrDict({
         "account_type": account_type,
         "account_type_name": account_type_name,
+        "absent_participant_decay": absent_participant_decay,
         "initial_rating": config["initial_rating"],
         "rate_kwargs": rate_kwargs,
         "rating_decay": rating_decay,
         "save_rating": config["save_rating"],
         "system": system,
+    })
+
+
+def get_absent_participant_decay_settings(config):
+    if "absent_participant_decay" not in config:
+        return None
+    value = config["absent_participant_decay"]
+    if not isinstance(value, dict):
+        raise ValueError("absent_participant_decay must be an object")
+
+    missing_fields = [field for field in ABSENT_PARTICIPANT_DECAY_REQUIRED_SETTINGS if field not in value]
+    if missing_fields:
+        raise ValueError(f"missing absent_participant_decay settings: {', '.join(missing_fields)}")
+    unknown_fields = sorted(set(value) - set(ABSENT_PARTICIPANT_DECAY_SETTINGS))
+    if unknown_fields:
+        raise ValueError(f"unknown absent_participant_decay settings: {', '.join(unknown_fields)}")
+    if value["score_method"] != "icpc_itmo_rating":
+        raise ValueError(f"unknown absent_participant_decay score_method = {value['score_method']!r}")
+
+    numeric_fields = ("score_scale", "decay_multiplier")
+    if "minimum_score" in value:
+        numeric_fields += ("minimum_score",)
+    for field in numeric_fields:
+        field_value = value[field]
+        if isinstance(field_value, bool) or not isinstance(field_value, (int, float)) or not math.isfinite(field_value):
+            raise ValueError(f"absent_participant_decay {field} must be a finite number")
+    if value["score_scale"] <= 0:
+        raise ValueError("absent_participant_decay score_scale must be positive")
+    if not 0 <= value["decay_multiplier"] < 1:
+        raise ValueError("absent_participant_decay decay_multiplier must be in [0, 1)")
+    if value.get("minimum_score", 0) < 0:
+        raise ValueError("absent_participant_decay minimum_score must be non-negative")
+
+    maximum_missed_contests = value["maximum_missed_contests"]
+    if isinstance(maximum_missed_contests, bool) or not isinstance(maximum_missed_contests, int):
+        raise ValueError("absent_participant_decay maximum_missed_contests must be an integer")
+    if maximum_missed_contests < 0:
+        raise ValueError("absent_participant_decay maximum_missed_contests must be non-negative")
+
+    return AttrDict({
+        "score_method": value["score_method"],
+        "score_scale": float(value["score_scale"]),
+        "decay_multiplier": float(value["decay_multiplier"]),
+        "maximum_missed_contests": maximum_missed_contests,
+        "minimum_score": float(value["minimum_score"]) if "minimum_score" in value else None,
     })
 
 
@@ -262,7 +348,9 @@ def get_elo_mmr_standings(contest, account_type=None):
     if account_type is not None:
         statistics = statistics.filter(account__account_type=account_type)
     statistics = list(
-        statistics.order_by("place_as_int", "account_id").values("pk", "account_id", "account__key", "place_as_int")
+        statistics.order_by("place_as_int", "account_id").values(
+            "pk", "account_id", "account__key", "place_as_int", "solving"
+        )
     )
 
     standings = []
@@ -282,8 +370,26 @@ def get_elo_mmr_standings(contest, account_type=None):
     return standings, participants
 
 
-def get_elo_mmr_rated_contests(resource, now, account_type=None):
+def make_elo_mmr_score_standings(scores):
+    ranked = sorted(scores.items(), key=lambda item: (-item[1], item[0]))
+    standings = []
+    index = 0
+    while index < len(ranked):
+        end = index + 1
+        while end < len(ranked) and ranked[end][1] == ranked[index][1]:
+            end += 1
+        for participant, _ in ranked[index:end]:
+            standings.append((participant, index, end - 1))
+        index = end
+    return standings
+
+
+def get_elo_mmr_rated_contests(resource, now, account_type=None, absent_participant_decay=None):
+    if absent_participant_decay is None:
+        absent_participant_decay = get_absent_participant_decay_settings(resource.rating_prediction or {})
     rated_contests = []
+    decay_states = {}
+    last_real_participants = {}
     eligible_contests = Contest.objects.filter(
         resource=resource,
         stage__isnull=True,
@@ -295,13 +401,60 @@ def get_elo_mmr_rated_contests(resource, now, account_type=None):
         standings, participants = get_elo_mmr_standings(contest, account_type)
         if len(standings) < 2:
             continue
+
+        synthetic_participants = set()
+        full_standings = standings
+        if absent_participant_decay is not None:
+            real_participants = set(participants)
+            for participant, state in decay_states.items():
+                if participant in real_participants:
+                    continue
+                state["score"] *= absent_participant_decay.decay_multiplier
+                state["missed_contests"] += 1
+
+            n_participants = len(participants)
+            max_solving = max(statistic["solving"] for statistic in participants.values())
+            for participant, statistic in participants.items():
+                solving_ratio = statistic["solving"] / max_solving if max_solving else 1
+                score = absent_participant_decay.score_scale
+                score *= (n_participants - statistic["place_as_int"] + 1) / n_participants
+                score *= solving_ratio
+                decay_states[participant] = {"score": score, "missed_contests": 0}
+                last_real_participants[participant] = (contest, statistic)
+
+            scores = {participant: decay_states[participant]["score"] for participant in real_participants}
+            for participant, state in decay_states.items():
+                if participant in real_participants:
+                    continue
+                if state["missed_contests"] <= absent_participant_decay.maximum_missed_contests and (
+                    absent_participant_decay.minimum_score is None
+                    or state["score"] >= absent_participant_decay.minimum_score
+                ):
+                    scores[participant] = state["score"]
+                    synthetic_participants.add(participant)
+            full_standings = make_elo_mmr_score_standings(scores)
+        else:
+            for participant, statistic in participants.items():
+                last_real_participants[participant] = (contest, statistic)
+
         native_contest = elo_mmr_py.Contest(
-            standings,
+            full_standings,
             name=contest.title,
             time_seconds=int(contest.end_time.timestamp()),
             url=contest.actual_url,
         )
-        rated_contests.append((contest, standings, participants, native_contest))
+        rated_contests.append(
+            EloMmrRatedContest(
+                contest=contest,
+                standings=standings,
+                participants=participants,
+                native_contest=native_contest,
+                full_standings=full_standings,
+                synthetic_participants=synthetic_participants,
+                decay_states={participant: dict(state) for participant, state in decay_states.items()},
+                last_real_participants=dict(last_real_participants),
+            )
+        )
     return rated_contests
 
 
@@ -505,22 +658,38 @@ def get_elo_mmr_checkpoint(resource, rated_contests, start_index, account_type=N
     return {**checkpoint, "players": players}, previous_contest.rating_prediction_hash
 
 
+def translate_elo_mmr_player_rating(player, new_rating):
+    rating = player["approx_posterior"]["mu"]
+    rating_delta = new_rating - rating
+    if not rating_delta:
+        return False
+    # Translate the entire skill distribution so future ratings use the same value that is shown to users.
+    player["normal_factor"]["mu"] += rating_delta
+    player["approx_posterior"]["mu"] = new_rating
+    for factor in player["logistic_factors"]:
+        factor["mu"] += rating_delta
+    player["event_history"][-1]["rating_mu"] = round(new_rating)
+    return True
+
+
 def apply_elo_mmr_rating_floor(checkpoint, participants):
     changed = False
     for participant in participants:
         player = checkpoint["players"][participant]
         rating = player["approx_posterior"]["mu"]
-        new_rating = max(0, rating)
-        rating_delta = new_rating - rating
-        if not rating_delta:
-            continue
-        # Translate the entire skill distribution to keep future ratings consistent with the visible floor.
-        player["normal_factor"]["mu"] += rating_delta
-        player["approx_posterior"]["mu"] = new_rating
-        for factor in player["logistic_factors"]:
-            factor["mu"] += rating_delta
-        player["event_history"][-1]["rating_mu"] = round(new_rating)
-        changed = True
+        if rating < 0:
+            changed |= translate_elo_mmr_player_rating(player, 0)
+    return changed
+
+
+def apply_elo_mmr_absent_rating_cap(checkpoint, previous_players, participants):
+    changed = False
+    for participant in participants:
+        previous_player = previous_players[participant]
+        previous_rating = previous_player["approx_posterior"]["mu"]
+        player = checkpoint["players"][participant]
+        if player["approx_posterior"]["mu"] > previous_rating:
+            changed |= translate_elo_mmr_player_rating(player, previous_rating)
     return changed
 
 
@@ -528,9 +697,28 @@ def calculate_elo_mmr_replay(resource, now, start_time=None):
     settings = get_elo_mmr_settings(resource)
     contests = list(Contest.objects.filter(resource=resource).order_by("start_time", "pk"))
     # Changes to account decay must invalidate calculation metadata saved with the previous configuration.
-    if settings.rating_decay or any(get_item(c, "info._rating_calculation.config.rating_decay") for c in contests):
+    has_incompatible_calculation = any(
+        get_item(contest, "info._rating_calculation.algorithm") == ELO_MMR_ALGORITHM
+        and get_item(contest, "info._rating_calculation.calculation_version") != ELO_MMR_CALCULATION_VERSION
+        for contest in contests
+    )
+    has_historical_absent_participant_decay = any(
+        get_item(c, "info._rating_calculation.config.absent_participant_decay") for c in contests
+    )
+    if (
+        has_incompatible_calculation
+        or settings.rating_decay
+        or settings.absent_participant_decay
+        or has_historical_absent_participant_decay
+        or any(get_item(c, "info._rating_calculation.config.rating_decay") for c in contests)
+    ):
         start_time = None
-    rated_contests = get_elo_mmr_rated_contests(resource, now, settings.account_type)
+    rated_contests = get_elo_mmr_rated_contests(
+        resource,
+        now,
+        settings.account_type,
+        settings.absent_participant_decay,
+    )
 
     rated_contest_ids = [contest.pk for contest, _, _, _ in rated_contests]
     rated_contest_ids_set = set(rated_contest_ids)
@@ -577,13 +765,26 @@ def calculate_elo_mmr_replay(resource, now, start_time=None):
 
         previous_players = checkpoint["players"] if checkpoint is not None else {}
         for contest_index in range(start_index, len(rated_contests)):
-            contest, standings, participants, native_contest = rated_contests[contest_index]
+            rated_contest = rated_contests[contest_index]
+            contest, standings, participants, native_contest = rated_contest
             rater.add(native_contest)
             rater.save(checkpoint_path)
             checkpoint = json.loads(checkpoint_path.read_text(encoding="utf8"))
             if checkpoint["contests_processed"] != contest_index + 1:
                 raise ValueError("unexpected Elo-MMR checkpoint contest index")
-            if settings.rating_decay and apply_elo_mmr_rating_floor(checkpoint, participants):
+            checkpoint_changed = False
+            if rated_contest.synthetic_participants:
+                checkpoint_changed |= apply_elo_mmr_absent_rating_cap(
+                    checkpoint,
+                    previous_players,
+                    rated_contest.synthetic_participants,
+                )
+            if settings.rating_decay or settings.absent_participant_decay:
+                checkpoint_changed |= apply_elo_mmr_rating_floor(
+                    checkpoint,
+                    (participant for participant, _, _ in rated_contest.full_standings),
+                )
+            if checkpoint_changed:
                 checkpoint_path.write_text(json.dumps(checkpoint, separators=(",", ":")), encoding="utf8")
                 rater = elo_mmr_py.Rater.load(checkpoint_path)
 
@@ -596,9 +797,27 @@ def calculate_elo_mmr_replay(resource, now, start_time=None):
                 "time": int(contest.end_time.timestamp()),
                 "standings": standings,
             }
+            if settings.absent_participant_decay:
+                hash_payload["standings_input"] = sorted(
+                    (
+                        participant,
+                        statistic["place_as_int"],
+                        statistic["solving"],
+                    )
+                    for participant, statistic in participants.items()
+                )
+                hash_payload["full_standings"] = rated_contest.full_standings
+                hash_payload["synthetic_participants"] = sorted(rated_contest.synthetic_participants)
+                hash_payload["absent_participant_decay_states"] = sorted(
+                    (participant, state["score"], state["missed_contests"])
+                    for participant, state in rated_contest.decay_states.items()
+                )
             if settings.rating_decay:
                 hash_payload["rating_decay_floor"] = 0
                 hash_payload["rating_decay_mode"] = "account_only"
+            elif settings.absent_participant_decay:
+                hash_payload["rating_decay_floor"] = 0
+                hash_payload["rating_decay_mode"] = "absent_participant_event"
             input_hash = hashlib.sha256(
                 json.dumps(hash_payload, sort_keys=True, separators=(",", ":")).encode("utf8")
             ).hexdigest()
@@ -660,12 +879,13 @@ def calculate_elo_mmr_replay(resource, now, start_time=None):
 
     final = {}
     leaderboard = []
+    final_rated_contest = rated_contests[-1]
     for participant, player in checkpoint["players"].items():
         event_history = player["event_history"]
         event = event_history[-1]
         old_rating = event_history[-2]["rating_mu"] if len(event_history) > 1 else round(settings.initial_rating)
-        contest, _, participants, _ = rated_contests[event["contest_index"]]
-        statistic = participants[participant]
+        event_contest = rated_contests[event["contest_index"]].contest
+        contest, statistic = final_rated_contest.last_real_participants[participant]
         ranking = {
             "account_id": statistic["account_id"],
             "member": statistic["account__key"],
@@ -680,7 +900,7 @@ def calculate_elo_mmr_replay(resource, now, start_time=None):
                 "n_contests": len(event_history),
             },
         }
-        rating_time = contest.end_time
+        rating_time = event_contest.end_time
         if settings.rating_decay:
             prediction = dict(latest[participant]["prediction"])
             prediction.pop(ELO_MMR_STATE_FIELD)
@@ -690,6 +910,8 @@ def calculate_elo_mmr_replay(resource, now, start_time=None):
             prediction["rating_change"] = prediction["new_rating"] - prediction["old_rating"]
             ranking["prediction"] = prediction
             rating_time = rated_contests[-1][0].end_time
+        elif settings.absent_participant_decay:
+            ranking["prediction"][ABSENT_PARTICIPANT_DECAY_FIELD] = dict(final_rated_contest.decay_states[participant])
         final[participant] = {"contest": contest, "rating_time": rating_time, **ranking}
         leaderboard.append(ranking)
 
@@ -1075,7 +1297,7 @@ class Command(BaseCommand):
         contest.save(update_fields=update_fields)
 
     def save_elo_mmr_accounts(self, resource, replay, now):
-        latest_account_ids = [int(participant) for participant in replay.latest]
+        final_account_ids = [int(participant) for participant in replay.final]
         affected_contest_ids = [snapshot.contest.pk for snapshot in replay.snapshots]
         affected_contest_ids.extend(contest.pk for contest in replay.invalidated_contests)
         accounts = (
@@ -1083,7 +1305,7 @@ class Command(BaseCommand):
             .select_for_update()
             .select_related("resource")
             .filter(resource=resource)
-            .filter(Q(pk__in=latest_account_ids) | Q(rating_prediction__contest__in=affected_contest_ids))
+            .filter(Q(pk__in=final_account_ids) | Q(rating_prediction__contest__in=affected_contest_ids))
             .in_bulk()
         )
         for account in accounts.values():

@@ -1,3 +1,4 @@
+from copy import deepcopy
 from datetime import timedelta
 from io import StringIO
 from unittest import mock
@@ -10,11 +11,14 @@ from django.utils import timezone
 from clist.models import Contest, Resource
 from ranking.enums import AccountType
 from ranking.management.commands.calculate_rating_prediction import (
+    ABSENT_PARTICIPANT_DECAY_FIELD,
     ELO_MMR_PLAYER_STATE_FORMAT_VERSION,
     ELO_MMR_RATING_FIELDS,
     ELO_MMR_REQUIRED_SETTINGS,
     ELO_MMR_STATE_FIELD,
+    apply_elo_mmr_absent_rating_cap,
     calculate_elo_mmr_replay,
+    get_elo_mmr_rated_contests,
     get_elo_mmr_settings,
     get_elo_mmr_standings,
 )
@@ -47,6 +51,17 @@ class EloMmrRatingPredictionTest(TestCase):
         config.update(overrides)
         return config
 
+    @staticmethod
+    def absent_participant_decay(**overrides):
+        config = {
+            "score_method": "icpc_itmo_rating",
+            "score_scale": 200,
+            "decay_multiplier": 0.7,
+            "maximum_missed_contests": 7,
+        }
+        config.update(overrides)
+        return config
+
     def create_resource(self, **rating_prediction):
         return Resource.objects.create(
             host="elo-mmr.example.com",
@@ -72,7 +87,7 @@ class EloMmrRatingPredictionTest(TestCase):
         return contest
 
     @staticmethod
-    def create_statistic(contest, key, place, account_type=AccountType.USER):
+    def create_statistic(contest, key, place, account_type=AccountType.USER, solving=0):
         info = {"is_member": True} if account_type == AccountType.MEMBER else {}
         account = Account.objects.create(
             resource=contest.resource,
@@ -86,10 +101,25 @@ class EloMmrRatingPredictionTest(TestCase):
             account=account,
             place=str(place),
             place_as_int=place,
+            solving=solving,
         )
         contest.n_statistics = (contest.n_statistics or 0) + 1
         contest.save(update_fields=["n_statistics"])
         return account, statistic
+
+    @staticmethod
+    def add_statistic(contest, account, place, solving=0):
+        statistic = Statistics.objects.create(
+            resource=contest.resource,
+            contest=contest,
+            account=account,
+            place=str(place),
+            place_as_int=place,
+            solving=solving,
+        )
+        contest.n_statistics = (contest.n_statistics or 0) + 1
+        contest.save(update_fields=["n_statistics"])
+        return statistic
 
     def test_account_type_is_optional_and_ties_use_rank_intervals(self):
         resource = self.create_resource()
@@ -162,6 +192,140 @@ class EloMmrRatingPredictionTest(TestCase):
 
         assert settings.rate_kwargs == {"mu_noob": 1500.0}
 
+    def test_absent_participant_decay_settings_are_resource_scoped_and_validated(self):
+        resource = self.create_resource(absent_participant_decay=self.absent_participant_decay())
+
+        settings = get_elo_mmr_settings(resource)
+
+        assert settings.absent_participant_decay.score_method == "icpc_itmo_rating"
+        assert settings.absent_participant_decay.score_scale == 200
+        assert settings.absent_participant_decay.decay_multiplier == pytest.approx(0.7)
+        assert settings.absent_participant_decay.maximum_missed_contests == 7
+        assert settings.absent_participant_decay.minimum_score is None
+
+        resource.rating_prediction["absent_participant_decay"]["minimum_score"] = 1
+        assert get_elo_mmr_settings(resource).absent_participant_decay.minimum_score == 1
+
+        invalid_values = (
+            None,
+            [],
+            {"decay_multiplier": 0.7},
+            self.absent_participant_decay(score_method="unknown"),
+            self.absent_participant_decay(score_scale=0),
+            self.absent_participant_decay(score_scale=float("inf")),
+            self.absent_participant_decay(decay_multiplier=-0.1),
+            self.absent_participant_decay(decay_multiplier=1),
+            self.absent_participant_decay(maximum_missed_contests=1.5),
+            self.absent_participant_decay(maximum_missed_contests=-1),
+            self.absent_participant_decay(minimum_score=-1),
+            {**self.absent_participant_decay(), "unknown": 1},
+        )
+        for value in invalid_values:
+            resource.rating_prediction["absent_participant_decay"] = value
+            with pytest.raises(ValueError, match="absent_participant_decay"):
+                get_elo_mmr_settings(resource)
+
+        resource.rating_prediction.update(
+            absent_participant_decay=self.absent_participant_decay(),
+            rating_decay=20,
+        )
+        with self.assertRaisesMessage(
+            ValueError,
+            "absent_participant_decay cannot be combined with a positive rating_decay",
+        ):
+            get_elo_mmr_settings(resource)
+
+    def test_absent_participant_decay_builds_full_standings_and_applies_cutoff(self):
+        resource = self.create_resource(absent_participant_decay=self.absent_participant_decay())
+        first_contest = self.create_contest(resource, key="final-0", days_ago=10)
+        tracked, _ = self.create_statistic(first_contest, "tracked", 1, solving=10)
+        first_anchor, _ = self.create_statistic(first_contest, "first-anchor", 2, solving=5)
+        second_anchor, _ = self.create_statistic(first_contest, "second-anchor", 3, solving=1)
+
+        for index in range(1, 9):
+            contest = self.create_contest(resource, key=f"final-{index}", days_ago=10 - index)
+            self.add_statistic(contest, first_anchor, 1, solving=10)
+            self.add_statistic(contest, second_anchor, 2, solving=5)
+        return_contest = self.create_contest(resource, key="final-9", days_ago=1)
+        self.add_statistic(return_contest, tracked, 1, solving=10)
+        self.add_statistic(return_contest, first_anchor, 2, solving=5)
+
+        rated_contests = get_elo_mmr_rated_contests(resource, timezone.now())
+        participant = str(tracked.pk)
+
+        assert rated_contests[0].decay_states[participant] == {"score": 200, "missed_contests": 0}
+        assert rated_contests[1].decay_states[participant]["score"] == pytest.approx(140)
+        assert rated_contests[1].decay_states[participant]["missed_contests"] == 1
+        assert participant in rated_contests[1].synthetic_participants
+        assert {entry[0]: entry[1:] for entry in rated_contests[1].full_standings}[participant] == (1, 1)
+        assert participant in rated_contests[7].synthetic_participants
+        assert rated_contests[7].decay_states[participant]["missed_contests"] == 7
+        assert participant not in rated_contests[8].synthetic_participants
+        assert participant not in {entry[0] for entry in rated_contests[8].full_standings}
+        assert rated_contests[8].decay_states[participant]["missed_contests"] == 8
+        assert rated_contests[9].decay_states[participant] == {"score": 200, "missed_contests": 0}
+        assert participant not in rated_contests[9].synthetic_participants
+
+    def test_optional_minimum_score_applies_an_additional_cutoff(self):
+        resource = self.create_resource(
+            absent_participant_decay=self.absent_participant_decay(minimum_score=141),
+        )
+        first_contest = self.create_contest(resource, key="final-0", days_ago=2)
+        tracked, _ = self.create_statistic(first_contest, "tracked", 1, solving=10)
+        anchor, _ = self.create_statistic(first_contest, "anchor", 2, solving=5)
+        second_contest = self.create_contest(resource, key="final-1", days_ago=1)
+        self.add_statistic(second_contest, anchor, 1, solving=10)
+        self.create_statistic(second_contest, "newcomer", 2, solving=5)
+
+        rated_contests = get_elo_mmr_rated_contests(resource, timezone.now())
+
+        assert rated_contests[1].decay_states[str(tracked.pk)]["score"] == pytest.approx(140)
+        assert str(tracked.pk) not in rated_contests[1].synthetic_participants
+
+    def test_zero_solving_uses_rank_only_fallback_without_division_by_zero(self):
+        resource = self.create_resource(absent_participant_decay=self.absent_participant_decay())
+        contest = self.create_contest(resource)
+        accounts = [self.create_statistic(contest, f"user-{index}", index)[0] for index in range(1, 3)]
+
+        (rated_contest,) = get_elo_mmr_rated_contests(resource, timezone.now())
+
+        assert rated_contest.full_standings == [
+            (str(accounts[0].pk), 0, 0),
+            (str(accounts[1].pk), 1, 1),
+        ]
+        assert rated_contest.decay_states == {
+            str(accounts[0].pk): {"score": 200, "missed_contests": 0},
+            str(accounts[1].pk): {"score": 100, "missed_contests": 0},
+        }
+
+    def test_absent_rating_cap_translates_the_complete_player_state(self):
+        previous_player = {
+            "normal_factor": {"mu": 500.0},
+            "approx_posterior": {"mu": 100.0},
+            "logistic_factors": [{"mu": 200.0}],
+            "event_history": [{"rating_mu": 100}],
+        }
+        increased_player = {
+            "normal_factor": {"mu": 520.0},
+            "approx_posterior": {"mu": 119.5},
+            "logistic_factors": [{"mu": 220.0}],
+            "event_history": [{"rating_mu": 100}, {"rating_mu": 120}],
+        }
+        checkpoint = {"players": {"tracked": increased_player}}
+
+        assert apply_elo_mmr_absent_rating_cap(checkpoint, {"tracked": previous_player}, {"tracked"})
+        assert increased_player["event_history"][-1]["rating_mu"] == 100
+        assert increased_player["approx_posterior"]["mu"] == 100
+        assert increased_player["normal_factor"]["mu"] == pytest.approx(500.5)
+        assert increased_player["logistic_factors"][0]["mu"] == pytest.approx(200.5)
+
+        decreased_player = deepcopy(increased_player)
+        decreased_player["event_history"][-1]["rating_mu"] = 90
+        decreased_player["approx_posterior"]["mu"] = 90
+        checkpoint = {"players": {"tracked": decreased_player}}
+        assert not apply_elo_mmr_absent_rating_cap(checkpoint, {"tracked": previous_player}, {"tracked"})
+        assert decreased_player["approx_posterior"]["mu"] == 90
+
     def test_prediction_is_mirrored_to_actual_rating_for_members(self):
         resource = self.create_resource(account_type="member")
         contest = self.create_contest(resource)
@@ -198,7 +362,10 @@ class EloMmrRatingPredictionTest(TestCase):
         assert contest.is_rated is True
         assert resource.rating_update_time is not None
         assert contest.info["_rating_calculation"]["algorithm"] == "elo_mmr_py"
-        assert contest.info["standings"]["account_type_fields"]["member"]["fixed_fields"]
+        standings = contest.info["standings"]
+        member_fields = standings["account_type_fields"]["member"]["fixed_fields"]
+        assert set(ELO_MMR_RATING_FIELDS) <= set(member_fields)
+        assert not set(ELO_MMR_RATING_FIELDS) & set(standings.get("fixed_fields", []))
 
     def test_save_rating_false_keeps_prediction_only(self):
         resource = self.create_resource(save_rating=False)
@@ -364,6 +531,114 @@ class EloMmrRatingPredictionTest(TestCase):
             resource.rating_prediction["rating_decay"] = value
             with self.assertRaisesMessage(ValueError, "rating_decay must be a finite non-negative number"):
                 get_elo_mmr_settings(resource)
+
+    def create_absent_participant_history(self):
+        resource = self.create_resource(absent_participant_decay=self.absent_participant_decay())
+        first_contest = self.create_contest(resource, key="final-1", days_ago=10)
+        first_anchor, _ = self.create_statistic(first_contest, "first-anchor", 1, solving=10)
+        second_anchor, _ = self.create_statistic(first_contest, "second-anchor", 2, solving=5)
+        tracked, tracked_statistic = self.create_statistic(first_contest, "tracked", 3, solving=1)
+        call_command("calculate_rating_prediction", contest=first_contest.pk, stdout=StringIO())
+
+        second_contest = self.create_contest(resource, key="final-2", days_ago=9)
+        self.add_statistic(second_contest, first_anchor, 1, solving=0)
+        self.add_statistic(second_contest, second_anchor, 2, solving=0)
+        tracked_statistic.refresh_from_db()
+        return resource, (first_anchor, second_anchor, tracked), (first_contest, second_contest), tracked_statistic
+
+    def test_synthetic_participant_updates_only_the_account(self):
+        resource, _, (first_contest, second_contest), tracked_statistic = self.create_absent_participant_history()
+        statistic_ids = list(Statistics.objects.filter(resource=resource).order_by("pk").values_list("pk", flat=True))
+        tracked_prediction = deepcopy(tracked_statistic.rating_prediction)
+        tracked_addition = deepcopy(tracked_statistic.addition)
+
+        call_command("calculate_rating_prediction", contest=second_contest.pk, stdout=StringIO())
+
+        tracked_statistic.refresh_from_db()
+        tracked = tracked_statistic.account
+        tracked.refresh_from_db()
+        state = tracked.rating_prediction[ABSENT_PARTICIPANT_DECAY_FIELD]
+        assert state["score"] == pytest.approx(200 * (1 / 3) * (1 / 10) * 0.7)
+        assert state["missed_contests"] == 1
+        assert tracked.rating_prediction["contest"] == first_contest.pk
+        assert tracked.rating_prediction["time"] == int(second_contest.end_time.timestamp())
+        assert tracked.rating == tracked.rating_prediction["new_rating"]
+        assert tracked.rating <= tracked_prediction["new_rating"]
+        assert tracked.rating_prediction["rating_change"] <= 0
+        assert tracked_statistic.rating_prediction == tracked_prediction
+        assert tracked_statistic.addition == tracked_addition
+        assert list(Statistics.objects.filter(resource=resource).order_by("pk").values_list("pk", flat=True)) == (
+            statistic_ids
+        )
+        assert ABSENT_PARTICIPANT_DECAY_FIELD not in tracked_statistic.rating_prediction
+        second_contest.refresh_from_db()
+        assert ABSENT_PARTICIPANT_DECAY_FIELD not in second_contest.rating_prediction_fields.get("types", {})
+
+    def test_cutoff_keeps_private_state_and_return_resets_it(self):
+        resource, (first_anchor, second_anchor, tracked), contests, _ = self.create_absent_participant_history()
+        for index in range(2, 9):
+            contest = self.create_contest(resource, key=f"final-{index + 1}", days_ago=9 - index)
+            self.add_statistic(contest, first_anchor, 1, solving=10)
+            self.add_statistic(contest, second_anchor, 2, solving=5)
+            contests += (contest,)
+
+        call_command("calculate_rating_prediction", contest=contests[-1].pk, stdout=StringIO())
+
+        tracked.refresh_from_db()
+        state = tracked.rating_prediction[ABSENT_PARTICIPANT_DECAY_FIELD]
+        assert state["missed_contests"] == 8
+        assert state["score"] == pytest.approx(200 * (1 / 3) * (1 / 10) * 0.7**8)
+        assert tracked.rating_prediction["time"] == int(contests[-2].end_time.timestamp())
+        cutoff_rating = tracked.rating
+
+        return_contest = self.create_contest(resource, key="final-return", days_ago=1)
+        returned = self.add_statistic(return_contest, tracked, 1, solving=10)
+        self.add_statistic(return_contest, first_anchor, 2, solving=5)
+        call_command("calculate_rating_prediction", contest=return_contest.pk, stdout=StringIO())
+
+        tracked.refresh_from_db()
+        returned.refresh_from_db()
+        assert tracked.rating_prediction[ABSENT_PARTICIPANT_DECAY_FIELD] == {"score": 200.0, "missed_contests": 0}
+        assert returned.rating_prediction["old_rating"] == cutoff_rating
+        assert ABSENT_PARTICIPANT_DECAY_FIELD not in returned.rating_prediction
+
+    def test_disabling_absent_decay_clears_private_state_and_replays_history(self):
+        resource, _, (first_contest, second_contest), tracked_statistic = self.create_absent_participant_history()
+        call_command("calculate_rating_prediction", contest=second_contest.pk, stdout=StringIO())
+        tracked = tracked_statistic.account
+        tracked.refresh_from_db()
+        assert ABSENT_PARTICIPANT_DECAY_FIELD in tracked.rating_prediction
+
+        resource.rating_prediction.pop("absent_participant_decay")
+        resource.save(update_fields=["rating_prediction"])
+        replay = calculate_elo_mmr_replay(resource, timezone.now(), start_time=second_contest.start_time)
+        assert len(replay.snapshots) == 2
+        call_command("calculate_rating_prediction", contest=second_contest.pk, stdout=StringIO())
+
+        tracked.refresh_from_db()
+        tracked_statistic.refresh_from_db()
+        assert ABSENT_PARTICIPANT_DECAY_FIELD not in tracked.rating_prediction
+        assert tracked.rating_prediction["contest"] == first_contest.pk
+        assert tracked.rating_prediction["time"] == int(first_contest.end_time.timestamp())
+        assert tracked.rating == tracked_statistic.rating_prediction["new_rating"]
+
+    def test_absent_decay_hash_includes_solving_and_configuration(self):
+        resource, _, (_, second_contest), tracked_statistic = self.create_absent_participant_history()
+        call_command("calculate_rating_prediction", contest=second_contest.pk, stdout=StringIO())
+        second_contest.refresh_from_db()
+        original_hash = second_contest.rating_prediction_hash
+
+        tracked_statistic.solving = 2
+        tracked_statistic.save(update_fields=["solving"])
+        replay = calculate_elo_mmr_replay(resource, timezone.now(), start_time=second_contest.start_time)
+        assert len(replay.snapshots) == 2
+        assert replay.snapshots[-1].input_hash != original_hash
+
+        solving_hash = replay.snapshots[-1].input_hash
+        resource.rating_prediction["absent_participant_decay"]["decay_multiplier"] = 0.6
+        replay = calculate_elo_mmr_replay(resource, timezone.now(), start_time=second_contest.start_time)
+        assert len(replay.snapshots) == 2
+        assert replay.snapshots[-1].input_hash != solving_hash
 
     def test_reparse_of_old_contest_recalculates_later_contests(self):
         resource = self.create_resource()

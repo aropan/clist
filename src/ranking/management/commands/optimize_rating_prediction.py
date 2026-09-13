@@ -19,6 +19,7 @@ from clist.models import Resource
 from ranking.management.commands.calculate_rating_prediction import (
     ELO_MMR_ALGORITHM,
     ELO_MMR_SYSTEM_SETTINGS,
+    apply_elo_mmr_absent_rating_cap,
     apply_elo_mmr_rating_floor,
     get_elo_mmr_rated_contests,
     get_elo_mmr_settings,
@@ -42,11 +43,12 @@ class OptimizationParameters:
         return self.annual_drift**2 / DAYS_PER_YEAR
 
     def rounded(self):
+        drift_per_day = round(self.drift_per_day, 2)
         return OptimizationParameters(
-            weight_limit=round(self.weight_limit, 3),
+            weight_limit=round(self.weight_limit, 2),
             sig_limit=round(self.sig_limit, 1),
             sig_noob=round(self.sig_noob, 1),
-            annual_drift=round(self.annual_drift, 1),
+            annual_drift=math.sqrt(drift_per_day * DAYS_PER_YEAR),
         )
 
 
@@ -99,7 +101,7 @@ def calculate_contest_prediction_metrics(contest_index, contest, standings, rati
 
 
 def aggregate_prediction_metrics(metrics, start, stop, half_life=None):
-    selected = metrics[start:stop]
+    selected = [metric for metric in metrics if start <= metric.contest_index < stop]
     if not selected:
         raise ValueError("no contest metrics selected")
     if half_life is None:
@@ -126,6 +128,27 @@ def make_elo_mmr_system(config, parameters):
     return elo_mmr_py.EloMmrConfig(config["system"], **system_kwargs)
 
 
+def get_contest_metric_standings(rated_contests, contest_index, use_previous_contest_participants):
+    standings = rated_contests[contest_index].standings
+    if not use_previous_contest_participants:
+        return standings
+    if not contest_index:
+        return []
+
+    previous_participants = set(rated_contests[contest_index - 1].participants)
+    standings = [standing for standing in standings if standing[0] in previous_participants]
+    normalized = []
+    index = 0
+    while index < len(standings):
+        end = index + 1
+        while end < len(standings) and standings[end][1:] == standings[index][1:]:
+            end += 1
+        for participant, _, _ in standings[index:end]:
+            normalized.append((participant, index, end - 1))
+        index = end
+    return normalized
+
+
 def evaluate_elo_mmr_parameters(rated_contests, config, parameters):
     system = make_elo_mmr_system(config, parameters)
     rater = elo_mmr_py.Rater(
@@ -134,10 +157,18 @@ def evaluate_elo_mmr_parameters(rated_contests, config, parameters):
         sig_noob=parameters.sig_noob,
     )
     metrics = []
-    apply_rating_floor = bool(config.get("rating_decay"))
+    absent_participant_decay = config.get("absent_participant_decay")
+    apply_rating_floor = bool(config.get("rating_decay") or absent_participant_decay)
     with tempfile.TemporaryDirectory(prefix="clist-elo-mmr-optimize-") as temporary_directory:
         checkpoint_path = Path(temporary_directory) / "checkpoint.json"
-        for contest_index, (contest, standings, participants, native_contest) in enumerate(rated_contests):
+        previous_players = {}
+        for contest_index, rated_contest in enumerate(rated_contests):
+            contest, _, _, native_contest = rated_contest
+            standings = get_contest_metric_standings(
+                rated_contests,
+                contest_index,
+                use_previous_contest_participants=bool(absent_participant_decay),
+            )
             current_ratings = rater.ratings
             ratings = {
                 participant: current_ratings[participant].mu
@@ -145,14 +176,28 @@ def evaluate_elo_mmr_parameters(rated_contests, config, parameters):
                 else config["initial_rating"]
                 for participant, _, _ in standings
             }
-            metrics.append(calculate_contest_prediction_metrics(contest_index, contest, standings, ratings))
+            if len(standings) >= 2:
+                metrics.append(calculate_contest_prediction_metrics(contest_index, contest, standings, ratings))
             rater.add(native_contest)
-            if apply_rating_floor:
+            if apply_rating_floor or rated_contest.synthetic_participants:
                 rater.save(checkpoint_path)
                 checkpoint = json.loads(checkpoint_path.read_text(encoding="utf8"))
-                if apply_elo_mmr_rating_floor(checkpoint, participants):
+                checkpoint_changed = False
+                if rated_contest.synthetic_participants:
+                    checkpoint_changed |= apply_elo_mmr_absent_rating_cap(
+                        checkpoint,
+                        previous_players,
+                        rated_contest.synthetic_participants,
+                    )
+                if apply_rating_floor:
+                    checkpoint_changed |= apply_elo_mmr_rating_floor(
+                        checkpoint,
+                        (participant for participant, _, _ in rated_contest.full_standings),
+                    )
+                if checkpoint_changed:
                     checkpoint_path.write_text(json.dumps(checkpoint, separators=(",", ":")), encoding="utf8")
                     rater = elo_mmr_py.Rater.load(checkpoint_path)
+                previous_players = checkpoint["players"]
     return metrics
 
 
@@ -275,9 +320,12 @@ class Command(BaseCommand):
             sig_noob=current_rater.sig_noob,
             annual_drift=math.sqrt(config["drift_per_day"] * DAYS_PER_YEAR),
         )
-        current_result = self.evaluate_candidate(
-            rated_contests, config, current_parameters, args.burn_in_contests, train_stop, args.half_life
-        )
+        try:
+            current_result = self.evaluate_candidate(
+                rated_contests, config, current_parameters, args.burn_in_contests, train_stop, args.half_life
+            )
+        except ValueError as error:
+            raise CommandError(f"resource {resource.host}: {error}") from error
 
         randomizer = random.Random(args.seed)
         results = [current_result]
@@ -321,7 +369,7 @@ class Command(BaseCommand):
             "parameters": parameters,
             "metrics": metrics,
             "train": aggregate_prediction_metrics(metrics, train_start, train_stop, half_life),
-            "test": aggregate_prediction_metrics(metrics, train_stop, len(metrics)),
+            "test": aggregate_prediction_metrics(metrics, train_stop, len(rated_contests)),
         })
 
     def print_results(
@@ -338,15 +386,17 @@ class Command(BaseCommand):
         self.stdout.write(f"Resource: {resource.host} ({resource.pk})")
         self.stdout.write(
             f"Eligible contests: {len(rated_contests)}, burn-in: {args.burn_in_contests}, "
-            f"train: {train_stop - args.burn_in_contests}, test: {args.test_contests}"
+            f"train: {train_stop - args.burn_in_contests}, test: {args.test_contests}, "
+            f"scored: {len(current_result.metrics)}"
         )
+        self.stdout.write(f"Candidate configurations: {args.trials + 1}")
 
         comparison = PrettyTable([
             "Config",
             "Weight limit",
             "Sig limit",
             "Sig noob",
-            "Annual drift",
+            "Drift/day",
             "Train log loss",
             "Train pred.",
             "Train rank RMSE",
@@ -363,7 +413,7 @@ class Command(BaseCommand):
             "Weight limit",
             "Sig limit",
             "Sig noob",
-            "Annual drift",
+            "Drift/day",
             "Train log loss",
             "Train pred.",
             "Train rank RMSE",
@@ -372,10 +422,10 @@ class Command(BaseCommand):
             parameters = result.parameters
             top_results.add_row([
                 index,
-                f"{parameters.weight_limit:.4f}",
-                f"{parameters.sig_limit:.2f}",
-                f"{parameters.sig_noob:.2f}",
-                f"{parameters.annual_drift:.2f}",
+                f"{parameters.weight_limit:.2f}",
+                f"{parameters.sig_limit:.1f}",
+                f"{parameters.sig_noob:.1f}",
+                f"{parameters.drift_per_day:.2f}",
                 f"{result.train.log_loss:.6f}",
                 f"{result.train.predictability:.4f}",
                 f"{result.train.rank_rmse:.6f}",
@@ -388,7 +438,7 @@ class Command(BaseCommand):
             "weight_limit": parameters.weight_limit,
             "sig_limit": parameters.sig_limit,
             "sig_noob": parameters.sig_noob,
-            "drift_per_day": round(parameters.drift_per_day, 8),
+            "drift_per_day": round(parameters.drift_per_day, 2),
         }
         self.stdout.write("Suggested Resource.rating_prediction override:")
         self.stdout.write(json.dumps(override, indent=2, sort_keys=True))
@@ -401,10 +451,10 @@ class Command(BaseCommand):
         parameters = result.parameters
         row = [
             name,
-            f"{parameters.weight_limit:.4f}",
-            f"{parameters.sig_limit:.2f}",
-            f"{parameters.sig_noob:.2f}",
-            f"{parameters.annual_drift:.2f}",
+            f"{parameters.weight_limit:.2f}",
+            f"{parameters.sig_limit:.1f}",
+            f"{parameters.sig_noob:.1f}",
+            f"{parameters.drift_per_day:.2f}",
             f"{result.train.log_loss:.6f}",
             f"{result.train.predictability:.4f}",
             f"{result.train.rank_rmse:.6f}",

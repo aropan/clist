@@ -108,14 +108,18 @@ class StandingsFieldsTest(SimpleTestCase):
             },
         )
 
-    def test_member_account_type_adds_its_fixed_fields(self):
+    def test_member_account_type_scopes_its_fixed_fields(self):
         contest = self.create_contest()
 
-        member_fields = get_standings_fields(contest, division=None, with_detail=False, account_type="member")
-        user_fields = get_standings_fields(contest, division=None, with_detail=False, account_type="user")
+        for with_detail in (False, True):
+            with self.subTest(with_detail=with_detail):
+                member_fields = get_standings_fields(
+                    contest, division=None, with_detail=with_detail, account_type="member"
+                )
+                user_fields = get_standings_fields(contest, division=None, with_detail=with_detail, account_type="user")
 
-        assert "n_gold" in member_fields
-        assert "n_gold" not in user_fields
+                assert "n_gold" in member_fields
+                assert "n_gold" not in user_fields
 
     def test_account_type_is_normalized(self):
         contest = self.create_contest()
@@ -159,6 +163,21 @@ class StandingsFieldsTest(SimpleTestCase):
 
         assert "predicted_new_rating" in fields
         assert "predicted_rating_perf" in fields
+
+    def test_rating_prediction_fields_are_scoped_to_configured_account_type(self):
+        contest = self.create_contest()
+        contest.resource.rating_prediction = {}
+        contest.has_fixed_rating_prediction_field = True
+        contest.rating_prediction_hash = "hash"
+        contest.info["_rating_calculation"] = {"config": {"account_type": "member", "save_rating": False}}
+
+        member_fields = get_standings_fields(contest, division=None, with_detail=True, account_type="member")
+        user_fields = get_standings_fields(contest, division=None, with_detail=True, account_type="user")
+
+        assert "predicted_new_rating" in member_fields
+        assert "predicted_rating_perf" in member_fields
+        assert "predicted_new_rating" not in user_fields
+        assert "predicted_rating_perf" not in user_fields
 
 
 class StandingsRowTest(TestCase):

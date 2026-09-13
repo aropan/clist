@@ -997,6 +997,18 @@ def get_standings_fields(
 
     division_addition_fields = inplace_division and divisions_order and division != divisions_order[0]
     addition_fields = division_addition.get("fields", contest_fields) if division_addition_fields else contest_fields
+    addition_fields = list(addition_fields)
+
+    def get_fixed_field_names(fields):
+        return {field if isinstance(field, str) else field[0] for field in fields}
+
+    common_fixed_fields = get_fixed_field_names(options.get("fixed_fields", []))
+    selected_account_type_fields = get_fixed_field_names(account_type_fields.get("fixed_fields", []))
+    scoped_account_type_fields = set()
+    for account_type_options in options.get("account_type_fields", {}).values():
+        scoped_account_type_fields.update(get_fixed_field_names(account_type_options.get("fixed_fields", [])))
+    excluded_account_type_fields = scoped_account_type_fields - common_fixed_fields - selected_account_type_fields
+
     special_fields = ["team_id", "participant_type", "division", "medal", "raw_rating", "medal_percentage"]
     special_fields.extend(settings.ADDITION_HIDE_FIELDS_)
     if hidden_fields is None:
@@ -1004,9 +1016,17 @@ def get_standings_fields(
     hidden_fields_values = hidden_fields_values or []
 
     predicted_fields = ["predicted_rating_change", "predicted_new_rating", "predicted_rating_perf"]
-    if contest.rating_prediction_hash:
+    rating_calculation = contest.info.get("_rating_calculation") or {}
+    rating_prediction_config = rating_calculation.get("config") or {}
+    rating_account_type = rating_prediction_config.get("account_type")
+    if rating_account_type:
+        rating_account_type = Account.get_type_value(Account.get_type(rating_account_type))
+    show_rating_prediction = not rating_account_type or rating_account_type == account_type
+    if contest.rating_prediction_hash and show_rating_prediction:
         addition_fields = addition_fields + predicted_fields
         hidden_fields.extend(predicted_fields)
+    elif contest.rating_prediction_hash:
+        excluded_account_type_fields.update(predicted_fields)
 
     addition_fields.extend(settings.STANDINGS_STATISTIC_FIELDS)
     hidden_fields.extend(settings.STANDINGS_STATISTIC_FIELDS)
@@ -1015,6 +1035,7 @@ def get_standings_fields(
         is_private_k = k.startswith("_")
         if (
             k in fields
+            or k in excluded_account_type_fields
             or k in special_fields
             or (not is_private_k and "country" in k and k not in hidden_fields_values)
             or (k in ["name", "place", "solving"] and k not in hidden_fields_values)
@@ -1027,9 +1048,12 @@ def get_standings_fields(
         if k not in hidden_fields:
             hidden_fields.append(k)
 
-    rating_calculation = contest.info.get("_rating_calculation") or {}
-    rating_prediction_config = rating_calculation.get("config") or {}
-    if contest.has_rating_prediction and with_detail and not rating_prediction_config.get("save_rating"):
+    if (
+        contest.has_rating_prediction
+        and with_detail
+        and show_rating_prediction
+        and not rating_prediction_config.get("save_rating")
+    ):
         for field in predicted_fields:
             if field not in fields and "rating_change" not in field:
                 fields[field] = field

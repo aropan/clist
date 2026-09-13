@@ -93,7 +93,7 @@ class CodingameSelectedUsersTest(SimpleTestCase):
         assert "percentage" not in standings["fields_values"]
 
 
-LEAGUE_INDEXES = {"legend": 0, "gold": 1, "silver": 2, "bronze": 3}
+LEAGUE_INDEXES = {"legend": 0, "gold": 1, "silver": 2, "bronze": 3, "wood": 4}
 
 
 class CodingameProgressMessagesTest(SimpleTestCase):
@@ -177,7 +177,7 @@ class CodingameProgressMessagesTest(SimpleTestCase):
         row = result["1"]
         (message,) = row["_subscription_messages"]
         assert message["type"] == "league_change"
-        assert message["message"] == ("{account} moved to `Silver` league from `Bronze`, place `30`. {contest}")
+        assert message["message"] == "{account} moved to 🥈`Silver` league from 🥉`Bronze`, place `30`"
         assert row["_best_place"] == 30
         assert row["_league"] == "Silver"
 
@@ -196,7 +196,7 @@ class CodingameProgressMessagesTest(SimpleTestCase):
         row = result["1"]
         (message,) = row["_subscription_messages"]
         assert message["type"] == "best_place"
-        assert message["message"] == ("{account} improved place `50` → `30` in `Bronze` league. {contest}")
+        assert message["message"] == "{account} improved place `50` → `30` in 🥉`Bronze` league"
         assert row["_best_place"] == 30
         assert row["_score_history"][-1]["updated"]
 
@@ -295,7 +295,7 @@ class CodingameProgressMessagesTest(SimpleTestCase):
         )
 
         (message,) = result["1"]["_subscription_messages"]
-        assert message["message"] == ("{account} moved to `Silver\\_X` league from `Bronze`, place `30`. {contest}")
+        assert message["message"] == "{account} moved to `Silver\\_X` league from 🥉`Bronze`, place `30`"
 
     def test_contest_without_percentage_produces_no_messages(self):
         statistics = {"1": {"_agent_id": 100, "_league": "Bronze", "_best_place": 50, "_score_history": []}}
@@ -330,3 +330,14 @@ class CodingameProgressMessagesTest(SimpleTestCase):
 
         (message,) = full["1"]["_subscription_messages"]
         assert message["type"] == "best_place"
+
+    def test_numbered_wood_league_keeps_its_icon(self):
+        statistics = {"1": {"_agent_id": 100, "_league": "Bronze", "_best_place": 50, "_score_history": []}}
+
+        result = self.get_standings(
+            [self.make_row(rank=80, agent_id=101, league="wood")],
+            statistics=statistics,
+        )
+
+        (message,) = result["1"]["_subscription_messages"]
+        assert message["message"] == "{account} moved to 🪵`Wood 1` league from 🥉`Bronze`, place `80`"
