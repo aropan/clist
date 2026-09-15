@@ -13,6 +13,7 @@ from django.db.models import OuterRef
 from sql_util.utils import Exists
 
 from clist.templatetags.extras import (
+    get_item,
     get_problem_key,
     get_problem_name,
     get_problem_short,
@@ -43,6 +44,8 @@ VERDICT_TEXTS = {
     12: "Invalid solution",
 }
 VERDICTS_WITH_TEST = {1, 3, 4, 6, 7, 8}
+PENDING_STATUSES = {0, 1, 2}
+ACCEPTED_STATUS = 9
 
 
 def parse_inertia_page(page, url):
@@ -102,36 +105,35 @@ def next_submissions_url(pagination, base_url, tab):
     return urlunparse(parsed._replace(scheme=base.scheme, netloc=base.netloc, query=urlencode(query)))
 
 
-def process_submissions_page(pagination):
-    for item in pagination["items"]:
-        user = item.get("user")
-        if not user or not user.get("username"):
-            continue
+def parse_submission(item):
+    handle = get_item(item, "user.username")
+    if not handle:
+        return None
 
-        status = item.get("status")
-        verdict = VERDICT_TEXTS.get(status, "Undefined status")
-        is_accepted = bool(item.get("isAccepted"))
+    status = item["status"]
+    verdict = VERDICT_TEXTS.get(status, "Undefined status")
+    is_accepted = status == ACCEPTED_STATUS
 
-        submission = {
-            "handle": user["username"],
-            "task_name": item.get("task", {}).get("title"),
-            "upsolving": bool(item.get("isUpsolve")),
-            "binary": is_accepted,
-            "exec_time": f"{item['runTime']} ms",
-            "memory_usage": f"{item['runMemory']} KB",
-            "id": item["id"],
-            "language": item.get("language", {}).get("name"),
-            "submission_time": int(arrow.get(item["createdAt"]).timestamp()),
-            "verdict_full": verdict,
-            "verdict": "AC" if is_accepted else "".join(w[0].upper() for w in verdict.split()),
-        }
+    submission = {
+        "handle": handle,
+        "task_name": get_item(item, "task.title"),
+        "upsolving": bool(item.get("isUpsolve")),
+        "binary": is_accepted,
+        "exec_time": f"{item['runTime']} ms",
+        "memory_usage": f"{item['runMemory']} KB",
+        "id": item["id"],
+        "language": get_item(item, "language.name"),
+        "submission_time": int(arrow.get(item["createdAt"]).timestamp()),
+        "verdict_full": verdict,
+        "verdict": "AC" if is_accepted else "".join(w[0].upper() for w in verdict.split()),
+    }
 
-        if task_number := item.get("task", {}).get("number"):
-            submission["task_id"] = task_number
-        if status in VERDICTS_WITH_TEST and item.get("activeTest") is not None:
-            submission["test"] = item["activeTest"]
+    if task_number := get_item(item, "task.number"):
+        submission["task_id"] = task_number
+    if status in VERDICTS_WITH_TEST and item.get("activeTest") is not None:
+        submission["test"] = item["activeTest"]
 
-        yield submission
+    return submission
 
 
 def process_submissions_url(attempts_url, submissions_info, n_pages=-1):
@@ -150,17 +152,25 @@ def process_submissions_url(attempts_url, submissions_info, n_pages=-1):
         pagination = get_submissions_pagination(props, url)
 
         n_processed = 0
-        for submission in process_submissions_page(pagination):
+        for item in pagination["items"]:
+            submission = parse_submission(item)
+            if submission is None:
+                continue
             if submission["id"] <= last_submission_id:
                 progress_bar.close()
                 return
+            n_processed += 1
+            if item["status"] in PENDING_STATUSES:
+                # Keep the checkpoint below unjudged submissions so their final verdict is fetched next run.
+                pending_checkpoint = submission["id"] - 1
+                submissions_info["last_submission_id"] = min(submissions_info["last_submission_id"], pending_checkpoint)
+                continue
             submissions_info["count"] += 1
             if submission["id"] > submissions_info["last_submission_id"]:
                 submissions_info["last_submission_id"] = submission["id"]
                 submissions_info["last_submission_time"] = arrow.get(submission["submission_time"]).isoformat()
                 submissions_info["time"] = arrow.now().isoformat()
             yield submission
-            n_processed += 1
         progress_bar.update(n_processed)
         if not n_processed:
             break
@@ -346,10 +356,10 @@ class Statistic(BaseModule):
                 raise ExceptionParseAccounts(f"Profile handle mismatch for {handle}: {profile['username']}")
 
             ret = {"name": profile.get("name")}
-            if avatar := (profile.get("cosmetics") or {}).get("pic"):
+            if avatar := get_item(profile, "cosmetics.pic"):
                 ret["avatar"] = urljoin(url, avatar)
-            if title := props.get("title"):
-                ret["title"] = title.get("name")
+            if title := get_item(props, "title.name"):
+                ret["title"] = title
 
             stats = props.get("stats") or {}
             for field, key in (
