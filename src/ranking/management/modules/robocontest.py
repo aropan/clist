@@ -5,7 +5,7 @@ import json
 import re
 from collections import OrderedDict, defaultdict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
-from urllib.parse import urljoin
+from urllib.parse import parse_qsl, urlencode, urljoin, urlparse, urlunparse
 
 import arrow
 from django.db import transaction
@@ -13,111 +13,169 @@ from django.db.models import OuterRef
 from sql_util.utils import Exists
 
 from clist.templatetags.extras import (
-    as_number,
+    get_item,
     get_problem_key,
     get_problem_name,
     get_problem_short,
-    html_unescape,
     is_improved_solution,
     is_solved,
 )
 from logify import live as tqdm
-from ranking.management.modules.common import REQ, BaseModule, parsed_table
+from ranking.management.modules.common import REQ, BaseModule
 from ranking.management.modules.excepts import ExceptionParseAccounts, ExceptionParseStandings, FailOnGetResponse
 from ranking.utils import create_upsolving_statistic
 from utils.ratelimiter import RateLimiter
 
+LOCALE_HEADERS = {"X-LANG": "en"}
 
-def process_submissions_page(resource, page):
-    table = parsed_table.ParsedTable(page)
-    for row in table:
-        submission_id = int(row["#"].value)
-        upsolving = bool(row[""].column.node.xpath('.//*[@title="Upsolve"]'))
-        handle = row["User"].column.node.xpath(".//a/@href")[0].split("/")[-1]
-        verdict = row["Status"].value
-        task = html_unescape(row["Task"].value)
-        is_accepted = verdict == "Accepted"
-
-        submission = {
-            "handle": handle,
-            "task_name": task,
-            "upsolving": upsolving,
-            "binary": is_accepted,
-            "exec_time": row["Time"].value,
-            "memory_usage": row["Memory"].value,
-            "id": submission_id,
-            "language": row["Language"].value,
-            "submission_time": int(
-                arrow.get(row["Sent date"].value, "DD.MM.YYYY HH:mm", tzinfo=resource.timezone).timestamp()
-            ),
-        }
-
-        if task_href := row["Task"].column.node.xpath(".//a/@href"):
-            submission["task_id"] = task_href[0].rstrip("/").split("/")[-1]
-
-        if match := re.search(r"(?P<verdict>[^(]*)\((?P<test>[^)]*)\)", verdict):
-            verdict = match.group("verdict").strip()
-            test = match.group("test").strip()
-            if test.startswith("test"):
-                submission["test"] = int(test[4:].strip())
-        submission["verdict_full"] = verdict
-        verdict_short = "".join(w[0].upper() for w in verdict.split())
-        submission["verdict"] = "AC" if is_accepted else verdict_short
-
-        yield submission
+VERDICT_TEXTS = {
+    0: "Waiting",
+    1: "Running",
+    2: "Compiling",
+    3: "Runtime error",
+    4: "Memory limit",
+    5: "Compilation error",
+    6: "Presentation error",
+    7: "Time limit",
+    8: "Wrong answer",
+    9: "Accepted",
+    10: "Partially accepted",
+    11: "Checker error",
+    12: "Invalid solution",
+}
+VERDICTS_WITH_TEST = {1, 3, 4, 6, 7, 8}
+PENDING_STATUSES = {0, 1, 2}
+ACCEPTED_STATUS = 9
 
 
-def process_submissions_url(resource, attempts_url, submissions_info, n_pages=-1):
+def parse_inertia_page(page, url):
+    for match in re.finditer(r'<script[^>]*type="application/json"[^>]*>(?P<data>.*?)</script>', page, re.DOTALL):
+        try:
+            data = json.loads(match.group("data"))
+        except json.JSONDecodeError:
+            continue
+        if isinstance(data, dict) and "component" in data:
+            return data
+    match = re.search(r'data-page="(?P<data>[^"]*)"', page)
+    if match:
+        return json.loads(html.unescape(match.group("data")))
+    raise ExceptionParseStandings(f"Failed to find inertia page data: {url}")
+
+
+def get_page_data(url, ignore_codes=None):
+    page, code = REQ.get(url, headers=LOCALE_HEADERS, return_code=True, ignore_codes=ignore_codes)
+    if code != 200 or not page:
+        return None
+    return parse_inertia_page(page, url)
+
+
+def get_props(data, url):
+    props = data.get("props")
+    if not isinstance(props, dict):
+        raise ExceptionParseStandings(f"Failed to find props: {url}")
+    return props
+
+
+def get_tab_data(props, tab, url):
+    if props.get("tab") != tab:
+        raise ExceptionParseStandings(f'Expected "{tab}" tab, got "{props.get("tab")}": {url}')
+    tab_data = props.get("tabData")
+    if not isinstance(tab_data, dict):
+        raise ExceptionParseStandings(f'Failed to find "{tab}" tab data: {url}')
+    return tab_data
+
+
+def get_submissions_pagination(props, url):
+    tab_data = props.get("tabData")
+    pagination = tab_data.get("pagination") if isinstance(tab_data, dict) else props.get("pagination")
+    if not isinstance(pagination, dict) or not isinstance(pagination.get("items"), list):
+        raise ExceptionParseStandings(f"Failed to find submissions pagination: {url}")
+    return pagination
+
+
+def next_submissions_url(pagination, base_url, tab):
+    # nextUrl drops the tab that selects submissions and can carry a proxy-downgraded scheme.
+    next_url = pagination.get("nextUrl")
+    if not next_url:
+        return None
+    parsed, base = urlparse(next_url), urlparse(base_url)
+    query = dict(parse_qsl(parsed.query))
+    if tab:
+        query["tab"] = tab
+    return urlunparse(parsed._replace(scheme=base.scheme, netloc=base.netloc, query=urlencode(query)))
+
+
+def parse_submission(item):
+    handle = get_item(item, "user.username")
+    if not handle:
+        return None
+
+    status = item["status"]
+    verdict = VERDICT_TEXTS.get(status, "Undefined status")
+    is_accepted = status == ACCEPTED_STATUS
+
+    submission = {
+        "handle": handle,
+        "task_name": get_item(item, "task.title"),
+        "upsolving": bool(item.get("isUpsolve")),
+        "binary": is_accepted,
+        "exec_time": f"{item['runTime']} ms",
+        "memory_usage": f"{item['runMemory']} KB",
+        "id": item["id"],
+        "language": get_item(item, "language.name"),
+        "submission_time": int(arrow.get(item["createdAt"]).timestamp()),
+        "verdict_full": verdict,
+        "verdict": "AC" if is_accepted else "".join(w[0].upper() for w in verdict.split()),
+    }
+
+    if task_number := get_item(item, "task.number"):
+        submission["task_id"] = task_number
+    if status in VERDICTS_WITH_TEST and item.get("activeTest") is not None:
+        submission["test"] = item["activeTest"]
+
+    return submission
+
+
+def process_submissions_url(attempts_url, submissions_info, n_pages=-1):
     last_submission_id = submissions_info.setdefault("last_submission_id", -1)
     submissions_info.setdefault("count", 0)
 
-    submissions_page = REQ.get(attempts_url)
-
-    match = re.search('wire:snapshot="(?P<wire>[^"]*)"', submissions_page)
-    snapshot = html_unescape(match.group("wire"))
-    match = re.search('<meta name="csrf-token" content="(?P<token>[^"]*)">', submissions_page)
-    csrf_token = match.group("token")
-
+    url = attempts_url
     progress_bar = tqdm.tqdm(desc="submissions fetching")
-    while n_pages:
+    while n_pages and url:
         n_pages -= 1
+
+        data = get_page_data(url)
+        if data is None:
+            raise ExceptionParseStandings(f"Failed to get submissions page: {url}")
+        props = get_props(data, url)
+        pagination = get_submissions_pagination(props, url)
+
         n_processed = 0
-        for submission in process_submissions_page(resource, submissions_page):
+        for item in pagination["items"]:
+            submission = parse_submission(item)
+            if submission is None:
+                continue
             if submission["id"] <= last_submission_id:
+                progress_bar.close()
                 return
+            n_processed += 1
+            if item["status"] in PENDING_STATUSES:
+                # Keep the checkpoint below unjudged submissions so their final verdict is fetched next run.
+                pending_checkpoint = submission["id"] - 1
+                submissions_info["last_submission_id"] = min(submissions_info["last_submission_id"], pending_checkpoint)
+                continue
             submissions_info["count"] += 1
             if submission["id"] > submissions_info["last_submission_id"]:
                 submissions_info["last_submission_id"] = submission["id"]
                 submissions_info["last_submission_time"] = arrow.get(submission["submission_time"]).isoformat()
                 submissions_info["time"] = arrow.now().isoformat()
             yield submission
-            n_processed += 1
         progress_bar.update(n_processed)
         if not n_processed:
-            return
+            break
 
-        match = re.search(r"""setPage([^'"]*.(?P<page>[^,]*)['"],['"]page['"])[^>]*>\s*Next""", submissions_page)
-        if not match:
-            return
-        set_page = match.group("page")
-
-        component = {
-            "snapshot": snapshot,
-            "updates": {},
-            "calls": [{"path": "", "method": "setPage", "params": [set_page, "page"]}],
-        }
-        post_data = {"_token": csrf_token, "components": [component]}
-        post_data = json.dumps(post_data)
-
-        data = REQ.get(
-            "https://robocontest.uz/livewire/update",
-            post=post_data,
-            content_type="application/json",
-            return_json=True,
-        )
-        component = data["components"][0]
-        snapshot = component["snapshot"]
-        submissions_page = component["effects"]["html"]
+        url = next_submissions_url(pagination, attempts_url, props.get("tab"))
     progress_bar.close()
 
 
@@ -136,143 +194,110 @@ def process_submission_problem(submission, upsolving, short, addition):
     return False
 
 
-def is_english_locale(page):
-    if not page:
-        return False
-    match = re.search(
-        '<a[^>]*href="[^"]*/locale/[^"]*"[^>]*class="[^"]*font-weight-bold[^"]*"[^>]*>(?P<locale>[^<]+)</a>', page
-    )
-    if not match:
-        return False
-    return match.group("locale").lower().strip() == "english"
-
-
-def set_locale():
-    return REQ.get("https://robocontest.uz/locale/en")
-
-
-def get_page(*args, **kwargs):
-    is_fetch_profile = kwargs.pop("is_fetch_profile", False)
-    page, code = REQ.get(*args, return_code=True, **kwargs)
-    page = page if code == 200 else None
-    if page:
-        if not is_english_locale(page):
-            if is_fetch_profile:
-                raise ExceptionParseAccounts("Failed to set locale")
-            page = set_locale()
-        if not is_english_locale(page):
-            raise ExceptionParseStandings("Failed to set locale")
-    return page
-
-
 class Statistic(BaseModule):
     def get_standings(self, users=None, statistics=None, **kwargs):
         standings_url = self.url.rstrip("/") + "/results"
 
         problems_infos = OrderedDict()
+        first_ac_user_ids = {}
         result = OrderedDict()
 
         n_page = 0
-        n_skip = 0
-        nothing = False
+        last_page = 1
         progress_bar = tqdm.tqdm(desc="results pagination")
-        while not nothing and n_skip < 5:
+        while n_page < last_page:
             n_page += 1
-            page = get_page(standings_url + f"?page={n_page}")
+            page_url = f"{standings_url}?page={n_page}"
+
+            data = get_page_data(page_url)
+            if data is None:
+                raise ExceptionParseStandings(f"Failed to get standings page: {page_url}")
+            standings = get_tab_data(get_props(data, page_url), "standings", page_url)
+            last_page = standings.get("lastPage") or 1
             progress_bar.update()
-            if page is None:
-                n_skip += 1
-                continue
-            page = re.sub(r"<!(?:--)?\[[^\]]*\](?:--)?>", "", page)
-            table = parsed_table.ParsedTable(page, as_list=True)
-            nothing = True
-            n_skip = 0
 
-            for row in table:
-                r = OrderedDict()
+            is_ioi = standings.get("contestMode") == "ioi"
+            tasks = standings.get("tasks") or []
 
-                for k, v in row:
-                    f = k.strip().lower()
-                    if f == "#":
-                        if not v.value:
-                            break
-                        r["place"] = v.value
-                    elif f.startswith("fullname"):
-                        a = v.column.node.xpath(".//a")[0]
-                        r["member"] = re.search("profile/(?P<key>[^/]+)", a.attrib["href"]).group("key")
-                        if a.text:
-                            r["name"] = html.unescape(a.text).strip()
-                        small = v.column.node.xpath(".//small")
-                        if small and (text := small[0].text):
-                            r["affiliation"] = html.unescape(text).strip()
-                        if v.row.node.xpath('./*[contains(@class, "kicked")]'):
-                            r["_no_update_n_contests"] = True
-                        handle = r["member"]
-                        stats = (statistics or {}).get(handle, {})
-                        problems = r.setdefault("problems", stats.get("problems", {}))
-                    elif not f:
-                        i = v.header.node.xpath(".//i")
-                        if i:
-                            c = i[0].attrib["class"]
-                            if "strava" in c or "chart-line" in c:
-                                if v.value == "0":
-                                    r["rating_change"] = 0
-                                elif len(vs := v.value.lstrip("~").split()) == 2:
-                                    new_rating, rating_change = map(int, vs)
-                                    r["rating_change"] = rating_change
-                                    r["new_rating"] = new_rating
-                            elif "tasks" in c:
-                                r["tasks"] = v.value
-                    elif f == "ball":
-                        r["solving"] = as_number(v.value)
-                    elif f == "penalty":
-                        r["penalty"] = as_number(v.value)
-                    elif len(f.split()[0]) == 1:
-                        short, full_score = f.split()
-                        short = short.title()
-                        if short not in problems_infos:
-                            name = html.unescape(v.header.node.attrib["title"])
-                            problems_infos[short] = {
-                                "short": short,
-                                "name": name or short,
-                                "url": urljoin(standings_url, v.header.node.xpath(".//a/@href")[0]),
-                                "full_score": int(full_score),
-                            }
-                        if not v.value:
-                            continue
-                        val = v.value
-                        p = problems.setdefault(short, {})
-                        if val.startswith("+"):
-                            p["result"], p["time"] = val.split()
-                        elif val == "-":
-                            p["result"] = "-1"
-                        elif " / " in val:
-                            res, full = [as_number(v) for v in val.split(" / ")]
-                            if 0 < res < full:
-                                p["partial"] = True
-                            p["result"] = res
-                        else:
-                            p["result"] = val
-                        if "first-solved" in v.column.node.attrib["class"]:
-                            p["first_ac"] = True
-                if not r.get("member"):
+            for task in tasks:
+                short = task["letter"]
+                if short not in problems_infos:
+                    problems_infos[short] = {
+                        "short": short,
+                        "name": task.get("title") or short,
+                        "url": urljoin(standings_url, f"tasks/{task['letter']}"),
+                        "full_score": task["maxScore"],
+                    }
+                    first_ac_user_ids[short] = task.get("firstSolvedUserId")
+
+            for row_data in standings.get("standings") or []:
+                handle = row_data.get("participantUsername") or row_data.get("participantName")
+                if not handle:
                     continue
-                if not problems and not as_number(r["solving"]):
-                    continue
-                if r.get("_no_update_n_contests"):
+
+                r = result.setdefault(handle, OrderedDict())
+                r["member"] = handle
+                r["place"] = row_data.get("rankRange") or row_data["rank"]
+                r["solving"] = row_data["score"]
+                r["penalty"] = row_data["penalty"]
+                if name := row_data.get("participantName"):
+                    r["name"] = name
+                if study := row_data.get("study"):
+                    r["affiliation"] = study
+                if row_data.get("kicked"):
+                    r["_no_update_n_contests"] = True
                     r.pop("place", None)
-                result[r["member"]] = r
-                nothing = False
+
+                if rating_change := row_data.get("ratingChange"):
+                    if rating_change.get("delta") is not None:
+                        r["rating_change"] = rating_change["delta"]
+                    if rating_change.get("newRating") is not None:
+                        r["new_rating"] = rating_change["newRating"]
+
+                stats = (statistics or {}).get(handle, {})
+                problems = r.setdefault("problems", stats.get("problems", {}))
+
+                for task, task_result in zip(tasks, row_data.get("tasks") or []):
+                    short = task["letter"]
+                    p = {}
+
+                    if is_ioi:
+                        score = task_result.get("score") or 0
+                        if not score:
+                            continue
+                        p["result"] = score
+                        max_score = task_result.get("maxScore") or task["maxScore"]
+                        if max_score and 0 < score < max_score:
+                            p["partial"] = True
+                    else:
+                        attempts = task_result.get("attempts") or 0
+                        if task_result.get("solved"):
+                            p["result"] = "+" if not attempts else f"+{attempts}"
+                            if task_time := task_result.get("time"):
+                                p["time"] = task_time
+                        elif attempts:
+                            p["result"] = f"-{attempts}"
+                        else:
+                            continue
+
+                    if row_data.get("userId") is not None and first_ac_user_ids.get(short) == row_data["userId"]:
+                        p["first_ac"] = True
+                    problems.setdefault(short, {}).update(p)
+
+                if not problems and not r["solving"]:
+                    result.pop(handle)
         progress_bar.close()
 
         contest_problems = list(problems_infos.values())
         for problem in tqdm.tqdm(contest_problems, desc="problems fetching"):
-            problem_page = get_page(problem["url"], ignore_codes={403})
-            if problem_page is None:
+            data = get_page_data(problem["url"], ignore_codes={403, 404})
+            if data is None:
                 continue
-            match = re.search(r"<h[^>]*>\s*Task\s*#?(?P<key>[^<]*)</h", problem_page)
-            problem["code"] = match.group("key").strip()
-            archive_url = self.resource.problem_url.format(key=problem["code"])
+            code = (get_props(data, problem["url"]).get("task") or {}).get("number")
+            if not code:
+                continue
+            problem["code"] = code
+            archive_url = self.resource.problem_url.format(key=code)
             try:
                 REQ.head(archive_url)
                 problem["archive_url"] = archive_url
@@ -280,18 +305,19 @@ class Statistic(BaseModule):
                 problem["archive_url"] = None
 
         problem_shorts = {p["name"]: p["short"] for p in contest_problems}
+        problem_shorts.update({p["code"]: p["short"] for p in contest_problems if p.get("code")})
         submissions_info = self.contest.submissions_info
         attempts_url = self.url.rstrip("/") + "/attempts"
 
-        for submission in process_submissions_url(self.resource, attempts_url, submissions_info):
+        for submission in process_submissions_url(attempts_url, submissions_info):
             task_name = submission.pop("task_name")
-            submission.pop("task_id", None)
+            task_id = submission.pop("task_id", None)
             handle = submission.pop("handle")
             upsolving = submission.pop("upsolving")
 
-            if task_name not in problem_shorts:
+            short = problem_shorts.get(task_id) or problem_shorts.get(task_name)
+            if short is None:
                 continue
-            short = problem_shorts[task_name]
 
             created = handle not in result
             addition = result.setdefault(handle, {"member": handle, "_no_update_n_contests": True})
@@ -310,48 +336,52 @@ class Statistic(BaseModule):
 
     @staticmethod
     def get_users_infos(users, resource, accounts, pbar=None):
-        # Set the english locale on the session: fetch_profile below raises instead of setting it.
-        get_page(resource.href())
-
         @RateLimiter(max_calls=5, period=1)
         def fetch_profile(handle):
             url = resource.profile_url.format(account=handle)
             try:
-                page = get_page(url, is_fetch_profile=True)
+                data = get_page_data(url)
             except FailOnGetResponse as e:
                 if e.code == 404:
                     return None
                 raise e
-            match = re.search('<meta[^>]*property="og:url"[^>]*content="(?P<url>[^"]*)"', page)
-            if not match:
+            if data is None:
+                return None
+
+            props = get_props(data, url)
+            profile = props.get("profile")
+            if not profile or not profile.get("username"):
                 raise ExceptionParseAccounts(f"Failed to parse profile page for {handle}")
-            if match.group("url") != url:
-                raise ExceptionParseAccounts(f"Profile url mismatch for {handle}: {url} != {match.group('url')}")
+            if profile["username"].lower() != handle.lower():
+                raise ExceptionParseAccounts(f"Profile handle mismatch for {handle}: {profile['username']}")
 
-            ret = {}
-            match = re.search('<img[^>]*src="(?P<avatar>[^"]*)"[^>]*id="avatar"', page)
-            if match:
-                ret["avatar"] = urljoin(url, match.group("avatar"))
+            ret = {"name": profile.get("name")}
+            if avatar := get_item(profile, "cosmetics.pic"):
+                ret["avatar"] = urljoin(url, avatar)
+            if title := get_item(props, "title.name"):
+                ret["title"] = title
 
-            for regex in (
-                r">(?P<val>[^<]*)</h[123]>\s*<p[^>]*>(?P<key>[^<]*)</p>",
-                r"<th[^>]*>(?P<key>[^<]*)</th>\s*<td[^>]*>(?P<val>[^<]*)</td>",
+            stats = props.get("stats") or {}
+            for field, key in (
+                ("rating", "contestRating"),
+                ("rank", "roboRank"),
+                ("karma", "karma"),
+                ("solved_tasks", "solvedTasks"),
+                ("total_tasks", "totalTasks"),
             ):
-                matches = re.finditer(regex, page)
-                for match in matches:
-                    key = match.group("key").strip().lower().replace(" ", "_")
-                    val = html.unescape(match.group("val").strip())
-                    ret[key] = val
+                if stats.get(key) is not None:
+                    ret[field] = stats[key]
 
-            match = re.search(r'<h3[^>]*class="[^"]*card-title[^"]*"[^>]*>(?:\s*<[^>]*>)*(?P<name>[^<]*)', page)
-            ret["name"] = html.unescape(match.group("name"))
+            study = props.get("study") or {}
+            for field, key in (
+                ("study", "study"),
+                ("study_level", "studyLevel"),
+                ("region", "region"),
+                ("district", "district"),
+            ):
+                if study.get(key):
+                    ret[field] = study[key]
 
-            # for field in 'region', 'district':
-            #     if ret.get(field):
-            #         country = locator.get_country(ret[field], lang='ru')
-            #         if country:
-            #             ret['country'] = country
-            #             break
             return ret
 
         with PoolExecutor(max_workers=8) as executor:
@@ -365,9 +395,7 @@ class Statistic(BaseModule):
                         yield {"skip": True}
                     continue
 
-                ret = {"info": data}
-
-                yield ret
+                yield {"info": data}
 
     @transaction.atomic()
     @staticmethod
@@ -403,7 +431,7 @@ class Statistic(BaseModule):
                 created = False
             return statistics_cache[contest], created
 
-        for submission in process_submissions_url(resource, attempts_url, account.submissions_info):
+        for submission in process_submissions_url(attempts_url, account.submissions_info):
             task_name = submission.pop("task_name")
             task_id = submission.pop("task_id", None)
             submission.pop("handle")
