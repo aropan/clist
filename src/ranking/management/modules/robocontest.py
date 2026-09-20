@@ -63,14 +63,14 @@ def parse_inertia_page(page, url):
 
 
 def get_page_data(url, ignore_codes=None):
-    page, code = REQ.get(url, headers=LOCALE_HEADERS, return_code=True, ignore_codes=ignore_codes)
+    page, code = REQ.get(url, headers=dict(LOCALE_HEADERS), return_code=True, ignore_codes=ignore_codes)
     if code != 200 or not page:
         return None
     return parse_inertia_page(page, url)
 
 
 def get_props(data, url):
-    props = data.get("props")
+    props = data.get("props") if isinstance(data, dict) else None
     if not isinstance(props, dict):
         raise ExceptionParseStandings(f"Failed to find props: {url}")
     return props
@@ -139,6 +139,8 @@ def parse_submission(item):
 def process_submissions_url(attempts_url, submissions_info, n_pages=-1):
     last_submission_id = submissions_info.setdefault("last_submission_id", -1)
     submissions_info.setdefault("count", 0)
+    pending_submission_ids = set(submissions_info.get("pending_submission_ids", []))
+    stop_id = min(last_submission_id, min(pending_submission_ids) - 1) if pending_submission_ids else last_submission_id
 
     url = attempts_url
     progress_bar = tqdm.tqdm(desc="submissions fetching")
@@ -151,28 +153,36 @@ def process_submissions_url(attempts_url, submissions_info, n_pages=-1):
         props = get_props(data, url)
         pagination = get_submissions_pagination(props, url)
 
-        n_processed = 0
+        n_seen = 0
         for item in pagination["items"]:
             submission = parse_submission(item)
             if submission is None:
                 continue
-            if submission["id"] <= last_submission_id:
+            submission_id = submission["id"]
+            if submission_id <= stop_id:
                 progress_bar.close()
                 return
-            n_processed += 1
-            if item["status"] in PENDING_STATUSES:
-                # Keep the checkpoint below unjudged submissions so their final verdict is fetched next run.
-                pending_checkpoint = submission["id"] - 1
-                submissions_info["last_submission_id"] = min(submissions_info["last_submission_id"], pending_checkpoint)
+            n_seen += 1
+            if submission_id <= last_submission_id and submission_id not in pending_submission_ids:
                 continue
-            submissions_info["count"] += 1
-            if submission["id"] > submissions_info["last_submission_id"]:
-                submissions_info["last_submission_id"] = submission["id"]
+            if submission_id > submissions_info["last_submission_id"]:
+                submissions_info["last_submission_id"] = submission_id
                 submissions_info["last_submission_time"] = arrow.get(submission["submission_time"]).isoformat()
                 submissions_info["time"] = arrow.now().isoformat()
+            if item["status"] in PENDING_STATUSES:
+                pending_submission_ids.add(submission_id)
+                submissions_info["pending_submission_ids"] = sorted(pending_submission_ids)
+                continue
+            if submission_id in pending_submission_ids:
+                pending_submission_ids.remove(submission_id)
+                if pending_submission_ids:
+                    submissions_info["pending_submission_ids"] = sorted(pending_submission_ids)
+                else:
+                    submissions_info.pop("pending_submission_ids", None)
+            submissions_info["count"] += 1
             yield submission
-        progress_bar.update(n_processed)
-        if not n_processed:
+        progress_bar.update(n_seen)
+        if not n_seen:
             break
 
         url = next_submissions_url(pagination, attempts_url, props.get("tab"))
@@ -239,7 +249,10 @@ class Statistic(BaseModule):
                 r["member"] = handle
                 r["place"] = row_data.get("rankRange") or row_data["rank"]
                 r["solving"] = row_data["score"]
-                r["penalty"] = row_data["penalty"]
+                if not is_ioi:
+                    r["penalty"] = row_data["penalty"]
+                    if row_data.get("solvedCount") is not None:
+                        r["tasks"] = str(row_data["solvedCount"])
                 if name := row_data.get("participantName"):
                     r["name"] = name
                 if study := row_data.get("study"):
@@ -341,16 +354,18 @@ class Statistic(BaseModule):
             url = resource.profile_url.format(account=handle)
             try:
                 data = get_page_data(url)
+                if data is None:
+                    raise ExceptionParseAccounts(f"Empty profile page for {handle}")
+                props = get_props(data, url)
             except FailOnGetResponse as e:
                 if e.code == 404:
                     return None
                 raise e
-            if data is None:
-                return None
+            except (ExceptionParseStandings, json.JSONDecodeError) as e:
+                raise ExceptionParseAccounts(f"Failed to parse profile page for {handle}") from e
 
-            props = get_props(data, url)
             profile = props.get("profile")
-            if not profile or not profile.get("username"):
+            if not isinstance(profile, dict) or not profile.get("username"):
                 raise ExceptionParseAccounts(f"Failed to parse profile page for {handle}")
             if profile["username"].lower() != handle.lower():
                 raise ExceptionParseAccounts(f"Profile handle mismatch for {handle}: {profile['username']}")
