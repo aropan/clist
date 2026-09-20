@@ -1,0 +1,22 @@
+{
+    "host": "robocontest.uz",
+    "rid": 137,
+    "path": "./module/robocontest.uz/index.php",
+    "url": "https://robocontest.uz/contests",
+    "parse_url": "https://robocontest.uz/contests",
+    "timezone": "Asia/Tashkent",
+    "api_url": null,
+    "info": {
+        "standings": {
+            "name_instead_key": true
+        },
+        "get_events": {
+            "colors": {
+                "darken": "#3D1644",
+                "lighten": "#EAD0EF"
+            }
+        }
+    },
+    "parse_full_list": true,
+    "recorded_at": "2026-09-20 23:09:10"
+}

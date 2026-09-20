@@ -1,0 +1,2912 @@
+[
+    {
+        "end_time": "2020-03-02T13:20:00+05:00",
+        "host": "robocontest.uz",
+        "key": "1",
+        "rid": 137,
+        "start_time": "2020-03-02T11:20:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "lazerG Turnir",
+        "url": "https://robocontest.uz/contests/1"
+    },
+    {
+        "end_time": "2020-03-26T19:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "4",
+        "rid": 137,
+        "start_time": "2020-03-26T16:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #1",
+        "url": "https://robocontest.uz/contests/4"
+    },
+    {
+        "end_time": "2020-05-07T14:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "5",
+        "rid": 137,
+        "start_time": "2020-05-07T11:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Contest - Respublika Olimpiadasiga saralash TATU",
+        "url": "https://robocontest.uz/contests/5"
+    },
+    {
+        "end_time": "2020-05-24T18:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "6",
+        "rid": 137,
+        "start_time": "2020-05-24T16:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #2",
+        "url": "https://robocontest.uz/contests/6"
+    },
+    {
+        "end_time": "2020-05-27T18:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "7",
+        "rid": 137,
+        "start_time": "2020-05-27T16:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #3",
+        "url": "https://robocontest.uz/contests/7"
+    },
+    {
+        "end_time": "2020-05-31T18:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "8",
+        "rid": 137,
+        "start_time": "2020-05-31T16:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #4",
+        "url": "https://robocontest.uz/contests/8"
+    },
+    {
+        "end_time": "2020-06-03T20:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "9",
+        "rid": 137,
+        "start_time": "2020-06-03T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #5",
+        "url": "https://robocontest.uz/contests/9"
+    },
+    {
+        "end_time": "2020-06-07T19:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "10",
+        "rid": 137,
+        "start_time": "2020-06-07T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #6",
+        "url": "https://robocontest.uz/contests/10"
+    },
+    {
+        "end_time": "2020-06-10T19:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "11",
+        "rid": 137,
+        "start_time": "2020-06-10T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #7",
+        "url": "https://robocontest.uz/contests/11"
+    },
+    {
+        "end_time": "2020-06-14T19:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "12",
+        "rid": 137,
+        "start_time": "2020-06-14T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #8",
+        "url": "https://robocontest.uz/contests/12"
+    },
+    {
+        "end_time": "2020-06-17T19:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "13",
+        "rid": 137,
+        "start_time": "2020-06-17T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #9",
+        "url": "https://robocontest.uz/contests/13"
+    },
+    {
+        "end_time": "2020-06-21T19:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "14",
+        "rid": 137,
+        "start_time": "2020-06-21T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #10",
+        "url": "https://robocontest.uz/contests/14"
+    },
+    {
+        "end_time": "2020-06-24T19:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "15",
+        "rid": 137,
+        "start_time": "2020-06-24T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #11",
+        "url": "https://robocontest.uz/contests/15"
+    },
+    {
+        "end_time": "2020-06-29T19:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "16",
+        "rid": 137,
+        "start_time": "2020-06-29T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #12",
+        "url": "https://robocontest.uz/contests/16"
+    },
+    {
+        "end_time": "2020-07-01T20:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "17",
+        "rid": 137,
+        "start_time": "2020-07-01T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #13",
+        "url": "https://robocontest.uz/contests/17"
+    },
+    {
+        "end_time": "2020-07-05T19:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "18",
+        "rid": 137,
+        "start_time": "2020-07-05T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #14",
+        "url": "https://robocontest.uz/contests/18"
+    },
+    {
+        "end_time": "2020-07-08T19:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "19",
+        "rid": 137,
+        "start_time": "2020-07-08T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #15",
+        "url": "https://robocontest.uz/contests/19"
+    },
+    {
+        "end_time": "2020-07-19T19:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "20",
+        "rid": 137,
+        "start_time": "2020-07-19T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #16",
+        "url": "https://robocontest.uz/contests/20"
+    },
+    {
+        "end_time": "2020-07-26T20:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "21",
+        "rid": 137,
+        "start_time": "2020-07-26T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #17",
+        "url": "https://robocontest.uz/contests/21"
+    },
+    {
+        "end_time": "2020-08-02T20:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "22",
+        "rid": 137,
+        "start_time": "2020-08-02T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #18",
+        "url": "https://robocontest.uz/contests/22"
+    },
+    {
+        "end_time": "2020-08-09T20:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "23",
+        "rid": 137,
+        "start_time": "2020-08-09T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #19",
+        "url": "https://robocontest.uz/contests/23"
+    },
+    {
+        "end_time": "2020-08-15T20:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "24",
+        "rid": 137,
+        "start_time": "2020-08-15T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #20",
+        "url": "https://robocontest.uz/contests/24"
+    },
+    {
+        "end_time": "2020-08-26T20:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "25",
+        "rid": 137,
+        "start_time": "2020-08-26T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Robocontest Round #21",
+        "url": "https://robocontest.uz/contests/25"
+    },
+    {
+        "end_time": "2020-08-29T19:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "27",
+        "rid": 137,
+        "start_time": "2020-08-29T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #22",
+        "url": "https://robocontest.uz/contests/27"
+    },
+    {
+        "end_time": "2020-09-05T20:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "28",
+        "rid": 137,
+        "start_time": "2020-09-05T18:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #23",
+        "url": "https://robocontest.uz/contests/28"
+    },
+    {
+        "end_time": "2020-09-12T21:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "29",
+        "rid": 137,
+        "start_time": "2020-09-12T18:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #24",
+        "url": "https://robocontest.uz/contests/29"
+    },
+    {
+        "end_time": "2020-09-20T21:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "30",
+        "rid": 137,
+        "start_time": "2020-09-20T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #25",
+        "url": "https://robocontest.uz/contests/30"
+    },
+    {
+        "end_time": "2020-09-26T20:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "31",
+        "rid": 137,
+        "start_time": "2020-09-26T18:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #26",
+        "url": "https://robocontest.uz/contests/31"
+    },
+    {
+        "end_time": "2020-10-03T20:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "32",
+        "rid": 137,
+        "start_time": "2020-10-03T18:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #27",
+        "url": "https://robocontest.uz/contests/32"
+    },
+    {
+        "end_time": "2020-10-17T20:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "33",
+        "rid": 137,
+        "start_time": "2020-10-17T18:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #28",
+        "url": "https://robocontest.uz/contests/33"
+    },
+    {
+        "end_time": "2020-10-31T20:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "34",
+        "rid": 137,
+        "start_time": "2020-10-31T18:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #29",
+        "url": "https://robocontest.uz/contests/34"
+    },
+    {
+        "end_time": "2020-11-07T21:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "35",
+        "rid": 137,
+        "start_time": "2020-11-07T18:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #30",
+        "url": "https://robocontest.uz/contests/35"
+    },
+    {
+        "end_time": "2020-11-15T17:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "36",
+        "rid": 137,
+        "start_time": "2020-11-15T14:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "TUIT Saralash",
+        "url": "https://robocontest.uz/contests/36"
+    },
+    {
+        "end_time": "2020-11-15T17:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "37",
+        "rid": 137,
+        "start_time": "2020-11-15T14:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #31",
+        "url": "https://robocontest.uz/contests/37"
+    },
+    {
+        "end_time": "2020-11-22T18:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "38",
+        "rid": 137,
+        "start_time": "2020-11-22T14:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "TUIT Saralash  2-bosqich",
+        "url": "https://robocontest.uz/contests/38"
+    },
+    {
+        "end_time": "2020-11-22T18:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "39",
+        "rid": 137,
+        "start_time": "2020-11-22T14:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #32",
+        "url": "https://robocontest.uz/contests/39"
+    },
+    {
+        "end_time": "2020-11-27T20:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "40",
+        "rid": 137,
+        "start_time": "2020-11-27T18:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #33",
+        "url": "https://robocontest.uz/contests/40"
+    },
+    {
+        "end_time": "2020-12-05T21:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "41",
+        "rid": 137,
+        "start_time": "2020-12-05T18:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #34",
+        "url": "https://robocontest.uz/contests/41"
+    },
+    {
+        "end_time": "2021-01-10T21:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "42",
+        "rid": 137,
+        "start_time": "2021-01-10T18:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #35",
+        "url": "https://robocontest.uz/contests/42"
+    },
+    {
+        "end_time": "2021-01-25T20:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "43",
+        "rid": 137,
+        "start_time": "2021-01-25T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "IT Marafon 2021 II-bosqich saralash",
+        "url": "https://robocontest.uz/contests/43"
+    },
+    {
+        "end_time": "2021-01-27T14:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "44",
+        "rid": 137,
+        "start_time": "2021-01-27T11:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "IT Marafon 2021 II-bosqich final",
+        "url": "https://robocontest.uz/contests/44"
+    },
+    {
+        "end_time": "2021-02-28T12:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "47",
+        "rid": 137,
+        "start_time": "2021-02-28T08:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Informatika fani bo'yicha Xalqaro fan olimpiadasiga terma jamoa a'zolarini saralashning 1-bosqichi",
+        "url": "https://robocontest.uz/contests/47"
+    },
+    {
+        "end_time": "2021-03-02T22:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "48",
+        "rid": 137,
+        "start_time": "2021-03-02T19:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #36",
+        "url": "https://robocontest.uz/contests/48"
+    },
+    {
+        "end_time": "2021-03-14T20:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "49",
+        "rid": 137,
+        "start_time": "2021-03-14T18:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #37",
+        "url": "https://robocontest.uz/contests/49"
+    },
+    {
+        "end_time": "2021-04-23T13:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "51",
+        "rid": 137,
+        "start_time": "2021-04-22T14:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "GP200 6-9 sinflar uchun Informatika fanidan na'munaviy olimpiada",
+        "url": "https://robocontest.uz/contests/51"
+    },
+    {
+        "end_time": "2021-04-26T14:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "52",
+        "rid": 137,
+        "start_time": "2021-04-26T11:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "GP200 6-9 sinflar uchun Informatika fanidan olimpiada",
+        "url": "https://robocontest.uz/contests/52"
+    },
+    {
+        "end_time": "2021-05-02T14:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "53",
+        "rid": 137,
+        "start_time": "2021-05-02T11:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "GP200 6-7 sinflar uchun Informatika fanidan olimpiada",
+        "url": "https://robocontest.uz/contests/53"
+    },
+    {
+        "end_time": "2021-05-02T14:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "54",
+        "rid": 137,
+        "start_time": "2021-05-02T11:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "GP200 8-9 sinflar uchun Informatika fanidan olimpiada",
+        "url": "https://robocontest.uz/contests/54"
+    },
+    {
+        "end_time": "2021-05-22T15:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "55",
+        "rid": 137,
+        "start_time": "2021-05-21T06:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Ixtisoslashtirilgan IT-maktablar orasida sport dasturlash bo'yicha musobaqa",
+        "url": "https://robocontest.uz/contests/55"
+    },
+    {
+        "end_time": "2021-05-28T15:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "56",
+        "rid": 137,
+        "start_time": "2021-05-28T07:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Ixtisoslashtirilgan IT-maktablar orasida sport dasturlash bo'yicha musobaqa",
+        "url": "https://robocontest.uz/contests/56"
+    },
+    {
+        "end_time": "2021-06-27T21:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "63",
+        "rid": 137,
+        "start_time": "2021-06-27T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #38",
+        "url": "https://robocontest.uz/contests/63"
+    },
+    {
+        "end_time": "2021-07-04T20:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "65",
+        "rid": 137,
+        "start_time": "2021-07-04T18:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #39",
+        "url": "https://robocontest.uz/contests/65"
+    },
+    {
+        "end_time": "2021-07-09T20:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "66",
+        "rid": 137,
+        "start_time": "2021-07-09T18:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #40",
+        "url": "https://robocontest.uz/contests/66"
+    },
+    {
+        "end_time": "2021-07-18T20:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "67",
+        "rid": 137,
+        "start_time": "2021-07-18T18:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #41",
+        "url": "https://robocontest.uz/contests/67"
+    },
+    {
+        "end_time": "2021-07-24T20:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "68",
+        "rid": 137,
+        "start_time": "2021-07-24T18:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #42",
+        "url": "https://robocontest.uz/contests/68"
+    },
+    {
+        "end_time": "2021-07-31T20:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "69",
+        "rid": 137,
+        "start_time": "2021-07-31T18:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #43",
+        "url": "https://robocontest.uz/contests/69"
+    },
+    {
+        "end_time": "2021-08-19T22:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "71",
+        "rid": 137,
+        "start_time": "2021-08-19T18:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #44",
+        "url": "https://robocontest.uz/contests/71"
+    },
+    {
+        "end_time": "2021-08-29T12:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "73",
+        "rid": 137,
+        "start_time": "2021-08-29T10:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Raqamli avlod, hakaton",
+        "url": "https://robocontest.uz/contests/73"
+    },
+    {
+        "end_time": "2021-08-31T20:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "72",
+        "rid": 137,
+        "start_time": "2021-08-31T18:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #45",
+        "url": "https://robocontest.uz/contests/72"
+    },
+    {
+        "end_time": "2021-10-03T21:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "74",
+        "rid": 137,
+        "start_time": "2021-10-03T18:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #46",
+        "url": "https://robocontest.uz/contests/74"
+    },
+    {
+        "end_time": "2021-11-06T21:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "76",
+        "rid": 137,
+        "start_time": "2021-11-06T18:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #47",
+        "url": "https://robocontest.uz/contests/76"
+    },
+    {
+        "end_time": "2021-12-03T18:10:00+05:00",
+        "host": "robocontest.uz",
+        "key": "77",
+        "rid": 137,
+        "start_time": "2021-12-03T16:10:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "IT Marafon 2022 TATU (Toshkent fillial) fakultetlari orasida saralash",
+        "url": "https://robocontest.uz/contests/77"
+    },
+    {
+        "end_time": "2021-12-08T21:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "80",
+        "rid": 137,
+        "start_time": "2021-12-08T18:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #48",
+        "url": "https://robocontest.uz/contests/80"
+    },
+    {
+        "end_time": "2021-12-26T21:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "84",
+        "rid": 137,
+        "start_time": "2021-12-26T18:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #49",
+        "url": "https://robocontest.uz/contests/84"
+    },
+    {
+        "end_time": "2021-12-30T21:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "85",
+        "rid": 137,
+        "start_time": "2021-12-30T18:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #50",
+        "url": "https://robocontest.uz/contests/85"
+    },
+    {
+        "end_time": "2022-01-04T20:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "86",
+        "rid": 137,
+        "start_time": "2022-01-04T18:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "ITEG IT Academy Round #1",
+        "url": "https://robocontest.uz/contests/86"
+    },
+    {
+        "end_time": "2022-01-08T21:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "87",
+        "rid": 137,
+        "start_time": "2022-01-08T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "SAM DU & TATU SF  ROUND #1",
+        "url": "https://robocontest.uz/contests/87"
+    },
+    {
+        "end_time": "2022-01-12T20:11:00+05:00",
+        "host": "robocontest.uz",
+        "key": "88",
+        "rid": 137,
+        "start_time": "2022-01-12T18:11:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #51",
+        "url": "https://robocontest.uz/contests/88"
+    },
+    {
+        "end_time": "2022-01-15T18:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "89",
+        "rid": 137,
+        "start_time": "2022-01-15T16:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "“TUIT PROGRAMMING CAMP” 1-bosqich, saralash",
+        "url": "https://robocontest.uz/contests/89"
+    },
+    {
+        "end_time": "2022-01-18T19:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "90",
+        "rid": 137,
+        "start_time": "2022-01-18T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "SAM DU & TATU SF  ROUND #2",
+        "url": "https://robocontest.uz/contests/90"
+    },
+    {
+        "end_time": "2022-01-21T20:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "91",
+        "rid": 137,
+        "start_time": "2022-01-21T18:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #52",
+        "url": "https://robocontest.uz/contests/91"
+    },
+    {
+        "end_time": "2022-01-28T21:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "92",
+        "rid": 137,
+        "start_time": "2022-01-28T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "SamDU startap inkubatsiya markazi LifePC JR contest",
+        "url": "https://robocontest.uz/contests/92"
+    },
+    {
+        "end_time": "2022-01-29T19:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "94",
+        "rid": 137,
+        "start_time": "2022-01-29T16:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "“TUIT PROGRAMMING CAMP” 1-bosqich, saralash #2",
+        "url": "https://robocontest.uz/contests/94"
+    },
+    {
+        "end_time": "2022-02-01T19:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "93",
+        "rid": 137,
+        "start_time": "2022-02-01T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "SamDU startap inkubatsiya markazining Dasturchi qizlar klubi musobaqasi",
+        "url": "https://robocontest.uz/contests/93"
+    },
+    {
+        "end_time": "2022-02-08T19:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "95",
+        "rid": 137,
+        "start_time": "2022-02-08T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "SAM DU & TATU SF ROUND #3",
+        "url": "https://robocontest.uz/contests/95"
+    },
+    {
+        "end_time": "2022-02-13T19:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "96",
+        "rid": 137,
+        "start_time": "2022-02-13T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "DASTURCHILAR KLUBI ROUND #2",
+        "url": "https://robocontest.uz/contests/96"
+    },
+    {
+        "end_time": "2022-02-16T19:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "97",
+        "rid": 137,
+        "start_time": "2022-02-16T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #53",
+        "url": "https://robocontest.uz/contests/97"
+    },
+    {
+        "end_time": "2022-02-19T19:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "98",
+        "rid": 137,
+        "start_time": "2022-02-19T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "SAM DU & TATU SF ROUND #4",
+        "url": "https://robocontest.uz/contests/98"
+    },
+    {
+        "end_time": "2022-02-26T19:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "99",
+        "rid": 137,
+        "start_time": "2022-02-26T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "DASTURCHILAR KLUBI ROUND #3",
+        "url": "https://robocontest.uz/contests/99"
+    },
+    {
+        "end_time": "2022-03-03T20:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "104",
+        "rid": 137,
+        "start_time": "2022-03-03T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "ITEG IT Academy Round #2",
+        "url": "https://robocontest.uz/contests/104"
+    },
+    {
+        "end_time": "2022-03-06T21:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "106",
+        "rid": 137,
+        "start_time": "2022-03-06T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #54",
+        "url": "https://robocontest.uz/contests/106"
+    },
+    {
+        "end_time": "2022-03-13T19:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "107",
+        "rid": 137,
+        "start_time": "2022-03-13T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "SAM DU & TATU SF ROUND #5",
+        "url": "https://robocontest.uz/contests/107"
+    },
+    {
+        "end_time": "2022-03-21T19:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "108",
+        "rid": 137,
+        "start_time": "2022-03-21T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "DASTURCHILAR KLUBI ROUND #4",
+        "url": "https://robocontest.uz/contests/108"
+    },
+    {
+        "end_time": "2022-03-28T19:35:00+05:00",
+        "host": "robocontest.uz",
+        "key": "109",
+        "rid": 137,
+        "start_time": "2022-03-28T16:35:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "SAM DU & TATU SF ROUND #6",
+        "url": "https://robocontest.uz/contests/109"
+    },
+    {
+        "end_time": "2022-03-30T20:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "111",
+        "rid": 137,
+        "start_time": "2022-03-30T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Shahrisabz 7-IDUMI, Round #1",
+        "url": "https://robocontest.uz/contests/111"
+    },
+    {
+        "end_time": "2022-04-06T20:45:00+05:00",
+        "host": "robocontest.uz",
+        "key": "112",
+        "rid": 137,
+        "start_time": "2022-04-06T18:45:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "SAM DU DK ROUND #1",
+        "url": "https://robocontest.uz/contests/112"
+    },
+    {
+        "end_time": "2022-04-08T21:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "113",
+        "rid": 137,
+        "start_time": "2022-04-08T18:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Shahrisabz 7-IDUMI, Round #2",
+        "url": "https://robocontest.uz/contests/113"
+    },
+    {
+        "end_time": "2022-04-11T16:05:00+05:00",
+        "host": "robocontest.uz",
+        "key": "116",
+        "rid": 137,
+        "start_time": "2022-04-11T14:05:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Samarqand PM",
+        "url": "https://robocontest.uz/contests/116"
+    },
+    {
+        "end_time": "2022-04-11T20:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "114",
+        "rid": 137,
+        "start_time": "2022-04-11T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Shahrisabz 7-IDUMI  ROUND #3",
+        "url": "https://robocontest.uz/contests/114"
+    },
+    {
+        "end_time": "2022-04-24T20:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "117",
+        "rid": 137,
+        "start_time": "2022-04-24T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Game Over",
+        "url": "https://robocontest.uz/contests/117"
+    },
+    {
+        "end_time": "2022-04-27T16:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "118",
+        "rid": 137,
+        "start_time": "2022-04-27T14:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "11-sinflar o'rtasida OTMga imtiyoz asosida kirish imkonini beruvchi olimpiada I bosqich",
+        "url": "https://robocontest.uz/contests/118"
+    },
+    {
+        "end_time": "2022-04-28T16:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "120",
+        "rid": 137,
+        "start_time": "2022-04-28T14:50:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "11-sinflar o'rtasida OTMga imtiyoz asosida kirish imkonini beruvchi olimpiada II bosqich",
+        "url": "https://robocontest.uz/contests/120"
+    },
+    {
+        "end_time": "2022-05-01T19:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "121",
+        "rid": 137,
+        "start_time": "2022-05-01T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "SAM DU DK ROUND #2",
+        "url": "https://robocontest.uz/contests/121"
+    },
+    {
+        "end_time": "2022-05-06T19:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "119",
+        "rid": 137,
+        "start_time": "2022-05-06T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Shahrisabz 7-IDUMI, Round #4",
+        "url": "https://robocontest.uz/contests/119"
+    },
+    {
+        "end_time": "2022-05-09T20:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "122",
+        "rid": 137,
+        "start_time": "2022-05-09T18:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "SamDU DK & RobotsAndMe Round #1",
+        "url": "https://robocontest.uz/contests/122"
+    },
+    {
+        "end_time": "2022-05-12T21:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "124",
+        "rid": 137,
+        "start_time": "2022-05-12T14:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Xalqaro Informatika Olimpiadasi uchun terma jamoa saralash musobaqasi 1-Kun",
+        "url": "https://robocontest.uz/contests/124"
+    },
+    {
+        "end_time": "2022-05-13T19:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "125",
+        "rid": 137,
+        "start_time": "2022-05-13T14:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Xalqaro Informatika Olimpiadasi uchun terma jamoa saralash musobaqasi 2-Kun",
+        "url": "https://robocontest.uz/contests/125"
+    },
+    {
+        "end_time": "2022-05-15T19:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "123",
+        "rid": 137,
+        "start_time": "2022-05-15T17:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "ITEG IT Academy round #3",
+        "url": "https://robocontest.uz/contests/123"
+    },
+    {
+        "end_time": "2022-05-23T19:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "130",
+        "rid": 137,
+        "start_time": "2022-05-23T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "SAM DU DK ROUND #3",
+        "url": "https://robocontest.uz/contests/130"
+    },
+    {
+        "end_time": "2022-05-24T21:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "129",
+        "rid": 137,
+        "start_time": "2022-05-24T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RUT - Robocontest United Team",
+        "url": "https://robocontest.uz/contests/129"
+    },
+    {
+        "end_time": "2022-05-26T19:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "127",
+        "rid": 137,
+        "start_time": "2022-05-26T16:15:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "IT MARAFON 2022 2-bosqich saralash",
+        "url": "https://robocontest.uz/contests/127"
+    },
+    {
+        "end_time": "2022-05-27T19:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "132",
+        "rid": 137,
+        "start_time": "2022-05-27T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "FerPS & Al-Kharazmi",
+        "url": "https://robocontest.uz/contests/132"
+    },
+    {
+        "end_time": "2022-05-29T13:25:00+05:00",
+        "host": "robocontest.uz",
+        "key": "128",
+        "rid": 137,
+        "start_time": "2022-05-29T10:25:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "IT MARAFON 2022 2-bosqich final",
+        "url": "https://robocontest.uz/contests/128"
+    },
+    {
+        "end_time": "2022-05-29T19:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "133",
+        "rid": 137,
+        "start_time": "2022-05-29T16:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "IT MARAFON 2022 2-bosqich final (takroriy)",
+        "url": "https://robocontest.uz/contests/133"
+    },
+    {
+        "end_time": "2022-06-01T21:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "134",
+        "rid": 137,
+        "start_time": "2022-06-01T16:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #55",
+        "url": "https://robocontest.uz/contests/134"
+    },
+    {
+        "end_time": "2022-06-02T15:10:00+05:00",
+        "host": "robocontest.uz",
+        "key": "137",
+        "rid": 137,
+        "start_time": "2022-06-02T11:10:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Jamoaviy contest [sinov]",
+        "url": "https://robocontest.uz/contests/137"
+    },
+    {
+        "end_time": "2022-06-02T19:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "135",
+        "rid": 137,
+        "start_time": "2022-06-02T16:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "IT MARAFON 2022 3-bosqich saralash",
+        "url": "https://robocontest.uz/contests/135"
+    },
+    {
+        "end_time": "2022-06-05T13:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "138",
+        "rid": 137,
+        "start_time": "2022-06-05T10:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "IT MARAFON 2022 3-bosqich final",
+        "url": "https://robocontest.uz/contests/138"
+    },
+    {
+        "end_time": "2022-06-11T19:20:00+05:00",
+        "host": "robocontest.uz",
+        "key": "136",
+        "rid": 137,
+        "start_time": "2022-06-11T17:10:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #56",
+        "url": "https://robocontest.uz/contests/136"
+    },
+    {
+        "end_time": "2022-06-14T20:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "139",
+        "rid": 137,
+        "start_time": "2022-06-14T16:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "NamDU Round #1",
+        "url": "https://robocontest.uz/contests/139"
+    },
+    {
+        "end_time": "2022-06-26T18:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "142",
+        "rid": 137,
+        "start_time": "2022-06-26T16:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #57",
+        "url": "https://robocontest.uz/contests/142"
+    },
+    {
+        "end_time": "2022-07-05T19:10:00+05:00",
+        "host": "robocontest.uz",
+        "key": "149",
+        "rid": 137,
+        "start_time": "2022-07-05T17:10:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Asaka 11-IDUMI round #1",
+        "url": "https://robocontest.uz/contests/149"
+    },
+    {
+        "end_time": "2022-07-08T20:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "148",
+        "rid": 137,
+        "start_time": "2022-07-08T17:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "ITEG IT Academy round #4",
+        "url": "https://robocontest.uz/contests/148"
+    },
+    {
+        "end_time": "2022-07-13T19:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "152",
+        "rid": 137,
+        "start_time": "2022-07-13T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "FerPS Round #1",
+        "url": "https://robocontest.uz/contests/152"
+    },
+    {
+        "end_time": "2022-07-19T20:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "154",
+        "rid": 137,
+        "start_time": "2022-07-19T17:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "NamDU Round #2",
+        "url": "https://robocontest.uz/contests/154"
+    },
+    {
+        "end_time": "2022-07-22T20:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "159",
+        "rid": 137,
+        "start_time": "2022-07-22T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Sirojiddinov A L & SamDu RT #1",
+        "url": "https://robocontest.uz/contests/159"
+    },
+    {
+        "end_time": "2022-07-26T20:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "158",
+        "rid": 137,
+        "start_time": "2022-07-26T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RUT - Robocontest United Team Round #2",
+        "url": "https://robocontest.uz/contests/158"
+    },
+    {
+        "end_time": "2022-07-30T19:45:00+05:00",
+        "host": "robocontest.uz",
+        "key": "160",
+        "rid": 137,
+        "start_time": "2022-07-30T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Asaka 11-IDUMI round #2",
+        "url": "https://robocontest.uz/contests/160"
+    },
+    {
+        "end_time": "2022-08-06T20:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "155",
+        "rid": 137,
+        "start_time": "2022-08-06T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "ROBOCONTEST ROUND #58",
+        "url": "https://robocontest.uz/contests/155"
+    },
+    {
+        "end_time": "2022-08-09T17:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "171",
+        "rid": 137,
+        "start_time": "2022-08-09T16:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "ROBOCONTEST ROUND #59 by Dasturchilar klubi",
+        "url": "https://robocontest.uz/contests/171"
+    },
+    {
+        "end_time": "2022-08-11T20:10:00+05:00",
+        "host": "robocontest.uz",
+        "key": "172",
+        "rid": 137,
+        "start_time": "2022-08-11T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Robocontest Round #60 by Impuls Team",
+        "url": "https://robocontest.uz/contests/172"
+    },
+    {
+        "end_time": "2022-08-14T19:45:00+05:00",
+        "host": "robocontest.uz",
+        "key": "176",
+        "rid": 137,
+        "start_time": "2022-08-14T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Robocontest Round #61",
+        "url": "https://robocontest.uz/contests/176"
+    },
+    {
+        "end_time": "2022-08-18T20:20:00+05:00",
+        "host": "robocontest.uz",
+        "key": "178",
+        "rid": 137,
+        "start_time": "2022-08-18T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Robocontest Round #62 by RUT members.",
+        "url": "https://robocontest.uz/contests/178"
+    },
+    {
+        "end_time": "2022-08-25T20:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "182",
+        "rid": 137,
+        "start_time": "2022-08-25T17:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Robocontest Round #63",
+        "url": "https://robocontest.uz/contests/182"
+    },
+    {
+        "end_time": "2022-09-03T19:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "187",
+        "rid": 137,
+        "start_time": "2022-09-03T16:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "ROBOCONTEST ROUND #64 (Math contest)",
+        "url": "https://robocontest.uz/contests/187"
+    },
+    {
+        "end_time": "2022-09-11T20:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "191",
+        "rid": 137,
+        "start_time": "2022-09-11T16:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "ROBOCONTEST ROUND #65",
+        "url": "https://robocontest.uz/contests/191"
+    },
+    {
+        "end_time": "2022-09-27T20:59:00+05:00",
+        "host": "robocontest.uz",
+        "key": "199",
+        "rid": 137,
+        "start_time": "2022-09-27T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Robocontest Round #66 by FerPS",
+        "url": "https://robocontest.uz/contests/199"
+    },
+    {
+        "end_time": "2022-10-04T21:01:00+05:00",
+        "host": "robocontest.uz",
+        "key": "201",
+        "rid": 137,
+        "start_time": "2022-10-04T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Robocontest Round #67 (Math contest)",
+        "url": "https://robocontest.uz/contests/201"
+    },
+    {
+        "end_time": "2022-10-10T20:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "205",
+        "rid": 137,
+        "start_time": "2022-10-10T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Robocontest Round #68 & SamSIM",
+        "url": "https://robocontest.uz/contests/205"
+    },
+    {
+        "end_time": "2022-11-06T20:59:00+05:00",
+        "host": "robocontest.uz",
+        "key": "222",
+        "rid": 137,
+        "start_time": "2022-11-06T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "ICPC 2022-2023 GA TAYYORGARLIK",
+        "url": "https://robocontest.uz/contests/222"
+    },
+    {
+        "end_time": "2022-11-07T21:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "230",
+        "rid": 137,
+        "start_time": "2022-11-07T16:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "INFORMATIKA VA AXBOROT TEXNOLOGIYALARI FANIDAN ASOSIY FAN OLIMPIADASINING III (VILOYAT) BOSQICHI 9 va 10 - SINFLAR MASALALARI",
+        "url": "https://robocontest.uz/contests/230"
+    },
+    {
+        "end_time": "2022-11-28T21:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "257",
+        "rid": 137,
+        "start_time": "2022-11-28T18:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "SamTUIT Programming Contest masalalariga asoslangan contest (unrated)",
+        "url": "https://robocontest.uz/contests/257"
+    },
+    {
+        "end_time": "2022-12-14T13:50:00+05:00",
+        "host": "robocontest.uz",
+        "key": "274",
+        "rid": 137,
+        "start_time": "2022-12-14T11:45:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Al-Xorazmiy 1-bosqich",
+        "url": "https://robocontest.uz/contests/274"
+    },
+    {
+        "end_time": "2022-12-29T21:35:00+05:00",
+        "host": "robocontest.uz",
+        "key": "283",
+        "rid": 137,
+        "start_time": "2022-12-29T16:35:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Robocontest Round #69 Yangi yil bilan!",
+        "url": "https://robocontest.uz/contests/283"
+    },
+    {
+        "end_time": "2022-12-30T20:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "286",
+        "rid": 137,
+        "start_time": "2022-12-30T16:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Robocontest Round #70 Yangi yilga tayyorgarlik!",
+        "url": "https://robocontest.uz/contests/286"
+    },
+    {
+        "end_time": "2023-01-01T20:59:00+05:00",
+        "host": "robocontest.uz",
+        "key": "288",
+        "rid": 137,
+        "start_time": "2023-01-01T09:10:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Robocontest Round #71",
+        "url": "https://robocontest.uz/contests/288"
+    },
+    {
+        "end_time": "2023-01-10T21:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "297",
+        "rid": 137,
+        "start_time": "2023-01-10T16:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Robocontest Round #72",
+        "url": "https://robocontest.uz/contests/297"
+    },
+    {
+        "end_time": "2023-01-14T21:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "308",
+        "rid": 137,
+        "start_time": "2023-01-14T16:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Robocontest Round #73 by Impuls Team",
+        "url": "https://robocontest.uz/contests/308"
+    },
+    {
+        "end_time": "2023-01-16T20:45:00+05:00",
+        "host": "robocontest.uz",
+        "key": "295",
+        "rid": 137,
+        "start_time": "2023-01-16T16:35:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Robocontest Round #74",
+        "url": "https://robocontest.uz/contests/295"
+    },
+    {
+        "end_time": "2023-01-21T20:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "312",
+        "rid": 137,
+        "start_time": "2023-01-21T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Robocontest round#75 SamDU DK",
+        "url": "https://robocontest.uz/contests/312"
+    },
+    {
+        "end_time": "2023-01-27T19:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "310",
+        "rid": 137,
+        "start_time": "2023-01-27T16:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "TATU Nurafshon filali talabalari uchun TUIT WINTER CUP",
+        "url": "https://robocontest.uz/contests/310"
+    },
+    {
+        "end_time": "2023-02-12T22:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "347",
+        "rid": 137,
+        "start_time": "2023-02-12T19:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Robocontest Round #76",
+        "url": "https://robocontest.uz/contests/347"
+    },
+    {
+        "end_time": "2023-02-18T21:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "363",
+        "rid": 137,
+        "start_time": "2023-02-18T18:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "IOI 2023 saralash masalalari 1-kun",
+        "url": "https://robocontest.uz/contests/363"
+    },
+    {
+        "end_time": "2023-02-19T17:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "365",
+        "rid": 137,
+        "start_time": "2023-02-19T14:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "IOI 2023 saralash masalalari 2-kun",
+        "url": "https://robocontest.uz/contests/365"
+    },
+    {
+        "end_time": "2023-02-26T22:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "354",
+        "rid": 137,
+        "start_time": "2023-02-26T19:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Algo Experts Round #1",
+        "url": "https://robocontest.uz/contests/354"
+    },
+    {
+        "end_time": "2023-03-01T23:05:00+05:00",
+        "host": "robocontest.uz",
+        "key": "371",
+        "rid": 137,
+        "start_time": "2023-03-01T18:05:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "AsaxiyUz Round #1",
+        "url": "https://robocontest.uz/contests/371"
+    },
+    {
+        "end_time": "2023-03-16T22:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "403",
+        "rid": 137,
+        "start_time": "2023-03-16T19:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "TUIT CUP 2023 1-bosqich",
+        "url": "https://robocontest.uz/contests/403"
+    },
+    {
+        "end_time": "2023-03-17T23:05:00+05:00",
+        "host": "robocontest.uz",
+        "key": "412",
+        "rid": 137,
+        "start_time": "2023-03-17T20:05:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "TUIT CUP 2023 FINAL birinchi bosqich unrated",
+        "url": "https://robocontest.uz/contests/412"
+    },
+    {
+        "end_time": "2023-03-21T23:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "410",
+        "rid": 137,
+        "start_time": "2023-03-21T20:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Algo Experts Round #2",
+        "url": "https://robocontest.uz/contests/410"
+    },
+    {
+        "end_time": "2023-04-04T23:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "435",
+        "rid": 137,
+        "start_time": "2023-04-04T18:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Robocontest Team Round Beta",
+        "url": "https://robocontest.uz/contests/435"
+    },
+    {
+        "end_time": "2023-04-16T22:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "451",
+        "rid": 137,
+        "start_time": "2023-04-16T19:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "APIO 2023 Xalqaro Olimpiadasiga qo`shimcha ishtirokchilarni saralash olimpiadasi",
+        "url": "https://robocontest.uz/contests/451"
+    },
+    {
+        "end_time": "2023-04-24T23:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "424",
+        "rid": 137,
+        "start_time": "2023-04-24T20:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #77 (EID MUBORAK)",
+        "url": "https://robocontest.uz/contests/424"
+    },
+    {
+        "end_time": "2023-04-28T13:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "454",
+        "rid": 137,
+        "start_time": "2023-04-28T11:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "MUHAMMAD AL-XORAZMIY NOMIDAGI TOSHKENT AXBOROT TEXNOLOGIYALARI UNIVERSITETI 11-sinflar o'rtasida OTMga imtiyoz asosida kirish imkonini beruvchi olimpiada",
+        "url": "https://robocontest.uz/contests/454"
+    },
+    {
+        "end_time": "2023-04-28T13:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "461",
+        "rid": 137,
+        "start_time": "2023-04-28T11:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "ISLOM KARIMOV NOMIDAGI TOSHKENT DAVLAT TEXNIKA UNIVERSITETI 11-sinflar o'rtasida OTMga imtiyoz asosida kirish imkonini beruvchi olimpiada",
+        "url": "https://robocontest.uz/contests/461"
+    },
+    {
+        "end_time": "2023-04-28T13:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "462",
+        "rid": 137,
+        "start_time": "2023-04-28T11:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "TOSHKENT DAVLAT TRANSPORT UNIVERSITETI 11-sinflar o'rtasida OTMga imtiyoz asosida kirish imkonini beruvchi olimpiada",
+        "url": "https://robocontest.uz/contests/462"
+    },
+    {
+        "end_time": "2023-04-28T13:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "463",
+        "rid": 137,
+        "start_time": "2023-04-28T11:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "TOSHKENT DAVLAT AGRAR UNIVERSITETI 11-sinflar o'rtasida OTMga imtiyoz asosida kirish imkonini beruvchi olimpiada",
+        "url": "https://robocontest.uz/contests/463"
+    },
+    {
+        "end_time": "2023-04-28T13:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "464",
+        "rid": 137,
+        "start_time": "2023-04-28T11:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "TOSHKENT IRRIGATSIYA VA QISHLOQ XO‘JALIGINI MEXANIZATSIYALASH MUHANDISLARI INSTITUTI MILLIY TADQIQOT UNIVERSITETI 11-sinflar o'rtasida OTMga imtiyoz asosida kirish imkonini beruvchi olimpiada",
+        "url": "https://robocontest.uz/contests/464"
+    },
+    {
+        "end_time": "2023-04-28T13:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "465",
+        "rid": 137,
+        "start_time": "2023-04-28T11:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "TOSHKENT DAVLAT IQTISODIYOT UNIVERSITETI 11-sinflar o'rtasida OTMga imtiyoz asosida kirish imkonini beruvchi olimpiada",
+        "url": "https://robocontest.uz/contests/465"
+    },
+    {
+        "end_time": "2023-04-30T22:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "477",
+        "rid": 137,
+        "start_time": "2023-04-30T09:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "TOSHKENT DAVLAT IQTISODIYOT UNIVERSITETI 11-sinflar o'rtasida OTMga imtiyoz asosida kirish imkonini beruvchi olimpiada",
+        "url": "https://robocontest.uz/contests/477"
+    },
+    {
+        "end_time": "2023-04-30T22:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "478",
+        "rid": 137,
+        "start_time": "2023-04-30T09:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "TOSHKENT IRRIGATSIYA VA QISHLOQ XO‘JALIGINI MEXANIZATSIYALASH MUHANDISLARI INSTITUTI MILLIY TADQIQOT UNIVERSITETI 11-sinflar o'rtasida OTMga imtiyoz asosida kirish imkonini beruvchi olimpiada",
+        "url": "https://robocontest.uz/contests/478"
+    },
+    {
+        "end_time": "2023-04-30T22:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "479",
+        "rid": 137,
+        "start_time": "2023-04-30T09:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "TOSHKENT DAVLAT AGRAR UNIVERSITETI 11-sinflar o'rtasida OTMga imtiyoz asosida kirish imkonini beruvchi olimpiada",
+        "url": "https://robocontest.uz/contests/479"
+    },
+    {
+        "end_time": "2023-04-30T22:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "480",
+        "rid": 137,
+        "start_time": "2023-04-30T09:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "TOSHKENT DAVLAT TRANSPORT UNIVERSITETI 11-sinflar o'rtasida OTMga imtiyoz asosida kirish imkonini beruvchi olimpiada",
+        "url": "https://robocontest.uz/contests/480"
+    },
+    {
+        "end_time": "2023-04-30T22:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "481",
+        "rid": 137,
+        "start_time": "2023-04-30T09:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "ISLOM KARIMOV NOMIDAGI TOSHKENT DAVLAT TEXNIKA UNIVERSITETI 11-sinflar o'rtasida OTMga imtiyoz asosida kirish imkonini beruvchi olimpiada",
+        "url": "https://robocontest.uz/contests/481"
+    },
+    {
+        "end_time": "2023-04-30T22:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "482",
+        "rid": 137,
+        "start_time": "2023-04-30T09:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "MUHAMMAD AL-XORAZMIY NOMIDAGI TOSHKENT AXBOROT TEXNOLOGIYALARI UNIVERSITETI 11-sinflar o'rtasida OTMga imtiyoz asosida kirish imkonini beruvchi olimpiada",
+        "url": "https://robocontest.uz/contests/482"
+    },
+    {
+        "end_time": "2023-05-07T23:59:00+05:00",
+        "host": "robocontest.uz",
+        "key": "514",
+        "rid": 137,
+        "start_time": "2023-05-07T20:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Aloqachilar Contest",
+        "url": "https://robocontest.uz/contests/514"
+    },
+    {
+        "end_time": "2023-05-09T22:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "423",
+        "rid": 137,
+        "start_time": "2023-05-09T19:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "9-may",
+        "url": "https://robocontest.uz/contests/423"
+    },
+    {
+        "end_time": "2023-05-12T23:59:00+05:00",
+        "host": "robocontest.uz",
+        "key": "540",
+        "rid": 137,
+        "start_time": "2023-05-12T18:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Agentlik olimpiadasi masalalari",
+        "url": "https://robocontest.uz/contests/540"
+    },
+    {
+        "end_time": "2023-05-15T00:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "544",
+        "rid": 137,
+        "start_time": "2023-05-14T09:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Agentlik olimpiadasi masalalaridan marafon",
+        "url": "https://robocontest.uz/contests/544"
+    },
+    {
+        "end_time": "2023-05-26T22:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "570",
+        "rid": 137,
+        "start_time": "2023-05-26T20:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Robocontest Round #78 SamDU DK",
+        "url": "https://robocontest.uz/contests/570"
+    },
+    {
+        "end_time": "2023-06-01T22:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "589",
+        "rid": 137,
+        "start_time": "2023-06-01T20:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Robocontest Round #79",
+        "url": "https://robocontest.uz/contests/589"
+    },
+    {
+        "end_time": "2023-06-13T21:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "609",
+        "rid": 137,
+        "start_time": "2023-06-13T19:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Informatika va axborot texnologiyalari fani, Oliy ta'lim muassasalarida respublika fan olimpiadasi saralash (4-bosqich bitiruvchilari uchun)",
+        "url": "https://robocontest.uz/contests/609"
+    },
+    {
+        "end_time": "2023-06-19T22:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "607",
+        "rid": 137,
+        "start_time": "2023-06-19T20:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Robocontest Round #80",
+        "url": "https://robocontest.uz/contests/607"
+    },
+    {
+        "end_time": "2023-06-21T22:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "629",
+        "rid": 137,
+        "start_time": "2023-06-21T20:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "4-bosqich talabalari o'rtasida o'tkazilgan Respublika olimpiadasi masalalaridan contest",
+        "url": "https://robocontest.uz/contests/629"
+    },
+    {
+        "end_time": "2023-06-30T22:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "637",
+        "rid": 137,
+        "start_time": "2023-06-30T20:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Robocontest Round #81 Youth Day",
+        "url": "https://robocontest.uz/contests/637"
+    },
+    {
+        "end_time": "2023-07-09T22:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "661",
+        "rid": 137,
+        "start_time": "2023-07-09T20:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Robocontest Weekly Contest #1",
+        "url": "https://robocontest.uz/contests/661"
+    },
+    {
+        "end_time": "2023-07-15T22:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "669",
+        "rid": 137,
+        "start_time": "2023-07-15T20:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Robocontest Weekly Contest #2",
+        "url": "https://robocontest.uz/contests/669"
+    },
+    {
+        "end_time": "2023-07-18T19:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "660",
+        "rid": 137,
+        "start_time": "2023-07-17T09:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "IT PARK rezidenti Robotics Lab tomonidan tashkil etilgan maxsus kurs uchun grant yutish imkoniyati.",
+        "url": "https://robocontest.uz/contests/660"
+    },
+    {
+        "end_time": "2023-07-24T22:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "675",
+        "rid": 137,
+        "start_time": "2023-07-24T20:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Robocontest Weekly Contest #3",
+        "url": "https://robocontest.uz/contests/675"
+    },
+    {
+        "end_time": "2023-07-30T22:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "701",
+        "rid": 137,
+        "start_time": "2023-07-30T20:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Robocontest Weekly Contest #4",
+        "url": "https://robocontest.uz/contests/701"
+    },
+    {
+        "end_time": "2023-08-01T00:35:00+05:00",
+        "host": "robocontest.uz",
+        "key": "379",
+        "rid": 137,
+        "start_time": "2023-07-31T19:35:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "AsaxiyUz Round #2",
+        "url": "https://robocontest.uz/contests/379"
+    },
+    {
+        "end_time": "2023-08-16T22:30:51+05:00",
+        "host": "robocontest.uz",
+        "key": "744",
+        "rid": 137,
+        "start_time": "2023-08-16T20:00:51+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "UzbCode Jam #3",
+        "url": "https://robocontest.uz/contests/744"
+    },
+    {
+        "end_time": "2023-08-27T21:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "780",
+        "rid": 137,
+        "start_time": "2023-08-27T19:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "INVALID SOLUTION Round #1",
+        "url": "https://robocontest.uz/contests/780"
+    },
+    {
+        "end_time": "2023-09-09T22:30:17+05:00",
+        "host": "robocontest.uz",
+        "key": "769",
+        "rid": 137,
+        "start_time": "2023-09-09T19:30:17+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Robocontest Round #83",
+        "url": "https://robocontest.uz/contests/769"
+    },
+    {
+        "end_time": "2023-09-14T12:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "796",
+        "rid": 137,
+        "start_time": "2023-09-14T09:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "TATU ICPC 1-bosqich(saralash-online)",
+        "url": "https://robocontest.uz/contests/796"
+    },
+    {
+        "end_time": "2023-10-25T22:30:20+05:00",
+        "host": "robocontest.uz",
+        "key": "916",
+        "rid": 137,
+        "start_time": "2023-10-25T19:30:20+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "INFORMATIKA VA AXBOROT TEXNOLOGIYALARI FANIDAN ASOSIY FAN OLIMPIADASINING III (VILOYAT) BOSQICHI  9-SINF MASALALARI(2022)",
+        "url": "https://robocontest.uz/contests/916"
+    },
+    {
+        "end_time": "2023-10-27T23:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "907",
+        "rid": 137,
+        "start_time": "2023-10-27T19:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Robocontest Round #84",
+        "url": "https://robocontest.uz/contests/907"
+    },
+    {
+        "end_time": "2023-10-29T16:00:15+05:00",
+        "host": "robocontest.uz",
+        "key": "921",
+        "rid": 137,
+        "start_time": "2023-10-29T13:00:15+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "INFORMATIKA VA AXBOROT TEXNOLOGIYALARI FANIDAN ASOSIY FAN OLIMPIADASINING III (VILOYAT) BOSQICHI  10-SINF MASALALARI(2022)",
+        "url": "https://robocontest.uz/contests/921"
+    },
+    {
+        "end_time": "2023-11-01T22:30:26+05:00",
+        "host": "robocontest.uz",
+        "key": "936",
+        "rid": 137,
+        "start_time": "2023-11-01T19:30:26+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "INFORMATIKA FANIDAN ASOSIY FAN OLIMPIADASINING III (VILOYAT) BOSQICHI (11-sinf)",
+        "url": "https://robocontest.uz/contests/936"
+    },
+    {
+        "end_time": "2023-11-19T18:00:34+05:00",
+        "host": "robocontest.uz",
+        "key": "950",
+        "rid": 137,
+        "start_time": "2023-11-19T13:00:34+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Informatika va axborot texnologiyalari fani bo‘yicha asosiy fan olimpiadasining IV(respublika) bosqichi. 11-sinf. 19-may 2023-yil",
+        "url": "https://robocontest.uz/contests/950"
+    },
+    {
+        "end_time": "2023-11-23T22:15:58+05:00",
+        "host": "robocontest.uz",
+        "key": "1018",
+        "rid": 137,
+        "start_time": "2023-11-23T19:00:58+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Informatika va AT bo‘yicha asosiy fan olimpiadasining III (viloyat) bosqichi masalalari. 10-sinf. 6-noyabr 2023.",
+        "url": "https://robocontest.uz/contests/1018"
+    },
+    {
+        "end_time": "2023-11-25T22:00:13+05:00",
+        "host": "robocontest.uz",
+        "key": "1019",
+        "rid": 137,
+        "start_time": "2023-11-25T19:00:13+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Informatika va AT bo‘yicha asosiy fan olimpiadasining III (viloyat) bosqichi masalalari. 11-sinf. 8-noyabr 2023.",
+        "url": "https://robocontest.uz/contests/1019"
+    },
+    {
+        "end_time": "2023-12-30T23:35:00+05:00",
+        "host": "robocontest.uz",
+        "key": "970",
+        "rid": 137,
+        "start_time": "2023-12-30T19:35:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Robocontest Round #85. Yangi yil bilan!",
+        "url": "https://robocontest.uz/contests/970"
+    },
+    {
+        "end_time": "2024-01-05T22:00:49+05:00",
+        "host": "robocontest.uz",
+        "key": "1101",
+        "rid": 137,
+        "start_time": "2024-01-05T19:00:49+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Robo-Coding Olimpiadasi masalalari",
+        "url": "https://robocontest.uz/contests/1101"
+    },
+    {
+        "end_time": "2024-01-11T00:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "1088",
+        "rid": 137,
+        "start_time": "2024-01-10T18:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Practice for IOI. Round 1.",
+        "url": "https://robocontest.uz/contests/1088"
+    },
+    {
+        "end_time": "2024-01-20T22:00:15+05:00",
+        "host": "robocontest.uz",
+        "key": "1089",
+        "rid": 137,
+        "start_time": "2024-01-20T19:00:15+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "The Ninja IT contest Respublika olimpiadasining 1-saralash bosqichi",
+        "url": "https://robocontest.uz/contests/1089"
+    },
+    {
+        "end_time": "2024-01-21T22:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "1073",
+        "rid": 137,
+        "start_time": "2024-01-21T19:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Robocontest Round #86",
+        "url": "https://robocontest.uz/contests/1073"
+    },
+    {
+        "end_time": "2024-01-27T22:00:40+05:00",
+        "host": "robocontest.uz",
+        "key": "1188",
+        "rid": 137,
+        "start_time": "2024-01-27T19:00:40+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "The Ninja IT contest Respublika olimpiadasining 2-saralash",
+        "url": "https://robocontest.uz/contests/1188"
+    },
+    {
+        "end_time": "2024-02-02T13:50:00+05:00",
+        "host": "robocontest.uz",
+        "key": "1215",
+        "rid": 137,
+        "start_time": "2024-02-02T10:50:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "The Ninja IT contest Respublika olimpiadasining final bosqichi",
+        "url": "https://robocontest.uz/contests/1215"
+    },
+    {
+        "end_time": "2024-02-02T22:00:02+05:00",
+        "host": "robocontest.uz",
+        "key": "1217",
+        "rid": 137,
+        "start_time": "2024-02-02T19:00:02+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Arxiv. The Ninja IT contest 2024 final bosqichi masalalaridan tuzilgan unrated contest.",
+        "url": "https://robocontest.uz/contests/1217"
+    },
+    {
+        "end_time": "2024-02-07T21:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "1227",
+        "rid": 137,
+        "start_time": "2024-02-07T19:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Invalid Solution Round# 2",
+        "url": "https://robocontest.uz/contests/1227"
+    },
+    {
+        "end_time": "2024-02-17T00:00:28+05:00",
+        "host": "robocontest.uz",
+        "key": "1261",
+        "rid": 137,
+        "start_time": "2024-02-16T19:00:28+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Harbiy vazirlik tomonidan o'tkazilgan olimpiada masalalari",
+        "url": "https://robocontest.uz/contests/1261"
+    },
+    {
+        "end_time": "2024-02-20T22:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "1282",
+        "rid": 137,
+        "start_time": "2024-02-20T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Mirror. IOI 2024 Saralash 2-bosqich 1-kun",
+        "url": "https://robocontest.uz/contests/1282"
+    },
+    {
+        "end_time": "2024-02-21T22:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "1283",
+        "rid": 137,
+        "start_time": "2024-02-21T17:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Mirror. IOI 2024 Saralash 2-bosqich 2-kun",
+        "url": "https://robocontest.uz/contests/1283"
+    },
+    {
+        "end_time": "2024-02-23T23:00:24+05:00",
+        "host": "robocontest.uz",
+        "key": "1133",
+        "rid": 137,
+        "start_time": "2024-02-23T20:00:24+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Working with Files (+ Algorithms)",
+        "url": "https://robocontest.uz/contests/1133"
+    },
+    {
+        "end_time": "2024-02-25T22:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "1319",
+        "rid": 137,
+        "start_time": "2024-02-25T18:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Informtatika fanidan Ixtisoslashtirilgan ta'lim muassasalari agentligi olimpiadasining hududiy bosqichi 5-6-7-sinflar. 2024-yil",
+        "url": "https://robocontest.uz/contests/1319"
+    },
+    {
+        "end_time": "2024-02-26T22:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "1320",
+        "rid": 137,
+        "start_time": "2024-02-26T18:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Informtatika fanidan Ixtisoslashtirilgan ta'lim muassasalari agentligi olimpiadasining hududiy bosqichi 8-9-sinflar. 2024-yil",
+        "url": "https://robocontest.uz/contests/1320"
+    },
+    {
+        "end_time": "2024-02-27T22:00:25+05:00",
+        "host": "robocontest.uz",
+        "key": "1321",
+        "rid": 137,
+        "start_time": "2024-02-27T18:00:25+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Informtatika fanidan Ixtisoslashtirilgan ta'lim muassasalari agentligi olimpiadasining hududiy bosqichi 10-11-sinflar. 2024-yil",
+        "url": "https://robocontest.uz/contests/1321"
+    },
+    {
+        "end_time": "2024-03-01T21:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "1339",
+        "rid": 137,
+        "start_time": "2024-03-01T19:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Prezident, ijod, ixtisoslashtirilgan maktab va maktab internatlari o'qituvchilari o'rtasida Informatika fanidan o‘tkaziladigan fan olimpiadasi(MIRROR)",
+        "url": "https://robocontest.uz/contests/1339"
+    },
+    {
+        "end_time": "2024-03-03T17:40:00+05:00",
+        "host": "robocontest.uz",
+        "key": "1325",
+        "rid": 137,
+        "start_time": "2024-03-03T13:40:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RTRM Cup, Maktab va litsey o‘quvchilari",
+        "url": "https://robocontest.uz/contests/1325"
+    },
+    {
+        "end_time": "2024-03-03T18:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "1326",
+        "rid": 137,
+        "start_time": "2024-03-03T13:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RTRM Cup, Universitet talabalari uchun jamoaviy",
+        "url": "https://robocontest.uz/contests/1326"
+    },
+    {
+        "end_time": "2024-03-06T21:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "1327",
+        "rid": 137,
+        "start_time": "2024-03-06T19:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Robocontest Round #87 div3",
+        "url": "https://robocontest.uz/contests/1327"
+    },
+    {
+        "end_time": "2024-03-06T21:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "1328",
+        "rid": 137,
+        "start_time": "2024-03-06T19:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Robocontest Round #88 div2",
+        "url": "https://robocontest.uz/contests/1328"
+    },
+    {
+        "end_time": "2024-03-11T00:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "1362",
+        "rid": 137,
+        "start_time": "2024-03-10T19:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Mirror. RTRM Cup, Maktab va litsey o‘quvchilari. Offlayn bosqich. Mirror",
+        "url": "https://robocontest.uz/contests/1362"
+    },
+    {
+        "end_time": "2024-03-17T18:20:00+05:00",
+        "host": "robocontest.uz",
+        "key": "1393",
+        "rid": 137,
+        "start_time": "2024-03-17T13:20:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RTRM Cup, Talabalar o’rtasida. Offlayn bosqich",
+        "url": "https://robocontest.uz/contests/1393"
+    },
+    {
+        "end_time": "2024-03-18T22:00:13+05:00",
+        "host": "robocontest.uz",
+        "key": "1395",
+        "rid": 137,
+        "start_time": "2024-03-18T17:00:13+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Mirror. RTRM Cup, Talabalar o’rtasida. Offlayn bosqich",
+        "url": "https://robocontest.uz/contests/1395"
+    },
+    {
+        "end_time": "2024-04-11T21:30:38+05:00",
+        "host": "robocontest.uz",
+        "key": "1375",
+        "rid": 137,
+        "start_time": "2024-04-11T19:00:38+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "TUIT CUP - 2024",
+        "url": "https://robocontest.uz/contests/1375"
+    },
+    {
+        "end_time": "2024-04-16T21:30:38+05:00",
+        "host": "robocontest.uz",
+        "key": "1460",
+        "rid": 137,
+        "start_time": "2024-04-16T19:00:38+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "TUIT CUP - 2024, 2-saralash",
+        "url": "https://robocontest.uz/contests/1460"
+    },
+    {
+        "end_time": "2024-04-20T21:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "1486",
+        "rid": 137,
+        "start_time": "2024-04-20T19:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Ixtisoslashtirilgan ta’lim muassasalari agentligi tizimidagi Prezident, ijod, ixtisoslashtirilgan maktab va maktab-internatlarida faoliyat ko‘rsatayotgan o‘qituvchilar o‘rtasida o‘tkaziladigan \"Lider o‘qituvchilar\" olimpiadasi MIRROR",
+        "url": "https://robocontest.uz/contests/1486"
+    },
+    {
+        "end_time": "2024-04-21T21:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "1455",
+        "rid": 137,
+        "start_time": "2024-04-21T19:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "“TERROBYTE HACKATHON 2024\" (Yosh dasturchi)",
+        "url": "https://robocontest.uz/contests/1455"
+    },
+    {
+        "end_time": "2024-04-21T21:30:46+05:00",
+        "host": "robocontest.uz",
+        "key": "1454",
+        "rid": 137,
+        "start_time": "2024-04-21T19:00:46+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "“TERROBYTE HACKATHON 2024\" (Dasturchi qizlar)",
+        "url": "https://robocontest.uz/contests/1454"
+    },
+    {
+        "end_time": "2024-04-30T19:30:23+05:00",
+        "host": "robocontest.uz",
+        "key": "1516",
+        "rid": 137,
+        "start_time": "2024-04-30T17:00:23+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "“TERROBYTE HACKATHON 2024\" Final stage. MIRROR. unrated",
+        "url": "https://robocontest.uz/contests/1516"
+    },
+    {
+        "end_time": "2024-04-30T21:00:14+05:00",
+        "host": "robocontest.uz",
+        "key": "1465",
+        "rid": 137,
+        "start_time": "2024-04-30T19:00:14+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "11-sinflar o'rtasida OTMga imtiyoz asosida kirish imkonini beruvchi olimpiadaning saralash bosqichi",
+        "url": "https://robocontest.uz/contests/1465"
+    },
+    {
+        "end_time": "2024-05-09T23:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "1235",
+        "rid": 137,
+        "start_time": "2024-05-09T19:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Robocontest Round #89",
+        "url": "https://robocontest.uz/contests/1235"
+    },
+    {
+        "end_time": "2024-05-12T23:00:08+05:00",
+        "host": "robocontest.uz",
+        "key": "1571",
+        "rid": 137,
+        "start_time": "2024-05-12T19:00:08+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Informatika fanidan Ixtisoslashtirilgan ta'lim muassasalari agentligi olimpiadasining 5-6-7-sinf masalalaridan MIRROR",
+        "url": "https://robocontest.uz/contests/1571"
+    },
+    {
+        "end_time": "2024-05-13T23:00:33+05:00",
+        "host": "robocontest.uz",
+        "key": "1581",
+        "rid": 137,
+        "start_time": "2024-05-13T19:00:33+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Informatika fanidan Ixtisoslashtirilgan ta'lim muassasalari agentligi olimpiadasining Respublika bosqichi 8-9-10-11-sinf MIRROR",
+        "url": "https://robocontest.uz/contests/1581"
+    },
+    {
+        "end_time": "2024-06-05T21:00:03+05:00",
+        "host": "robocontest.uz",
+        "key": "1466",
+        "rid": 137,
+        "start_time": "2024-06-05T19:00:03+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "OTM 4-bosqich talabalari o'rtasida OTM magistrga imtiyoz asosida kirish imkonini beruvchi olimpiadaning saralash bosqichi (Faqat TATU talabalari)",
+        "url": "https://robocontest.uz/contests/1466"
+    },
+    {
+        "end_time": "2024-06-10T21:35:00+05:00",
+        "host": "robocontest.uz",
+        "key": "1633",
+        "rid": 137,
+        "start_time": "2024-06-10T19:35:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "“Informatika va axborot texnologiyalari” fani bo‘yicha respublika fan olimpiadasi | MIRROR",
+        "url": "https://robocontest.uz/contests/1633"
+    },
+    {
+        "end_time": "2024-06-20T22:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "1650",
+        "rid": 137,
+        "start_time": "2024-06-20T19:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Xorazm viloyati Hokim Olimpiadasi. Informatika 7-8 sinflar. MIRROR.",
+        "url": "https://robocontest.uz/contests/1650"
+    },
+    {
+        "end_time": "2024-07-04T21:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "1665",
+        "rid": 137,
+        "start_time": "2024-07-04T19:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #90",
+        "url": "https://robocontest.uz/contests/1665"
+    },
+    {
+        "end_time": "2024-07-13T21:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "1675",
+        "rid": 137,
+        "start_time": "2024-07-13T19:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #91",
+        "url": "https://robocontest.uz/contests/1675"
+    },
+    {
+        "end_time": "2024-07-19T21:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "1679",
+        "rid": 137,
+        "start_time": "2024-07-19T19:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #92",
+        "url": "https://robocontest.uz/contests/1679"
+    },
+    {
+        "end_time": "2024-07-25T21:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "1688",
+        "rid": 137,
+        "start_time": "2024-07-25T19:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #93",
+        "url": "https://robocontest.uz/contests/1688"
+    },
+    {
+        "end_time": "2024-07-29T21:35:00+05:00",
+        "host": "robocontest.uz",
+        "key": "1686",
+        "rid": 137,
+        "start_time": "2024-07-29T19:35:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Robocontest Round #94",
+        "url": "https://robocontest.uz/contests/1686"
+    },
+    {
+        "end_time": "2024-08-01T21:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "1700",
+        "rid": 137,
+        "start_time": "2024-08-01T19:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #95",
+        "url": "https://robocontest.uz/contests/1700"
+    },
+    {
+        "end_time": "2024-08-15T23:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "1708",
+        "rid": 137,
+        "start_time": "2024-08-15T19:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #96",
+        "url": "https://robocontest.uz/contests/1708"
+    },
+    {
+        "end_time": "2024-09-02T21:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "1681",
+        "rid": 137,
+        "start_time": "2024-09-02T19:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Robocontest round #97",
+        "url": "https://robocontest.uz/contests/1681"
+    },
+    {
+        "end_time": "2024-09-15T22:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "1699",
+        "rid": 137,
+        "start_time": "2024-09-15T19:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "IT MARAFON 2024 1-bosqich",
+        "url": "https://robocontest.uz/contests/1699"
+    },
+    {
+        "end_time": "2024-09-29T23:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "1782",
+        "rid": 137,
+        "start_time": "2024-09-29T19:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "IT MARAFON 2024 2-bosqich",
+        "url": "https://robocontest.uz/contests/1782"
+    },
+    {
+        "end_time": "2024-10-10T22:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "1850",
+        "rid": 137,
+        "start_time": "2024-10-10T19:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "ICPC TATU va uning hududiy filiallari orasida sinov bosqichi",
+        "url": "https://robocontest.uz/contests/1850"
+    },
+    {
+        "end_time": "2024-10-31T22:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "1963",
+        "rid": 137,
+        "start_time": "2024-10-31T19:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "IT MARAFON 2024 3-sinov bosqichi Reytingli",
+        "url": "https://robocontest.uz/contests/1963"
+    },
+    {
+        "end_time": "2024-11-25T21:15:00+05:00",
+        "host": "robocontest.uz",
+        "key": "2124",
+        "rid": 137,
+        "start_time": "2024-11-25T18:15:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "10-sinf Informatika fan olimpiadasi III bosqichi Mirror",
+        "url": "https://robocontest.uz/contests/2124"
+    },
+    {
+        "end_time": "2024-11-26T17:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "2128",
+        "rid": 137,
+        "start_time": "2024-11-26T14:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "11-sinf Informatika fan olimpiadasi III bosqichi MIRROR",
+        "url": "https://robocontest.uz/contests/2128"
+    },
+    {
+        "end_time": "2024-11-27T19:20:00+05:00",
+        "host": "robocontest.uz",
+        "key": "2138",
+        "rid": 137,
+        "start_time": "2024-11-27T17:20:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "9-sinf Informatika fan olimpiadasi III bosqichi MIRROR",
+        "url": "https://robocontest.uz/contests/2138"
+    },
+    {
+        "end_time": "2024-12-06T18:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "2129",
+        "rid": 137,
+        "start_time": "2024-12-06T15:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "“Eng yaxshi dasturchi” respublika tanlovi hududiy bosqichi",
+        "url": "https://robocontest.uz/contests/2129"
+    },
+    {
+        "end_time": "2024-12-06T21:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "2214",
+        "rid": 137,
+        "start_time": "2024-12-06T18:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "“Eng yaxshi dasturchi” respublika tanlovi hududiy bosqichi MIRROR",
+        "url": "https://robocontest.uz/contests/2214"
+    },
+    {
+        "end_time": "2024-12-11T21:50:00+05:00",
+        "host": "robocontest.uz",
+        "key": "2192",
+        "rid": 137,
+        "start_time": "2024-12-11T19:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Robocontest Round #98",
+        "url": "https://robocontest.uz/contests/2192"
+    },
+    {
+        "end_time": "2024-12-23T22:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "2311",
+        "rid": 137,
+        "start_time": "2024-12-23T19:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "\"Eng yaxshi dasturchi\" Final bosqichi, Mirror",
+        "url": "https://robocontest.uz/contests/2311"
+    },
+    {
+        "end_time": "2024-12-26T23:25:00+05:00",
+        "host": "robocontest.uz",
+        "key": "2307",
+        "rid": 137,
+        "start_time": "2024-12-26T20:25:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Robocontest Round #99",
+        "url": "https://robocontest.uz/contests/2307"
+    },
+    {
+        "end_time": "2024-12-30T22:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "2201",
+        "rid": 137,
+        "start_time": "2024-12-30T19:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Happy New Year | RoboContest Round #100",
+        "url": "https://robocontest.uz/contests/2201"
+    },
+    {
+        "end_time": "2025-01-13T22:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "2336",
+        "rid": 137,
+        "start_time": "2025-01-13T19:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Robocontest Round #101",
+        "url": "https://robocontest.uz/contests/2336"
+    },
+    {
+        "end_time": "2025-02-23T21:45:00+05:00",
+        "host": "robocontest.uz",
+        "key": "2543",
+        "rid": 137,
+        "start_time": "2025-02-23T19:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #102",
+        "url": "https://robocontest.uz/contests/2543"
+    },
+    {
+        "end_time": "2025-03-14T22:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "2619",
+        "rid": 137,
+        "start_time": "2025-03-14T19:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #103 (3.14 !)",
+        "url": "https://robocontest.uz/contests/2619"
+    },
+    {
+        "end_time": "2025-03-31T21:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "2684",
+        "rid": 137,
+        "start_time": "2025-03-31T19:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "STEM olimpiadalari 8-9-sinf MIRROR (15.03.2025)",
+        "url": "https://robocontest.uz/contests/2684"
+    },
+    {
+        "end_time": "2025-04-11T20:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "2707",
+        "rid": 137,
+        "start_time": "2025-04-11T18:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Prezident, ijod va ixtisoslashtirilgan maktablarining 10-sinf o'quvchilari o'rtasida informatika fani bo'yicha olimpiadaning hududiy bosqichi MIRROR",
+        "url": "https://robocontest.uz/contests/2707"
+    },
+    {
+        "end_time": "2025-04-12T20:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "2708",
+        "rid": 137,
+        "start_time": "2025-04-12T18:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Prezident, ijod va ixtisoslashtirilgan maktablarining 11-sinf o'quvchilari o'rtasida informatika fani bo'yicha olimpiadaning hududiy bosqichi MIRROR",
+        "url": "https://robocontest.uz/contests/2708"
+    },
+    {
+        "end_time": "2025-04-17T21:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "2713",
+        "rid": 137,
+        "start_time": "2025-04-17T19:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Xalqaro IT olimpiada by Amity University - Saralash",
+        "url": "https://robocontest.uz/contests/2713"
+    },
+    {
+        "end_time": "2025-04-25T21:45:00+05:00",
+        "host": "robocontest.uz",
+        "key": "2715",
+        "rid": 137,
+        "start_time": "2025-04-25T19:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #104",
+        "url": "https://robocontest.uz/contests/2715"
+    },
+    {
+        "end_time": "2025-05-04T15:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "2742",
+        "rid": 137,
+        "start_time": "2025-05-04T13:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "MUHAMMAD AL-XORAZMIY NOMIDAGI TOSHKENT AXBOROT TEXNOLOGIYALARI UNIVERSITETI 11-sinflar o'rtasida (faqat Toshkent shahridagi maktablar) OTMga imtiyoz asosida kirish imkonini beruvchi olimpiada - saralash",
+        "url": "https://robocontest.uz/contests/2742"
+    },
+    {
+        "end_time": "2025-05-04T15:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "2743",
+        "rid": 137,
+        "start_time": "2025-05-04T13:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "TOSHKENT DAVLAT IQTISODIYOT UNIVERSITETI 11-sinflar o'rtasida (faqat Toshkent shahridagi maktablar) OTMga imtiyoz asosida kirish imkonini beruvchi olimpiada - saralash",
+        "url": "https://robocontest.uz/contests/2743"
+    },
+    {
+        "end_time": "2025-05-06T16:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "2748",
+        "rid": 137,
+        "start_time": "2025-05-06T14:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "TOSHKENT KIMYO-TEXNOLOGIYA INSTITUTI. 11-sinflar o'rtasida (faqat Toshkent shahridagi maktablar) OTMga imtiyoz asosida kirish imkonini beruvchi olimpiada - saralash",
+        "url": "https://robocontest.uz/contests/2748"
+    },
+    {
+        "end_time": "2025-05-23T21:10:00+05:00",
+        "host": "robocontest.uz",
+        "key": "2807",
+        "rid": 137,
+        "start_time": "2025-05-23T19:10:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "TATU 4-bosqich bakalavr talabalari uchun magistraturaga imtiyoz beruvchi tanlovning saralash bosqichi",
+        "url": "https://robocontest.uz/contests/2807"
+    },
+    {
+        "end_time": "2025-05-28T13:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "2809",
+        "rid": 137,
+        "start_time": "2025-05-28T10:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "MSITF-2025 (16-30 yoshlar)",
+        "url": "https://robocontest.uz/contests/2809"
+    },
+    {
+        "end_time": "2025-05-28T13:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "2815",
+        "rid": 137,
+        "start_time": "2025-05-28T10:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "MSITF-2025 (7-15 yosh guruhi)",
+        "url": "https://robocontest.uz/contests/2815"
+    },
+    {
+        "end_time": "2025-07-20T22:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "2866",
+        "rid": 137,
+        "start_time": "2025-07-20T19:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #105",
+        "url": "https://robocontest.uz/contests/2866"
+    },
+    {
+        "end_time": "2025-09-26T22:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "2960",
+        "rid": 137,
+        "start_time": "2025-09-26T18:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Umumiy o'rta ta'lim tashkilotlarida faoliyat ko'rsatayotgan  informatika va axborot texnologiyalari fani o'qituvchilari o'rtasida  Respublika olimpiadasining final bosqichi [MIRROR]",
+        "url": "https://robocontest.uz/contests/2960"
+    },
+    {
+        "end_time": "2025-10-26T22:15:00+05:00",
+        "host": "robocontest.uz",
+        "key": "3003",
+        "rid": 137,
+        "start_time": "2025-10-26T19:15:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "ICPC ga tayyorgarlik. Jamoaviy musobaqa (universitet talabalari uchun)",
+        "url": "https://robocontest.uz/contests/3003"
+    },
+    {
+        "end_time": "2025-11-24T21:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "3209",
+        "rid": 137,
+        "start_time": "2025-11-24T19:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "[Mirror] Informatika va axborot texnologiya fani asosiy olimpiadasining III viloyat (hududiy) bosqichi 2025-yil. 9-sinf.",
+        "url": "https://robocontest.uz/contests/3209"
+    },
+    {
+        "end_time": "2025-11-25T21:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "3225",
+        "rid": 137,
+        "start_time": "2025-11-25T19:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "[Mirror] Informatika va axborot texnologiya fani asosiy olimpiadasining III viloyat (hududiy) bosqichi 2025-yil. 10-sinf.",
+        "url": "https://robocontest.uz/contests/3225"
+    },
+    {
+        "end_time": "2025-11-26T21:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "3229",
+        "rid": 137,
+        "start_time": "2025-11-26T19:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "[Mirror] Informatika va axborot texnologiya fani asosiy olimpiadasining III viloyat (hududiy) bosqichi 2025-yil. 11-sinf.",
+        "url": "https://robocontest.uz/contests/3229"
+    },
+    {
+        "end_time": "2025-12-31T21:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "3238",
+        "rid": 137,
+        "start_time": "2025-12-31T19:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Happy New Year | RoboContest Round #106",
+        "url": "https://robocontest.uz/contests/3238"
+    },
+    {
+        "end_time": "2026-01-15T21:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "3396",
+        "rid": 137,
+        "start_time": "2026-01-15T19:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Vatan himoyachilari kuni | RoboContest Round #107",
+        "url": "https://robocontest.uz/contests/3396"
+    },
+    {
+        "end_time": "2026-01-30T21:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "3397",
+        "rid": 137,
+        "start_time": "2026-01-30T19:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #108",
+        "url": "https://robocontest.uz/contests/3397"
+    },
+    {
+        "end_time": "2026-02-25T23:59:00+05:00",
+        "host": "robocontest.uz",
+        "key": "3628",
+        "rid": 137,
+        "start_time": "2026-02-25T10:10:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Al-Xorazmiy olimpiadasi. Sinov bosqichi",
+        "url": "https://robocontest.uz/contests/3628"
+    },
+    {
+        "end_time": "2026-02-27T13:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "3652",
+        "rid": 137,
+        "start_time": "2026-02-27T10:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "[MIRROR] Al-Xorazmiy nufuzli olimpiadasi saralash viloyat bosqichi. 7-sinf. 26-fevral 2026-yil",
+        "url": "https://robocontest.uz/contests/3652"
+    },
+    {
+        "end_time": "2026-02-27T16:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "3653",
+        "rid": 137,
+        "start_time": "2026-02-27T13:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "[MIRROR] Al-Xorazmiy nufuzli olimpiadasi saralash viloyat bosqichi. 8-sinf. 26-fevral 2026-yil",
+        "url": "https://robocontest.uz/contests/3653"
+    },
+    {
+        "end_time": "2026-02-28T15:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "3665",
+        "rid": 137,
+        "start_time": "2026-02-28T13:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "[MIRROR] Prezident, ijod va ixtisoslashtirilgan maktablari o'quvchilari o'rtasida informatika fani bo'yicha olimpiadaning hududiy bosqichi. 8-sinf. 27-fevral 2026 yil",
+        "url": "https://robocontest.uz/contests/3665"
+    },
+    {
+        "end_time": "2026-02-28T17:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "3666",
+        "rid": 137,
+        "start_time": "2026-02-28T15:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "[MIRROR] Prezident, ijod va ixtisoslashtirilgan maktablari o'quvchilari o'rtasida informatika fani bo'yicha olimpiadaning hududiy bosqichi. 9-sinf. 27-fevral 2026-yil",
+        "url": "https://robocontest.uz/contests/3666"
+    },
+    {
+        "end_time": "2026-02-28T22:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "3492",
+        "rid": 137,
+        "start_time": "2026-02-28T20:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #109",
+        "url": "https://robocontest.uz/contests/3492"
+    },
+    {
+        "end_time": "2026-03-01T15:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "3667",
+        "rid": 137,
+        "start_time": "2026-03-01T13:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "[MIRROR] Prezident, ijod va ixtisoslashtirilgan maktablari o'quvchilari o'rtasida informatika fani bo'yicha olimpiadaning hududiy bosqichi. 10-sinf. 28-fevral 2026-yil",
+        "url": "https://robocontest.uz/contests/3667"
+    },
+    {
+        "end_time": "2026-03-01T17:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "3668",
+        "rid": 137,
+        "start_time": "2026-03-01T15:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "[MIRROR] Prezident, ijod va ixtisoslashtirilgan maktablari o'quvchilari o'rtasida informatika fani bo'yicha olimpiadaning hududiy bosqichi. 11-sinf. 28-fevral 2026-yil",
+        "url": "https://robocontest.uz/contests/3668"
+    },
+    {
+        "end_time": "2026-04-18T22:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "3789",
+        "rid": 137,
+        "start_time": "2026-04-18T20:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Kelajak muhandislari doirasida \"Robo Coders 2026\" Sport dasturlash musobaqasi saralash bosqichi",
+        "url": "https://robocontest.uz/contests/3789"
+    },
+    {
+        "end_time": "2026-04-20T22:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "3826",
+        "rid": 137,
+        "start_time": "2026-04-20T19:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Prezident, ijod va ixtisoslashtirilgan maktablari o'quvchilari o'rtasida informatika fani bo'yicha olimpiadaning agentlik (respublika) bosqichi. 5-8-sinf. [MIRROR]",
+        "url": "https://robocontest.uz/contests/3826"
+    },
+    {
+        "end_time": "2026-04-21T22:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "3827",
+        "rid": 137,
+        "start_time": "2026-04-21T19:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Prezident, ijod va ixtisoslashtirilgan maktablari o'quvchilari o'rtasida informatika fani bo'yicha olimpiadaning agentlik (respublika) bosqichi. 9-11-sinf. [MIRROR]",
+        "url": "https://robocontest.uz/contests/3827"
+    },
+    {
+        "end_time": "2026-04-26T21:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "3825",
+        "rid": 137,
+        "start_time": "2026-04-26T19:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Muhammad al-Xorazmiy nomidagi Toshkent axborot texnologiyalari universitetining Toshkent shahrida joylashgan umumta’lim maktablari bitiruvchi 11-sinf o‘quvchilari o‘rtasida “Informatika va axborot texnologiyalari” fani bo‘yicha ko‘p bosqichli olimpiada saralash bosqichi",
+        "url": "https://robocontest.uz/contests/3825"
+    },
+    {
+        "end_time": "2026-05-09T21:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "3852",
+        "rid": 137,
+        "start_time": "2026-05-09T19:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #110 | 9-may Xotira va qadrlash kuni",
+        "url": "https://robocontest.uz/contests/3852"
+    },
+    {
+        "end_time": "2026-05-15T22:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "3875",
+        "rid": 137,
+        "start_time": "2026-05-15T20:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "4-KHIMIO O'zbekiston terma jamoasiga nomzodlarni saralash bosqichi [MIRROR]",
+        "url": "https://robocontest.uz/contests/3875"
+    },
+    {
+        "end_time": "2026-06-03T22:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "3911",
+        "rid": 137,
+        "start_time": "2026-06-03T19:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #111 | 1-iyun Xalqaro Bolalar bayrami",
+        "url": "https://robocontest.uz/contests/3911"
+    },
+    {
+        "end_time": "2026-07-11T22:35:00+05:00",
+        "host": "robocontest.uz",
+        "key": "3951",
+        "rid": 137,
+        "start_time": "2026-07-11T19:35:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "1 yil kubogi",
+        "url": "https://robocontest.uz/contests/3951"
+    },
+    {
+        "end_time": "2026-09-04T22:30:00+05:00",
+        "host": "robocontest.uz",
+        "key": "3941",
+        "rid": 137,
+        "start_time": "2026-09-04T19:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "RoboContest Round #112",
+        "url": "https://robocontest.uz/contests/3941"
+    },
+    {
+        "end_time": "2026-09-06T22:05:00+05:00",
+        "host": "robocontest.uz",
+        "key": "3997",
+        "rid": 137,
+        "start_time": "2026-09-06T19:35:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "Back to school contest",
+        "url": "https://robocontest.uz/contests/3997"
+    },
+    {
+        "end_time": "2026-10-03T21:00:00+05:00",
+        "host": "robocontest.uz",
+        "key": "3998",
+        "rid": 137,
+        "start_time": "2026-10-03T19:00:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "EAS Code Challenge 2026",
+        "url": "https://robocontest.uz/contests/3998"
+    }
+]
