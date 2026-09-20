@@ -397,6 +397,31 @@ class Statistic(BaseModule):
                 if study.get(key):
                     ret[field] = study[key]
 
+            contest_addition_update = {}
+            for history in props.get("ratingHistory") or []:
+                contest_id = get_item(history, "contest.id")
+                if contest_id is None:
+                    continue
+
+                update = OrderedDict()
+                for field, key in (
+                    ("_rank", "rank"),
+                    ("old_rating", "oldRating"),
+                    ("rating_change", "change"),
+                    ("new_rating", "rating"),
+                ):
+                    if history.get(key) is not None:
+                        update[field] = history[key]
+                if update:
+                    contest_addition_update[str(contest_id)] = update
+
+            if contest_addition_update:
+                ret["_contest_addition_update_params"] = {
+                    "update": contest_addition_update,
+                    "by": "key",
+                    "clear_rating_change": True,
+                }
+
             return ret
 
         with PoolExecutor(max_workers=8) as executor:
@@ -410,7 +435,11 @@ class Statistic(BaseModule):
                         yield {"skip": True}
                     continue
 
-                yield {"info": data}
+                ret = {"info": data}
+                contest_addition_update_params = data.pop("_contest_addition_update_params", None)
+                if contest_addition_update_params:
+                    ret["contest_addition_update_params"] = contest_addition_update_params
+                yield ret
 
     @transaction.atomic()
     @staticmethod
