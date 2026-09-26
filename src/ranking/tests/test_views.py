@@ -273,3 +273,18 @@ class StandingsRowTest(TestCase):
         rendered = render_standings_paging(self.contest, statistic_ids, with_detail=False)
 
         assert rendered == {"page": "163", "total": 3}
+
+    def test_live_render_escapes_parser_markup(self):
+        attack = '<img src=x onerror="alert(1)">'
+        self.contest.info = {"problems": [{"short": "A", "full_score": 100}]}
+        self.contest.save(update_fields=["info"])
+        self.alice.account.url = "javascript:alert(1)"
+        self.alice.account.save(update_fields=["url"])
+        self.alice.addition = {"url": "javascript:alert(1)", "problems": {"A": {"result": attack, "icon": attack}}}
+        self.alice.save(update_fields=["addition"])
+
+        page = render_standings_paging(self.contest, [self.alice.pk], with_detail=False)["page"]
+
+        assert attack not in page
+        assert "&lt;img" in page
+        assert 'href="javascript:' not in page

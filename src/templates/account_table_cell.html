@@ -11,8 +11,8 @@
 {% if with_fixed_width %}<div class="avatar-width-fixed">{% endif %}
 {% if resource.avatar_url %}
   {% call_method account 'avatar_url' resource as avatar_url %}
-  {% if avatar_url|not_empty %}
-    <img class="account-avatar" src="{{ avatar_url }}"/>
+  {% if avatar_url|safe_href|not_empty %}
+    <img class="account-avatar" src="{{ avatar_url|safe_href }}"/>
   {% endif %}
 {% endif %}
 {% if with_fixed_width %}</div>{% endif %}
@@ -35,7 +35,7 @@
 {% endif %}
 
 {% if not without_url %}
-<a href="{% if with_account_default_url %}{% url 'coder:account' account.key resource.host %}{% else %}{{ account.url }}{% endif %}" class="{% coder_color_class resource account.info %}">
+<a href="{% if with_account_default_url %}{% url 'coder:account' account.key resource.host %}{% else %}{{ account.url|safe_href }}{% endif %}" class="{% coder_color_class resource account.info %}">
 {% else %}
 <span class="{% coder_color_class resource account.info %}">
 {% endif %}

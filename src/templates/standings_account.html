@@ -2,7 +2,7 @@
 {% if resource.avatar_url and account %}
   <div class="avatar-width-fixed">
   {% if not team_id %}
-  {% with avatar_url=account.avatar_url %}{% if avatar_url|not_empty %}<img class="account-avatar" src="{{ avatar_url }}"/>{% endif %}{% endwith %}
+  {% with avatar_url=account.avatar_url|safe_href %}{% if avatar_url|not_empty %}<img class="account-avatar" src="{{ avatar_url }}"/>{% endif %}{% endwith %}
   {% endif %}
   </div>
 {% endif %}
@@ -34,7 +34,7 @@
 
 <div class="inline-block">
   <div class="handle-div inline{% if not team_id and not statistic.addition.style %} {% coder_color_class resource statistic.addition account.info %}{% endif %}" style="{% if statistic.addition.style %}{% for k, v in statistic.addition.style.items %}{{k}}: {{v}}; {% endfor %}{% endif %}">
-    {% if account.url and not team_id %}<a href="{{ account.url }}" class="coder">{% elif '_account_url' in statistic.addition %}<a href="{{ statistic.addition|get_item:"_account_url" }}">{% endif %}
+    {% if account.url and not team_id %}<a href="{{ account.url|safe_href }}" class="coder">{% elif '_account_url' in statistic.addition %}<a href="{{ statistic.addition|get_item:"_account_url"|safe_href }}">{% endif %}
 
     {% if account.deleted %}
     {% define "strike" as account_tag %}
@@ -92,7 +92,7 @@
   {% endif %}
 
   {% if statistic.addition.url %}
-    <a href="{{ statistic.addition.url }}" class="external-link invisible" target="_blank" rel="noopener noreferrer"><i class="fas fa-external-link-alt"></i></a>
+    <a href="{{ statistic.addition.url|safe_href }}" class="external-link invisible" target="_blank" rel="noopener noreferrer"><i class="fas fa-external-link-alt"></i></a>
   {% endif %}
 
   {% if has_versus %}

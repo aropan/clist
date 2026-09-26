@@ -151,7 +151,7 @@ data-place="{{ place }}"
   {% endif %}
   <td{% if field in resource.RATING_FIELDS %} class="rating-cell"{% else %} class="addition-{{ field }}-cell"{% endif %}>
     <span{% if field == 'advance' and advance_medal %} class="trophy {{ advance_medal|lower }}-trophy"{% endif %}>
-      {% if field == 'advance' and advance_url %}<a href="{{ advance_url }}">{% endif %}
+      {% if field == 'advance' and advance_url %}<a href="{{ advance_url|safe_href }}">{% endif %}
       {% if field == 'new_global_rating' and statistic.new_global_rating is not None %}
         {{ statistic.new_global_rating }}
       {% elif field == 'global_rating_change' and statistic.global_rating_change is not None %}

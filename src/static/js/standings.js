@@ -1617,7 +1617,8 @@ $(() => {
       clear_on_update_standings();
       set_contest_time_percentage(data.time_percentage);
     }
-    var tr = $(data.rows).filter("tr");
+    // Parse in a separate document and discard scripts before inserting server-rendered rows.
+    var tr = $($.parseHTML(data.rows, null, false)).filter("tr");
     if (!tr.length) {
       return;
     }

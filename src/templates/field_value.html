@@ -60,11 +60,11 @@
         <span>
       {% elif field == 'analysis' and 'dict' in types and value and 'url' in value %}
         <span title="{{ value.url }}" data-toggle="tooltip">
-          <a href="{{ value.url }}" rel="noopener noreferrer">
+          <a href="{{ value.url|safe_href }}" rel="noopener noreferrer">
           {% if not value.icon %}
             <i class="text-muted fas fa-external-link-alt"></i>
           {% elif value.icon|startswith:"http" %}
-            <img src="{{ value.icon }}" height="16px">
+            <img src="{{ value.icon|safe_href }}" height="16px">
           {% else %}
             {% icon_to value.icon html_class="text-muted" %}
           {% endif %}
@@ -72,12 +72,12 @@
         </span>
       {% elif 'badge' in field and value|get_item:'icon' %}
         <span{% if value.title %} title="{{ value.title }}" data-toggle="tooltip"{% endif %}>
-          <img src="{{ value.icon }}" height="16px"/>
+          <img src="{{ value.icon|safe_href }}" height="16px"/>
         </span>
       {% elif value.url %}
-        <a href="{{ value.url }}" rel="noopener noreferrer">{{ template_value }}</a>
+        <a href="{{ value.url|safe_href }}" rel="noopener noreferrer">{{ template_value }}</a>
       {% elif value|startswith:"http" %}
-        <a href="{{ value }}" rel="noopener noreferrer">{{ template_value }}</a>
+        <a href="{{ value|safe_href }}" rel="noopener noreferrer">{{ template_value }}</a>
       {% elif field|is_ip_field and value|get_type == 'list' %}
         {% for v in value %}{% if forloop.counter0 %}<br/>{% endif %}<a class="nowrap field-to-select" href="{% url_transform request field|strip:"_" v with_replace=1 %}">{{ v }}</a>{% endfor %}
       {% elif field == 'first_ac__accounts' and types|to_json == '["list"]' %}

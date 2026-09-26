@@ -28,6 +28,7 @@ from django.template.base import Node
 from django.template.defaultfilters import floatformat, slugify, stringfilter
 from django.urls import NoReverseMatch, reverse
 from django.utils.functional import keep_lazy
+from django.utils.html import conditional_escape
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.safestring import mark_safe
 from django.utils.timezone import now
@@ -700,7 +701,7 @@ def circle_div(size, color, radius, width, fill, div_class=None, title=None):
         div_attrs["title"] = title
         div_attrs["data-html"] = "true"
         div_attrs["data-toggle"] = "tooltip"
-    div_attrs = " ".join(f'{k}="{v}"' for k, v in div_attrs.items())
+    div_attrs = " ".join(f'{k}="{html.escape(str(v))}"' for k, v in div_attrs.items())
     return mark_safe(
         f'''
         <div
@@ -727,9 +728,9 @@ def circle_div(size, color, radius, width, fill, div_class=None, title=None):
 def medal_percentage(medal, percent, info=None, size=16):
     radius = size // 2
     width = size // 10
-    title = f"{medal.title()}"
+    title = html.escape(str(medal).title())
     if info:
-        title += f"<br/>{info}"
+        title += f"<br/>{html.escape(str(info))}"
     title += f"<br/>{percent * 100:.2f}%"
     return circle_div(size, "inherit", radius, width, percent, title=title, div_class=f"{medal}-medal-percentage")
 
@@ -741,12 +742,14 @@ def coder_color_circle(resource, *values, size=16, value_name=None, **kwargs):
     rating, value = resource.get_rating_color(cleaned_values, value_name=value_name)
     if not rating:
         return ""
-    color = rating["hex_rgb"]
+    color = str(rating["hex_rgb"])
+    if not re.fullmatch(r"#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?", color):
+        color = "inherit"
     radius = size // 2
     width = size // 10
     reverse_percent = resource.info.get("ratings", {}).get("reverse_circle_percent")
 
-    title = f"{value}"
+    title = html.escape(str(value))
     has_percent = ("prev" if reverse_percent else "next") in rating
     if has_percent:
         prv = max(rating.get("prev", rating["low"]), 0)
@@ -760,7 +763,7 @@ def coder_color_circle(resource, *values, size=16, value_name=None, **kwargs):
     if not has_percent or rating.get("target"):
         fill = f'<circle cx="{radius}" cy="{radius}" r="{size // 5}" style="fill: {color}"></circle>'
     if "name" in rating:
-        title += f"<br/>{rating['name']}"
+        title += f"<br/>{html.escape(str(rating['name']))}"
     if len(values) == 1 and isinstance(values[0], Account):
         resource_rank = values[0].resource_rank
         if resource_rank:
@@ -1521,7 +1524,7 @@ def icon_to(value: str | bool, default=None, icons=None, html_class=None, inner=
                 params.update(kwargs)
 
         if "position" in kwargs:
-            inner += f' data-placement="{kwargs["position"]}"'
+            inner += f' data-placement="{html.escape(str(kwargs["position"]))}"'
         if "icon" in params:
             value = params["icon"]
         if "class" in params:
@@ -1529,13 +1532,13 @@ def icon_to(value: str | bool, default=None, icons=None, html_class=None, inner=
         if "title" in params:
             default = params["title"]
     elif value == "TEXT":
-        value = title_field(default)
+        value = html.escape(title_field(default))
     else:
-        value = title_field(value)
+        value = html.escape(title_field(value))
     if default:
-        inner += f' title="{default}" data-toggle="tooltip"'
+        inner += f' title="{html.escape(str(default))}" data-toggle="tooltip"'
     if html_class:
-        inner += f' class="{html_class}"'
+        inner += f' class="{html.escape(str(html_class))}"'
     ret = f"<span{inner}>{value}</span>"
     return mark_safe(ret)
 
@@ -1581,6 +1584,20 @@ def chat_data_field_to_select(context, field="chat", nomultiply=False, owned=Tru
 def relative_url(url):
     urlinfo = urlparse(url)
     return urlinfo._replace(scheme="", netloc="").geturl()
+
+
+@register.filter
+def safe_href(value):
+    url = str(value or "").strip()
+    if any(ord(char) < 32 for char in url):
+        return ""
+    try:
+        scheme = urlparse(url).scheme
+    except ValueError:
+        return ""
+    if scheme not in ("", "http", "https"):
+        return ""
+    return url
 
 
 def quote_url(url):
@@ -1660,8 +1677,8 @@ def submission_info_field(stat, field):
         counter[value] += 1
     ips = ""
     for v, k in sorted([(v, k) for k, v in counter.items()], reverse=True):
-        ips += f"<div>{k} ({v})</div>"
-    ret = f'<div title="{ips}" data-html="true" data-toggle="tooltip">'
+        ips += f"<div>{html.escape(str(k))} ({v})</div>"
+    ret = f'<div title="{html.escape(ips)}" data-html="true" data-toggle="tooltip">'
     if len(counter) == 1:
         ret += "IP"
     else:
@@ -2002,7 +2019,7 @@ def profile_url(account, resource=None, inner=None, html_class=None):
         return return_inner
     if account.info.get("_no_profile_url"):
         return return_inner
-    url = format_dict(resource.profile_url, account.dict_with_info())
+    url = safe_href(format_dict(resource.profile_url, account.dict_with_info()))
     if not url:
         return return_inner
     if inner and inner.startswith("icon_to:"):
@@ -2010,8 +2027,10 @@ def profile_url(account, resource=None, inner=None, html_class=None):
         inner = icon_to(inner)
     else:
         inner = inner or icon_to("profile")
-    html_class = f'class="{html_class}"' if html_class else ""
-    return mark_safe(f'<a href="{url}" {html_class} target="_blank" rel="noopener">{inner}</a>')
+    html_class = f'class="{html.escape(str(html_class))}"' if html_class else ""
+    return mark_safe(
+        f'<a href="{html.escape(url)}" {html_class} target="_blank" rel="noopener">{conditional_escape(inner)}</a>'
+    )
 
 
 @register.simple_tag
@@ -2183,25 +2202,25 @@ def standings_statistic_problem_attributes(context):
         if my_stat and context.get("with_solution"):
             class_attr += " drop-zone"
 
-    attrs = f'class="{class_attr}"'
+    attrs = f'class="{html.escape(class_attr)}"'
     if result:
         full_score_instead_result = full_score and is_solved(result) and not contest.is_stage()
         score = f"{full_score}" if full_score_instead_result else f"{result['result']}"
-        attrs += f' data-score="{score}"'
-        attrs += f' data-result="{result["result"]}"'
-        attrs += f' data-penalty="{result["time"]}"'
+        attrs += f' data-score="{html.escape(score)}"'
+        attrs += f' data-result="{html.escape(str(result["result"]))}"'
+        attrs += f' data-penalty="{html.escape(str(result["time"]))}"'
 
         problem_sec = problem["time_in_seconds"]
         result_sec = result["time_in_seconds"]
         penalty_in_seconds = problem_sec if problem_sec and contest.is_stage() else result_sec
-        attrs += f' data-penalty-in-seconds="{penalty_in_seconds}"'
-        attrs += f' data-more-penalty="{result["penalty"]}"'
-        attrs += f' data-class="{result_class}"'
+        attrs += f' data-penalty-in-seconds="{html.escape(str(penalty_in_seconds))}"'
+        attrs += f' data-more-penalty="{html.escape(str(result["penalty"]))}"'
+        attrs += f' data-class="{html.escape(result_class)}"'
 
         if getattr(statistic, "virtual_start", None):
             attrs += ' data-active-switcher="true"'
-    attrs += f' data-problem-key="{key}"'
-    attrs += f' data-problem-full-score="{full_score}"'
+    attrs += f' data-problem-key="{html.escape(str(key))}"'
+    attrs += f' data-problem-full-score="{html.escape(str(full_score))}"'
 
     return mark_safe(attrs)
 
@@ -2212,16 +2231,16 @@ def format_optional(value, prefix="", suffix=""):
 
 def format_score(value, cache=None):
     if cache is None:
-        return scoreformat(value)
+        return conditional_escape(scoreformat(value))
     key = type(value), value
     try:
         return cache[key]
     except KeyError:
-        formatted = scoreformat(value)
+        formatted = conditional_escape(scoreformat(value))
         cache[key] = formatted
         return formatted
     except TypeError:
-        return scoreformat(value)
+        return conditional_escape(scoreformat(value))
 
 
 def format_verdict(verdict, test):
@@ -2240,9 +2259,8 @@ def format_time_display(time, penalty, time_rank, attempt):
 
 def format_status(status, status_tag, is_small):
     escaped_status = html.escape(str(status))
-    if status_tag and is_small:
-        safe_tag = html.escape(str(status_tag))
-        return f"<{safe_tag}>{escaped_status}</{safe_tag}>"
+    if status_tag in {"b", "del", "em", "i", "s", "small", "span", "strong"} and is_small:
+        return f"<{status_tag}>{escaped_status}</{status_tag}>"
     return escaped_status
 
 
@@ -2438,6 +2456,7 @@ def standings_statistic_problem(context, scoreformat_cache=None):
     has_link_target = (
         stat.get("url") or stat.get("solution") or stat.get("external_solution") or stat.get("standings_url")
     )
+    has_safe_link = False
     if can_show_link and has_link_target:
         if stat.get("standings_url"):
             link_url = stat["standings_url"]
@@ -2446,20 +2465,26 @@ def standings_statistic_problem(context, scoreformat_cache=None):
         else:
             link_url = reverse("ranking:solution", args=[statistic.pk, key])
 
-        html_parts.append('<a target="_blank" rel="noopener noreferrer"')
-        if not (contest and contest.is_stage()) and (stat.get("solution") or stat.get("external_solution")):
-            html_parts.append(' class="solution"')
-            html_parts.append(' onClick="viewSolution(this, event)"')
-            html_parts.append(f' data-url="{html.escape(link_url)}"')
-            link_url = reverse("ranking:solution", args=[statistic.pk, key])
-        html_parts.append(f' href="{html.escape(link_url)}"')
-        html_parts.append(">")
+        link_url = safe_href(link_url)
+        if link_url:
+            has_safe_link = True
+            html_parts.append('<a target="_blank" rel="noopener noreferrer"')
+            if not (contest and contest.is_stage()) and (stat.get("solution") or stat.get("external_solution")):
+                html_parts.append(' class="solution"')
+                html_parts.append(' onClick="viewSolution(this, event)"')
+                html_parts.append(f' data-url="{html.escape(link_url)}"')
+                link_url = reverse("ranking:solution", args=[statistic.pk, key])
+            html_parts.append(f' href="{html.escape(link_url)}"')
+            html_parts.append(">")
 
     if stat.get("icon"):
         icon_title = (
             f' title="{html.escape(str(stat["verdict"]))}" data-toggle="tooltip"' if stat.get("verdict") else ""
         )
-        html_parts.append(f"<span{icon_title}>{mark_safe(stat['icon'])}</span>")
+        icon = str(stat["icon"])
+        if not re.fullmatch(r'<i class="fas fa-[a-z0-9-]+"></i>', icon):
+            icon = html.escape(icon)
+        html_parts.append(f"<span{icon_title}>{icon}</span>")
     elif stat.get("binary") is not None:
         icon_title = (
             f' title="{html.escape(str(stat["verdict"]))}" data-toggle="tooltip"' if stat.get("verdict") else ""
@@ -2490,8 +2515,9 @@ def standings_statistic_problem(context, scoreformat_cache=None):
         if ctx_timezone and start_time_dt and (ctx_timeformat := context.get("timeformat")):
             title_attr = f' title="{html.escape(format_time(timezone(start_time_dt, ctx_timezone), ctx_timeformat))}" data-placement="top" data-toggle="tooltip"'
         countdown_val = countdown(start_time_dt) if start_time_dt else ""
+        start_time = html.escape(str(stat["start_time"]))
         html_parts.append(
-            f'<span{title_attr} class="small countdown" data-timestamp="{stat["start_time"]}">{countdown_val}</span>'
+            f'<span{title_attr} class="small countdown" data-timestamp="{start_time}">{countdown_val}</span>'
         )
     elif display_val := (
         stat.get("result_name")
@@ -2499,21 +2525,23 @@ def standings_statistic_problem(context, scoreformat_cache=None):
         else format_score(stat["result"], scoreformat_cache)
     ):
         result_class = (
-            f' class="{stat["result_name_class"]}"' if with_result_name and stat.get("result_name_class") else ""
+            f' class="{html.escape(str(stat["result_name_class"]))}"'
+            if with_result_name and stat.get("result_name_class")
+            else ""
         )
         result_title = (
             f' title="{html.escape(str(stat["verdict"]))}" data-toggle="tooltip"'
             if stat.get("verdict") and "time" in stat
             else ""
         )
-        html_parts.append(f"<span{result_class}{result_title}>{display_val}</span>")
+        html_parts.append(f"<span{result_class}{result_title}>{conditional_escape(display_val)}</span>")
 
     if with_detail and stat.get("result_rank"):
         html_parts.append(
             f'<span class="text-muted small text-weight-normal"> ({html.escape(str(stat["result_rank"]))})</span>'
         )
 
-    if can_show_link and has_link_target:
+    if has_safe_link:
         html_parts.append("</a>")
 
     if has_alternative_result:
