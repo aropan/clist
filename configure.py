@@ -2,16 +2,17 @@
 
 import logging
 import os
-import random
 import re
+import secrets
 import string
 import subprocess
+from getpass import getpass
 
 VARIABLE_RE = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=")
 
 
 def random_string(length=40):
-    return "".join(random.choices(list(string.ascii_letters + string.digits), k=length))
+    return "".join(secrets.choice(string.ascii_letters + string.digits) for _ in range(length))
 
 
 def create_logger():
@@ -24,7 +25,12 @@ def create_logger():
     return logger
 
 
-def enter_value(variable, old_value):
+def enter_value(variable, old_value, secret=False):
+    if secret:
+        while not (value := getpass(f"Enter {variable}: ")):
+            print(f"{variable} cannot be empty")
+        return value
+
     if not old_value:
         logger.info(f"Generated new value for {variable} default")
         old_value = random_string()
@@ -153,6 +159,28 @@ def run_command(cmd):
     subprocess.run(cmd, shell=True, check=True)
 
 
+def create_admin(username, password, email):
+    logger.info("Run command = docker compose run dev ./manage.py createadmin")
+    subprocess.run(
+        [
+            "docker",
+            "compose",
+            "run",
+            "dev",
+            "./manage.py",
+            "createadmin",
+            "--username",
+            username,
+            "--password",
+            password,
+            "--email",
+            email,
+            "--noinput",
+        ],
+        check=True,
+    )
+
+
 def create_volumes():
     with open("docker-compose.yml") as fo:
         content = fo.read()
@@ -181,15 +209,9 @@ def main():
     run_command("docker compose run dev ./manage.py migrate")
 
     username = enter_value("username", os.getlogin())
-    password = enter_value("password", random_string(10))
+    password = enter_value("password", None, secret=True)
     email = enter_value("email", "admin@localhost")
-    run_command(f'''
-        docker compose run dev ./manage.py createadmin
-        --username "{username}"
-        --password "{password}"
-        --email "{email}"
-        --noinput
-    ''')
+    create_admin(username, password, email)
 
 
 logger = create_logger()

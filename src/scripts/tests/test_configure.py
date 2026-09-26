@@ -1,5 +1,6 @@
 import importlib.util
 from pathlib import Path
+from unittest.mock import Mock
 
 import pytest
 
@@ -73,3 +74,42 @@ def test_fill_template_leaves_up_to_date_file_unchanged(tmp_path: Path, monkeypa
     fill_template("settings.env")
 
     assert Path("settings.env").read_text(encoding="utf-8") == "# Local comment\nVALUE=custom"
+
+
+def test_create_admin_passes_password_as_argument_without_logging_it(monkeypatch: pytest.MonkeyPatch) -> None:
+    run = Mock()
+    log = Mock()
+    monkeypatch.setattr(configure.subprocess, "run", run)
+    monkeypatch.setattr(configure.logger, "info", log)
+
+    password = 'secret"; $(echo exposed)'
+    configure.create_admin("admin", password, "admin@example.com")
+
+    run.assert_called_once_with(
+        [
+            "docker",
+            "compose",
+            "run",
+            "dev",
+            "./manage.py",
+            "createadmin",
+            "--username",
+            "admin",
+            "--password",
+            password,
+            "--email",
+            "admin@example.com",
+            "--noinput",
+        ],
+        check=True,
+    )
+    assert password not in str(log.call_args_list)
+
+
+def test_password_prompt_requires_a_nonempty_value(monkeypatch: pytest.MonkeyPatch) -> None:
+    prompt = Mock(side_effect=["", "entered-secret"])
+    monkeypatch.setattr(configure, "getpass", prompt)
+
+    assert configure.enter_value("password", None, secret=True) == "entered-secret"
+    assert prompt.call_count == 2
+    assert prompt.call_args.args[0] == "Enter password: "
