@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 from logging import getLogger
 
@@ -19,7 +18,7 @@ class Command(BaseCommand):
     help = "Anonymize accounts"
 
     def __init__(self, *args, **kw):
-        super(Command, self).__init__(*args, **kw)
+        super().__init__(*args, **kw)
         self.logger = getLogger("ranking.anonymize.account")
 
     def add_arguments(self, parser):
@@ -55,7 +54,7 @@ class Command(BaseCommand):
         for account in accounts:
             new_key = generate_secret_64()
             new_name = args.name
-            self.logger.info(f"Anonymizing account {account.key} ({account.name}) -> {new_key} ({new_name})")
+            self.logger.info("Anonymizing account id=%s", account.pk)
             if args.dryrun:
                 continue
             for statistic in account.statistics_set.select_related("contest"):
