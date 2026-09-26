@@ -294,7 +294,10 @@
     updateProgress(event) {
       const description = event.description || "Progress";
       const finished = Boolean(event.completed || event.finished);
-      let row = this.progress.children('[data-bar-id="' + event.bar_id + '"]');
+      const barId = String(event.bar_id);
+      let row = this.progress
+        .children(".live-log-progress")
+        .filter((_, element) => element.getAttribute("data-bar-id") === barId);
       const scrollState = this.captureProgressScroll(row[0]);
       if (event.total === 0) {
         row.remove();
@@ -302,14 +305,13 @@
         return;
       }
       if (!row.length) {
-        row = $(
-          '<div class="live-log-progress" data-bar-id="' +
-            event.bar_id +
-            '">' +
-            '<div class="live-log-progress-label"></div>' +
-            '<div class="progress"><div class="progress-bar progress-bar-success"></div></div>' +
-            "</div>",
-        );
+        row = $("<div>")
+          .addClass("live-log-progress")
+          .attr("data-bar-id", barId)
+          .append(
+            $("<div>").addClass("live-log-progress-label"),
+            $("<div>").addClass("progress").append($("<div>").addClass("progress-bar progress-bar-success")),
+          );
         this.progress.prepend(row);
       }
       row.attr("data-description", description);
