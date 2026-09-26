@@ -93,7 +93,7 @@ def similar_contests_queryset(contest):
     regex = get_similar_contests_regex()
     title_regex = re.sub(regex, similar_contests_replacing, f"^{contest.title}$")
     contests_filter = Q(title__iregex=title_regex)
-    if not re.match("^[^a-zA-Z]*$", contest.key):
+    if not re.match(r"^[^a-zA-Z]*$", contest.key):
         key_regex = re.sub(regex, similar_contests_replacing, f"^{contest.key}$")
         contests_filter |= Q(key__iregex=key_regex)
     contests_filter &= Q(resource_id=contest.resource_id, stage__isnull=True)
@@ -141,15 +141,14 @@ def create_contest_problem_discussion(contest, problem):
 
 @transaction.atomic
 def update_problems(contest, problems=None, force=False):
-    if problems is not None and not force:
-        if canonize(problems) == canonize(contest.info.get("problems")):
-            return
+    if problems is not None and not force and canonize(problems) == canonize(contest.info.get("problems")):
+        return None
 
     contest.info["problems"] = problems
     contest.save(update_fields=["info"])
 
     if hasattr(contest, "stage"):
-        return
+        return None
 
     contest.n_problems = len(list(contest.problems_list))
     contest.save(update_fields=["n_problems"])
@@ -372,14 +371,14 @@ def update_problems(contest, problems=None, force=False):
 def update_writers(contest, writers=None, force=False) -> bool | None:
     if writers is not None and not force:
         if canonize(writers) == canonize(contest.info.get("writers")):
-            return
+            return None
         contest.info["writers"] = writers
         contest.save()
 
     writers = contest.info.get("writers", [])
     if not writers:
         contest.writers.clear()
-        return
+        return None
 
     resource = contest.resource
     contest_writers = set(contest.writers.values_list("key", flat=True))

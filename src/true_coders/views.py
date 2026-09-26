@@ -280,7 +280,7 @@ def get_profile_context(request, statistics, writers, resources, template):
     if search_resource:
         view_all_statistics_fields = request.user.has_perm("ranking.view_statistics_fields")
         fields_types = search_resource.statistics_fields.get("types", {})
-        options = list(sorted(fields_types.keys()))
+        options = sorted(fields_types.keys())
         options += django_settings.STANDINGS_STATISTIC_FIELDS
         fields = request.GET.getlist("field")
         if view_all_statistics_fields:
@@ -1055,9 +1055,9 @@ def get_ratings_data(
         resource_info["min"] = min([stat["new_rating"] for stat in resource_info["data"]])
         resource_info["max"] = max([stat["new_rating"] for stat in resource_info["data"]])
         resource_info["data"] = [resource_info["data"]]
-        resource_info["fields"] = list(sorted(resource_info.get("fields", [])))
+        resource_info["fields"] = sorted(resource_info.get("fields", []))
 
-    ratings["data"]["dates"] = list(sorted(set(dates)))
+    ratings["data"]["dates"] = sorted(set(dates))
     return ratings
 
 
@@ -1744,14 +1744,13 @@ def change(request):
                     accounts = list(accounts[: n_limit + 1])
                     if len(accounts) == 0:
                         return HttpResponseBadRequest("Account not found")
-                    elif len(accounts) > n_limit:
+                    if len(accounts) > n_limit:
                         return HttpResponseBadRequest("Too many accounts")
-                    else:
-                        response = {
-                            "message": "suggest",
-                            "accounts": [a.dict() for a in accounts],
-                        }
-                        return JsonResponse(response)
+                    response = {
+                        "message": "suggest",
+                        "accounts": [a.dict() for a in accounts],
+                    }
+                    return JsonResponse(response)
             else:
                 account = Account.objects.filter(pk=account_id).first()
                 if account is None:
@@ -1986,7 +1985,7 @@ def change(request):
             if name not in request.POST:
                 return None
             val = request.POST.get(name)
-            if not re.match("^[-+?:.,0-9]{0,50}$", val):
+            if not re.match(r"^[-+?:.,0-9]{0,50}$", val):
                 raise ValueError(f"invalid {name} value = {val}")
             return val
 
@@ -2089,17 +2088,17 @@ def search(request, **kwargs):
         for t in django_settings.THEMES_:
             ret[t] = t.title()
         return JsonResponse(ret)
-    elif query == "timezones":
+    if query == "timezones":
         ret = {}
         for tz in get_timezones():
             ret[tz["name"]] = f"{tz['name']} {tz['repr']}"
         return JsonResponse(ret)
-    elif query == "highlights":
+    if query == "highlights":
         ret = {}
         for h in django_settings.HIGHLIGHT_STYLES:
             ret[h] = h
         return JsonResponse(ret)
-    elif query == "resources":
+    if query == "resources":
         qs = Resource.priority_objects.all()
         if is_yes(request.GET.get("has_statistics_logs")):
             qs = get_objects_for_user(request.user, "view_statistics_logs", qs)
@@ -3082,7 +3081,7 @@ def accounts(request, template="accounts.html"):
                 continue
             fields_types[k] = field_type
             custom_fields.add(k)
-    custom_fields = list(sorted(custom_fields))
+    custom_fields = sorted(custom_fields)
     if chart_field and chart_field not in table_fields:
         if chart_field not in custom_fields:
             chart_field = None

@@ -506,7 +506,7 @@ COUNTRIES_OVERRIDE = {
             "КНДР",
             "Северная Корея",
         ]
-    },  # noqa
+    },
     "KR": {"names": ["South Korea", "Republic of Korea", "Южная Корея", "Korea, Republic of", "Korea"]},
     "MO": {"names": ["Macao", "Macau", "Макао", "Macao, China"]},
     "US": {
@@ -520,7 +520,7 @@ COUNTRIES_OVERRIDE = {
             "Соединенные Штаты Америки",
             "США",
         ]
-    },  # noqa
+    },
     "VN": {"names": ["Vietnam", "Viet Nam", "Вьетнам"]},
     "GB": {
         "names": [
@@ -535,7 +535,7 @@ COUNTRIES_OVERRIDE = {
             "Англия",
             "Шотландия",
         ]
-    },  # noqa
+    },
     "MD": {"names": ["Moldova", "Молдова", "Молдавия", "Republic of Moldova", "Moldova, Republic of"]},
     "KG": {"names": ["Kyrgyzstan", "Кыргызстан", "Киргизия"]},
     "RS": {"names": ["Serbia", "Srbija", "Сербия"]},
@@ -1102,8 +1102,8 @@ ACCOUNT_STATISTIC_FIELDS = [
 UPSOLVING_FILTER_DEFAULT = True
 
 GEOIP_PATH = os.path.join(SHARED_DIR, "GeoLite2-Country.mmdb")
-GEOIP_ACCOUNT_ID = getattr(conf, "GEOIP_ACCOUNT_ID")
-GEOIP_LICENSE_KEY = getattr(conf, "GEOIP_LICENSE_KEY")
+GEOIP_ACCOUNT_ID = conf.GEOIP_ACCOUNT_ID
+GEOIP_LICENSE_KEY = conf.GEOIP_LICENSE_KEY
 
 GEOIP = None
 if os.path.exists(GEOIP_PATH):

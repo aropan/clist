@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import collections
 import json
@@ -40,7 +39,7 @@ class Statistic(BaseModule):
 
         standings_url = urljoin(self.url, self.STANDINGS_URL_FORMAT_.format(key=self.key))
         page = REQ.get(standings_url)
-        matches = re.findall('"[^"]*contest_ranklist[^"]*page=([0-9]+)', page)
+        matches = re.findall(r'"[^"]*contest_ranklist[^"]*page=([0-9]+)', page)
         n_pages = max(map(int, matches)) if matches else 1
 
         def fetch_page(page):
@@ -75,7 +74,7 @@ class Statistic(BaseModule):
 
                         if "ondblclick" in v.column.attrs:
                             ondblclick = v.column.attrs["ondblclick"]
-                            ids = re.findall("[0-9]+", ondblclick)
+                            ids = re.findall(r"[0-9]+", ondblclick)
                             if len(ids) == 2:
                                 url = urljoin(self.url, self.SOLUTION_URL_FORMAT_.format(*ids))
                                 p["url"] = url
@@ -83,7 +82,7 @@ class Statistic(BaseModule):
 
                         *info, p["time"] = info
                         if info and info[0] == "(":
-                            m = re.search("-([0-9]+)", info[1])
+                            m = re.search(r"-([0-9]+)", info[1])
                             if m:
                                 p["penalty_score"] = m.group(1)
                             info = info[3:]
@@ -130,8 +129,8 @@ class Statistic(BaseModule):
             }
             page = REQ.submit_form(data=data, form=form)
 
-        match = re.search('<select[^>]*id="country"[^>]*>.*?</select>', page, re.DOTALL)
-        countries = dict(re.findall('<option[^>]*value="([0-9]+)"[^>]*>([^<]*)</option>', match.group(0)))
+        match = re.search(r'<select[^>]*id="country"[^>]*>.*?</select>', page, re.DOTALL)
+        countries = dict(re.findall(r'<option[^>]*value="([0-9]+)"[^>]*>([^<]*)</option>', match.group(0)))
 
         @RateLimiter(max_calls=5, period=1)
         def fetch_user(user):
@@ -145,11 +144,11 @@ class Statistic(BaseModule):
             for k, v in matches:
                 info[k.lower()] = int(v)
 
-            match = re.search('<img[^>]*src="[^"]*country[^"]*/([0-9]+)[^"/]*"[^>]*alt="country"[^>]*>', page)
+            match = re.search(r'<img[^>]*src="[^"]*country[^"]*/([0-9]+)[^"/]*"[^>]*alt="country"[^>]*>', page)
             if match:
                 info["country"] = countries.get(match.group(1))
 
-            match = re.search('<img[^>]*class="img-circle"[^>]*src="([^"]*getAvatar.php[^"]*)"[^>]*>', page)
+            match = re.search(r'<img[^>]*class="img-circle"[^>]*src="([^"]*getAvatar.php[^"]*)"[^>]*>', page)
             if match:
                 info["avatar_url"] = urljoin(url, match.group(1))
 

@@ -29,7 +29,7 @@ class CachingPaginator(Paginator):
         """
         if getattr(self, "_count", None) is None:
             try:
-                key = "adm:{0}:count".format(hash(self.object_list.query.__str__()))
+                key = f"adm:{hash(self.object_list.query.__str__())}:count"
                 self._count = cache.get(key, -1)
                 if self._count == -1:
                     with transaction.atomic(), connection.cursor() as cursor:
@@ -74,7 +74,7 @@ def admin_register(*args, **kwargs):
                     if field.related_model is ContentType:
                         continue
                     autocomplete_fields.append(field.name)
-                setattr(admin_class, "autocomplete_fields", autocomplete_fields)
+                admin_class.autocomplete_fields = autocomplete_fields
 
         return admin_class
 

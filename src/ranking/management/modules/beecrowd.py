@@ -46,7 +46,7 @@ class Statistic(BaseModule):
                     r["place"] = v.value
                 elif f == "contestant":
                     a = v.column.node.xpath(".//a")[0]
-                    r["member"] = re.search("profile/(?P<key>[0-9]+)", a.attrib["href"]).group("key")
+                    r["member"] = re.search(r"profile/(?P<key>[0-9]+)", a.attrib["href"]).group("key")
                     r["name"] = a.text
                     em = v.column.node.xpath(".//em")
                     if em:
@@ -55,7 +55,7 @@ class Statistic(BaseModule):
                             val = val.strip()
                             if val == "-":
                                 continue
-                            if re.match("^[-0-9A-Z ]+$", val):
+                            if re.match(r"^[-0-9A-Z ]+$", val):
                                 r["university"] = val
                             else:
                                 r["country"] = val

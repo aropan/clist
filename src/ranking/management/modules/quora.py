@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import collections
 import csv
@@ -43,7 +42,7 @@ class Statistic(BaseModule):
         if filepath:
             season = self.get_season()
 
-            with open(filepath, "r") as fo:
+            with open(filepath) as fo:
                 data = csv.DictReader(fo)
                 last, place = None, None
                 for idx, r in enumerate(data, start=1):

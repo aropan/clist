@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import bisect
 import json
@@ -133,7 +132,7 @@ class Statistic(BaseModule):
                     countries = countries.replace("name:", '"name":')
                     countries = json.loads(countries)
                     countries = [c["id"] for c in countries]
-            if leagues_names is None and (m := re.search('"league":(?P<array>{"league":.*?})[^"]', page)):
+            if leagues_names is None and (m := re.search(r'"league":(?P<array>{"league":.*?})[^"]', page)):
                 leagues = json.loads(m.group("array"))
                 leagues.pop("league", None)
                 leagues_names = [league.split()[0].title() for league in leagues.values()]
@@ -304,7 +303,7 @@ class Statistic(BaseModule):
                     if rec["name"] == handle and rec["type"] == "USER":
                         break
                 else:
-                    return
+                    return None
 
                 public_handle = rec["id"]
                 data = REQ.get(
@@ -332,7 +331,7 @@ class Statistic(BaseModule):
                             if "account" in member:
                                 names_mapping[member["name"]] = member["account"]
 
-                names = [name for name in result.keys() if name not in names_mapping]
+                names = [name for name in result if name not in names_mapping]
 
                 names_mapping.update({
                     name: key
@@ -508,7 +507,7 @@ class Statistic(BaseModule):
             "info_fields": ["leagues", "_challenge", "_has_versus", "_opening"],
             "leagues": leagues,
             "_challenge": challenge,
-            "_opening": list(sorted(opening.values(), key=lambda o: o["date"])),
+            "_opening": sorted(opening.values(), key=lambda o: o["date"]),
             "options": {
                 "fixed_fields": fixed_fields,
             },

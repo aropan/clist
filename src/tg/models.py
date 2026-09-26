@@ -82,7 +82,7 @@ class History(BaseModel):
         if count > self.LIMIT_BY_CHAT:
             for o in q[0 : count - self.LIMIT_BY_CHAT]:
                 o.delete()
-        super(History, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
     class Meta:
         verbose_name_plural = "History"

@@ -5,7 +5,7 @@ import json
 import re
 from collections import OrderedDict, defaultdict
 from copy import deepcopy
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from urllib.parse import urljoin
 
 import arrow
@@ -196,7 +196,7 @@ class Statistic(BaseModule):
                             problems[k] = problem
                             continue
 
-                        time = datetime.fromtimestamp(res["get_star_ts"], tz=timezone.utc)
+                        time = datetime.fromtimestamp(res["get_star_ts"], tz=UTC)
                         virtual_start = virtual_starts.get(contest.start_time)
                         if is_virtual and virtual_start and virtual_start < time:
                             time -= virtual_start - day_start_time
@@ -295,7 +295,7 @@ class Statistic(BaseModule):
                 result[k].setdefault("_division_addition", {}).update({division: v})
             divisions_order.append(division)
 
-        problems = list(sorted(problems_infos.values(), key=lambda p: p["_order"]))
+        problems = sorted(problems_infos.values(), key=lambda p: p["_order"])
         for p in problems:
             p.pop("_order")
 

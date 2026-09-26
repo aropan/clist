@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 from collections import defaultdict
 from logging import getLogger
@@ -82,7 +81,7 @@ class Command(BaseCommand):
     help = "Set resources accounts"
 
     def __init__(self, *args, **kw):
-        super(Command, self).__init__(*args, **kw)
+        super().__init__(*args, **kw)
         self.logger = getLogger("clist.set_resources_accounts")
 
     def add_arguments(self, parser):

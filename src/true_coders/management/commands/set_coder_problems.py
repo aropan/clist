@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from logging import getLogger
 
 from django.core.management.base import BaseCommand
@@ -150,7 +150,7 @@ class Command(BaseCommand):
                         if "time_in_seconds" in result:
                             submission_time = contest.start_time + timedelta(seconds=result["time_in_seconds"])
                         elif "submission_time" in result:
-                            submission_time = datetime.fromtimestamp(result["submission_time"], tz=timezone.utc)
+                            submission_time = datetime.fromtimestamp(result["submission_time"], tz=UTC)
                         else:
                             submission_time = contest.end_time
 

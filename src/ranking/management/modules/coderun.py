@@ -12,11 +12,11 @@ from utils.timetools import now, parse_datetime
 class Statistic(BaseModule):
     STANDING_URL_FORMAT_ = "/seasons/{season}/tracks/{track}/rating"
     API_STANDINGS_URL_FORMAT_ = (
-        "/api/seasons/{season}/tracks/{track}/leaderboard?currentPage={{page}}&pageSize={{page_size}}"  # noqa
+        "/api/seasons/{season}/tracks/{track}/leaderboard?currentPage={{page}}&pageSize={{page_size}}"
     )
     PROBLEM_URL_FORMAT_ = "/seasons/{season}/tracks/{track}/problem/{problem}"
     API_PROBLEM_URL_FORMAT_ = (
-        "/api/seasons/{season}/tracks/{track}/problem/search?currentPage={{page}}&pageSize={{page_size}}"  # noqa
+        "/api/seasons/{season}/tracks/{track}/problem/search?currentPage={{page}}&pageSize={{page_size}}"
     )
 
     def get_standings(self, users=None, statistics=None, **kwargs):

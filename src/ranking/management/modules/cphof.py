@@ -50,7 +50,7 @@ class Statistic(BaseModule):
             info["member"] = handle
             info["profile_url"]["account"] = handle.split(":", 1)[1]
         else:
-            match = re.search('<link[^>]*rel="canonical"[^>]*href="[^"]*/profile/(?P<handle>[^"]*)"', page)
+            match = re.search(r'<link[^>]*rel="canonical"[^>]*href="[^"]*/profile/(?P<handle>[^"]*)"', page)
             handle = html.unescape(match.group("handle"))
             info["member"] = handle
 
@@ -67,7 +67,7 @@ class Statistic(BaseModule):
         accounts = set()
         match = re.search(r"<div[^>]*>\s*External\s*Profiles.*?</div>[^<]*</div>", page, re.DOTALL)
         if match:
-            matches = re.finditer('<a[^>]*href="(?P<url>[^"]*)"[^>]*>', match.group(0))
+            matches = re.finditer(r'<a[^>]*href="(?P<url>[^"]*)"[^>]*>', match.group(0))
             for match in matches:
                 url = match.group("url")
                 url = url.strip("/")
@@ -76,7 +76,7 @@ class Statistic(BaseModule):
                 accounts.add((host, key))
         info["accounts"] = [{"host": host, "key": key} for host, key in accounts]
 
-        match = re.search("<h3[^>]*>(?P<name>[^>]*)<", page)
+        match = re.search(r"<h3[^>]*>(?P<name>[^>]*)<", page)
         info["name"] = html.unescape(match.group("name").strip())
         return info
 
@@ -114,7 +114,7 @@ class Statistic(BaseModule):
             host_mapping = self.resource.info["_host_mapping"]
             host = infos.get("official_page")
             if host:
-                match = re.search(".*https?://(?P<host>[^/]*)/", host)
+                match = re.search(r".*https?://(?P<host>[^/]*)/", host)
                 host = match.group("host")
             else:
                 host = infos.get("series")

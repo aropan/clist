@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import logging
 
@@ -15,7 +14,7 @@ class Command(BaseCommand):
     help = "Detect major contests"
 
     def __init__(self, *args, **kwargs):
-        super(Command, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.logger = logging.getLogger("ranking.detect.major_contests")
 
     def add_arguments(self, parser):

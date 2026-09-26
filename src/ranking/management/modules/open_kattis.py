@@ -257,7 +257,7 @@ class Statistic(BaseModule):
 
         def parse_users(page):
             nonlocal users
-            entries = re.finditer('<a[^>]*href="/users/(?P<member>[^"/]*)"[^>]*>(?P<name>[^<]*)</a>', page)
+            entries = re.finditer(r'<a[^>]*href="/users/(?P<member>[^"/]*)"[^>]*>(?P<name>[^<]*)</a>', page)
             for entry in entries:
                 member = entry.group("member")
                 if member in users:
@@ -319,7 +319,7 @@ class Statistic(BaseModule):
                     (
                         "name",
                         r'<div[^>]*class="image_info-text-horizontal"[^>]*>\s*<a[^>]*>\s*<span[^>]*>\s*<em>(?P<val>[^<]*)',
-                    ),  # noqa
+                    ),
                     ("country", r'<div[^>]*country-flag[^>]*>\s*<a[^>]*href="[^"]*/countries/(?P<val>[^"/]*)/?"'),
                     ("subdivision", r'<div[^>]*subdivision-flag[^>]*>\s*<[^>]*>\s*<a[^>]*title="(?P<val>[^"]*)"'),
                     ("university", r'<span[^>]*university-logo[^>]*>\s*<a[^>]*title="(?P<val>[^"]*)"'),

@@ -215,7 +215,7 @@ class Subscription(TaskNotification):
     def with_coder_list_names(self) -> bool:
         return self.with_custom_names and self.coder_list and self.coder_list.custom_names
 
-    def account_name(self, account) -> Optional[str]:
+    def account_name(self, account) -> str | None:
         if self.with_coder_list_names():
             groups = self.coder_list.groups.filter(name__isnull=False)
             groups = groups.filter(Q(values__account=account) | Q(values__coder__account=account))
@@ -270,7 +270,7 @@ class Task(BaseModel):
         Task.objects.create(notification=notification, **kwargs)
 
     def __str__(self):
-        return "Task#{0.id} {0.notification}".format(self)
+        return f"Task#{self.id} {self.notification}"
 
 
 @receiver(pre_delete, sender=Task)

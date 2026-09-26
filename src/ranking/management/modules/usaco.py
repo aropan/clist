@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import os
 import re
@@ -30,11 +29,11 @@ def req_get(*args, **kwargs):
 
 class Statistic(BaseModule):
     def __init__(self, **kwargs):
-        super(Statistic, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         if not self.standings_url:
             url = "http://usaco.org/index.php?page=contests"
             page = req_get(url)
-            matches = re.finditer('<a[^>]*href="(?P<url>[^"]*)"[^>]*>(?P<name>[^<]*[0-9]{4}[^<]*Results)</a>', page)
+            matches = re.finditer(r'<a[^>]*href="(?P<url>[^"]*)"[^>]*>(?P<name>[^<]*[0-9]{4}[^<]*Results)</a>', page)
             month = self.start_time.strftime("%B").lower()
             prev_standings_url = None
             for match in matches:
@@ -46,10 +45,10 @@ class Statistic(BaseModule):
                     prev_standings_url = urllib.parse.urljoin(url, match.group("url"))
             else:
                 if prev_standings_url is not None:
-                    pred_standings_url = re.sub("[0-9]+", lambda m: str(int(m.group(0)) + 1), prev_standings_url)
+                    pred_standings_url = re.sub(r"[0-9]+", lambda m: str(int(m.group(0)) + 1), prev_standings_url)
                     url = "http://usaco.org/"
                     page = req_get(url)
-                    matches = re.finditer('<a[^>]*href="?(?P<url>[^"]*)"?[^>]*>here</a>', page)
+                    matches = re.finditer(r'<a[^>]*href="?(?P<url>[^"]*)"?[^>]*>here</a>', page)
                     for match in matches:
                         standings_url = urllib.parse.urljoin(url, match.group("url"))
                         if standings_url == pred_standings_url:
@@ -90,7 +89,7 @@ class Statistic(BaseModule):
                         break
                 prev_index = index
                 url = urllib.parse.urljoin(self.standings_url, match.group("url"))
-                cpid = re.search("cpid=([0-9]+)", url).group(1)
+                cpid = re.search(r"cpid=([0-9]+)", url).group(1)
                 problems.append({
                     "short": str(len(problems) + 1),
                     "code": cpid,
@@ -104,7 +103,7 @@ class Statistic(BaseModule):
             return problemsets if full else problems
 
         page = req_get(self.standings_url)
-        divisions = list(re.finditer('<a[^>]*href="(?P<url>[^"]*data[^"]*_(?P<name>[^_]*)_results.html)"[^>]*>', page))
+        divisions = list(re.finditer(r'<a[^>]*href="(?P<url>[^"]*data[^"]*_(?P<name>[^_]*)_results.html)"[^>]*>', page))
         descriptions = []
         prev_span = None
         for division_match in divisions:
@@ -116,7 +115,7 @@ class Statistic(BaseModule):
             descriptions.append(page[prev_span[1] :])
 
         problems_info = OrderedDict()
-        match = re.search("""<a[^>]*href=["'](?P<href>[^"']*page=[a-z0-9]+problems)["'][^>]*>""", page)
+        match = re.search(r"""<a[^>]*href=["'](?P<href>[^"']*page=[a-z0-9]+problems)["'][^>]*>""", page)
         if match:
             url = urllib.parse.urljoin(self.standings_url, match.group("href"))
             page = req_get(url)

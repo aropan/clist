@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import json
 from collections import OrderedDict
@@ -45,7 +44,7 @@ class Statistic(BaseModule):
             def fetch_results(page):
                 nonlocal stop
                 if stop:
-                    return
+                    return None
                 url = self.API_RANKING_URL_FORMAT_.format(id=self.key, sid=session["id"], page=page)
                 page = REQ.get(url)
                 data = json.loads(page)

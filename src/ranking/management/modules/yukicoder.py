@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import collections
 import html
 import re
@@ -18,7 +16,7 @@ class Statistic(BaseModule):
             if e.code == 404:
                 return {"action": "delete"}
             raise e
-        match = re.search('<table[^>]*class="table"[^>]*>.*?</table>', page, re.MULTILINE | re.DOTALL)
+        match = re.search(r'<table[^>]*class="table"[^>]*>.*?</table>', page, re.MULTILINE | re.DOTALL)
         if not match:
             raise ExceptionParseStandings("Not found problems table")
         header_mapping = {
@@ -67,7 +65,7 @@ class Statistic(BaseModule):
 
         standings_url = self.standings_url or self.url.rstrip("/") + "/table"
         page = REQ.get(standings_url)
-        match = re.search('<table[^>]*class="table"[^>]*>.*?</table>', page, re.MULTILINE | re.DOTALL)
+        match = re.search(r'<table[^>]*class="table"[^>]*>.*?</table>', page, re.MULTILINE | re.DOTALL)
         if not match:
             raise ExceptionParseStandings("Not found standings table")
 
@@ -82,11 +80,11 @@ class Statistic(BaseModule):
                 a.pop(0)
 
             n_days = None
-            m = re.match("^([0-9]+)d$", a[0])
+            m = re.match(r"^([0-9]+)d$", a[0])
             if m:
                 n_days = m.group(1)
                 a.pop(0)
-            m = re.match("^[0-9:]+$", a[0])
+            m = re.match(r"^[0-9:]+$", a[0])
             if m:
                 if n_days:
                     ret["time"] = n_days + ":" + a[0] + ":00" * (2 - a[0].count(":"))
@@ -110,10 +108,10 @@ class Statistic(BaseModule):
             r = {"solved": {"solving": 0}}
             problems = r.setdefault("problems", {})
             for k, v in row.items():
-                match = re.search("^(?P<short>[A-Z]) No.(?P<code>[0-9]+)", k)
+                match = re.search(r"^(?P<short>[A-Z]) No.(?P<code>[0-9]+)", k)
                 if match:
                     a = v.value.split()
-                    if len(a) < 1 or a[1] == "-" or len(a) == 2 and a[0] == "0":
+                    if len(a) < 1 or a[1] == "-" or (len(a) == 2 and a[0] == "0"):
                         continue
                     p = problems.setdefault(match.group("short"), {})
                     stat = get_stat(v.value)
@@ -200,12 +198,12 @@ class Statistic(BaseModule):
     @staticmethod
     def get_source_code(contest, problem):
         page = REQ.get(problem["url"])
-        match = re.search('<pre[^>]*id="code"[^>]*>(?P<solution>.*?)</pre>', page, re.DOTALL)
+        match = re.search(r'<pre[^>]*id="code"[^>]*>(?P<solution>.*?)</pre>', page, re.DOTALL)
         if not match:
             return {}
         solution = html.unescape(match.group("solution"))
         ret = {"solution": solution}
-        match = re.search('data-ace-mode="(?P<lang>[^"]*)"', page)
+        match = re.search(r'data-ace-mode="(?P<lang>[^"]*)"', page)
         if match:
             ret["language"] = match.group("lang")
         return ret

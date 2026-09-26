@@ -18,7 +18,7 @@ import time
 from collections import deque
 from collections.abc import Callable, Iterator, Sequence
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -227,15 +227,15 @@ def human_size(value: int) -> str:
 
 
 def utc_now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def timestamp_name(value: datetime) -> str:
-    return value.astimezone(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    return value.astimezone(UTC).strftime("%Y%m%dT%H%M%SZ")
 
 
 def isoformat_utc(value: datetime) -> str:
-    return value.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+    return value.astimezone(UTC).isoformat().replace("+00:00", "Z")
 
 
 def parse_manifest_datetime(value: Any) -> datetime | None:
@@ -247,7 +247,7 @@ def parse_manifest_datetime(value: Any) -> datetime | None:
         return None
     if parsed.tzinfo is None:
         return None
-    return parsed.astimezone(timezone.utc)
+    return parsed.astimezone(UTC)
 
 
 def archive_component(index: int, database_name: str) -> str:
@@ -356,7 +356,7 @@ def expired_backup_directories(
     if retention_days <= 0 or not root.is_dir():
         return []
     root_resolved = root.resolve()
-    cutoff = now.astimezone(timezone.utc) - timedelta(days=retention_days)
+    cutoff = now.astimezone(UTC) - timedelta(days=retention_days)
     expired = []
     for candidate in root.iterdir():
         if not BACKUP_NAME_RE.fullmatch(candidate.name) or candidate.is_symlink() or not candidate.is_dir():

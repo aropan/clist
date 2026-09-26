@@ -21,7 +21,7 @@ def run(host=None, *args):
         if hasattr(rule, "selectorText"):
             selector = rule.selectorText.lstrip(".")
             color = rule.style.getPropertyValue("color")
-            if color and re.match("#[0-9A-Za-z]", color):
+            if color and re.match(r"#[0-9A-Za-z]", color):
                 color = color.lstrip("#")
                 if len(color) == 3:
                     color = "".join(a + b for a, b in zip(color, color))

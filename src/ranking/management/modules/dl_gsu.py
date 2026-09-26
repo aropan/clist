@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import re
 from collections import OrderedDict, defaultdict
 from datetime import timedelta
@@ -91,7 +89,7 @@ class Statistic(BaseModule):
                 "Соревнования",
                 "Тренировочные олимпиады",
             ):
-                match = re.search('<a[^>]*href="(?P<url>[^"]*)"[^>]*>{}<'.format(name), page)
+                match = re.search(f'<a[^>]*href="(?P<url>[^"]*)"[^>]*>{name}<', page)
                 url = match.group("url")
                 page = req.get(url)
 
@@ -116,11 +114,11 @@ class Statistic(BaseModule):
             dates = [d.strftime("%Y-%m-%d") for d in dates]
             re_dates = "|".join(dates)
 
-            regex = r"""
-            <tr[^>]*>[^<]*<td[^>]*>\s*(?P<date>{})\s*</td>[^<]*
+            regex = rf"""
+            <tr[^>]*>[^<]*<td[^>]*>\s*(?P<date>{re_dates})\s*</td>[^<]*
             <td[^>]*>(?P<title>[^<]*)</td>[^<]*
             <td[^>]*>[^<]*<a[^>]*href\s*=["\s]*(?P<url>[^">]*)["\s]*[^>]*>
-            """.format(re_dates)
+            """
             matches = re.findall(regex, page, re.MULTILINE | re.VERBOSE)
 
             datas = [
@@ -147,7 +145,7 @@ class Statistic(BaseModule):
                 for d in datas:
                     url = d["url"]
                     page = req.get(url)
-                    path = re.findall('<td[^>]*nowrap><a[^>]*href="(?P<href>[^"]*)"', page)
+                    path = re.findall(r'<td[^>]*nowrap><a[^>]*href="(?P<href>[^"]*)"', page)
                     if len(path) < 2:
                         ok = False
                     parent = urljoin(url, path[-2])
@@ -173,7 +171,7 @@ class Statistic(BaseModule):
 
         def get_table(page):
             html_table = re.search(
-                '<table[^>]*bgcolor="silver"[^>]*>.*?</table>', page, re.MULTILINE | re.DOTALL
+                r'<table[^>]*bgcolor="silver"[^>]*>.*?</table>', page, re.MULTILINE | re.DOTALL
             ).group(0)
             table = parsed_table.ParsedTable(html_table, as_list=True, ignore_wrong_header_number=False)
             return table
@@ -190,13 +188,13 @@ class Statistic(BaseModule):
             nonlocal is_olymp
             hrefs = v.column.node.xpath("a/@href")
             if not hrefs:
-                return
+                return None
             href = hrefs[0]
             match = re.search(r"olympResultsShowUserRank.*u\.id=(?P<uid>[0-9]+)", href)
             if match:
                 is_olymp = True
                 return "olymp" + match.group("uid")
-            match = re.search("[0-9]+$", href)
+            match = re.search(r"[0-9]+$", href)
             return match.group(0)
 
         def is_problem(v):
@@ -208,7 +206,7 @@ class Statistic(BaseModule):
             if isinstance(r, parsed_table.ParsedTableRow):
                 values = []
                 for v in r.columns:
-                    if re.search("^[0-9]*$", v.value.strip()) or (not values or values[-1].value != v.value):
+                    if re.search(r"^[0-9]*$", v.value.strip()) or (not values or values[-1].value != v.value):
                         values.append(v)
                 if not len(values) <= len(table.header.columns) <= len(values) + 2:
                     raise ExceptionParseStandings("Not match columns count")

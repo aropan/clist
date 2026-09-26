@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from urllib.parse import urlparse
 
 from ranking.management.modules import opencup, yandex

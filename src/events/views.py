@@ -535,7 +535,7 @@ def frame(request, slug, status):
     countries = Counter(t.country for t in teams)
 
     base_css_path = staticfiles_storage.path("css/base.css")
-    with open(base_css_path, "r") as fo:
+    with open(base_css_path) as fo:
         base_css = fo.read()
 
     return render(

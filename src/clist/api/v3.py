@@ -9,7 +9,7 @@ from clist.api.v2 import (
     AccountResource,
     BaseModelResource,
     ContestResource,
-    ResourceResource,  # noqa: F401
+    ResourceResource,  # ruff: ignore[unused-import]
     StatisticsResource,
     use_in_detail_only,
     use_in_me_only,

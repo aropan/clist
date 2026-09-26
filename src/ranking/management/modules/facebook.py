@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import json
 import re
@@ -22,7 +21,7 @@ from utils.ratelimiter import RateLimiter
 
 
 def is_rate_limit_error(e):
-    return bool(re.search("rate limit exceeded", str(e), re.I))
+    return bool(re.search(r"rate limit exceeded", str(e), re.I))
 
 
 class Statistic(BaseModule):
@@ -124,17 +123,17 @@ class Statistic(BaseModule):
         def get_advance():
             advancement = contest_data.get("advancement_requirement_text")
             if advancement:
-                match = re.search("top (?P<place>[0-9]+) contestants", advancement)
+                match = re.search(r"top (?P<place>[0-9]+) contestants", advancement)
                 if match:
                     threshold = int(match.group("place"))
                     return {"filter": [{"threshold": threshold, "operator": "le", "field": "place"}]}
 
-                match = re.search("least (?P<score>[0-9]+) points", advancement)
+                match = re.search(r"least (?P<score>[0-9]+) points", advancement)
                 if match:
                     threshold = int(match.group("score"))
                     return {"filter": [{"threshold": threshold, "operator": "ge", "field": "solving"}]}
 
-                match = re.search("least (?P<count>[0-9]+) problem", advancement)
+                match = re.search(r"least (?P<count>[0-9]+) problem", advancement)
                 if match:
                     threshold = int(match.group("count"))
                     return {"filter": [{"threshold": threshold, "operator": "ge", "field": "_n_solved"}]}
@@ -192,7 +191,7 @@ class Statistic(BaseModule):
                 def fetch_page(page):
                     nonlocal stop
                     if stop:
-                        return
+                        return None
                     with rate_limiter:
                         try:
                             data = query(
@@ -211,11 +210,11 @@ class Statistic(BaseModule):
                             )
                         except ProxyLimitReached:
                             stop = True
-                            return
+                            return None
                         except Exception as e:
                             if not is_rate_limit_error(e):
                                 LOG.error(f"Fetch page exception = {e}")
-                            return
+                            return None
                         return data
 
                 n_page = (total + limit - 1) // limit

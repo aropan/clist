@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import re
 
 from ranking.management.modules.common import REQ, BaseModule
@@ -10,7 +8,7 @@ class Statistic(BaseModule):
     STANDING_URL_FORMAT_ = "http://informatics.mccme.ru/mod/monitor/view.php?id={0.key}"
 
     def __init__(self, **kwargs):
-        super(Statistic, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
         if not self.key:
             raise InitModuleException()
@@ -32,14 +30,14 @@ class Statistic(BaseModule):
             tds = re.finditer(r"<td[^>]*>.*(?:<\/td>)?", match)
             for i, td in enumerate(tds):
                 td = td.group()
-                value = re.sub("<[^>]*>", "", td).strip()
+                value = re.sub(r"<[^>]*>", "", td).strip()
 
-                attrs = dict(m.group("key", "value") for m in re.finditer('(?P<key>[a-z]*)="?(?P<value>[^">]*)', td))
+                attrs = dict(m.group("key", "value") for m in re.finditer(r'(?P<key>[a-z]*)="?(?P<value>[^">]*)', td))
                 if "href" in attrs:
-                    match = re.search("/user/.*id=(?P<id>[0-9]+)", attrs["href"])
+                    match = re.search(r"/user/.*id=(?P<id>[0-9]+)", attrs["href"])
                     if match:
                         member = match.group("id")
-                if not header and prob_pos is None and attrs.get("rowspan", None) != "2":
+                if not header and prob_pos is None and attrs.get("rowspan") != "2":
                     prob_pos = i
                 # value = attrs.get('title', value)
                 # if 'href' in attrs:
@@ -71,7 +69,7 @@ class Statistic(BaseModule):
 
             problems = r.setdefault("problems", {})
             for k, v in row.items():
-                if v and re.match("^[A-Z]$", k):
+                if v and re.match(r"^[A-Z]$", k):
                     problems[k] = {"result": v}
             if not problems:
                 r.pop("problems")

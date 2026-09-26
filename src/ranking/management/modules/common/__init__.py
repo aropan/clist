@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import csv
 import json
@@ -17,7 +16,7 @@ from lazy_load import lz
 
 from clist.templatetags.extras import as_number, get_item
 from ranking.management.modules.excepts import ExceptionParseStandings
-from utils import parsed_table  # noqa
+from utils import parsed_table
 from utils.requester import requester
 
 
@@ -85,7 +84,7 @@ def apply_result_additions(
             result[member] = deepcopy(addition)
 
 
-class BaseModule(object, metaclass=ABCMeta):
+class BaseModule(metaclass=ABCMeta):
     def __init__(self, **kwargs):
         contest = kwargs.pop("contest", None)
         if contest is not None:
@@ -308,7 +307,7 @@ class BaseModule(object, metaclass=ABCMeta):
         if csv_data:
             csv_matching = csv_data["matching"]
             addition_data = {}
-            with open(csv_data["file"], "r") as fo:
+            with open(csv_data["file"]) as fo:
                 rows = csv.reader(fo, **csv_data.get("fmtparams", {}))
                 headers = next(rows)
                 for row in rows:

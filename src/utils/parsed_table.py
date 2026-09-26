@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import re
 from collections import OrderedDict
@@ -15,7 +14,7 @@ def merge_dicts(a, b):
     return ret
 
 
-class ParsedTableValue(object):
+class ParsedTableValue:
     def __init__(self, row, col, header):
         self.attrs = merge_dicts(header.attrs, merge_dicts(row.attrs, col.attrs))
         self.value = col.value
@@ -27,7 +26,7 @@ class ParsedTableValue(object):
         return self.value
 
 
-class FakeTableCol(object):
+class FakeTableCol:
     def __init__(self, value, attrs):
         self.value = value
         self.attrs = attrs
@@ -39,7 +38,7 @@ class FakeTableCol(object):
         return [self.value]
 
 
-class ParsedTableCol(object):
+class ParsedTableCol:
     def __init__(self, col):
         self.attrs = dict(list(col.items()))
         texts = col.itertext()
@@ -64,7 +63,7 @@ class ParsedTableCol(object):
         return f"attrs = {self.attrs}, value = {self.value}"
 
 
-class ParsedTableRow(object):
+class ParsedTableRow:
     def __init__(self, row=None):
         if row is not None:
             self.attrs = dict(list(row.items()))
@@ -78,7 +77,7 @@ class ParsedTableRow(object):
         return f"attrs = {self.attrs}, columns = {list(map(str, self.columns))}"
 
 
-class ParsedTable(object):
+class ParsedTable:
     def __init__(
         self,
         html,

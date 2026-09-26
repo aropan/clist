@@ -7,7 +7,7 @@ app_name = "coder"
 urlpatterns = [
     re_path(r"^settings/$", views.settings, name="settings"),
     re_path(
-        r"^settings/(?P<tab>preferences|social|accounts|filters|notifications|lists|calendars|subscriptions|chats)/$",  # noqa
+        r"^settings/(?P<tab>preferences|social|accounts|filters|notifications|lists|calendars|subscriptions|chats)/$",
         views.settings,
         name="settings",
     ),

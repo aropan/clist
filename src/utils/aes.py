@@ -32,7 +32,7 @@ def strip_PKCS7_padding(s):
     return s[:-numpads]
 
 
-class AES(object):
+class AES:
     # valid key sizes
     keySize = dict(SIZE_128=16, SIZE_192=24, SIZE_256=32)
 
@@ -1113,7 +1113,7 @@ class AES(object):
         return output
 
 
-class AESModeOfOperation(object):
+class AESModeOfOperation:
     aes = AES()
 
     # structure of supported modes of operation

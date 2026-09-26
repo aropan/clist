@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import html
 import json
@@ -33,7 +32,7 @@ class Statistic(BaseModule):
     STANDINGS_URL_FORMAT_ = "https://www.codechef.com/rankings/{key}"
     API_CONTEST_URL_FORMAT_ = "https://www.codechef.com/api/contests/{key}"
     API_RANKING_URL_FORMAT_ = (
-        "https://www.codechef.com/api/rankings/{key}?sortBy=rank&order=asc&page={page}&itemsPerPage={per_page}"  # noqa
+        "https://www.codechef.com/api/rankings/{key}?sortBy=rank&order=asc&page={page}&itemsPerPage={per_page}"
     )
     API_PROBLEM_URL_FORMAT_ = "https://www.codechef.com/api/contests/{key}/problems/{code}"
     PROFILE_URL_FORMAT_ = "https://www.codechef.com/users/{user}"
@@ -45,7 +44,7 @@ class Statistic(BaseModule):
     E429_DELAY = timedelta(seconds=60)
 
     def __init__(self, **kwargs):
-        super(Statistic, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self._username = conf.CODECHEF_USERNAME
         self._password = conf.CODECHEF_PASSWORD
 
@@ -66,7 +65,7 @@ class Statistic(BaseModule):
     @staticmethod
     def _get(*args, proxy=None, **kwargs):
         now = datetime.now()
-        if proxy is None or Statistic.E429_TIMEOUT is None or Statistic.E429_TIMEOUT < now:
+        if proxy is None or Statistic.E429_TIMEOUT is None or now > Statistic.E429_TIMEOUT:
             additional_attempts = kwargs.setdefault("additional_attempts", {})
             additional_attempts[429] = {"count": 1}
             kwargs.setdefault("additional_delay", 2)
@@ -78,8 +77,7 @@ class Statistic(BaseModule):
             Statistic.E429_TIMEOUT = now + Statistic.E429_DELAY
             kwargs.pop("additional_attempts")
             return Statistic._get(*args, proxy=proxy, **kwargs)
-        else:
-            return proxy.get(*args, **kwargs)
+        return proxy.get(*args, **kwargs)
 
     def get_standings(self, users=None, statistics=None, **kwargs):
         # REQ.get('https://www.codechef.com/')
@@ -212,7 +210,7 @@ class Statistic(BaseModule):
                         handle = d.pop("user_handle")
                         d.pop("html_handle", None)
                         problems_status = d.pop("problems_status")
-                        if handle is None or d["score"] < 1e-9 and not problems_status:
+                        if handle is None or (d["score"] < 1e-9 and not problems_status):
                             LOG.warning(f"Skip handle = {handle}: {d}")
                             continue
                         row = result.setdefault(handle, OrderedDict())
@@ -305,7 +303,7 @@ class Statistic(BaseModule):
         has_penalty = False
         for row in result.values():
             p = row.get("penalty")
-            has_penalty = has_penalty or p and str(p) != "0"
+            has_penalty = has_penalty or (p and str(p) != "0")
         if not has_penalty:
             for row in result.values():
                 row.pop("penalty", None)
@@ -339,7 +337,7 @@ class Statistic(BaseModule):
             url = format_url.format(user=quote(user))
             response = Statistic._get(url, return_url=True, return_code=True, ignore_codes={404}, proxy=req)
             page, page_url, page_code = response
-            if page_code == 404 or "/users/" not in page_url and "/teams/" not in page_url:
+            if page_code == 404 or ("/users/" not in page_url and "/teams/" not in page_url):
                 page = None
             break
         return page, page_url
@@ -410,7 +408,7 @@ class Statistic(BaseModule):
                         value = match.group("value").strip()
                         info[key] = value
 
-                    match = re.search('<h1[^>]*class="h2-style"[^>]*>(?P<name>[^<]*)</h1>', page)
+                    match = re.search(r'<h1[^>]*class="h2-style"[^>]*>(?P<name>[^<]*)</h1>', page)
                     if match:
                         info["name"] = html.unescape(match.group("name").strip())
 
@@ -443,9 +441,8 @@ class Statistic(BaseModule):
                         if code:
                             if (
                                 re.search(r"\bdiv[ision]*[-_\s]+[ABCD1234]\b", name, re.I)
-                                and re.search("[ABCDE]$", code)
-                                or re.search(r"^[A-Z]+[0-9]+[ABCD]$", code)
-                            ):
+                                and re.search(r"[ABCDE]$", code)
+                            ) or re.search(r"^[A-Z]+[0-9]+[ABCD]$", code):
                                 code = code[:-1]
 
                             u = update.setdefault(code, OrderedDict())
@@ -541,9 +538,9 @@ class Statistic(BaseModule):
                     contest = None
             else:
                 f = Q(key=key)
-                if re.search("[A-Z]$", key):
+                if re.search(r"[A-Z]$", key):
                     f |= Q(key=key[:-1])
-                    entry = re.search("([0-9]+)$", key[:-1])
+                    entry = re.search(r"([0-9]+)$", key[:-1])
                     if entry and len(entry.group(1)) == 2:
                         f |= Q(key=key[:-3] + "20" + key[-3:-1])
                 contest = resource.contest_set.filter(f).first()
@@ -596,7 +593,7 @@ class Statistic(BaseModule):
             if contest is None:
                 LOG.warning(f"Missing contest for key = {contest_key} and short = {short}")
                 ret.setdefault("missing_contests", set()).add((contest_key, short))
-                return
+                return None
 
             if contest in stats_cache:
                 stat = stats_cache[contest]
@@ -608,13 +605,13 @@ class Statistic(BaseModule):
             problem = problems.setdefault(short, {})
             if is_solved(problem) or problem.get("result") == problem_info.get("result"):
                 ret["n_already"] += 1
-                return
+                return None
 
             account.last_submission = max_with_none(account.last_submission, submission_time)
             upsolving = problem.setdefault("upsolving", {})
             if not is_improved_solution(problem_info, upsolving):
                 ret["n_not_improved"] += 1
-                return
+                return None
 
             problem["upsolving"] = problem_info
             submissions_info["count"] += 1
@@ -702,7 +699,7 @@ class Statistic(BaseModule):
             if not tags:
                 continue
             if isinstance(tags, str):
-                tags = re.findall("<a[^>]*>([^<]+)</a>", tags)
+                tags = re.findall(r"<a[^>]*>([^<]+)</a>", tags)
             problem_tags.extend(tags)
         if problem_tags:
             problem_info["tags"] = [slug(t) for t in problem_tags]

@@ -58,7 +58,7 @@ def names_iou(name1, name2):
 
 class Statistic(BaseModule):
     def __init__(self, **kwargs):
-        super(Statistic, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     @staticmethod
     def _json_load(data):
@@ -66,8 +66,8 @@ class Statistic(BaseModule):
             ret = json.loads(data)
         except json.decoder.JSONDecodeError:
             data = re.sub(r"\\'", "'''", data)
-            data = re.sub("'", '"', data)
-            data = re.sub('"""', "'", data)
+            data = data.replace("'", '"')
+            data = data.replace('"""', "'")
             ret = json.loads(data)
         return ret
 
@@ -79,11 +79,11 @@ class Statistic(BaseModule):
             try:
                 json_data = json.loads(page)
             except json.decoder.JSONDecodeError:
-                return
+                return None
             regex = """<table[^>]*id=["']medalTable[^>]*>.*?</table>"""
             match = re.search(regex, json_data["content"], re.DOTALL)
             if not match:
-                return
+                return None
 
             html_table = match.group(0)
             table = parsed_table.ParsedTable(html_table)
@@ -98,7 +98,7 @@ class Statistic(BaseModule):
                         medals[attr] = medals.get(attr, 0) + 1
                         break
             if not medals:
-                return
+                return None
             return medals
 
         ret = get_from_icpc(year)
@@ -114,7 +114,7 @@ class Statistic(BaseModule):
         entities = defaultdict(dict)
         members = {}
         event_feed = os.path.join(os.path.dirname(__file__), event_feed)
-        with open(event_feed, "r") as fo:
+        with open(event_feed) as fo:
             for line in fo:
                 entity = json.loads(line.strip())
                 entity_type = entity["type"]
@@ -342,7 +342,7 @@ class Statistic(BaseModule):
                         team = teams.setdefault(tid, {})
                         problems = team.setdefault("problems", {})
                         result = problems.get(p_name, {}).get("result", "")
-                        if not result.startswith("?") and status.startswith("?") or result.startswith("+"):
+                        if (not result.startswith("?") and status.startswith("?")) or result.startswith("+"):
                             continue
                         if status == "+":
                             attempt = int(attempt) - 1
@@ -444,7 +444,7 @@ class Statistic(BaseModule):
 
                 problems_info = OrderedDict(sorted(problems_info.items()))
             else:
-                regex = """(?:<table[^>]*(?:id=["']standings|class=["'][^"']*scoreboard)[^>]*>|"content":"[^"]*<table[^>]*>|<table[^>]*class="[^"]*(?:table[^"]*){3}"[^>]*>).*?</table>|<TABLE>.*?</TABLE>"""  # noqa
+                regex = """(?:<table[^>]*(?:id=["']standings|class=["'][^"']*scoreboard)[^>]*>|"content":"[^"]*<table[^>]*>|<table[^>]*class="[^"]*(?:table[^"]*){3}"[^>]*>).*?</table>|<TABLE>.*?</TABLE>"""  # ruff: ignore[line-too-long]
                 if is_icpc_api_standings_url:
                     page = html.unescape(page)
                     page = re.sub(r"</table>\s*<table>\s*(<tr[^>]*>\s*<t[^>]*>)", r"\1", page, flags=re.I)
@@ -624,8 +624,8 @@ class Statistic(BaseModule):
                                         problems_info[k]["name"] = title
 
                                 v = re.sub(r"([0-9]+)\s+([0-9]+)\s+tr.*", r"\2 \1", v)
-                                v = re.sub("tr[a-z]*", "", v)
-                                v = re.sub("-*", "", v)
+                                v = re.sub(r"tr[a-z]*", "", v)
+                                v = re.sub(r"-*", "", v)
                                 v = re.sub(r"([0-9]+)/([0-9]+)", r"\1 \2", v)
                                 v = v.strip()
                                 v = v.rstrip("/")
@@ -688,7 +688,7 @@ class Statistic(BaseModule):
                             last_place = row["place"]
                         elif last_place:
                             row["place"] = last_place
-                        if is_ineligible or participant_type and participant_type.lower() in {"companies"}:
+                        if is_ineligible or (participant_type and participant_type.lower() in {"companies"}):
                             row.pop("place")
                             row.pop("medal")
                             for problem in problems.values():
@@ -728,7 +728,7 @@ class Statistic(BaseModule):
 
                 elements = etree.HTML(page).xpath(
                     '//div[@class="card-header"]/following-sibling::div[@class="card-body"]//li'
-                )  # noqa
+                )
                 for el in elements:
                     name = "".join([s.strip() for s in el.xpath("text()")])
                     member = f"{name} {season}"
@@ -928,7 +928,7 @@ class Statistic(BaseModule):
                 cf_info = self.info["use_codeforces_list"]
                 page = codeforces_get(cf_info["url"])
                 fields = [cf_info["fields"]["university"], *cf_info["fields"]["members"]]
-                matches = re.finditer("<table[^>]*>.*?</table>", page, re.DOTALL)
+                matches = re.finditer(r"<table[^>]*>.*?</table>", page, re.DOTALL)
                 names_rows = {}
                 for row in result.values():
                     region = row.get("region")
@@ -976,7 +976,7 @@ class Statistic(BaseModule):
                 for university, handles in skipped:
                     best_iou = 0
                     university_re = university
-                    university_re = re.sub('[- —,()"]+', '[- —,()"]+', university_re)
+                    university_re = re.sub(r'[- —,()"]+', '[- —,()"]+', university_re)
                     university_re = re.sub(
                         r"\b[A-Z]+\b", lambda m: "".join(f"{c}[^A-Z]*" for c in m.group(0)), university_re
                     )

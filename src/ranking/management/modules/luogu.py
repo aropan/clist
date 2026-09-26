@@ -27,7 +27,7 @@ class Statistic(BaseModule):
                 "count": 8,
                 "func": lambda e: e.has_message(
                     r"\u8bf7\u6c42\u9891\u7e41\uff0c\u8bf7\u7a0d\u5019\u518d\u8bd5"
-                ),  # frequent requests, please try again later  # noqa
+                ),  # frequent requests, please try again later
             },
             429: {"count": 5},
         }
@@ -178,7 +178,7 @@ class Statistic(BaseModule):
                 page = Statistic._get(url)
             except FailOnGetResponse:
                 return False
-            match = re.search('<script[^>]*id="lentille-context"[^>]*>(?P<data>[^<]*)</script>', page)
+            match = re.search(r'<script[^>]*id="lentille-context"[^>]*>(?P<data>[^<]*)</script>', page)
             data = json.loads(match.group("data"))
             ret["ratings"] = get_item(data, "data.elo") or []
             user_data = get_item(data, "data.user") or {}

@@ -71,7 +71,7 @@ class Statistic(BaseModule):
 
         @RateLimiter(max_calls=10, period=2)
         def fetch_and_process_page(page):
-            url = f"https://practiceapi.geeksforgeeks.org/api/v1/contest/{self.key}/leaderboard/?page={page + 1}&type=current"  # noqa
+            url = f"https://practiceapi.geeksforgeeks.org/api/v1/contest/{self.key}/leaderboard/?page={page + 1}&type=current"  # ruff: ignore[line-too-long]
             page = REQ.get(url)
             data = json.loads(page)
 

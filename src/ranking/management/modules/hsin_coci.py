@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
-
 import re
 import urllib.parse
 from collections import OrderedDict
-from pprint import pprint  # noqa
+from pprint import pprint  # ruff: ignore[unused-import]
 
 from clist.templatetags.extras import as_number
 from ranking.management.modules.common import REQ, BaseModule, CustomRequester, parsed_table
@@ -12,7 +10,7 @@ from ranking.management.modules.excepts import ExceptionParseStandings, InitModu
 
 class Statistic(BaseModule):
     def __init__(self, **kwargs):
-        super(Statistic, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
         if not self.name or not self.url:
             raise InitModuleException()
@@ -84,7 +82,7 @@ class Statistic(BaseModule):
                         if href:
                             href = href[0]
                             p["url"] = urllib.parse.urljoin(standings_url, href)
-                            match = re.search("solutions/(?P<member>[^/]*)/", href)
+                            match = re.search(r"solutions/(?P<member>[^/]*)/", href)
                             r["member"] = match.group("member")
                 elif k == "solving":
                     r[k] = as_number(v.value)

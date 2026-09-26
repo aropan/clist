@@ -43,7 +43,7 @@ def create_field_to_select(**kwargs):
 def update_context_by_source(request, context):
     source = context["source"]
     if not source:
-        return
+        return None
 
     fields = []
     entities = None
@@ -253,7 +253,7 @@ def charts(request, template="charts.html"):
         if action == "pre-delete":
             delete_info = get_delete_info(context["entities"])
             return JsonResponse({"status": "ok", "data": delete_info})
-        elif action == "delete":
+        if action == "delete":
             deleted_info = context["entities"].delete()
             request.logger.info(f"Deleted: {deleted_info}")
         return allowed_redirect(url_transform(request, action=None, with_remove=True))

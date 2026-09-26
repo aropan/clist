@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import json
 import re
@@ -41,7 +40,7 @@ class Statistic(BaseModule):
             self.standings_url = f"https://www.russiancodecup.ru/en/results/championship/round/{info['ID']}/"
             self.name = info["NAME"]
 
-        match = re.search("/round/([0-9]+)/", self.standings_url)
+        match = re.search(r"/round/([0-9]+)/", self.standings_url)
         rid = match.group(1)
 
         result = OrderedDict()
@@ -101,7 +100,7 @@ class Statistic(BaseModule):
         def fetch_info(user):
             url = f"https://www.russiancodecup.ru/en/ajax/user/{user['id']}"
             page = REQ.get(url)
-            matches = re.finditer("<tr><th>(?P<key>[^<]*):</th><td>(?P<value>[^<]*)</td></tr>", page)
+            matches = re.finditer(r"<tr><th>(?P<key>[^<]*):</th><td>(?P<value>[^<]*)</td></tr>", page)
             info = {}
             for match in matches:
                 key = match.group("key").strip().lower()

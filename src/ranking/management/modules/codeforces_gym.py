@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from clist.models import Resource
 from ranking.management.modules import codeforces
 

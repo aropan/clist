@@ -348,7 +348,7 @@ def main(request, party=None):
     offset = get_timezone_offset(tzname)
 
     more_fields = request.user.has_perm("clist.view_more_fields")
-    more_fields = more_fields and [f for f in request.GET.getlist("more") if f] or []
+    more_fields = (more_fields and [f for f in request.GET.getlist("more") if f]) or []
 
     context.update({
         "offset": offset,
@@ -386,7 +386,7 @@ def resources(request):
     resources = resources.select_related("module")
 
     more_fields = request.user.has_perm("clist.view_more_fields")
-    more_fields = more_fields and [f for f in request.GET.getlist("more") if f] or []
+    more_fields = (more_fields and [f for f in request.GET.getlist("more") if f]) or []
 
     context = {
         "navbar_admin_model": Resource,
@@ -452,7 +452,7 @@ def resources_account_ratings(request, template="resources_account_ratings.html"
         accounts = resource.account_set.filter(rating__isnull=False).order_by("-rating")
         accounts = accounts.filter(accounts_filter)
         accounts = accounts.prefetch_related("coders")
-        setattr(resource, "accounts", accounts)
+        resource.accounts = accounts
 
     earliest_last_activity = Account.objects.filter(rating__isnull=False).earliest("last_activity").last_activity
 
@@ -541,7 +541,7 @@ def resource_problem_rating_chart(resource):
     problems = resource.problem_set.all()
     problem_rating_chart = make_chart(problems, "rating", n_bins=n_bins, cast="int", step=step)
     if not problem_rating_chart:
-        return
+        return None
 
     data = problem_rating_chart["data"]
     idx = 0
@@ -716,7 +716,7 @@ def resource(request, resource, template="resource.html", extra_context=None):
         "quarter": timedelta(days=30 * 3),
         "month": timedelta(days=30 * 1),
     }
-    delta_period = deltas_period.get(period, None)
+    delta_period = deltas_period.get(period)
     if delta_period:
         accounts = accounts.filter(last_activity__gte=now - delta_period)
         mute_country_rating = True

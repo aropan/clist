@@ -15,7 +15,7 @@ class Language(BaseModel):
     extensions = models.JSONField(default=list, blank=True)
 
     @staticmethod
-    def get(language) -> Optional["Language"]:
+    def get(language) -> Language | None:
         try:
             return Language.objects.get(Q(id__iexact=language) | Q(name__iexact=language))
         except Language.DoesNotExist:
@@ -23,7 +23,7 @@ class Language(BaseModel):
 
     @staticmethod
     @timed_cache("15m")
-    def cached_get(language) -> Optional["Language"]:
+    def cached_get(language) -> Language | None:
         return Language.get(language)
 
     def __str__(self):
@@ -37,7 +37,7 @@ class Verdict(BaseModel):
     solved = models.BooleanField(default=False)
 
     @staticmethod
-    def get(verdict) -> Optional["Verdict"]:
+    def get(verdict) -> Verdict | None:
         try:
             return Verdict.objects.get(Q(id__iexact=verdict) | Q(name__iexact=verdict))
         except Verdict.DoesNotExist:
@@ -45,7 +45,7 @@ class Verdict(BaseModel):
 
     @staticmethod
     @timed_cache("15m")
-    def cached_get(verdict) -> Optional["Verdict"]:
+    def cached_get(verdict) -> Verdict | None:
         return Verdict.get(verdict)
 
     def __str__(self):

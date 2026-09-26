@@ -167,9 +167,9 @@ class Proxer:
 
     def load_data(self):
         try:
-            with open(self.file_name, "r") as fo:
+            with open(self.file_name) as fo:
                 self._data = load(fo)
-        except IOError, ValueError:
+        except OSError, ValueError:
             self._data = {}
         self._data.setdefault("proxies", {})
         self._data.setdefault("sources", {})
@@ -214,7 +214,7 @@ class Proxer:
 
     def check_proxy(self):
         with self.lock:
-            if self.proxy and self.proxy["_fail"] > 0 and self.proxy["_state"] == 0 or self.is_slow_proxy():
+            if (self.proxy and self.proxy["_fail"] > 0 and self.proxy["_state"] == 0) or self.is_slow_proxy():
                 if (self.proxy["_success"] or self.proxy["_total_success"]) and self.proxy["_n_deferred"]:
                     message = "defer"
                     self.defer_proxy()
@@ -422,7 +422,7 @@ class Proxer:
         self.load_data()
         self.clear_data()
         if path.exists(file_name):
-            with open(file_name, "r") as fo:
+            with open(file_name) as fo:
                 for line in fo:
                     line = line.strip()
                     if not line:
@@ -479,8 +479,8 @@ def encode_multipart(fields=None, files=None, boundary=None):
     fields = fields or {}
     for name, value in fields.items():
         lines.extend((
-            "--{0}".format(boundary),
-            'Content-Disposition: form-data; name="{0}"'.format(escape_quote(name)),
+            f"--{boundary}",
+            f'Content-Disposition: form-data; name="{escape_quote(name)}"',
             "",
             str(value),
         ))
@@ -493,21 +493,19 @@ def encode_multipart(fields=None, files=None, boundary=None):
         else:
             mimetype = mimetypes.guess_type(filename)[0] or "application/octet-stream"
         lines.extend((
-            "--{0}".format(boundary),
-            'Content-Disposition: form-data; name="{0}"; filename="{1}"'.format(
-                escape_quote(name), escape_quote(filename)
-            ),
-            "Content-Type: {0}".format(mimetype),
+            f"--{boundary}",
+            f'Content-Disposition: form-data; name="{escape_quote(name)}"; filename="{escape_quote(filename)}"',
+            f"Content-Type: {mimetype}",
             "",
             value["content"],
         ))
 
-    lines.extend(("--{0}--".format(boundary), ""))
+    lines.extend((f"--{boundary}--", ""))
     body = "\r\n".join(lines)
     body = body.encode("utf8")
 
     headers = {
-        "Content-Type": "multipart/form-data; boundary={0}".format(boundary),
+        "Content-Type": f"multipart/form-data; boundary={boundary}",
         "Content-Length": len(body),
     }
 
@@ -619,7 +617,7 @@ class requester:
                 ("Connection", "keep-alive"),
                 (
                     "User-Agent",
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36"  # noqa
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36"  # ruff: ignore[line-too-long]
                     if user_agent is None
                     else user_agent,
                 ),
@@ -704,7 +702,7 @@ class requester:
     ):
         prefix = "local-file:"
         if url.startswith(prefix):
-            with open(url[len(prefix) :], "r") as fo:
+            with open(url[len(prefix) :]) as fo:
                 page = fo.read().decode("utf8")
                 self.last_page = page
             return page
@@ -718,7 +716,7 @@ class requester:
 
         makedirs(self.dir_cache, mode=0o777, exist_ok=True)
 
-        files = files or isinstance(post, dict) and post.pop("files__", None)
+        files = files or (isinstance(post, dict) and post.pop("files__", None))
 
         if post and isinstance(post, dict):
             post_urlencoded = urllib.parse.urlencode(post).encode("utf-8")
@@ -918,7 +916,7 @@ class requester:
                 h.update(headers)
                 self.opener.addheaders = list(h.items())
 
-            if content_type == "multipart/form-data" and post or files:
+            if (content_type == "multipart/form-data" and post) or files:
                 post_urlencoded, multipart_headers = encode_multipart(fields=post, files=files)
                 headers.update(multipart_headers)
             elif content_type:
@@ -1032,7 +1030,7 @@ class requester:
                             raise_fail(err, error_exception)
                         else:
                             traceback.print_exc()
-                        return
+                        return None
                 break
 
             self.time_response = datetime.utcnow() - time_start
@@ -1113,7 +1111,7 @@ class requester:
             re.VERBOSE,
         )
         if not match:
-            return
+            return None
         return match.group("href")
 
     def get_link_by_text_and_go_if_exist(self, text):
@@ -1218,7 +1216,7 @@ class requester:
 
     def get_cookies(self, domain_regex=None):
         return dict(
-            ((i.name, i.value) for i in self.cookiejar if domain_regex is None or re.search(domain_regex, i.domain))
+            (i.name, i.value) for i in self.cookiejar if domain_regex is None or re.search(domain_regex, i.domain)
         )
 
     def get_cookie(self, name, *args, **kwargs):
@@ -1288,7 +1286,7 @@ class requester:
         for field, value in kwargs.items():
             orig_attributes[field] = getattr(self, field, None)
             setattr(self, field, value)
-        setattr(self, "orig_attributes", orig_attributes)
+        self.orig_attributes = orig_attributes
 
     def restore_attributes(self):
         orig_attributes = getattr(self, "orig_attributes", None)

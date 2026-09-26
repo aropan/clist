@@ -34,7 +34,7 @@ class Statistic(BaseModule):
         REQ.last_url = self.url
 
         page = get("/tamtamy/home.action")
-        if not re.search('<a[^>]*href="[^"]*logout[^"]*"[^>]*>', page, re.I):
+        if not re.search(r'<a[^>]*href="[^"]*logout[^"]*"[^>]*>', page, re.I):
             get(
                 "/tamtamy/user/signIn.action",
                 post={
@@ -78,7 +78,7 @@ class Statistic(BaseModule):
         def process_page(data):
             nonlocal max_solving, has_delta, has_members, stop
             if stop:
-                return
+                return None
             n_processed = 0
             for r in data["list"]:
                 row = {}

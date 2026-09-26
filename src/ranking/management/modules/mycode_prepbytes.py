@@ -1,11 +1,10 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import json
 import logging
 import os
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
-from pprint import pprint  # noqa
+from pprint import pprint  # ruff: ignore[unused-import]
 
 import coloredlogs
 import dateutil.parser

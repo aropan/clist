@@ -49,9 +49,7 @@ def get_weighted_rating(wratings, target, threshold=0.95, cache=None) -> float:
         """
         if threshold and positive_prob > threshold:
             left = middle
-        elif threshold and negative_prob > threshold:
-            right = middle
-        elif e_total < target:
+        elif (threshold and negative_prob > threshold) or e_total < target:
             right = middle
         else:
             left = middle

@@ -4,8 +4,8 @@
 import os
 import sys
 
-sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), "..", ".."))  # noqa
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pyclist.settings")  # noqa
+sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), "..", ".."))
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pyclist.settings")
 
 import xml.etree.ElementTree as ET
 
@@ -13,7 +13,7 @@ import django
 import fire
 import tqdm
 
-django.setup()  # noqa
+django.setup()
 
 from ranking.models import Statistics
 

@@ -17,7 +17,7 @@ class Command(BaseCommand):
     help = "Train problem rating predictor"
 
     def __init__(self, *args, **kw):
-        super(Command, self).__init__(*args, **kw)
+        super().__init__(*args, **kw)
         self.logger = getLogger("clist.train.problem_rating_predictor")
 
     def add_arguments(self, parser):

@@ -127,10 +127,10 @@ class ContestResource(BaseModelResource):
     n_statistics = fields.IntegerField("n_statistics", null=True)
     n_problems = fields.IntegerField("n_problems", null=True)
     parsed_at = fields.DateTimeField("parsed_time", null=True)
-    upcoming = fields.BooleanField(help_text="Boolean data (default true if format is atom). Filter upcoming contests")  # noqa
+    upcoming = fields.BooleanField(help_text="Boolean data (default true if format is atom). Filter upcoming contests")
     format_time = fields.BooleanField(
         help_text="Boolean data (default true if format is atom). Convert time to user timezone and timeformat"
-    )  # noqa
+    )
     duration = fields.DateTimeField("duration_in_secs", help_text='Time delta: Ex: "864000" or "10 days"')
     href = fields.CharField("url")
     filtered = fields.BooleanField(help_text="Use user filters")
@@ -143,7 +143,7 @@ class ContestResource(BaseModelResource):
     start_time = fields.DateTimeField("start_time", use_in=use_in_atom_format)
     start_time__during = fields.DateTimeField(
         help_text='Time delta: Ex: "864000" or "10 days" (default "1 day" if format is atom)'
-    )  # noqa
+    )
     end_time__during = fields.DateTimeField(help_text='Time delta: Ex: "864000" or "10 days"')
 
     class Meta(BaseModelResource.Meta):
@@ -422,7 +422,7 @@ class AccountResource(BaseModelResource):
 def get_api_version(bundle):
     parts = bundle.request.path.split("/")
     for part in parts:
-        if re.match("^v[0-9]+$", part):
+        if re.match(r"^v[0-9]+$", part):
             return part
     return None
 

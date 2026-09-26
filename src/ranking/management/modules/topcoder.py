@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import html
 import json
@@ -132,7 +131,7 @@ class Statistic(BaseModule):
                 value = re.sub(r"[0-9]*([0-9]{2})\s*tco(\s+)", r"tco\1\2", value)
                 value = re.sub(r"tco\s*[0-9]*([0-9]{2})(\s+)", r"tco\1\2", value)
                 value = re.sub(r"^[0-9]{2}([0-9]{2})(\s+)", r"tco\1\2", value)
-                return set(re.split("[^A-Za-z0-9]+", value))
+                return set(re.split(r"[^A-Za-z0-9]+", value))
 
             def process_match(date, title, url):
                 nonlocal opt
@@ -183,7 +182,7 @@ class Statistic(BaseModule):
 
         for url in self.url, self.standings_url:
             if url:
-                match = re.search("/challenges/(?P<cid>[0-9]+)", url)
+                match = re.search(r"/challenges/(?P<cid>[0-9]+)", url)
                 if match:
                     challenge_id = match.group("cid")
                     break
@@ -268,7 +267,7 @@ class Statistic(BaseModule):
                 raise ExceptionParseStandings("not found result urls")
 
             dd_round_results = {}
-            match = re.search("rd=(?P<rd>[0-9]+)", url)
+            match = re.search(r"rd=(?P<rd>[0-9]+)", url)
             if match:
                 rd = match.group("rd")
                 url = f"https://www.topcoder.com/tc?module=BasicData&c=dd_round_results&rd={rd}"
@@ -282,11 +281,11 @@ class Statistic(BaseModule):
 
             hidden_fields.extend(["coding_phase", "challenge_phase", "system_test", "point_total", "room"])
 
-            matches = re.finditer("<table[^>]*>.*?</table>", page, re.DOTALL)
+            matches = re.finditer(r"<table[^>]*>.*?</table>", page, re.DOTALL)
             problems_sets = []
             for match in matches:
                 problems = re.findall(
-                    '<a[^>]*href="(?P<href>[^"]*(?:c=problem_statement[^"]*|pm=(?P<key>[0-9]+)[^"]*){2})"[^>]*>(?P<name>[^/]*)</a>',  # noqa
+                    '<a[^>]*href="(?P<href>[^"]*(?:c=problem_statement[^"]*|pm=(?P<key>[0-9]+)[^"]*){2})"[^>]*>(?P<name>[^/]*)</a>',  # ruff: ignore[unraw-re-pattern]
                     match.group(),
                     re.IGNORECASE,
                 )
@@ -305,13 +304,13 @@ class Statistic(BaseModule):
 
                     def fetch_problem(p):
                         page = req.get(p["url"], time_out=30)
-                        match = re.search('<a[^>]*href="(?P<href>[^"]*module=ProblemDetail[^"]*)"[^>]*>', page)
+                        match = re.search(r'<a[^>]*href="(?P<href>[^"]*module=ProblemDetail[^"]*)"[^>]*>', page)
                         page = req.get(urljoin(p["url"], match.group("href")), time_out=30)
                         matches = re.findall(
                             r'<td[^>]*class="statTextBig"[^>]*>(?P<key>[^<]*)</td>\s*<td[^>]*>(?P<value>.*?)</td>',
                             page,
                             re.DOTALL,
-                        )  # noqa
+                        )
                         for key, value in matches:
                             key = key.strip().rstrip(":").lower()
                             if key == "categories":
@@ -321,12 +320,12 @@ class Statistic(BaseModule):
                                     p["tags"] = tags
                             elif key.startswith("writer") or key.startswith("tester"):
                                 key = key.rstrip("s") + "s"
-                                p[key] = re.findall("(?<=>)[^<>,]+(?=<)", value)
+                                p[key] = re.findall(r"(?<=>)[^<>,]+(?=<)", value)
                         for w in p.get("writers", []):
                             writers[w] += 1
 
                         info = p.setdefault("info", {})
-                        matches = re.finditer("<table[^>]*paddingTable2[^>]*>.*?</table>", page, re.DOTALL)
+                        matches = re.finditer(r"<table[^>]*paddingTable2[^>]*>.*?</table>", page, re.DOTALL)
                         for match in matches:
                             html_table = match.group(0)
                             rows = parsed_table.ParsedTable(html_table)
@@ -338,7 +337,7 @@ class Statistic(BaseModule):
                                     elif k and division_str in k.split():
                                         value = v.value
                                 if key and value:
-                                    key = re.sub(" +", "_", key.lower())
+                                    key = re.sub(r" +", "_", key.lower())
                                     info[key] = value
                                     if key == "point_value":
                                         value = toint(value) or asfloat(value)
@@ -403,7 +402,7 @@ class Statistic(BaseModule):
                     try:
                         page = req.get(url, time_out=60)
                         match = re.search(
-                            '<td[^>]*class="problemText"[^>]*>(?P<solution>.*?)</td>', page, re.DOTALL | re.IGNORECASE
+                            r'<td[^>]*class="problemText"[^>]*>(?P<solution>.*?)</td>', page, re.DOTALL | re.IGNORECASE
                         )
                         if match:
                             ret = html.unescape(match.group("solution"))
@@ -419,17 +418,19 @@ class Statistic(BaseModule):
                 def fetch_info(url):
                     nonlocal n_failed_fetch_info
                     if n_failed_fetch_info > 10:
-                        return
+                        return None
                     match = None
                     try:
                         page = req.get(url, time_out=10)
-                        match = re.search('class="coderBrackets">.*?<a[^>]*>(?P<handle>[^<]*)</a>', page, re.IGNORECASE)
+                        match = re.search(
+                            r'class="coderBrackets">.*?<a[^>]*>(?P<handle>[^<]*)</a>', page, re.IGNORECASE
+                        )
                     except FailOnGetResponse:
                         pass
 
                     if not match:
                         n_failed_fetch_info += 1
-                        return
+                        return None
 
                     handle = html.unescape(match.group("handle").strip())
 
@@ -460,7 +461,7 @@ class Statistic(BaseModule):
                             d["result"] = -d["result"]
                         if abs(d["result"]) < 1e-9:
                             d.pop("result")
-                        if re.match("^[0.:]+$", d["time"]):
+                        if re.match(r"^[0.:]+$", d["time"]):
                             d.pop("time")
                         else:
                             time_in_seconds = 0
@@ -565,7 +566,7 @@ class Statistic(BaseModule):
                                 hidden_fields.append(k)
                             ks = k.split("_")
                             if ks[0] == "level" and ks[-1] == "language" and v and v.lower() != "unspecified":
-                                idx = {"one": 0, "two": 1, "three": 2}.get(ks[1], None)
+                                idx = {"one": 0, "two": 1, "three": 2}.get(ks[1])
                                 d = problems_info
                                 if len(problems_sets) > 1:
                                     d = d["division"][row["division"]]

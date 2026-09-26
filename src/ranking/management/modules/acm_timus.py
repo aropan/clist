@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import collections
 import re
@@ -12,7 +11,7 @@ from ranking.management.modules.common import REQ, BaseModule, parsed_table
 
 class Statistic(BaseModule):
     def __init__(self, **kwargs):
-        super(Statistic, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         if not self.standings_url:
             self.standings_url = self.url.replace("contest.aspx", "monitor.aspx")
 
@@ -29,7 +28,7 @@ class Statistic(BaseModule):
                 title = first(v.header.node.xpath("a[@title]/@title"))
                 if k in ["Участник", "Participant"]:
                     url = first(v.column.node.xpath("a[@href]/@href"))
-                    row["member"] = re.search("([0-9]+)/?$", url).group(1)
+                    row["member"] = re.search(r"([0-9]+)/?$", url).group(1)
                     row["name"] = v.value
                 elif k in ["Место", "Rank"]:
                     row["place"] = v.value

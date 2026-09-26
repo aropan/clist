@@ -191,7 +191,7 @@ class Command(BaseCommand):
                     self.logger.warning("cphof url specified but no accounts found")
                     continue
                 page = REQ.get(cphof_url)
-                match = re.search('<link[^>]*rel="canonical"[^>]*href="[^"]*/profile/(?P<handle>[^"]*)"[^>]*>', page)
+                match = re.search(r'<link[^>]*rel="canonical"[^>]*href="[^"]*/profile/(?P<handle>[^"]*)"[^>]*>', page)
                 handle = html.unescape(match.group("handle"))
                 cphof_account = cphof_resource.account_set.filter(key=handle).first()
                 if not cphof_account:

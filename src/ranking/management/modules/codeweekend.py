@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import hashlib
 from collections import OrderedDict
 from datetime import timedelta

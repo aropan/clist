@@ -1,4 +1,4 @@
-from bugsink_conf import *  # noqa: F401,F403
+from bugsink_conf import *  # ruff: ignore[undefined-local-with-import-star]
 
 # CLIST's Django session cookie is domain-wide (.clist.by) and also named
 # "sessionid"; use a distinct name so the two don't clash on this subdomain

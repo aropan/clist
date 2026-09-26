@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import html
 import os
 import random
@@ -26,10 +24,10 @@ from utils.timetools import parse_datetime
 
 def normalize_standings_url(url):
     if not url:
-        return
-    url = re.sub("enter/?", "", url)
+        return None
+    url = re.sub(r"enter/?", "", url)
     url = re.sub(r"\?.*$", "", url)
-    url = re.sub("/?$", "", url)
+    url = re.sub(r"/?$", "", url)
     if not url.endswith("/standings"):
         url = os.path.join(url, "standings")
     return url
@@ -60,12 +58,12 @@ class Statistic(BaseModule):
     def _get_headers(self) -> dict | None:
         coder_pk = get_item(self.resource.info, "statistics.competitive_hustle_coder_pk")
         if not coder_pk:
-            return
+            return None
 
         ouath_service = Service.objects.get(name="yandex-contest")
         oauth_token = ouath_service.token_set.filter(coder__pk=coder_pk).first()
         if not oauth_token:
-            return
+            return None
 
         access_token = oauth_token.get_access_token()
         headers = {"Authorization": f"OAuth {access_token}"}
@@ -154,11 +152,11 @@ class Statistic(BaseModule):
         def fetch_submissions(page):
             nonlocal stop_fetch_submissions, n_success, n_fail, success_rate
             if stop_fetch_submissions:
-                return
+                return None
             if timezone.now() > finish_time:
                 LOG.warning("Fetch submissions timeout")
                 stop_fetch_submissions = True
-                return
+                return None
             with rate_limiter:
                 offset = batch_size * page
                 run_ids_query = "&".join(f"runIds={run_id}" for run_id in run_ids[offset : offset + batch_size])
@@ -198,9 +196,8 @@ class Statistic(BaseModule):
                         problem = problem.setdefault("upsolving", {})
                         submission_problem = submission_problem.setdefault("upsolving", {})
                     fields_data = problem or submission_problem
-                    if (
-                        not fields_data
-                        or as_number(submission_score) == as_number(fields_data.get("result"))
+                    if not fields_data or (
+                        as_number(submission_score) == as_number(fields_data.get("result"))
                         and ("submission_id" not in fields_data or submission["runId"] < fields_data["submission_id"])
                     ):
                         for field, source in Statistic.SUBMISSION_FIELDS_MAPPING.items():
@@ -232,7 +229,7 @@ class Statistic(BaseModule):
             if counters:
                 break
             if contest_url:
-                contest_url = re.sub("standings/?", "", contest_url)
+                contest_url = re.sub(r"standings/?", "", contest_url)
             for submission in self._get_all_submissions(contest_key):
                 submission_id = submission["id"]
                 submission_time = parse_datetime(submission["submissionTime"])
@@ -416,11 +413,10 @@ class Statistic(BaseModule):
                 continue
             statistics_problem = statistics_problems[short]
             for key, value in statistics_problem.items():
-                if (
-                    key in Statistic.SUBMISSION_FIELDS_MAPPING
-                    and key not in problem
-                    or key in {"_submission_infos", "upsolving"}
-                ):
+                if (key in Statistic.SUBMISSION_FIELDS_MAPPING and key not in problem) or key in {
+                    "_submission_infos",
+                    "upsolving",
+                }:
                     problem[key] = value
 
     def get_standings(self, users=None, statistics=None, **kwargs):
@@ -434,7 +430,7 @@ class Statistic(BaseModule):
         problems_info = OrderedDict()
         standings_by_submissions = get_item(self.info, "standings.by_submissions")
 
-        if not re.search("/[0-9]+/", self.standings_url):
+        if not re.search(r"/[0-9]+/", self.standings_url):
             return {}
 
         name2logins = self._get_account_renaming([self.contest.key, self.contest.upsolving_key])
@@ -452,13 +448,13 @@ class Statistic(BaseModule):
                 page = request_get(url)
 
                 if n_page == 1:
-                    pages = re.findall('<a[^>]*href="[^"]*standings[^"]*p[^"]*=([0-9]+)"[^>]*>', page)
+                    pages = re.findall(r'<a[^>]*href="[^"]*standings[^"]*p[^"]*=([0-9]+)"[^>]*>', page)
                     if pages:
                         max_page = max(map(int, pages))
                         tqdm_pagination = tqdm.tqdm(total=max_page, desc="fetch standings pages")
 
                 match = re.search(
-                    '<table[^>]*class="[^"]*standings[^>]*>.*?</table>',
+                    r'<table[^>]*class="[^"]*standings[^>]*>.*?</table>',
                     page,
                     re.MULTILINE | re.DOTALL,
                 )
@@ -519,7 +515,7 @@ class Statistic(BaseModule):
                             if "+" in res or res.startswith("100"):
                                 solved += 1
                             try:
-                                has_solved = has_solved or "+" not in res and float(res) > 0
+                                has_solved = has_solved or ("+" not in res and float(res) > 0)
                             except ValueError:
                                 pass
                         elif "table__cell_role_participant" in v.attrs["class"]:
@@ -538,7 +534,7 @@ class Statistic(BaseModule):
                         elif "table__cell_role_place" in v.attrs["class"]:
                             row["place"] = v.value
                         elif "table__header_type_penalty" in v.attrs["class"]:
-                            row["penalty"] = int(v.value) if re.match("^-?[0-9]+$", v.value) else v.value
+                            row["penalty"] = int(v.value) if re.match(r"^-?[0-9]+$", v.value) else v.value
                         elif "table__header_type_score" in v.attrs["class"]:
                             row["solving"] = as_number(v.value.replace(",", ""))
                     if has_solved:
@@ -662,7 +658,7 @@ class Statistic(BaseModule):
             for short, problem in row["problems"].items():
                 ips |= {info["ip"] for info in problem.get("_submission_infos", [])}
             contest_ips |= ips
-            row["_ips"] = list(sorted(ips))
+            row["_ips"] = sorted(ips)
             contest_n_ips |= {len(ips)}
             row["_n_ips"] = len(ips)
 
@@ -712,12 +708,12 @@ class Statistic(BaseModule):
         if contest_ips:
             info_fields = standings.setdefault("info_fields", [])
             info_fields.extend(["_ips", "_n_ips", "_whois"])
-            standings["_ips"] = list(sorted(contest_ips))
-            standings["_n_ips"] = list(sorted(contest_n_ips))
+            standings["_ips"] = sorted(contest_ips)
+            standings["_n_ips"] = sorted(contest_n_ips)
             standings["_whois"] = whois
             for field, values in contest_whois.items():
                 info_fields.append(field)
-                standings[field] = list(sorted(values))
+                standings[field] = sorted(values)
 
         now = timezone.now()
         if now < self.end_time < now + timedelta(hours=2):

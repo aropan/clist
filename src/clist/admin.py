@@ -24,7 +24,7 @@ class ContestAdmin(BaseModelAdmin):
         def queryset(self, request, queryset):
             if self.value() == "0":
                 return queryset.filter(end_time__gt=timezone.now())
-            elif self.value() == "1":
+            if self.value() == "1":
                 return queryset.filter(end_time__lte=timezone.now())
 
     class ComingContestListFilter(SimpleListFilter):
@@ -40,7 +40,7 @@ class ContestAdmin(BaseModelAdmin):
         def queryset(self, request, queryset):
             if self.value() == "0":
                 return queryset.filter(start_time__lte=timezone.now())
-            elif self.value() == "1":
+            if self.value() == "1":
                 return queryset.filter(start_time__gt=timezone.now())
 
     class RatingSet(admin.TabularInline):
@@ -218,7 +218,7 @@ class ResourceAdmin(BaseModelAdmin):
         def queryset(self, request, queryset):
             if self.value() == "0":
                 return queryset.filter(profile_url__isnull=True)
-            elif self.value() == "1":
+            if self.value() == "1":
                 return queryset.filter(profile_url__isnull=False)
 
     fieldsets = [

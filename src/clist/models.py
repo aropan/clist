@@ -8,7 +8,7 @@ import os
 import re
 from collections import defaultdict
 from collections.abc import Iterable
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from typing import List, Optional
 from urllib.parse import urljoin, urlparse
 
@@ -202,7 +202,7 @@ class Resource(BaseModel):
         return self.short_host or self.host
 
     def href(self, host=None):
-        return "{uri.scheme}://{host}/".format(uri=urlparse(self.url), host=host or self.host)
+        return f"{urlparse(self.url).scheme}://{host or self.host}/"
 
     def get_rating_color(self, value, ignore_old=False, value_name=None):
         if self.ratings and (value or isinstance(value, (int, float))):
@@ -258,10 +258,9 @@ class Resource(BaseModel):
                         value_next = curr_rating.get("next", curr_rating["high"])
                         value = value_prev + value_next - value
                     return curr_rating, value
-                else:
-                    for rating in self.ratings:
-                        if rating["low"] <= value < rating["high"]:
-                            return rating, value
+                for rating in self.ratings:
+                    if rating["low"] <= value < rating["high"]:
+                        return rating, value
         return None, None
 
     def save(self, *args, **kwargs):
@@ -387,7 +386,7 @@ class Resource(BaseModel):
                 img = img.convert("RGBA")
                 output_io = io.BytesIO()
                 img.save(output_io, format="PNG")
-                filename = re.sub("[./]", "_", self.host) + ".png"
+                filename = re.sub(r"[./]", "_", self.host) + ".png"
                 self.icon_file.save(filename, ContentFile(output_io.getvalue()))
                 self.icon_updated_at = timezone_now()
                 self.save()
@@ -517,12 +516,12 @@ class Resource(BaseModel):
 
     @staticmethod
     def get(
-        value: str | int | List[str | int],
-        queryset: Optional[models.QuerySet["Resource"]] = None,
+        value: str | int | list[str | int],
+        queryset: models.QuerySet[Resource] | None = None,
         raise_exception: Exception = Http404,
-    ) -> Optional["Resource"] | List["Resource"]:
+    ) -> Resource | list[Resource] | None:
         queryset = queryset or Resource.objects
-        if isinstance(value, int) or isinstance(value, str) and value.isdigit():
+        if isinstance(value, int) or (isinstance(value, str) and value.isdigit()):
             ret = queryset.filter(pk=value).first()
         elif isinstance(value, str):
             ret = queryset.filter(Q(host=value) | Q(short_host=value)).first()
@@ -530,7 +529,7 @@ class Resource(BaseModel):
             values = [v for v in value if v]
             filters = Q()
             for value in values:
-                if isinstance(value, int) or isinstance(value, str) and value.isdigit():
+                if isinstance(value, int) or (isinstance(value, str) and value.isdigit()):
                     filters |= Q(pk=value)
                 elif isinstance(value, str):
                     filters |= Q(host=value) | Q(short_host=value)
@@ -726,7 +725,7 @@ class Contest(BaseModel):
 
         if self.is_over():
             standings_medals = bool(get_item(self.info, "standings.medals"))
-            self.with_medals = standings_medals and not self.has_hidden_results or "medal" in fields
+            self.with_medals = (standings_medals and not self.has_hidden_results) or "medal" in fields
             self.with_advance = "advanced" in fields or "_advance" in fields
 
         if not self.kind:
@@ -805,11 +804,10 @@ class Contest(BaseModel):
         duration = self.duration
         if duration > timedelta(days=999):
             return "%d years" % (duration.days // 364)
-        elif duration > timedelta(days=3):
+        if duration > timedelta(days=3):
             return "%d days" % duration.days
-        else:
-            total = duration.total_seconds()
-            return "%02d:%02d" % ((total + 1e-9) // 3600, (total + 1e-9) % 3600 // 60)
+        total = duration.total_seconds()
+        return "%02d:%02d" % ((total + 1e-9) // 3600, (total + 1e-9) % 3600 // 60)
 
     @classmethod
     def month_regex(cls):
@@ -828,12 +826,12 @@ class Contest(BaseModel):
         for match in re.finditer(
             rf"(?P<number>\b[0-9]+\b(?:[\W\S]\b[0-9]+\b)*)|(?P<letter>[A-Z]\b)|(?P<month>{Contest.month_regex()})",
             title,
-        ):  # noqa
+        ):
             for delta in (-1, 1):
                 base_title = title
                 values = []
                 if value := match.group("number"):
-                    value = re.sub("[0-9]+", lambda x: str(int(x.group()) + delta), value)
+                    value = re.sub(r"[0-9]+", lambda x: str(int(x.group()) + delta), value)
                 elif value := match.group("letter"):
                     value = chr(ord(value) + delta)
                 elif value := match.group("month"):
@@ -951,7 +949,7 @@ class Contest(BaseModel):
     def standings_start_time(self):
         start_time = self.info.get("custom_start_time")
         if start_time:
-            return datetime.fromtimestamp(start_time, tz=timezone.utc)
+            return datetime.fromtimestamp(start_time, tz=UTC)
         return self.start_time
 
     @property
@@ -967,7 +965,7 @@ class Contest(BaseModel):
 
     @property
     def current_duration(self):
-        now = self.parsed_time or datetime.now(timezone.utc)
+        now = self.parsed_time or datetime.now(UTC)
         return max(0, min(self.duration_in_secs, (now - self.standings_start_time).total_seconds()))
 
     @property
@@ -1157,12 +1155,12 @@ class Contest(BaseModel):
 
     def is_live_statistics(self):
         if not self.parsed_time or self.parsed_time + timedelta(minutes=5) < timezone_now() or not self.is_running():
-            return
+            return None
         return hasattr(self, "live_statistics")
 
     @staticmethod
-    def get(value) -> Optional["Contest"]:
-        if isinstance(value, int) or isinstance(value, str) and value.isdigit():
+    def get(value) -> Contest | None:
+        if isinstance(value, int) or (isinstance(value, str) and value.isdigit()):
             return Contest.objects.filter(pk=value).first()
         if isinstance(value, str):
             qs = Contest.objects.filter(
@@ -1325,7 +1323,7 @@ class Problem(BaseModel):
 
     @staticmethod
     @timed_cache("15m")
-    def cached_get(contest, short) -> Optional["Problem"]:
+    def cached_get(contest, short) -> Problem | None:
         try:
             return Problem.objects.get(Q(short=short) & (Q(contest=contest) | Q(contests=contest)))
         except Problem.DoesNotExist:

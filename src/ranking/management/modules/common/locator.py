@@ -29,7 +29,7 @@ class Locator:
 
     def get_address(self, location, lang="en"):
         if not location:
-            return
+            return None
 
         location = re.sub(r"(\bг\.|\bг\b)", "", location)
         location = re.sub(r"<[^>]*>", " ", location)
@@ -40,7 +40,7 @@ class Locator:
         if self.default_locations and location_lower in self.default_locations:
             location = self.default_locations[location_lower]
             if location is None:
-                return
+                return None
 
         if self.locations is None or location not in self.locations:
             try:
@@ -60,7 +60,7 @@ class Locator:
     def get_country(self, location, lang="en"):
         address = self.get_address(location=location, lang=lang)
         if not address:
-            return
+            return None
         *_, country = map(str.strip, address.split(","))
         if country.startswith("The "):
             country = country[4:]
@@ -69,7 +69,7 @@ class Locator:
     def get_city(self, location, lang="en"):
         address = self.get_address(location=location, lang=lang)
         if not address or "," not in address:
-            return
+            return None
         *parts, _ = map(str.strip, address.split(","))
         for city in parts:
             name = city.split(" ")[-1].lower()
@@ -80,7 +80,7 @@ class Locator:
     def get_additional_info(self, location, lang="en"):
         address = self.get_address(location=location, lang=lang)
         if not address or "," not in address:
-            return
+            return None
         *parts, _ = map(str.strip, address.split(","))
         ret = {}
         for part in parts:
@@ -117,7 +117,7 @@ class Locator:
         with self.lock.acquire(timeout=60):
             self.locations = {}
             if os.path.exists(self.locations_file):
-                with open(self.locations_file, "r") as fo:
+                with open(self.locations_file) as fo:
                     data = yaml.safe_load(fo) or dict()
                     self.locations = {k: v for k, v in data.items() if v}
             if self.locations is None:
@@ -125,9 +125,8 @@ class Locator:
 
     def write(self):
         if self.locations is not None:
-            with self.lock.acquire(timeout=60):
-                with open(self.locations_file, "wb") as fo:
-                    yaml.dump(self.locations, fo, encoding="utf8", allow_unicode=True)
+            with self.lock.acquire(timeout=60), open(self.locations_file, "wb") as fo:
+                yaml.dump(self.locations, fo, encoding="utf8", allow_unicode=True)
 
     def __enter__(self):
         self.lock.acquire()

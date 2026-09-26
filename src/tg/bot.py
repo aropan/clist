@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import argparse
 import json
@@ -256,7 +255,7 @@ class Bot:
         if not args.no_paging and num_pages > 1:
             no_page = args.offset / args.limit + 1
             result += args.delimiter + "%d of %d" % (no_page, num_pages)
-            setattr(args, "paging__", {"no_page": no_page, "num_pages": num_pages})
+            args.paging__ = {"no_page": no_page, "num_pages": num_pages}
 
         yield result
 
@@ -275,7 +274,7 @@ class Bot:
         qs = Resource.objects.all()
         if args.grep:
             qs = qs.filter(host__iregex=args.grep)
-        result = args.delimiter.join("[{0.host}](http://{0.host}]/)".format(r) for r in qs)
+        result = args.delimiter.join(f"[{r.host}](http://{r.host}]/)" for r in qs)
         yield result
 
     def iamadmin(self, args):
@@ -301,7 +300,7 @@ class Bot:
                 )
                 if created:
                     msg = '%s is new admin @%s for "%s".' % (self.coder.user, settings.TELEGRAM_NAME, chat.title)
-                    delattr(self, "group_")
+                    del self.group_
                 else:
                     msg = "Hmmmm, problem with set new admin."
             else:
@@ -492,10 +491,9 @@ class Bot:
         if args.top_n is not None:
             skip_names_info = True
             args.top_n = args.top_n or None
-            if args.top_n:
-                if not 1 <= args.top_n <= settings.CODER_SUBSCRIPTION_TOP_N_LIMIT_:
-                    yield rf"Top N should be in range \[1, {settings.CODER_SUBSCRIPTION_TOP_N_LIMIT_}]."
-                    return
+            if args.top_n and not 1 <= args.top_n <= settings.CODER_SUBSCRIPTION_TOP_N_LIMIT_:
+                yield rf"Top N should be in range \[1, {settings.CODER_SUBSCRIPTION_TOP_N_LIMIT_}]."
+                return
             top_n_msg = f"subscribed to top {args.top_n}" if args.top_n else "unsubscribed from top"
             if subscription.top_n != args.top_n:
                 subscription.top_n = args.top_n
@@ -649,10 +647,9 @@ class Bot:
             unsubscribe_p.add_argument("-c", "--contest", help="Contest id, series or name")
 
             for a in list_p._actions:
-                if not isinstance(a, argparse._HelpAction):
-                    if a.default is not None:
-                        d = str(a.default).replace("\n", r"\n")
-                        a.help = a.help + '. Default: "%s"' % d.replace("%", "%%")
+                if not isinstance(a, argparse._HelpAction) and a.default is not None:
+                    d = str(a.default).replace("\n", r"\n")
+                    a.help = a.help + '. Default: "%s"' % d.replace("%", "%%")
 
             command_p.add_parser("/prev", description="Show previous page in paging")
             command_p.add_parser("/next", description="Show next page in paging")
@@ -693,7 +690,7 @@ class Bot:
 
                 self.chat_id = dargs.pop("chat_id__", self.coder_chat.chat_id)
                 if hasattr(self, "group_"):
-                    delattr(self, "group_")
+                    del self.group_
 
                 if c != "/repeat":
                     if "offset" not in dargs or "limit" not in args:
@@ -760,7 +757,7 @@ class Bot:
         if not isinstance(msg, dict):
             msg = {"text": msg}
         if not msg["text"]:
-            return
+            return None
         if len(msg["text"]) > MAX_MESSAGE_LENGTH:
             msg["text"] = msg["text"][: MAX_MESSAGE_LENGTH - 3] + "..."
 
@@ -795,7 +792,7 @@ class Bot:
                 delete_info = Chat.objects.filter(chat_id=chat_id).delete()
                 self.logger.warning(f"Chat {chat_id} not found. Deleted {delete_info}")
                 raise e
-            elif "can't parse entities" in error_message:
+            if "can't parse entities" in error_message:
                 ret = self._send_telegram_message(**msg)
             else:
                 raise e

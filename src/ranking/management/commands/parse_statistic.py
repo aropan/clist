@@ -11,7 +11,7 @@ import traceback
 from collections import OrderedDict, defaultdict
 from contextlib import contextmanager
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from functools import cache
 from html import unescape
 from math import isclose
@@ -886,7 +886,7 @@ class Command(BaseCommand):
                             skip_for_problem_stat = bool(r.get("_skip_for_problem_stat"))
                             last_activity = contest.start_time
                             if r.get("submit_time") and "timestamp" in custom_fields_types.get("submit_time", []):
-                                last_activity = datetime.fromtimestamp(r["submit_time"], tz=timezone.utc)
+                                last_activity = datetime.fromtimestamp(r["submit_time"], tz=UTC)
                             total_problems_solving = 0
 
                             def update_problems_info():
@@ -1862,7 +1862,7 @@ class Command(BaseCommand):
                                         log_type=log_type,
                                         log_id=submission_id,
                                         defaults={
-                                            "time": datetime.fromtimestamp(submission_time, tz=timezone.utc),
+                                            "time": datetime.fromtimestamp(submission_time, tz=UTC),
                                             "data": submission,
                                             "updated": now,
                                         },

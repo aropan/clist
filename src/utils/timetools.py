@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from functools import wraps
 from urllib.parse import parse_qs, urlparse
 
@@ -22,7 +22,7 @@ def parse_duration(value):
     return timedelta(seconds=seconds)
 
 
-def parse_datetime_from_url(value, tz=timezone.utc):
+def parse_datetime_from_url(value, tz=UTC):
     value = value.replace("&amp;", "&")
     parsed_url = urlparse(value)
     qs = parse_qs(parsed_url.query)
@@ -58,11 +58,11 @@ def parse_datetime(value, tz=None) -> datetime | None:
     if tz:
         value = f"{value} {tz}"
     value = re.sub(r"\bUTC\b\s*([+-][:0-9]+)(.*)", r"\2 \1", value, flags=re.IGNORECASE)
-    return dateutil.parser.parse(value).astimezone(tz=timezone.utc)
+    return dateutil.parser.parse(value).astimezone(tz=UTC)
 
 
 def datetime_from_timestamp(timestamp):
-    return datetime.fromtimestamp(timestamp, tz=timezone.utc)
+    return datetime.fromtimestamp(timestamp, tz=UTC)
 
 
 def datetime_to_str(dt):

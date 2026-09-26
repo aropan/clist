@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import collections
 import re
@@ -14,7 +13,7 @@ from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGe
 
 class Statistic(BaseModule):
     def __init__(self, **kwargs):
-        super(Statistic, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         if not self.standings_url:
             raise InitModuleException("Not set standings url for %s" % self.name)
 

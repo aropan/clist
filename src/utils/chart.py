@@ -25,7 +25,7 @@ def make_bins(src, dst, n_bins, logger=NullLogger(), field=None, step=None, qs=N
     if isinstance(src, str):
         if not dst:
             logger.warning(f"One of border is empty, field = {field}")
-            return
+            return None
         if (
             field
             and qs is not None
@@ -52,7 +52,7 @@ def make_bins(src, dst, n_bins, logger=NullLogger(), field=None, step=None, qs=N
         bins = [int(round(b)) for b in bins]
     elif isinstance(src, float):
         bins = [round(b, 2) for b in bins]
-    bins = list(sorted(set(bins)))
+    bins = sorted(set(bins))
     if isinstance(src, int) and len(bins) < n_bins:
         bins.append(bins[-1] + 1)
     elif len(bins) == 1 or force_ending:
@@ -126,7 +126,7 @@ def make_chart(
         related_field = field.split("__")[0]
         if related_field in related_fields or "___" in field:
             logger.error(f"use of an invalid field = {field}")
-            return
+            return None
         cast = cast or IntegerField()
         qs = qs.annotate(value=Cast(JSONF(field), cast))
     else:
@@ -144,7 +144,7 @@ def make_chart(
     dst = bounds["dst"]
     if src is None:
         logger.warning(f"Empty histogram, field = {field}")
-        return
+        return None
 
     if isinstance(src, datetime):
         context["x_type"] = "time"
@@ -180,8 +180,8 @@ def make_chart(
 
     for idx, row in enumerate(context["data"]):
         if isinstance(src, datetime):
-            st = re.findall("([0-9]+|.)", str(context["bins"][idx]))
-            fn = re.findall("([0-9]+|.)", str(context["bins"][idx + 1]))
+            st = re.findall(r"([0-9]+|.)", str(context["bins"][idx]))
+            fn = re.findall(r"([0-9]+|.)", str(context["bins"][idx + 1]))
             title = ""
             n_diff = 0
             for lhs, rhs in zip(st, fn):

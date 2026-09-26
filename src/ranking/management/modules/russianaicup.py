@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import json
 import re
@@ -58,11 +57,11 @@ class Statistic(BaseModule):
         raise ExceptionParseStandings("Is outdated")
 
         standings_url = self.standings_url
-        standings_url = re.sub(".*/(http.*)", r"\1", standings_url)
+        standings_url = re.sub(r".*/(http.*)", r"\1", standings_url)
 
         web_archive_url = self.info.get("parse", {}).get("web_archive_url")
         if web_archive_url:
-            web_archive_url = re.sub("/http.*", "/", web_archive_url)
+            web_archive_url = re.sub(r"/http.*", "/", web_archive_url)
             standings_url = web_archive_url + standings_url
 
         passed = datetime.utcnow().replace(tzinfo=pytz.utc) - self.end_time > timedelta(days=30)
@@ -87,13 +86,13 @@ class Statistic(BaseModule):
 
             page = Statistic.get(url)
 
-            match = re.search("<title>[^<]*-(?P<name>[^<]*)</title>", page)
+            match = re.search(r"<title>[^<]*-(?P<name>[^<]*)</title>", page)
             if codename not in match.group("name"):
-                return
+                return None
 
             if total_num_pages is None:
                 matches = re.findall(
-                    '<span[^>]*class="[^"]*page-index[^"]*"[^>]*pageindex="([0-9]+)"[^>]*>',
+                    r'<span[^>]*class="[^"]*page-index[^"]*"[^>]*pageindex="([0-9]+)"[^>]*>',
                     page,
                     re.I,
                 )
@@ -132,7 +131,7 @@ class Statistic(BaseModule):
 
                 participant = row.pop("Participant")
                 member = participant.value
-                if member in result or users and member not in users:
+                if member in result or (users and member not in users):
                     continue
                 r["member"] = member
                 if not web_archive_url:
@@ -229,7 +228,9 @@ class Statistic(BaseModule):
             row["_rating_data"] = rating_data_b64
 
         if not web_archive_url and "/1/" in self.standings_url:
-            match = re.search('<meta[^>]*name="x-csrf-token"[^>]*content="(?P<token>[^"]*)"[^>]*>', REQ.last_page, re.I)
+            match = re.search(
+                r'<meta[^>]*name="x-csrf-token"[^>]*content="(?P<token>[^"]*)"[^>]*>', REQ.last_page, re.I
+            )
             csrf_token = match.group("token")
 
             with PoolExecutor(max_workers=8) as executor:
@@ -269,7 +270,7 @@ class Statistic(BaseModule):
                 return {}
             ret = {}
             match = re.search(
-                """
+                r"""
                 <div[^>]*class="userInfo"[^>]*>[^<]*
                     <div[^>]class="name"[^>]*>(?P<name>[^<]*)</div>[^<]*
                     (?:<div[^>]*class="location"[^>]*>(?P<location>.*?)</div>)?
@@ -283,14 +284,14 @@ class Statistic(BaseModule):
             ret = {"name": match.group("name").strip()}
             location = match.group("location")
             if location:
-                country = re.split("<br/?>", location)[-1].strip()
+                country = re.split(r"<br/?>", location)[-1].strip()
                 ret["country"] = country
 
-            match = re.search('<a[^>]*class="userFace"[^>]*>[^<]*<img[^>]*src="(?P<url>[^"]*)"', page)
+            match = re.search(r'<a[^>]*class="userFace"[^>]*>[^<]*<img[^>]*src="(?P<url>[^"]*)"', page)
             if match:
                 ret["avatar"] = urllib.parse.urljoin(url, match.group("url"))
 
-            if re.search('<h[^>]*class="tableCaption"[^>]*>No contests<', page):
+            if re.search(r'<h[^>]*class="tableCaption"[^>]*>No contests<', page):
                 ret["rating"] = None
 
             match = re.search(r"userId\s*:\s*(?P<user_id>[0-9]+)", page)

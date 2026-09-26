@@ -12,9 +12,9 @@ def row_numbering(qs, pk, field="row_number"):
 
     sql_query, sql_params = qs.query.sql_with_params()
     qs = qs.model.objects.raw(
-        """
-        SELECT * FROM ({}) %s WHERE "%s" = %s
-        """.format(sql_query),
+        f"""
+        SELECT * FROM ({sql_query}) %s WHERE "%s" = %s
+        """,
         [*sql_params, db_table, field_pk, pk],
     )
     return qs

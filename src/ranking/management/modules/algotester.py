@@ -24,15 +24,15 @@ class Statistic(BaseModule):
             total = None
             problems_infos = OrderedDict()
             while total is None or offset < total:
-                url = f"https://algotester.com/en/ContestProblem/DisplayList/{cid}?actions=4&offset={offset}&limit={limit}"  # noqa
+                url = f"https://algotester.com/en/ContestProblem/DisplayList/{cid}?actions=4&offset={offset}&limit={limit}"
                 page = REQ.get(url, headers={"x-requested-with": "XMLHttpRequest"})
                 data = json.loads(page)
                 if total is None:
                     if "total" not in data:
-                        return
+                        return None
                     total = data["total"]
                 if "rows" not in data:
-                    return
+                    return None
 
                 for problem in data["rows"]:
                     code = str(problem["Id"])
@@ -52,9 +52,9 @@ class Statistic(BaseModule):
             problems_infos = OrderedDict()
             page = REQ.get(self.standings_url)
             matches = re.finditer(
-                '<th[^>]*(?:data-field="(?P<field>[^"]*)"[^>]*|data-formatter="(?P<formatter>[^"]*)"[^>]*){2}>(?P<value>[^<]*)</th>',
+                r'<th[^>]*(?:data-field="(?P<field>[^"]*)"[^>]*|data-formatter="(?P<formatter>[^"]*)"[^>]*){2}>(?P<value>[^<]*)</th>',
                 page,
-            )  # noqa
+            )
             for match in matches:
                 formatter = match.group("formatter")
                 if formatter.startswith("formatter"):
@@ -83,7 +83,7 @@ class Statistic(BaseModule):
                 url = contestant.pop("Url")
                 if url is None:
                     continue
-                match = re.search("(?P<type>Account|Team)/Display/(?P<key>[0-9]+)", url)
+                match = re.search(r"(?P<type>Account|Team)/Display/(?P<key>[0-9]+)", url)
                 handle = match.group("type").lower() + match.group("key")
                 r = result.setdefault(handle, OrderedDict())
                 r["member"] = handle

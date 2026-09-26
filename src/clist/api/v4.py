@@ -14,7 +14,7 @@ from clist.api.v3 import (
     BaseModelResource,
     ContestResource,
     ResourceResource,
-    StatisticsResource,  # noqa
+    StatisticsResource,  # ruff: ignore[unused-import]
     use_for_is_real,
     use_for_is_virtual,
     use_in_detail_only,

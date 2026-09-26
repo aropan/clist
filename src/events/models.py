@@ -270,7 +270,7 @@ class Team(BaseModel):
         filename = event.logins_paths[self.status_label]
         if cache is None or filename not in cache:
             passwords = {}
-            with open(filename, "r") as fo:
+            with open(filename) as fo:
                 reader = csv.reader(fo)
                 for username, password in reader:
                     login = Login.objects.filter(username=username).first()
@@ -303,7 +303,7 @@ class JoinRequestManager(models.Manager):
     DELAY_BEFORE_DELETE = timedelta(hours=1)
 
     def get_queryset(self):
-        qs = super(JoinRequestManager, self).get_queryset()
+        qs = super().get_queryset()
         qs.filter(created__lte=now() - self.DELAY_BEFORE_DELETE).delete()
         return qs
 
@@ -336,7 +336,7 @@ class Login(BaseModel):
 
     def send_email(self, connection=None):
         if self.is_sent:
-            return
+            return None
         event = self.team.event
         filepath = event.email_conf["logins-templates"][TeamStatus.labels[self.stage]]
         template = get_template(filepath)

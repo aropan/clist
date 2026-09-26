@@ -1,11 +1,10 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import logging
 import re
 from collections import OrderedDict
 from datetime import datetime, timedelta
-from pprint import pprint  # noqa
+from pprint import pprint  # ruff: ignore[unused-import]
 
 import coloredlogs
 import pytz
@@ -28,7 +27,7 @@ class Statistic(BaseModule):
 
         page = REQ.get(self.standings_url)
 
-        html_table = re.search("<table[^>]*>.*?</table>", page, re.MULTILINE | re.DOTALL).group(0)
+        html_table = re.search(r"<table[^>]*>.*?</table>", page, re.MULTILINE | re.DOTALL).group(0)
         table = parsed_table.ParsedTable(
             html_table,
             as_list=True,

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import os
 import shutil
@@ -21,7 +20,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         edition_id = "GeoLite2-Country"
-        download_url = f"https://download.maxmind.com/app/geoip_download?edition_id={edition_id}&license_key={settings.GEOIP_LICENSE_KEY}&suffix=tar.gz"  # noqa E501
+        download_url = f"https://download.maxmind.com/app/geoip_download?edition_id={edition_id}&license_key={settings.GEOIP_LICENSE_KEY}&suffix=tar.gz"
         response = requests.get(download_url, stream=True)
         with tempfile.TemporaryDirectory() as temp_dir:
             self.logger.info(f"temp_dir = {temp_dir}")

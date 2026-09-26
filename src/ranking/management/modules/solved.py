@@ -14,7 +14,7 @@ from utils.ratelimiter import RateLimiter
 class Statistic(BaseModule):
     SCOREBOARD_URL_FORMAT_ = "https://scoreboard.solved.ac/?contestId={cid}"
     API_SCOREBOARD_URL_FORMAT_ = (
-        "https://solved.ac/api/v3/contest/scoreboard?contestId={cid}&page={page}&rated=true&rivals=false"  # noqa
+        "https://solved.ac/api/v3/contest/scoreboard?contestId={cid}&page={page}&rated=true&rivals=false"
     )
 
     def get_standings(self, users=None, statistics=None, **kwargs):
@@ -101,7 +101,7 @@ class Statistic(BaseModule):
         def fetch_profile(handle):
             profile_url = resource.profile_url.format(account=handle)
             profile_page = REQ.get(profile_url, n_attempts=3)
-            search_result = re.search('<script[^>]*id="__NEXT_DATA__"[^>]*>(?P<json>[^<]*)</script>', profile_page)
+            search_result = re.search(r'<script[^>]*id="__NEXT_DATA__"[^>]*>(?P<json>[^<]*)</script>', profile_page)
             profile_data = json.loads(search_result.group("json"))
             profile_data = profile_data["props"]["pageProps"]
             data = profile_data["user"]

@@ -138,7 +138,7 @@ class TeamAdmin(BaseModelAdmin):
                 done += 1
             else:
                 skip += 1
-        self.message_user(request, "{} successfully created logins, {} skipped.".format(done, skip))
+        self.message_user(request, f"{done} successfully created logins, {skip} skipped.")
 
     bind_login.short_description = "Bind login with current status as stage"
 
@@ -184,7 +184,7 @@ class LoginAdmin(BaseModelAdmin):
         response = HttpResponse(content_type="text")
         response["Content-Disposition"] = "attachment; filename=namming.txt"
         for login in queryset:
-            response.write("{} {}\n".format(login.username, login.team.title))
+            response.write(f"{login.username} {login.team.title}\n")
         return response
 
     get_renaming_data.short_description = "Get raw data for renameing teams"
@@ -193,7 +193,7 @@ class LoginAdmin(BaseModelAdmin):
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = "attachment; filename=passwords.csv"
         for login in queryset:
-            response.write("{},{},{}\n".format(login.username, login.password, login.team.title))
+            response.write(f"{login.username},{login.password},{login.team.title}\n")
         return response
 
     get_passwords.short_description = "Get passwords"
@@ -227,7 +227,7 @@ class LoginAdmin(BaseModelAdmin):
         for connection in list(cache.values()):
             connection.close()
 
-        self.message_user(request, "{} successfully send emails, {} skipped, {} failed.".format(done, skip, failed))
+        self.message_user(request, f"{done} successfully send emails, {skip} skipped, {failed} failed.")
 
     send_email.short_description = "Send email with template message by stage"
 

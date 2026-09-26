@@ -1,6 +1,6 @@
 import io
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from pathlib import Path
 from unittest.mock import Mock
 
@@ -201,7 +201,7 @@ def test_write_checksums_covers_manifest_and_archive_files(tmp_path: Path) -> No
 
 
 def test_retention_selects_only_old_verified_directories(tmp_path: Path) -> None:
-    now = datetime(2026, 8, 10, 12, tzinfo=timezone.utc)
+    now = datetime(2026, 8, 10, 12, tzinfo=UTC)
     old = tmp_path / "postgresql-20260701T120000Z"
     recent = tmp_path / "postgresql-20260809T120000Z"
     incomplete = tmp_path / "postgresql-20260601T120000Z"
@@ -222,7 +222,7 @@ def test_retention_selects_only_old_verified_directories(tmp_path: Path) -> None
 
 
 def test_rotation_removes_only_selected_backup(backup_config: BackupConfig) -> None:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     old = backup_config.root / "postgresql-20260701T120000Z"
     recent = backup_config.root / "postgresql-20990101T120000Z"
     write_manifest(old, completed_at=now - timedelta(days=40))
@@ -286,7 +286,7 @@ def test_failed_dump_removes_only_current_in_progress_directory(
     application = BackupApplication(backup_config, Console(file=io.StringIO(), force_terminal=False))
     database = DatabaseInfo(1, "app", 1, "001-app")
     existing = backup_config.root / "postgresql-20260101T000000Z"
-    write_manifest(existing, completed_at=datetime(2026, 1, 1, tzinfo=timezone.utc))
+    write_manifest(existing, completed_at=datetime(2026, 1, 1, tzinfo=UTC))
     monkeypatch.setattr(application, "preflight", lambda: [database])
     monkeypatch.setattr(application, "dump_globals", Mock(side_effect=BackupError("expected failure")))
 

@@ -26,7 +26,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         conf_file = options["conf_file"]
         if os.path.exists(conf_file):
-            with open(options["conf_file"], "r") as fo:
+            with open(options["conf_file"]) as fo:
                 conf = yaml.safe_load(fo)
         else:
             conf = {}

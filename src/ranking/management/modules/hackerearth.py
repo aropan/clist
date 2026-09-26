@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import json
 import re
@@ -27,7 +26,7 @@ class Statistic(BaseModule):
     LOGGED_IN = False
 
     def __init__(self, **kwargs):
-        super(Statistic, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     @staticmethod
     def _get(url, lock=Lock()):
@@ -76,7 +75,7 @@ class Statistic(BaseModule):
         except ExceptionParseStandings as e:
             raise ExceptionParseStandings(e.args[0])
 
-        match = re.search('<div[^>]*class="event-id hidden"[^>]*>(?P<id>[0-9]*)</div>', page)
+        match = re.search(r'<div[^>]*class="event-id hidden"[^>]*>(?P<id>[0-9]*)</div>', page)
         if not match:
             raise ExceptionParseStandings("Not found event id")
 
@@ -89,7 +88,7 @@ class Statistic(BaseModule):
 
             url = self.RANKING_URL_FORMAT_.format(event_id=event_id, page=page_index)
             page = self._get(url)
-            page = re.sub("<!--.*?-->", "", page, flags=re.DOTALL)
+            page = re.sub(r"<!--.*?-->", "", page, flags=re.DOTALL)
 
             table = parsed_table.ParsedTable(page)
 
@@ -127,7 +126,7 @@ class Statistic(BaseModule):
                         if members_teams:
                             r["members"] = []
                             url = members_teams[0]
-                            r["team_id"] = re.search("(?P<team_id>[0-9]+)/?$", url).group("team_id")
+                            r["team_id"] = re.search(r"(?P<team_id>[0-9]+)/?$", url).group("team_id")
                             r["name"] = name
                             r["members_url"] = url
                         else:
@@ -141,7 +140,7 @@ class Statistic(BaseModule):
                         r["solving"] = float(v.value.split()[0])
                     elif "total time" in f or "hh:mm:ss" in f:
                         r["penalty"] = v.value.strip()
-                    elif re.match("^p[0-9]+", f):
+                    elif re.match(r"^p[0-9]+", f):
                         short = k.split()[0]
                         if v.value in ["N/A", "Недоступно"]:
                             continue
@@ -162,7 +161,7 @@ class Statistic(BaseModule):
                                 r["solved"]["solving"] += 1
                             if "background-color: #d5e8d2" in v.column.attrs.get("style", ""):
                                 p["first_ac"] = True
-                if not r or r.get("solving", 0) < 1e-9 and "problems" not in r:
+                if not r or (r.get("solving", 0) < 1e-9 and "problems" not in r):
                     continue
                 if fixed_rank is not None and fixed_rank != r["place"]:
                     continue
@@ -208,7 +207,7 @@ class Statistic(BaseModule):
                 fetch_page(page_index + 1)
         else:
             page, problems_info = fetch_page(1)
-            pages = re.findall('<a[^>]*href="[^"]*/page/([0-9]+)/?"', page)
+            pages = re.findall(r'<a[^>]*href="[^"]*/page/([0-9]+)/?"', page)
             max_page_index = max(map(int, pages)) if pages else 1
 
             if users is None or users:

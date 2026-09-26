@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import collections
 import functools
 import html
@@ -98,7 +96,7 @@ class Statistic(BaseModule):
     def fetch_submissions(self, fuser=None, c_page=1):
         if self._fetch_submissions_limit is not None:
             if not self._fetch_submissions_limit:
-                return
+                return None
             self._fetch_submissions_limit -= 1
 
         url = self.SUBMISSIONS_URL_.format(self) + f"?page={c_page}"
@@ -108,7 +106,7 @@ class Statistic(BaseModule):
         codes = set()
         for attempt in range(4):
             if self._stop or self._forbidden:
-                return
+                return None
 
             with rate_limiter:
                 try:
@@ -116,15 +114,15 @@ class Statistic(BaseModule):
                     break
                 except FailOnGetResponse as e:
                     if e.code == 404:
-                        return
+                        return None
                     codes.add(e.code)
                     time.sleep(attempt)
                 except ProxyLimitReached:
-                    return
+                    return None
         else:
             if 403 in codes:
                 self._forbidden = True
-            return
+            return None
 
         regex = "<table[^>]*>.*?</table>"
         entry = re.search(regex, page, re.DOTALL)
@@ -319,7 +317,7 @@ class Statistic(BaseModule):
         match = re.search(r"(?<=<li>)writer:.*?</?l[iu]>", page, re.I | re.DOTALL)
         writers = []
         if match:
-            matches = re.findall("(?<=>)[^<]+(?=</)", match.group())
+            matches = re.findall(r"(?<=>)[^<]+(?=</)", match.group())
             writers = list()
             for m in matches:
                 writers.extend(map(str.strip, re.split(r"[,\s]+", m)))
@@ -430,7 +428,7 @@ class Statistic(BaseModule):
             try:
                 page = self._get(info["url"])
                 match = re.search(
-                    r'<span[^>]*class="lang-[a-z]+"[^>]*>\s*(<script[^<]*>\s*</script>\s*)?<p>\s*(?:配点|Score)\s*(?:：|:)\s*<var>\s*(?P<score>[0-9]+)\s*</var>\s*(?:点|points)\s*</p>',  # noqa: RUF001
+                    r'<span[^>]*class="lang-[a-z]+"[^>]*>\s*(<script[^<]*>\s*</script>\s*)?<p>\s*(?:配点|Score)\s*(?:：|:)\s*<var>\s*(?P<score>[0-9]+)\s*</var>\s*(?:点|points)\s*</p>',  # ruff: ignore[ambiguous-unicode-character-string]
                     page,
                     re.I,
                 )
@@ -451,7 +449,7 @@ class Statistic(BaseModule):
 
         if any("full_score" not in t for t in task_info.values()):
             page = self._get(self.url)
-            for match in re.finditer("<table[^>]*>.*</table>", page, re.MULTILINE | re.DOTALL):
+            for match in re.finditer(r"<table[^>]*>.*</table>", page, re.MULTILINE | re.DOTALL):
                 table = parsed_table.ParsedTable(match.group(0))
                 header = [c.value for c in table.header.columns]
                 if header != ["Task", "Score"]:
@@ -608,7 +606,7 @@ class Statistic(BaseModule):
                 no_url = False
                 for p in problems.values():
                     u = p.get("upsolving", {})
-                    if "result" in p and "url" not in p or "result" in u and "url" not in u:
+                    if ("result" in p and "url" not in p) or ("result" in u and "url" not in u):
                         no_url = True
                         break
                 if no_url:
@@ -675,7 +673,7 @@ class Statistic(BaseModule):
             """,
             re.VERBOSE,
         )
-        avatar_re = re.compile("""<img[^>]*class=["']avatar["'][^>]*src=["'](?P<url>[^"']*/icons/[^"']*)["'][^>]*>""")
+        avatar_re = re.compile(r"""<img[^>]*class=["']avatar["'][^>]*src=["'](?P<url>[^"']*/icons/[^"']*)["'][^>]*>""")
 
         @rate_limiter
         def fetch_profile(user):
@@ -687,7 +685,7 @@ class Statistic(BaseModule):
                     return None
                 code = e.code
                 if code == 404:
-                    return
+                    return None
                 return {}
             ret = {}
             matches = key_value_re.finditer(page, re.VERBOSE)
@@ -701,7 +699,7 @@ class Statistic(BaseModule):
                 ret["avatar"] = match.group("url")
             if "Rating" in ret:
                 ret["rating"] = int(ret["Rating"])
-            match = re.search(">var rating_history=(?P<rating_history>[^<]*);</", page)
+            match = re.search(r">var rating_history=(?P<rating_history>[^<]*);</", page)
             if match:
                 contest_addition_update = {}
                 rating_history = json.loads(match.group("rating_history"))
@@ -749,7 +747,7 @@ class Statistic(BaseModule):
             raise ExceptionParseStandings("Not found url")
 
         page = Statistic._get(problem["url"])
-        match = re.search('<pre[^>]*id="submission-code"[^>]*>(?P<source>[^<]*)</pre>', page)
+        match = re.search(r'<pre[^>]*id="submission-code"[^>]*>(?P<source>[^<]*)</pre>', page)
         if not match:
             raise ExceptionParseStandings("Not found source code")
         solution = html.unescape(match.group("source"))

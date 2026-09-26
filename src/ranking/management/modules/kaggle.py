@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import collections
 import json
 from copy import deepcopy
@@ -28,7 +26,7 @@ class Statistic(BaseModule):
     CURL_COOKIE_FILE_ = "sharedfiles/resource/kaggle/cookies.txt"
 
     def __init__(self, **kwargs):
-        super(Statistic, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     @classmethod
     def _get(cls, *args, **kwargs):

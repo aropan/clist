@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import collections
 import re
@@ -100,7 +99,7 @@ class Statistic(BaseModule):
                             full_scores.add(value)
                     elif (
                         (ids := v.row.node.xpath("@id"))
-                        and (match := re.match("^ranking_row_(?P<id>[0-9]+)$", ids[0]))
+                        and (match := re.match(r"^ranking_row_(?P<id>[0-9]+)$", ids[0]))
                         and "member" not in row
                     ):
                         row["name"] = v.value

@@ -129,7 +129,7 @@ def process_access_token(request, service, access_token):
 
         response = json.loads(response.text)
         response = response[data_field] if data_field else response
-        while isinstance(response, list) or isinstance(response, dict) and len(response) == 1:
+        while isinstance(response, list) or (isinstance(response, dict) and len(response) == 1):
             array = response if isinstance(response, list) else list(response.values())
             response = array[0]
             for d in array[1:]:
@@ -224,11 +224,11 @@ USERNAME_EXIST_ERROR = "User already exist."
 def username_error(username):
     if not username:
         return USERNAME_EMPTY_ERROR
-    elif len(username) > 30:
+    if len(username) > 30:
         return USERNAME_LONG_ERROR
-    elif not re.match(r"^[\-A-Za-z0-9_@\+\.]{1,30}$", username):
+    if not re.match(r"^[\-A-Za-z0-9_@\+\.]{1,30}$", username):
         return USERNAME_WRONG_ERROR
-    elif User.objects.filter(username__iexact=username).exists():
+    if User.objects.filter(username__iexact=username).exists():
         return USERNAME_EXIST_ERROR
     return False
 
@@ -365,7 +365,7 @@ def form(request, uuid):
             request.session["token_url"] = form_url
             request.session["token_code_args"] = form.service_code_args
             return redirect(reverse("auth:query", args=(form.service.name,)))
-        elif action == "logout":
+        if action == "logout":
             request.session.pop("form_token_id", None)
         elif action == "register":
             if request.headers.get("X-Secret") != form.secret:
@@ -380,8 +380,7 @@ def form(request, uuid):
                     if not credential:
                         if credential_qs.first():
                             return HttpResponseBadRequest("Credential already approved")
-                        else:
-                            return HttpResponseBadRequest("Credential not found")
+                        return HttpResponseBadRequest("Credential not found")
                     credential.state = Credential.State.APPROVED
                     credential.save(update_fields=["state"])
 
@@ -420,7 +419,7 @@ def form_stats(request, uuid):
 
     chart_credentials = credentials
     timing = request.get_filtered_value("timing", options=["current", "total"])
-    if timing == "current" or not timing and not form.is_closed():
+    if timing == "current" or (not timing and not form.is_closed()):
         if not form.start_time:
             request.logger.warning("Form has no start time, showing total statistics instead.")
         else:

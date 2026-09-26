@@ -15,7 +15,7 @@ class Statistic(BaseModule):
             raise ExceptionParseStandings("No standings URL provided")
 
         page = REQ.get(self.standings_url)
-        page = re.sub('<[^>]*class="sort-indicator"[^>]*>[^<]*</[^>]*>', "", page)
+        page = re.sub(r'<[^>]*class="sort-indicator"[^>]*>[^<]*</[^>]*>', "", page)
         header_mapping = {
             "": "place",
             "#": "place",
@@ -71,7 +71,7 @@ class Statistic(BaseModule):
                 try:
                     problem_url = self.standings_url.replace("/standings/", f"/problems/{short}/")
                     problem_page, problem_url = REQ.get(problem_url, return_url=True)
-                    match = re.search("<h1[^>]*>(?P<name>.*?)</h1>", problem_page)
+                    match = re.search(r"<h1[^>]*>(?P<name>.*?)</h1>", problem_page)
                     problem_name = match.group("name")
 
                     def strikethrough(m):

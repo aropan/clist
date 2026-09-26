@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import re
 from collections import OrderedDict
 from urllib.parse import urljoin
@@ -16,8 +14,8 @@ class Statistic(BaseModule):
 
         page = REQ.get(self.url)
 
-        has_en = re.search("<option selected>en</option>", page)
-        has_fi = re.search("<option selected>fi</option>", page)
+        has_en = re.search(r"<option selected>en</option>", page)
+        has_fi = re.search(r"<option selected>fi</option>", page)
 
         if not has_en and has_fi:
             form = REQ.form()
@@ -29,7 +27,7 @@ class Statistic(BaseModule):
         matches = re.finditer(
             r'<[^>]*class="task"[^>]*>\s*<b>(?P<short>[^<]*)</b>\s*<a[^>]*href="(?P<url>[^"]*)"[^>]*>(?P<name>[^<]*)</a>',
             page,
-        )  # noqa: E501
+        )
         problem_infos = dict()
         for match in matches:
             short = match.group("short").strip()
@@ -38,7 +36,7 @@ class Statistic(BaseModule):
             problem_infos[short] = {"short": short, "name": name, "url": url}
 
         page = REQ.get(standings_url)
-        table_class = re.search('<table[^>]*class="(?P<class>scoreboard[^>]*)"[^>]*>', page)
+        table_class = re.search(r'<table[^>]*class="(?P<class>scoreboard[^>]*)"[^>]*>', page)
         table_class = table_class.group("class").split()
         table_class.remove("scoreboard")
         if len(table_class) != 1:

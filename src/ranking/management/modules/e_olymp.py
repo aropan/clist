@@ -171,9 +171,7 @@ query GetScoreboard($id: ID!, $first: Int, $offset: Int) {
 
             info = {}
             return_data = {"info": info}
-            if account.name:
-                member_id = account.key
-            elif re.match("^[a-z0-9]{26}$", account.key):
+            if account.name or re.match(r"^[a-z0-9]{26}$", account.key):
                 member_id = account.key
             else:
                 url = resource.profile_url.format(**account.dict_with_info())

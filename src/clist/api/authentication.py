@@ -120,7 +120,7 @@ class OAuth2ScopedAuthentication(OAuth20Authentication):
         you can also specify only one scope(instead of a list), and that scope will the only scope that has
         permission to the according method
         """
-        super(OAuth2ScopedAuthentication, self).__init__(realm)
+        super().__init__(realm)
         self.POST = post
         if use_default:
             self.GET = get or post
@@ -139,7 +139,7 @@ class OAuth2ScopedAuthentication(OAuth20Authentication):
             self.DELETE = delete
 
     def verify_access_token(self, key, request, **kwargs):
-        token = super(OAuth2ScopedAuthentication, self).verify_access_token(key, request, **kwargs)
+        token = super().verify_access_token(key, request, **kwargs)
         if not self.check_scope(token, request):
             raise OAuthError("AccessToken does not meet scope requirement")
         # TODO: Return the actual scope granted if it is different

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 from collections import defaultdict
 from logging import getLogger
@@ -41,11 +40,11 @@ def set_accounts_fields(resources, logger):
             fields_types = {k: list(v) for k, v in fields_types.items()}
             resource_accounts_fields_types = resource.accounts_fields_types
 
-            fields = list(sorted(set(resource_accounts_fields_types.keys()) | set(fields_types.keys())))
+            fields = sorted(set(resource_accounts_fields_types.keys()) | set(fields_types.keys()))
             first_log = True
             for field in fields:
-                new_types = list(sorted(fields_types.get(field, [])))
-                orig_types = list(sorted(resource_accounts_fields_types.get(field, [])))
+                new_types = sorted(fields_types.get(field, []))
+                orig_types = sorted(resource_accounts_fields_types.get(field, []))
                 if new_types == orig_types:
                     continue
                 if (orig_types or new_types) and first_log:
@@ -78,11 +77,11 @@ def set_problems_fields(resources, logger):
             fields_types = {k: list(v) for k, v in fields_types.items()}
             resource_problems_fields_types = resource.problems_fields.get("types", {})
 
-            fields = list(sorted(set(resource_problems_fields_types.keys()) | set(fields_types.keys())))
+            fields = sorted(set(resource_problems_fields_types.keys()) | set(fields_types.keys()))
             first_log = True
             for field in fields:
-                new_types = list(sorted(fields_types.get(field, [])))
-                orig_types = list(sorted(resource_problems_fields_types.get(field, [])))
+                new_types = sorted(fields_types.get(field, []))
+                orig_types = sorted(resource_problems_fields_types.get(field, []))
                 if new_types == orig_types:
                     continue
                 if (orig_types or new_types) and first_log:
@@ -123,11 +122,11 @@ def set_statistics_fields(resources, logger):
             fields_types = {k: list(v) for k, v in fields_types.items()}
             resource_statistics_fields_types = resource.statistics_fields.get("types", {})
 
-            fields = list(sorted(set(resource_statistics_fields_types.keys()) | set(fields_types.keys())))
+            fields = sorted(set(resource_statistics_fields_types.keys()) | set(fields_types.keys()))
             first_log = True
             for field in fields:
-                new_types = list(sorted(fields_types.get(field, [])))
-                orig_types = list(sorted(resource_statistics_fields_types.get(field, [])))
+                new_types = sorted(fields_types.get(field, []))
+                orig_types = sorted(resource_statistics_fields_types.get(field, []))
                 if new_types == orig_types:
                     continue
                 if (orig_types or new_types) and first_log:
@@ -200,7 +199,7 @@ class Command(BaseCommand):
     help = "Set resources fields"
 
     def __init__(self, *args, **kw):
-        super(Command, self).__init__(*args, **kw)
+        super().__init__(*args, **kw)
         self.logger = getLogger("clist.set_resources_fields")
 
     def add_arguments(self, parser):

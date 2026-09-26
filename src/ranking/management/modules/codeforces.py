@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import html
 import json
 import os
@@ -120,7 +118,7 @@ def _get(url, *args, lang="en", return_url=False, **kwargs):
         rcpc = "".join(("0" if x < 16 else "") + hex(x)[2:] for x in map(ord, ret))
         REQ.add_cookie("RCPC", rcpc)
 
-        result = re.search('document.location.href="(?P<url>[^"]*)"', page)
+        result = re.search(r'document.location.href="(?P<url>[^"]*)"', page)
         url = result.group("url")
         page, last_url = REQ.get(url, *args, return_url=True, **kwargs)
         REQ.save_cookie()
@@ -147,7 +145,7 @@ class Statistic(BaseModule):
             self.api_key = api.split(":") if ":" in api else API_KEYS[api]
         else:
             self.api_key = DEFAULT_API_KEY
-        if not re.match("^[0-9]+$", cid):
+        if not re.match(r"^[0-9]+$", cid):
             raise InitModuleException(f"Contest id {cid} should be number")
         self.cid = cid
 
@@ -159,7 +157,7 @@ class Statistic(BaseModule):
         if not match:
             if with_exception:
                 raise ExceptionParseStandings("Not found table")
-            return
+            return None
         html_table = match.group(0)
         mapping = {
             "#": "place",
@@ -233,7 +231,7 @@ class Statistic(BaseModule):
             "problems": list(problems_info.values()),
         }
 
-        match = re.search('<span class="contest-status">([^<]*)</span>', page)
+        match = re.search(r'<span class="contest-status">([^<]*)</span>', page)
         if match:
             standings["status"] = slug(match.group(1))
 
@@ -282,7 +280,11 @@ class Statistic(BaseModule):
                 p = p.setdefault("upsolving", {})
 
             update_result = "result" not in p or is_solved(p["result"]) < is_accepted
-            if update_result or "submission_id" not in p or p["submission_id"] > info["submission_id"] and is_accepted:
+            if (
+                update_result
+                or "submission_id" not in p
+                or (p["submission_id"] > info["submission_id"] and is_accepted)
+            ):
                 if update_result:
                     info["result"] = "+" if is_accepted else "-"
                 p.update(info)
@@ -318,7 +320,7 @@ class Statistic(BaseModule):
             round_data["problem"] = problem_name
             problems_infos[problem_name] = {"name": problem_name}
             advancing_members = round_data.setdefault("advancing_members", [])
-            if "winner" in match and match["winner"]:
+            if match.get("winner"):
                 advancing_members.append(match["winner"])
 
             single_matches = match.get("single_matches") or []
@@ -379,7 +381,7 @@ class Statistic(BaseModule):
     def get_blitz_cup_standings_from_html(self):
         page = _get(self.standings_url, lang="ru")
         content = re.search(r'<div[^>]*class="content"[^>]*>.*?</div>', page, re.DOTALL).group(0)
-        matches = re.finditer("<(?P<tag>li|h3)>(?P<content>.*?)</(?:li|h3)>", content)
+        matches = re.finditer(r"<(?P<tag>li|h3)>(?P<content>.*?)</(?:li|h3)>", content)
         result = {}
         problem_infos = {}
         member_rounds = defaultdict(list)
@@ -423,7 +425,7 @@ class Statistic(BaseModule):
             if contest_time_match := re.search(r'<a[^>]*class="contest-time"[^>]*href="(?P<url>[^"]*)"[^>]*>', match):
                 contest_time = parse_datetime(contest_time_match.group("url")).timestamp()
             elif contest_time and (contest_time_match := re.search(r"[^;()]*UTC\s*[+-][^;()]*", match)):
-                contest_time = f"{str(self.start_time.year)} {contest_day} {contest_time_match.group()}"
+                contest_time = f"{self.start_time.year!s} {contest_day} {contest_time_match.group()}"
                 contest_time = parse_datetime(contest_time).timestamp()
             else:
                 contest_time = None
@@ -679,7 +681,7 @@ class Statistic(BaseModule):
                     if is_ghost and member["name"]:
                         r["name"] = member["name"]
                         r["_no_update_name"] = True
-                    elif grouped and (not upsolve and not is_gym or "name" not in r):
+                    elif grouped and ((not upsolve and not is_gym) or "name" not in r):
                         r["name"] = ", ".join(m["handle"] for m in party["members"])
                         if "teamId" in party:
                             r["team_id"] = party["teamId"]
@@ -858,7 +860,7 @@ class Statistic(BaseModule):
 
         def to_score(x):
             return (
-                (1 if x.startswith("+") or not x.startswith("-") and not x.startswith("?") and float(x) > 0 else 0)
+                (1 if x.startswith("+") or (not x.startswith("-") and not x.startswith("?") and float(x) > 0) else 0)
                 if isinstance(x, str)
                 else x
             )
@@ -901,12 +903,9 @@ class Statistic(BaseModule):
         ):
             standings["default_problem_full_score"] = "max" if first_score > last_score else "min"
 
-        if re.search("^educational codeforces round", self.name, re.IGNORECASE):
-            standings["options"].setdefault("timeline", {}).update({
-                "attempt_penalty": 10 * 60,
-                "challenge_score": False,
-            })
-        elif re.search(r"\<div\.\s*3\>", self.name, re.IGNORECASE):
+        if re.search(r"^educational codeforces round", self.name, re.IGNORECASE) or re.search(
+            r"\<div\.\s*3\>", self.name, re.IGNORECASE
+        ):
             standings["options"].setdefault("timeline", {}).update({
                 "attempt_penalty": 10 * 60,
                 "challenge_score": False,
@@ -959,7 +958,7 @@ class Statistic(BaseModule):
                     users[index] = infos[index]["handle"]
                 break
             if data["status"] == "FAILED" and (
-                match := re.search("handles: User with handle (?P<handle>.*) not found", data["comment"])
+                match := re.search(r"handles: User with handle (?P<handle>.*) not found", data["comment"])
             ):
                 handle = match.group("handle")
                 if handle not in users:
@@ -1030,7 +1029,7 @@ class Statistic(BaseModule):
         # page, last_url = _get(problem['url'], return_url=True)
         # if last_url != problem['url']:
         #     raise ExceptionParseStandings('Not allowed to view source code')
-        # result = re.search('<pre[^>]*id="program-source-text"[^>]*class="(?P<class>[^"]*)"[^>]*>(?P<source>[^<]*)</pre>', page)  # noqa
+        # result = re.search('<pre[^>]*id="program-source-text"[^>]*class="(?P<class>[^"]*)"[^>]*>(?P<source>[^<]*)</pre>', page)  # ruff: ignore[line-too-long]
         # if not result:
         #     raise ExceptionParseStandings('Not found source code')
         # solution = html.unescape(result.group('source'))

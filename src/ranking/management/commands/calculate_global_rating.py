@@ -162,7 +162,7 @@ class Command(BaseCommand):
                 for idx, history in enumerate(player.event_history):
                     change = history.rating_mu - rating if idx else None
                     rating = history.rating_mu
-                    statistics_updates[(pk, history.contest_index)] = (rating, change)
+                    statistics_updates[pk, history.contest_index] = (rating, change)
             batch_size = int(len(coders) ** 0.5 + 1)
             Coder.objects.bulk_update(coders.values(), ["global_rating"], batch_size=batch_size)
             self.logger.info("done")

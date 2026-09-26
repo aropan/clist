@@ -5,7 +5,7 @@ import operator
 from collections import OrderedDict, defaultdict
 from datetime import timedelta
 from logging import getLogger
-from pprint import pprint  # noqa
+from pprint import pprint  # ruff: ignore[unused-import]
 
 from django.core.management.base import BaseCommand
 from django.db.models import Q
@@ -46,12 +46,9 @@ def is_skip(contest, statistic):
         return True
 
     return bool(
-        statistic.account.info.get("is_team")
-        and not statistic.account.info.get("members")
-        or statistic.addition.get("team_id")
-        and not statistic.addition.get("_members")
-        or old_rating_only
-        and statistic.get_old_rating() is None
+        (statistic.account.info.get("is_team") and not statistic.account.info.get("members"))
+        or (statistic.addition.get("team_id") and not statistic.addition.get("_members"))
+        or (old_rating_only and statistic.get_old_rating() is None)
     )
 
 
@@ -73,7 +70,7 @@ def get_solved(result, problem, not_full_multiplier=1e-3):
     result_is_solved = is_solved(result)
     if result_is_solved and not is_challenge:
         return 1
-    elif result.get("partial") and problem.get("full_score"):
+    if result.get("partial") and problem.get("full_score"):
         ret = score / problem["full_score"]
     elif problem.get("max_score"):
         ret = score / problem["max_score"]

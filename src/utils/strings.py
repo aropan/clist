@@ -168,14 +168,13 @@ def sanitize_text(text):
 def sanitize_data(data):
     if isinstance(data, str):
         return sanitize_text(data)
-    elif isinstance(data, dict):
+    if isinstance(data, dict):
         return {sanitize_data(k): sanitize_data(v) for k, v in data.items()}
-    elif isinstance(data, list):
+    if isinstance(data, list):
         return [sanitize_data(x) for x in data]
-    elif isinstance(data, tuple):
+    if isinstance(data, tuple):
         return tuple(sanitize_data(x) for x in data)
-    else:
-        return data
+    return data
 
 
 def strip_tags(html):

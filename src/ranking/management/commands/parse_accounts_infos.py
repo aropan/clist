@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 from collections import defaultdict
 from dataclasses import dataclass
@@ -55,7 +54,7 @@ def get_subscriptions_with_upsolving(resource, account):
     if account.has_coders and (coders := account.coders.filter(n_subscribers__gt=0)):
         query |= Q(coders__in=coders)
     if not query:
-        return
+        return None
     qs = Subscription.for_upsolving
     qs = qs.filter(Q(resource__isnull=True) | Q(resource=resource))
     qs = qs.filter(query)
@@ -69,7 +68,7 @@ def get_coderlist_value(account, func, field):
     if account.has_coders and (coders := account.coders.filter(n_listvalues__gt=0)):
         query |= Q(values__coder__in=coders)
     if not query:
-        return
+        return None
     qs = CoderList.objects.filter(**{f"{field}__isnull": False})
     qs = qs.filter(query)
     aggregation = qs.aggregate(field_value=func(field))
@@ -90,7 +89,7 @@ class Command(BaseCommand):
     help = "Parsing accounts infos"
 
     def __init__(self, *args, **kw):
-        super(Command, self).__init__(*args, **kw)
+        super().__init__(*args, **kw)
         self.logger = getLogger("ranking.parse.account")
 
     def add_arguments(self, parser):
@@ -342,7 +341,7 @@ class Command(BaseCommand):
                                 )
                                 for c in qs:
                                     account.coders.add(c)
-                                    setattr(account, "has_coders", True)
+                                    account.has_coders = True
 
                             upsolving_subscriptions = False
                             do_upsolve = resource.has_upsolving and (
@@ -414,10 +413,8 @@ class Command(BaseCommand):
                             outdated = account.info.pop("outdated_", {})
                             special_info_fields = data.get("special_info_fields") or set()
                             for k, v in account.info.items():
-                                if (
-                                    args.all
-                                    or k not in info
-                                    and (Account.is_special_info_field(k) or k in special_info_fields)
+                                if args.all or (
+                                    k not in info and (Account.is_special_info_field(k) or k in special_info_fields)
                                 ):
                                     info[k] = v
                                 elif k not in info:

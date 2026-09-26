@@ -26,12 +26,12 @@ class Statistic(BaseModule):
         if not self.standings_url:
             self.standings_url = f"https://projecteuler.net/fastest={self.key}"
 
-        user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36"  # noqa
+        user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36"  # ruff: ignore[line-too-long]
 
         def get_standings_page(req):
             page = req.get(self.standings_url, headers={"User-Agent": user_agent})
 
-            unauthorized = not re.search('<form[^>]*action="sign_out"[^>]*>', page)
+            unauthorized = not re.search(r'<form[^>]*action="sign_out"[^>]*>', page)
             if unauthorized:
                 LOG.info("Authentication required; starting captcha recognition")
                 auth_progress = tqdm(total=20, desc="captcha attempts", unit="attempt")
@@ -43,7 +43,7 @@ class Statistic(BaseModule):
                         image_rgb = Image.open(image_stream)
                         text = pytesseract.image_to_string(image_rgb, config="--oem 0 --psm 13 digits")
                         text = text.strip()
-                        if re.match("^[0-9]{5}$", text):
+                        if re.match(r"^[0-9]{5}$", text):
                             break
 
                     req.get("https://projecteuler.net/sign_in")
@@ -57,7 +57,7 @@ class Statistic(BaseModule):
                             "remember_me": "1",
                         },
                     )
-                    match = re.search('<p[^>]*class="warning"[^>]*>(?P<message>[^<]*)</p>', page)
+                    match = re.search(r'<p[^>]*class="warning"[^>]*>(?P<message>[^<]*)</p>', page)
                     if match:
                         req.print(match.group("message"))
                         auth_progress.update()
@@ -96,7 +96,7 @@ class Statistic(BaseModule):
         problems_info = [problem_info]
 
         regex = "<table[^>]*>.*?</table>"
-        page = re.sub('<span[^>]*class="[^"]*tooltiptext_narrow[^"]*"[^>]*>[^<]*</span>', "", page)
+        page = re.sub(r'<span[^>]*class="[^"]*tooltiptext_narrow[^"]*"[^>]*>[^<]*</span>', "", page)
         html_table = re.search(regex, page, re.DOTALL)
 
         if html_table:
@@ -115,7 +115,7 @@ class Statistic(BaseModule):
 
                 for k, v in r.items():
                     if k == "place":
-                        row["place"] = re.match("[0-9]+", v.value).group(0)
+                        row["place"] = re.match(r"[0-9]+", v.value).group(0)
                     elif k == "country":
                         country = first(v.node.xpath(".//@title"))
                         if country:

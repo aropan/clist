@@ -141,7 +141,7 @@ def parse_time(time):
 @register.filter
 def timezone(time, tzname):
     if not time:
-        return
+        return None
     return time.astimezone(pytz.timezone(tzname))
 
 
@@ -286,7 +286,7 @@ def get_timezone_offset_hm(value):
 
 
 def get_timezones():
-    with open(os.path.join(settings.STATIC_JSON_TIMEZONES), "r") as fo:
+    with open(os.path.join(settings.STATIC_JSON_TIMEZONES)) as fo:
         timezones = json.load(fo)
         for tz in timezones:
             offset = get_timezone_offset(tz["name"])
@@ -327,10 +327,9 @@ def listsort(value):
         for key in key_list:
             new_dict[key] = value[key]
         return new_dict
-    elif isinstance(value, Iterable):
+    if isinstance(value, Iterable):
         return sorted(value)
-    else:
-        return value
+    return value
     listsort.is_safe = True
 
 
@@ -357,7 +356,7 @@ def asbool(value):
 @register.simple_tag
 def calc_mod_penalty(info, contest, solving, penalty):
     if not isinstance(penalty, (int, float)):
-        return
+        return None
     time = min((now() - contest.start_time).total_seconds(), contest.duration_in_secs) // 60
     return int(round(penalty - info["penalty"] + (info["solving"] - solving) * time))
 
@@ -503,12 +502,11 @@ def get_problem_solution(problem):
                     short = get_problem_short(p)
                     result = deepcopy(statistic.addition.get("problems", {}).get(short))
 
-                    if "group" in p:
-                        if is_solved(result):
-                            score = as_number(result.get("result"))
-                            if score is not None:
-                                group_scores[p["group"]] += score
-                                result["result"] = group_scores[p["group"]]
+                    if "group" in p and is_solved(result):
+                        score = as_number(result.get("result"))
+                        if score is not None:
+                            group_scores[p["group"]] += score
+                            result["result"] = group_scores[p["group"]]
 
                     res = {
                         "contest": contest,
@@ -519,8 +517,7 @@ def get_problem_solution(problem):
                     if (
                         not ret
                         or ret["result"] is None
-                        or result is not None
-                        and is_improved_solution(result, ret["result"], with_upsolving=True)
+                        or (result is not None and is_improved_solution(result, ret["result"], with_upsolving=True))
                     ):
                         ret = res
     return ret
@@ -825,11 +822,11 @@ def get_number_from_str(val):
     if isinstance(val, (int, float)):
         return val
     if val is None:
-        return
+        return None
     val = re.sub(r"\s", "", str(val))
     match = re.search(r"-?[0-9]+(?:\.[0-9]+)?", str(val))
     if not match:
-        return
+        return None
     ret = yaml.safe_load(match.group(0))
     return ret
 
@@ -1021,7 +1018,7 @@ def is_partial(value, with_upsolving=False):
         return False
     if not value or not isinstance(value, dict):
         return False
-    return value.get("partial") or with_upsolving and "upsolving" in value and is_partial(value["upsolving"])
+    return value.get("partial") or (with_upsolving and "upsolving" in value and is_partial(value["upsolving"]))
 
 
 def is_scoring_result(value):
@@ -1193,7 +1190,7 @@ def highlight_class(lang):
     lang = re.sub(r"\s*[.0-9]+", "", lang)
     lang = re.sub(r"([a-z])\+\+", r"\1pp", lang)
     lang = re.sub(r"([a-z])\#", r"\1sharp", lang)
-    lang = re.sub(" ", "", lang)
+    lang = lang.replace(" ", "")
     return lang
 
 
@@ -1256,8 +1253,8 @@ def as_number(value, force=False, default=None):
 
 
 def _title_field(value):
-    value = re.sub("([A-Z]+)", r"_\1", value)
-    values = re.split("_+", value)
+    value = re.sub(r"([A-Z]+)", r"_\1", value)
+    values = re.split(r"_+", value)
     values = [v.title() for v in values]
     return values
 
@@ -1273,10 +1270,10 @@ def title_field_div(value, split=False):
 
 
 def normalize_field(k):
-    if k[0].isalpha() and not re.match("^[A-Z]+([0-9]+)?$", k):
+    if k[0].isalpha() and not re.match(r"^[A-Z]+([0-9]+)?$", k):
         k = k[0].upper() + k[1:]
-        k = "_".join(map(str.lower, re.findall("([A-ZА-Я]+[^A-ZА-Я]+|[A-ZА-Я]+$)", k)))
-        k = re.sub("_+", "_", k)
+        k = "_".join(map(str.lower, re.findall(r"([A-ZА-Я]+[^A-ZА-Я]+|[A-ZА-Я]+$)", k)))
+        k = re.sub(r"_+", "_", k)
     return k
 
 
@@ -1396,7 +1393,7 @@ def get_country_from(context, country, custom_countries):
     if not country:
         return None
     country_code = get_custom_country(context["request"], country, custom_countries) or country.code
-    setattr(country, "flag_code", country_code)
+    country.flag_code = country_code
     return country
 
 
@@ -1421,17 +1418,17 @@ def get_country_from_members(accounts, members):
             continue
         counter[account.country.code] += 1
     if not counter:
-        return
+        return None
     country = max(counter, key=counter.get)
     if counter[country] <= len(members) / 2:
-        return
+        return None
     return country
 
 
 @register.simple_tag
 def use_lightrope():
     time = now()
-    return time.month == 12 and time.day > 20 or time.month == 1 and time.day < 10
+    return (time.month == 12 and time.day > 20) or (time.month == 1 and time.day < 10)
 
 
 @register.simple_tag
@@ -1490,7 +1487,7 @@ def trim_to(value, length, raw_text=False):
         return f"{prefix}{separator}{suffix}"
 
     prefix, middle, suffix = map(html.escape, (prefix, middle, suffix))
-    separator = f'<span class="expandable-text">{middle}</span><span class="expandable-click" onclick="return expand_trimmed_text(event, this)">{separator}</span>'  # noqa: E501
+    separator = f'<span class="expandable-text">{middle}</span><span class="expandable-click" onclick="return expand_trimmed_text(event, this)">{separator}</span>'  # ruff: ignore[line-too-long]
     ret = f'<span title="{html.escape(value)}" data-toggle="tooltip">{prefix}{separator}{suffix}</span>'
     return mark_safe(ret)
 
@@ -1657,7 +1654,7 @@ def sort_select_data(data):
 @register.filter
 def simple_select_data(data):
     if data is None or data == "":
-        return
+        return None
     ret = {
         "noajax": True,
         "nogroupby": True,
@@ -1837,12 +1834,12 @@ def is_optional_yes(value):
 @register.filter
 def get_admin_url(obj):
     if obj is None:
-        return
+        return None
     content_type = ContentType.objects.get_for_model(obj.__class__)
     try:
         return reverse("admin:%s_%s_change" % (content_type.app_label, content_type.model), args=(obj.pk,))
     except NoReverseMatch:
-        return
+        return None
 
 
 @register.simple_tag
@@ -1891,7 +1888,7 @@ def search_linked_coder(request, account):
 @register.simple_tag(takes_context=True)
 def time_ago(context, time):
     if not time:
-        return
+        return None
     title = format_time(timezone(time, context["timezone"]), context["timeformat"])
     value = naturaltime(timezone(time, context["timezone"]))
     return mark_safe(f'<span title="{title}" data-placement="top" data-toggle="tooltip">{value}</span>')
@@ -2084,9 +2081,8 @@ def field_to_select_values(context):
         values = context["request"].get_filtered_list(field_name, options=data["options"])
         if values:
             return values
-    if data.get("data"):
-        if values := [d["id"] for d in data["data"] if d.get("selected")]:
-            return values
+    if data.get("data") and (values := [d["id"] for d in data["data"] if d.get("selected")]):
+        return values
     if "values" in data:
         return data["values"]
     if "value" in data:
@@ -2319,7 +2315,7 @@ def standings_statistic_problem_detail(context, small, stat=None, scoreformat_ca
     stat_upsolving = stat["upsolving"]
 
     without_score = not stat_result and not stat_extra_score
-    status_and_time_cond = (stat_status and stat_time) and (without_score and context.get("with_detail") or not small)
+    status_and_time_cond = (stat_status and stat_time) and ((without_score and context.get("with_detail")) or not small)
     status_cond = stat_status and (not stat_time or is_reject(stat))
     delta_time_cond = small and stat_delta_time and stat_time
     time_cond = stat_time
@@ -2435,19 +2431,14 @@ def standings_statistic_problem(context, scoreformat_cache=None):
         div_classes.append("vir")
 
     html_parts.append(f'<div class="{" ".join(div_classes)}"')
-    if not with_detail:
-        if (
-            stat.get("status")
-            or stat.get("time")
-            or stat.get("upsolving")
-            or stat.get("verdict")
-            or stat.get("language")
-        ):
-            tooltip_title = standings_statistic_problem_detail(
-                context, small=False, stat=stat, scoreformat_cache=scoreformat_cache
-            )
-            tooltip_attrs = f' title=\'{tooltip_title}\' data-toggle="tooltip" data-placement="top" data-html="true"'
-            html_parts.append(tooltip_attrs)
+    if not with_detail and (
+        stat.get("status") or stat.get("time") or stat.get("upsolving") or stat.get("verdict") or stat.get("language")
+    ):
+        tooltip_title = standings_statistic_problem_detail(
+            context, small=False, stat=stat, scoreformat_cache=scoreformat_cache
+        )
+        tooltip_attrs = f' title=\'{tooltip_title}\' data-toggle="tooltip" data-placement="top" data-html="true"'
+        html_parts.append(tooltip_attrs)
     html_parts.append(">")
 
     has_alternative_result = context.get("has_alternative_result")
@@ -2459,7 +2450,7 @@ def standings_statistic_problem(context, scoreformat_cache=None):
         )
         html_parts.append('<span class="detail-alternative-result">')
 
-    can_show_link = contest and (contest.is_over() or contest.is_stage()) or my_stat or stat.get("standings_url")
+    can_show_link = (contest and (contest.is_over() or contest.is_stage())) or my_stat or stat.get("standings_url")
     has_link_target = (
         stat.get("url") or stat.get("solution") or stat.get("external_solution") or stat.get("standings_url")
     )

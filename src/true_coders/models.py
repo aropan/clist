@@ -293,14 +293,13 @@ class Coder(BaseModel):
             return queryset
         if coder_kind == "real":
             return queryset.filter(is_virtual=False)
-        elif coder_kind == "ghost" or coder_kind == "virtual":
+        if coder_kind == "ghost" or coder_kind == "virtual":
             return queryset.filter(is_virtual=True)
-        elif coder_kind == "none":
+        if coder_kind == "none":
             return queryset.none()
-        else:
-            if logger:
-                logger.warning(f"Unknown coder kind: {coder_kind}")
-            return queryset
+        if logger:
+            logger.warning(f"Unknown coder kind: {coder_kind}")
+        return queryset
 
 
 class CoderProblem(BaseModel):
@@ -359,7 +358,7 @@ class Party(BaseModel):
     def save(self, *args, **kwargs):
         if not self.secret_key:
             self.secret_key = generate_secret(length=20)
-        return super(Party, self).save(*args, **kwargs)
+        return super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
@@ -402,27 +401,27 @@ class Filter(BaseModel):
     week_days = ArrayField(models.PositiveSmallIntegerField(), blank=True, default=_get_default_week_days)
 
     def __str__(self):
-        result = "" if not self.name else "{0.name}: ".format(self)
-        result += "{0.coder}, {0.resources} resources, {0.contest} contest".format(self)
+        result = "" if not self.name else f"{self.name}: "
+        result += f"{self.coder}, {self.resources} resources, {self.contest} contest"
         if self.duration_from is not None or self.duration_to is not None:
             result += ", duration"
             if self.duration_from is not None:
-                result += " from {0.duration_from}".format(self)
+                result += f" from {self.duration_from}"
             if self.duration_to is not None:
-                result += " to {0.duration_to}".format(self)
+                result += f" to {self.duration_to}"
         if self.start_time_from is not None or self.start_time_to is not None:
             result += ", start time"
             if self.start_time_from is not None:
-                result += " from {0.start_time_from}".format(self)
+                result += f" from {self.start_time_from}"
             if self.start_time_to is not None:
-                result += " to {0.start_time_to}".format(self)
+                result += f" to {self.start_time_to}"
         if self.regex is not None:
             result += ", regex "
             if self.inverse_regex:
                 result += "!"
             result += "= " + self.regex
         if self.host is not None:
-            result += ", host = {}".format(self.host)
+            result += f", host = {self.host}"
         return result
 
     def dict(self):

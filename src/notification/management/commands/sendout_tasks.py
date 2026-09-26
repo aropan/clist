@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import os
 import re
@@ -84,7 +83,7 @@ class Command(BaseCommand):
         method, *args = method.split(":", 1)
         subject, message, context = self.get_message(method=method, data=data, coder=coder, **kwargs)
         if not message:
-            return
+            return None
         response = None
 
         def delete_notification(msg):
@@ -172,7 +171,7 @@ class Command(BaseCommand):
 
     def load_config(self):
         if os.path.exists(self.CONFIG_FILE):
-            with open(self.CONFIG_FILE, "r") as fo:
+            with open(self.CONFIG_FILE) as fo:
                 self.config = yaml.safe_load(fo)
         else:
             self.config = {}
@@ -181,9 +180,8 @@ class Command(BaseCommand):
 
     def save_config(self):
         lock = FileLock(self.CONFIG_FILE)
-        with lock.acquire(timeout=60):
-            with open(self.CONFIG_FILE, "w") as fo:
-                yaml.dump(self.config, fo, indent=2)
+        with lock.acquire(timeout=60), open(self.CONFIG_FILE, "w") as fo:
+            yaml.dump(self.config, fo, indent=2)
 
     @print_sql_decorator()
     @lock

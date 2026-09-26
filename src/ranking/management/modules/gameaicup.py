@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import bisect
 import json
@@ -192,7 +191,7 @@ class Statistic(BaseModule):
     @staticmethod
     def _ordered_players(game):
         players = [{**strategy, **result} for strategy, result in zip(game["strategies"], game["player_results"])]
-        players = list(sorted(players, key=lambda x: x["rank"]))
+        players = sorted(players, key=lambda x: x["rank"])
         for player in players:
             x = player["rating_change"]
             player["rating_change"] = ("+" if x > 0 else ("±" if x == 0 else "")) + str(x)

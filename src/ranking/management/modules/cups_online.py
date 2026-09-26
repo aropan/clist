@@ -31,7 +31,7 @@ class Statistic(BaseModule):
         self.host_url = f"{urlinfo.scheme}://{urlinfo.netloc}"
 
         page = REQ.get("https://cups.online/en/")
-        data_profile = re.search('data-profile="(?P<value>[^"]*)"', page).group("value")
+        data_profile = re.search(r'data-profile="(?P<value>[^"]*)"', page).group("value")
         if data_profile:
             data_profile = json.loads(html.unescape(data_profile))
         else:
@@ -47,8 +47,8 @@ class Statistic(BaseModule):
 
     def old_aicups_get_standings(self, users=None, statistics=None):
         page = REQ.get(self.standings_url, detect_charsets=True)
-        tabs = re.findall('<a[^>]*data-toggle="tab">(?:<[^>]*>)*(?P<name>[^<]+)', page)
-        tables = re.findall("<table[^<]*>.*?</table>", page, re.DOTALL)
+        tabs = re.findall(r'<a[^>]*data-toggle="tab">(?:<[^>]*>)*(?P<name>[^<]+)', page)
+        tables = re.findall(r"<table[^<]*>.*?</table>", page, re.DOTALL)
         rating_name = self.info.get("_rating_name", self.name)
 
         for index, (tab, table) in enumerate(zip(tabs, tables), start=1):
@@ -71,7 +71,7 @@ class Statistic(BaseModule):
                     href = v.column.node.xpath('.//a[starts-with(@href, "/profile/")]/@href')
                     if len(href) != 1:
                         raise ExceptionParseStandings(f"Not found user url, url = {href}")
-                    uid = re.search("([0-9]+)/?", href[0]).group(1)
+                    uid = re.search(r"([0-9]+)/?", href[0]).group(1)
                     handle = f"aicups:{uid}"
                     r["member"] = handle
                     r["name"] = re.sub(r"\s+", " ", v.value)
@@ -127,8 +127,8 @@ class Statistic(BaseModule):
         iter_time_delta = timedelta(hours=3)
         is_running = self.start_time < now() < self.end_time + iter_time_delta or not statistics
         is_raic = bool(re.search(r"^Code.*[0-9]{4}.*\[ai\]", self.name))
-        is_final = is_raic and bool(re.search("финал|final", self.name, re.I))
-        is_round = is_raic and (is_final or bool(re.search("раунд|round", self.name, re.I)))
+        is_final = is_raic and bool(re.search(r"финал|final", self.name, re.I))
+        is_round = is_raic and (is_final or bool(re.search(r"раунд|round", self.name, re.I)))
         is_long = self.end_time - self.start_time > timedelta(days=60)
 
         standings_list = [
@@ -286,9 +286,9 @@ class Statistic(BaseModule):
                 page = 1
                 n_pages = None
                 last_found_created_at = None
-                while not stop and (n_pages is None or futures and page <= n_pages):
+                while not stop and (n_pages is None or (futures and page <= n_pages)):
                     for _ in range(2):
-                        if n_pages is not None and page + len(futures) > n_pages or len(futures) >= 2 * num_workers:
+                        if (n_pages is not None and page + len(futures) > n_pages) or len(futures) >= 2 * num_workers:
                             break
                         futures.append(executor.submit(fetch_battle, page + len(futures)))
 
@@ -416,7 +416,7 @@ class Statistic(BaseModule):
         }
 
         if is_round and not self.info.get("advance"):
-            match = re.search("Round (?P<round>[12])", self.name)
+            match = re.search(r"Round (?P<round>[12])", self.name)
             if match:
                 threshold = [300, 50][int(match.group("round")) - 1]
                 ret["advance"] = {"filter": [{"threshold": threshold, "operator": "le", "field": "place"}]}
@@ -463,7 +463,7 @@ class Statistic(BaseModule):
         seen = set()
         while not stop and (total is None or page * page_size < total):
             page += 1
-            url = f"{self.host_url}/api_v2/battles/task/{task_id}?page={page}&page_size={page_size}&search={member.encode('utf-8')}"  # noqa
+            url = f"{self.host_url}/api_v2/battles/task/{task_id}?page={page}&page_size={page_size}&search={member.encode('utf-8')}"  # ruff: ignore[line-too-long]
             data = REQ.get(url, return_json=True)
             total = data["totals"]
             stop = True
@@ -500,7 +500,7 @@ class Statistic(BaseModule):
                     player["position"] = rank
                     if player["handle"] == member:
                         me = player
-                if not me or solution_id is not None and solution_id != me["solution_id"]:
+                if not me or (solution_id is not None and solution_id != me["solution_id"]):
                     continue
                 solution_id = me["solution_id"]
                 stop = False

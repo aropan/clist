@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import json
 import re
 from collections import OrderedDict
@@ -40,7 +38,7 @@ class Statistic(BaseModule):
         else:
             raise ExceptionParseStandings("not found round")
 
-        m = re.search("maxPointsForProblem=(?P<score>[0-9]+)", round_data["description"])
+        m = re.search(r"maxPointsForProblem=(?P<score>[0-9]+)", round_data["description"])
         max_points_challenge_problem = int(m.group("score")) if m else None
 
         page = REQ.get(self.ROUND_INFO_API_URL_)
@@ -117,7 +115,7 @@ class Statistic(BaseModule):
                         p["result"] = m["score"]
 
                     matches = re.finditer(
-                        '<a[^>]*href="[^"]*/CompetitorResults/[^"]*/(?P<account>[0-9]+)/?">(?P<name>[^<]*)</a>',
+                        r'<a[^>]*href="[^"]*/CompetitorResults/[^"]*/(?P<account>[0-9]+)/?">(?P<name>[^<]*)</a>',
                         page,
                     )
                     users = [m.groupdict() for m in matches]

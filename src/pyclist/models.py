@@ -63,12 +63,12 @@ class BaseModel(models.Model):
         self.add_to_update_fields(["modified"], kwargs.get("update_fields"))
         return super().save(*args, **kwargs)
 
-    def fetched_field(self, field) -> Optional[Any]:
+    def fetched_field(self, field) -> Any | None:
         fields = field.split("__")
         obj = self
         for field in fields:
             if field not in obj._state.fields_cache:
-                return
+                return None
             obj = getattr(obj, field)
         return obj
 

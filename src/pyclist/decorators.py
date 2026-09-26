@@ -21,19 +21,19 @@ from utils.strings import slug_string_iou
 logger = logging.getLogger(__name__)
 
 
-def get_contest_by_id_and_slug(contests, contest_id, title_slug) -> None | Contest:
+def get_contest_by_id_and_slug(contests, contest_id, title_slug) -> Contest | None:
     contest = contests.filter(pk=contest_id).first()
     if contest is None:
-        return
+        return None
     if slug_string_iou(title_slug, slug(contest.title)) < 0.3:
-        return
+        return None
     return contest
 
 
-def get_contest_by_series(contests, series) -> None | Contest:
+def get_contest_by_series(contests, series) -> Contest | None:
     contest = contests.filter(series__aliases__contains=slug(series)).order_by("-end_time").first()
     if contest is None:
-        return
+        return None
     return contest
 
 

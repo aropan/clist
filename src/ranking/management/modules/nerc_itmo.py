@@ -16,7 +16,7 @@ from ranking.management.modules.nerc_itmo_helper import parse_xml
 
 class Statistic(BaseModule):
     def __init__(self, **kwargs):
-        super(Statistic, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         if not self.standings_url:
             raise InitModuleException("Not set standings url for %s" % self.name)
 
@@ -39,7 +39,7 @@ class Statistic(BaseModule):
         regex = '<table[^>]*class="standings"[^>]*>.*?</table>'
         match = re.search(regex, page, re.DOTALL)
         if not match:
-            page = re.sub("<table[^>]*wrapper[^>]*>", "", page)
+            page = re.sub(r"<table[^>]*wrapper[^>]*>", "", page)
             regex = "<table[^>]*>.*?</table>"
             match = re.search(regex, page, re.DOTALL)
         html_table = match.group(0)
@@ -120,7 +120,7 @@ class Statistic(BaseModule):
 
             def canonize_name(name):
                 name = re.sub(r"^\*\s*", "", name)
-                name = re.sub(":", "", name)
+                name = name.replace(":", "")
                 name = re.sub(r"\s+", "", name)
                 return name
 
@@ -131,7 +131,7 @@ class Statistic(BaseModule):
                 if not team_regions:
                     page = REQ.get(self.info["use_icpc.kimden.online"])
                     matches = re.finditer(
-                        '<label[^>]*for="(?P<selector>[^"]*)"[^"]*onclick="setRegion[^"]*"[^>]*>(?P<name>[^>]*)</',
+                        r'<label[^>]*for="(?P<selector>[^"]*)"[^"]*onclick="setRegion[^"]*"[^>]*>(?P<name>[^>]*)</',
                         page,
                     )
                     regions = {}

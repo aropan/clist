@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import collections
 import copy
 import json
@@ -281,7 +279,7 @@ class Statistic(BaseModule):
             if with_submissions:
                 for problem_info_ in problems_infos.values():
                     problem_info = problem_info_
-                    standings_problem_url = re.sub("/problem$", "/leaderboard", problem_info["url"])
+                    standings_problem_url = re.sub(r"/problem$", "/leaderboard", problem_info["url"])
                     api_standings_url_format = standings_problem_url.replace("/contests/", "/rest/contests/")
                     api_standings_url_format += "?offset={offset}&limit={limit}"
 

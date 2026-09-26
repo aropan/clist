@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import re
 from collections import OrderedDict, defaultdict
@@ -14,7 +13,7 @@ from ranking.management.modules.nerc_itmo_helper import parse_xml
 
 class Statistic(BaseModule):
     def __init__(self, **kwargs):
-        super(Statistic, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def get_standings(self, users=None, statistics=None, **kwargs):
         year = self.start_time.year

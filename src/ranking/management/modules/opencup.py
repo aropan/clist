@@ -12,7 +12,7 @@ from ranking.management.modules.excepts import InitModuleException
 
 class Statistic(BaseModule):
     def __init__(self, **kwargs):
-        super(Statistic, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         if not self.standings_url:
             raise InitModuleException("Not set standings url")
 
@@ -51,11 +51,11 @@ class Statistic(BaseModule):
             other = OrderedDict()
             problems = row.setdefault("problems", {})
             for key, v in list(r.items()):
-                if re.match("^Stage [0-9]+$", key):
+                if re.match(r"^Stage [0-9]+$", key):
                     k = key.split()[1]
                 else:
                     k = key.split()[0]
-                if len(k) == 1 and "A" <= k <= "Z" or k.isdigit():
+                if (len(k) == 1 and "A" <= k <= "Z") or k.isdigit():
                     if k >= "X":
                         continue
                     d = problems_info.setdefault(k, {})
@@ -96,7 +96,7 @@ class Statistic(BaseModule):
                     row["solving"] = float(v.value)
                 elif k == "Time":
                     if "'" in v.value and '"' in v.value:
-                        minute, seconds = map(int, re.findall("-?[0-9]+", v.value))
+                        minute, seconds = map(int, re.findall(r"-?[0-9]+", v.value))
                         if minute < 0:
                             seconds = -seconds
                         row["penalty"] = f"{minute + seconds / 60:.2f}"
@@ -112,7 +112,7 @@ class Statistic(BaseModule):
                     row["member"] = member
                     row["name"] = name
                 else:
-                    key = re.sub("[-._ ]+", "_", key)
+                    key = re.sub(r"[-._ ]+", "_", key)
                     key = key.strip(":")
                     val = v.value.strip()
                     if val and val != "-":

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import json
 import re
@@ -26,7 +25,7 @@ class Statistic(BaseModule):
         match = re.search(
             r"""var(?P<vars>(?:\s*[a-z]+=[0-9]+,)+)\s*M=(?:new Array)?[\[\(]?(?P<data>.*?)[\]\)]\s*(?:function|var)""",
             page,
-        )  # noqa
+        )
 
         result = {}
         problems_info = OrderedDict()

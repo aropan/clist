@@ -11,9 +11,9 @@ from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGe
 
 class Statistic(BaseModule):
     API_PROBLEMS_URL_FORMAT_ = (
-        "https://api.algoleague.com/api/app/contests-problem/get-problems-info?ContestId={contest_id}"  # noqa: E501
+        "https://api.algoleague.com/api/app/contests-problem/get-problems-info?ContestId={contest_id}"
     )
-    API_STANDINGS_URL_FORMAT_ = "https://api.algoleague.com/api/app/contests-score?ContestId={contest_id}&SkipCount={offset}&MaxResultCount={count}"  # noqa: E501
+    API_STANDINGS_URL_FORMAT_ = "https://api.algoleague.com/api/app/contests-score?ContestId={contest_id}&SkipCount={offset}&MaxResultCount={count}"
     API_USER_PREVIEW_FORMAT_ = "https://api.algoleague.com/api/app/app-user-preview/{}"
 
     def get_standings(self, users=None, statistics=None, **kwargs):

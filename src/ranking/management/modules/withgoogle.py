@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import base64
 import json
@@ -30,10 +29,10 @@ class Statistic(BaseModule):
     ARCHIVE_DATA_URL_FORMAT_ = "https://codingcompetitions.withgoogle.com/data/scoreboards/{year}.json"
 
     def __init__(self, **kwargs):
-        super(Statistic, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def _api_get_standings(self, users=None, statistics=None):
-        match = re.search("/([0-9a-f]{16})$", self.url)
+        match = re.search(r"/([0-9a-f]{16})$", self.url)
         if not match:
             raise ExceptionParseStandings(f"Not found id in url = {self.url}")
         self.id = match.group(1)
@@ -115,7 +114,7 @@ class Statistic(BaseModule):
 
         def fetch_page(page):
             if stop:
-                return
+                return None
             return get(page * num_consecutive_users + 1, num_consecutive_users)
 
         n_forbidden = 0
@@ -453,7 +452,7 @@ class Statistic(BaseModule):
                 name = data_round["name"]
                 if name in names:
                     name = "Qualification Round"
-                if self.name.endswith(name) or name in ["Full ranking", "Main round"] and is_final_round:
+                if self.name.endswith(name) or (name in ["Full ranking", "Main round"] and is_final_round):
                     data = data_round["data"]
                     standings_url = self.ARCHIVE_URL_FORMAT_.format(year=self.start_time.year)
                     break
@@ -467,7 +466,7 @@ class Statistic(BaseModule):
         if not data:
             if "hashcode_scoreboard" in self.info:
                 page = REQ.get(self.info["hashcode_scoreboard"])
-                match = re.search('<table[^>]*class="[^"]*Hashcode[^"]*Judge[^"]*Table[^"]*"[^>]*>.*?</table>', page)
+                match = re.search(r'<table[^>]*class="[^"]*Hashcode[^"]*Judge[^"]*Table[^"]*"[^>]*>.*?</table>', page)
                 if match:
                     data = parsed_table.ParsedTable(match.group(0))
                     data = [{k: v.value for k, v in row.items()} for row in data]

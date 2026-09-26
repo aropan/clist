@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import re
 from collections import OrderedDict
@@ -13,7 +12,7 @@ from ranking.management.modules.excepts import ExceptionParseStandings
 
 class Statistic(BaseModule):
     def __init__(self, **kwargs):
-        super(Statistic, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.url = self.key
 
     @staticmethod
@@ -48,7 +47,7 @@ class Statistic(BaseModule):
             header = None
             for match in re.findall(r"<tr[^>]*>.*?<\/tr>", page):
                 match = match.replace("&nbsp;", " ")
-                fields = [re.sub("<[^>]*>", " ", m).strip() for m in re.findall(r"<t[hd][^>]*>.*?\/t[hd]>", match)]
+                fields = [re.sub(r"<[^>]*>", " ", m).strip() for m in re.findall(r"<t[hd][^>]*>.*?\/t[hd]>", match)]
 
                 if re.search(r"<\/th>", match):
                     header = fields
@@ -71,13 +70,13 @@ class Statistic(BaseModule):
 
                 problems = row.setdefault("problems", {})
                 for k in sorted(fields.keys()):
-                    if re.match("^(?:[A-Z]|[0-9]{,2})$", k):
+                    if re.match(r"^(?:[A-Z]|[0-9]{,2})$", k):
                         problems_info[k] = {"short": k}
                         v = fields[k].split()
                         if len(v) > 0:
                             p = {"result": v[0]}
                             if len(v) > 1:
-                                p["time"] = re.sub("[^0-9:]", "", v[1])
+                                p["time"] = re.sub(r"[^0-9:]", "", v[1])
                             if upsolve:
                                 a = problems.setdefault(k, {})
                                 if a.get("result", None) != p["result"]:

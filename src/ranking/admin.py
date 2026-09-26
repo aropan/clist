@@ -41,7 +41,7 @@ class HasCoders(admin.SimpleListFilter):
         value = self.value()
         if value == "yes":
             return queryset.filter(has_coder=True)
-        elif value == "no":
+        if value == "no":
             return queryset.filter(has_coder=False)
         return queryset
 
@@ -60,7 +60,7 @@ class HasInfo(admin.SimpleListFilter):
         value = self.value()
         if value == "yes":
             return queryset.filter(updated__gte=now())
-        elif value == "no":
+        if value == "no":
             return queryset.filter(updated__lte=now())
         return queryset
 

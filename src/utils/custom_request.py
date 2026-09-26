@@ -31,14 +31,14 @@ def get_sort_field(self, options, orders=("asc", "desc"), field="sort", order_fi
     return get_order_by(value, order)
 
 
-def get_resource(self, field="resource", method="GET") -> Optional[Resource]:
+def get_resource(self, field="resource", method="GET") -> Resource | None:
     if method not in ["GET", "POST"]:
         raise ValueError(f"Invalid method: {method}")
     resource = getattr(self, method).get(field)
     return Resource.get(resource)
 
 
-def get_resources(self, field="resource", method="GET", default=None) -> Optional[Resource]:
+def get_resources(self, field="resource", method="GET", default=None) -> Resource | None:
     if method not in ["GET", "POST"]:
         raise ValueError(f"Invalid method: {method}")
     resources = self.get_filtered_list(field, method=method)
@@ -47,7 +47,7 @@ def get_resources(self, field="resource", method="GET", default=None) -> Optiona
     return Resource.get(resources)
 
 
-def get_contests(self, field="contest", method="GET", default=None) -> Optional[Contest]:
+def get_contests(self, field="contest", method="GET", default=None) -> Contest | None:
     if method not in ["GET", "POST"]:
         raise ValueError(f"Invalid method: {method}")
     contests = self.get_filtered_list(field, method=method)
@@ -56,9 +56,7 @@ def get_contests(self, field="contest", method="GET", default=None) -> Optional[
     return Contest.objects.filter(pk__in=contests) if contests else Contest.objects.none()
 
 
-def get_filtered_list(
-    self, field, options: Optional[list[str]] = None, method: str = "GET", separator: Optional[str] = None
-):
+def get_filtered_list(self, field, options: list[str] | None = None, method: str = "GET", separator: str | None = None):
     if method not in ["GET", "POST", "EMPTY"]:
         raise ValueError(f"Invalid method: {method}")
 
@@ -71,7 +69,7 @@ def get_filtered_list(
             value_key = value.split(separator)[0]
         if value in values_set:
             continue
-        if options is not None and value_key in options or options is None and value:
+        if (options is not None and value_key in options) or (options is None and value):
             values.append(value)
             values_set.add(value)
 
@@ -124,16 +122,16 @@ def as_coder_or_coder(self):
 
 
 def CustomRequest(request):
-    setattr(request, "logger", RequestLogger(request))
-    setattr(request, "get_resource", partial(get_resource, request))
-    setattr(request, "get_resources", partial(get_resources, request))
-    setattr(request, "get_contests", partial(get_contests, request))
-    setattr(request, "get_filtered_list", partial(get_filtered_list, request))
-    setattr(request, "get_filtered_value", partial(get_filtered_value, request))
-    setattr(request, "canonical_url", None)
-    setattr(request, "set_canonical", partial(set_canonical, request))
-    setattr(request, "has_contest_perm", partial(has_contest_perm, request))
-    setattr(request, "set_security_cookie", partial(set_security_cookie, request))
-    setattr(request, "get_sort_field", partial(get_sort_field, request))
-    setattr(request, "as_coder_or_coder", partial(as_coder_or_coder, request))
+    request.logger = RequestLogger(request)
+    request.get_resource = partial(get_resource, request)
+    request.get_resources = partial(get_resources, request)
+    request.get_contests = partial(get_contests, request)
+    request.get_filtered_list = partial(get_filtered_list, request)
+    request.get_filtered_value = partial(get_filtered_value, request)
+    request.canonical_url = None
+    request.set_canonical = partial(set_canonical, request)
+    request.has_contest_perm = partial(has_contest_perm, request)
+    request.set_security_cookie = partial(set_security_cookie, request)
+    request.get_sort_field = partial(get_sort_field, request)
+    request.as_coder_or_coder = partial(as_coder_or_coder, request)
     return request

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import collections
 import re
@@ -62,7 +61,7 @@ class Statistic(BaseModule):
 
             tags = problem.setdefault("tags", [])
             for tag in column.node.xpath('.//a[contains(@href,"/tags/")]/text()'):
-                tag = re.sub("([^A-Z])([A-Z])", r"\1-\2", tag).lower()
+                tag = re.sub(r"([^A-Z])([A-Z])", r"\1-\2", tag).lower()
                 tags.append(tag)
             contest_problems.append(problem)
         if with_letter:
@@ -174,11 +173,13 @@ class Statistic(BaseModule):
                             problems_info[letter] = {"short": letter}
                         if (
                             len(letter) == 1
-                            or re.match("^[A-Z][0-9]+$", letter)
-                            or pind < len(contest_problems)
-                            and (
-                                contest_problems[pind].get("name") == letter
-                                or contest_problems[pind].get("short") == letter
+                            or re.match(r"^[A-Z][0-9]+$", letter)
+                            or (
+                                pind < len(contest_problems)
+                                and (
+                                    contest_problems[pind].get("name") == letter
+                                    or contest_problems[pind].get("short") == letter
+                                )
                             )
                         ):
                             is_first_ac = has_mark(v, "star")
@@ -196,7 +197,7 @@ class Statistic(BaseModule):
                                     else:
                                         _, time, attempt = title.split()
                                         time = int(time)
-                                        attempt = sum(map(int, re.findall("[0-9]+", attempt)))
+                                        attempt = sum(map(int, re.findall(r"[0-9]+", attempt)))
                                 else:
                                     time, attempt = None, None
 
@@ -325,7 +326,7 @@ class Statistic(BaseModule):
                     return user, None, None
                 return user, False, None
 
-            tables = re.findall("<table[^>]*>.*?</table>", page, re.DOTALL)
+            tables = re.findall(r"<table[^>]*>.*?</table>", page, re.DOTALL)
             t = parsed_table.ParsedTable(html=tables[-1])
             ratings = {}
             info = {}
@@ -337,7 +338,7 @@ class Statistic(BaseModule):
                 info.setdefault("rating", rating)
 
             matches = re.finditer(
-                """
+                r"""
                  <div[^>]*class="?value"?[^>]*>(?P<value>[^<]*)</div>[^<]*
                  <div[^>]*class="?title"?>(?P<key>[^<]*)</div>
             """,

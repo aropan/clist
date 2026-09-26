@@ -20,7 +20,7 @@ from utils.strings import split_team_name_and_members, string_iou, strip_tags
 def extract_team_name(name):
     match = re.search(r"^(?P<team_name>.*)\([^\)]+\)$", name)
     if not match:
-        return
+        return None
     return match.group("team_name").strip()
 
 
@@ -78,7 +78,7 @@ class Statistic(BaseModule):
         contest = self.resource.contest_set.filter(end_time__lt=self.start_time)
         contest = contest.filter(standings_url__isnull=False, stage__isnull=True)
         contest = contest.latest("end_time")
-        matches = list(re.finditer("[0-9]+", contest.standings_url))
+        matches = list(re.finditer(r"[0-9]+", contest.standings_url))
         if not matches:
             raise ExceptionParseStandings("No standings url, not found contest id in previous contest")
 
@@ -444,7 +444,7 @@ class Statistic(BaseModule):
     @staticmethod
     def get_users_infos(users, resource, accounts, pbar=None):
         def set_rename(user, account, ret):
-            if re.match("^team-[0-9]+$", user):
+            if re.match(r"^team-[0-9]+$", user):
                 return
             if not account.name:
                 return

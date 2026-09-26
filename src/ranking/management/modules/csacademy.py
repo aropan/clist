@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import itertools
 import json
@@ -20,7 +19,7 @@ class Statistic(BaseModule):
     PROFILE_URL_FORMAT_ = "https://csacademy.com/user/{account}/?"
 
     def __init__(self, **kwargs):
-        super(Statistic, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def get_standings(self, users=None, statistics=None, **kwargs):
         if not self.key.isdigit():
@@ -63,7 +62,7 @@ class Statistic(BaseModule):
         users_by_id = {user["id"]: user for user in data["state"]["publicuser"] if user.get("username")}
 
         page = REQ.get(self.url, headers={"x-requested-with": ""})
-        match = re.search('src="(?P<url>[^"]*PublicState[^"]*)"', page)
+        match = re.search(r'src="(?P<url>[^"]*PublicState[^"]*)"', page)
         page = REQ.get(match.group("url"))
         match = re.search(r'"country":\s*(?P<data>\[[^\]]*\])', page)
         countries = json.loads(match.group("data"))

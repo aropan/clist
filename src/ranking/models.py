@@ -119,7 +119,7 @@ class Account(BaseModel):
                 avatar_url_info = resource.info.get("avatar_url", {})
                 fields = avatar_url_info.get("fields")
                 if fields and any(not self.info.get(f) for f in fields):
-                    return
+                    return None
                 url = resource.avatar_url.format(key=self.key, info=self.info)
                 if avatar_url_info.get("urljoin"):
                     url = urljoin(avatar_url_info.get("urljoin"), url)
@@ -157,7 +157,7 @@ class Account(BaseModel):
 
     def get_last_season(self):
         if not self.last_activity:
-            return
+            return None
         date = self.last_activity
         year = date.year - (0 if date.month > 8 else 1)
         season = f"{year}-{year + 1}"
@@ -258,14 +258,14 @@ class Account(BaseModel):
         super().save(*args, **kwargs)
 
     @staticmethod
-    def get(resource, key) -> Optional["Account"]:
+    def get(resource, key) -> Account | None:
         account = resource.account_set.filter(key=key).first()
         if account is None and (renaming := resource.accountrenaming_set.filter(old_key=key).first()):
             account = resource.account_set.get(key=renaming.new_key)
         return account
 
     @staticmethod
-    def get_type(name) -> Optional[AccountType]:
+    def get_type(name) -> AccountType | None:
         if not name or not isinstance(name, str):
             return None
         name_ci = name.upper()
@@ -274,7 +274,7 @@ class Account(BaseModel):
         return AccountType[name_ci]
 
     @staticmethod
-    def get_type_value(index) -> Optional[str]:
+    def get_type_value(index) -> str | None:
         for idx, value in AccountType.choices:
             if idx == index:
                 return value.lower()
@@ -463,7 +463,7 @@ def download_avatar_url(account):
         content_type = magic.from_buffer(response.content, mime=True)
     ext = content_type.split("/")[-1]
     ext = ext.split("+")[0]
-    folder = re.sub("[./]", "_", account.resource.host)
+    folder = re.sub(r"[./]", "_", account.resource.host)
     hashname = hashlib.md5(download_avatar_url.encode()).hexdigest()
     hashname = hashname[:2] + "/" + hashname[2:4] + "/" + hashname[4:]
     relpath = os.path.join("avatars", folder, f"{hashname}.{ext}")

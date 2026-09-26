@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import hashlib
 import hmac
 import html
@@ -178,7 +176,7 @@ class Statistic(BaseModule):
                 value = variables[key]
                 data[field] = value
 
-            if match := re.search('<img[^>]*alt="[^"]*Avatar[^"]*"[^>]*src="(?P<avatar>[^"]*)"[^>]*>', profile_page):
+            if match := re.search(r'<img[^>]*alt="[^"]*Avatar[^"]*"[^>]*src="(?P<avatar>[^"]*)"[^>]*>', profile_page):
                 data["avatar_url"] = urljoin(profile_url, match.group("avatar"))
 
             match = re.search(r"rating_data\s*=\s*(?P<history>\[.*?\]);", profile_page)

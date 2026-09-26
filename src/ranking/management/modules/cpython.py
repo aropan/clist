@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import copy
 import json
 import os
@@ -26,7 +24,7 @@ def query(url, *args, **kwargs):
             sleep_time = 2**attempt
             try:
                 data = json.loads(e.response)
-                match = re.search("available in (?P<seconds>[0-9]+) second", data["detail"])
+                match = re.search(r"available in (?P<seconds>[0-9]+) second", data["detail"])
                 sleep_time = int(match.group("seconds")) + 1
             except Exception:
                 pass
@@ -91,7 +89,7 @@ class Statistic(BaseModule):
 
             for row in rows:
                 handle = row.pop("username")
-                if re.match("cholpan[0-9]*", handle):
+                if re.match(r"cholpan[0-9]*", handle):
                     continue
                 r = result.setdefault(handle, {"member": handle})
                 is_unrated = row.get("isUnrated")

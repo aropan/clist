@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import copy
 import hashlib
@@ -53,7 +52,7 @@ def get_curl_args():
 class Statistic(BaseModule):
     API_REGION_SUFFIX = "_v2"
     API_RANKING_URL_FORMAT_ = (
-        "https://leetcode.com/contest/api/ranking/{key}/?pagination={{}}&region=global{region_suffix}"  # noqa E501
+        "https://leetcode.com/contest/api/ranking/{key}/?pagination={{}}&region=global{region_suffix}"
     )
     QUESTIONS_URL_FORMAT_ = "https://leetcode.com/contest/api/info/{key}/"
     RANKING_URL_FORMAT_ = "{url}/ranking"
@@ -131,7 +130,7 @@ class Statistic(BaseModule):
         try:
             contest_name_slug = contest.key
             count = REQ.get(f"https://lccn.lbao.site/api/v1/contest-records/count?contest_name={contest_name_slug}")
-            if re.match("^[0-9]+$", count) and int(count):
+            if re.match(r"^[0-9]+$", count) and int(count):
                 ret.append({
                     "name": "lccn.lbao.site",
                     "url": f"https://lccn.lbao.site/predicted/{contest_name_slug}",
@@ -200,7 +199,7 @@ class Statistic(BaseModule):
         def fetch_standings_page(page):
             nonlocal stop_fetch_standings
             if stop_fetch_standings:
-                return
+                return None
             with fetch_page_rate_limiter:
                 url = api_ranking_url_format.format(page + 1)
                 content = Statistic._get(url, ignore_codes={404}, n_attempts=3)
@@ -260,8 +259,8 @@ class Statistic(BaseModule):
                     nonlocal api_ranking_url_format, stop_fetch_standings
                     if stored_ranking_pages is not None and domain not in stored_ranking_pages:
                         return
-                    api_ranking_url_format = re.sub("[.][^./]+(?=/)", domain, api_ranking_url_format)
-                    api_ranking_url_format = re.sub("&region=[^&]+", f"&region={region}", api_ranking_url_format)
+                    api_ranking_url_format = re.sub(r"[.][^./]+(?=/)", domain, api_ranking_url_format)
+                    api_ranking_url_format = re.sub(r"&region=[^&]+", f"&region={region}", api_ranking_url_format)
 
                     stop_fetch_standings = False
 
@@ -369,7 +368,7 @@ class Statistic(BaseModule):
                                 r["info"]["userAvatar"] = row.pop("avatar_url")
 
                             url = f"{standings_url.rstrip('/')}/{data['_page']}"
-                            url = re.sub("[.][^./]+(?=/)", domain, url)
+                            url = re.sub(r"[.][^./]+(?=/)", domain, url)
                             r["url"] = url
 
                             country = None
@@ -460,7 +459,7 @@ class Statistic(BaseModule):
             "url": standings_url,
             "hidden_fields": hidden_fields,
             "problems": list(problems_info.values()),
-            "badges": list(sorted(badges)),
+            "badges": sorted(badges),
             "info_fields": ["badges"],
         }
 
@@ -497,7 +496,7 @@ class Statistic(BaseModule):
     def get_users_infos(users, resource, accounts, pbar=None):
         rate_limiter = RateLimiter(max_calls=1, period=2)
 
-        @lru_cache()
+        @lru_cache
         def get_all_contests(data_region=""):
             domain = Statistic.DOMAINS[data_region]
             page = Statistic._get(
@@ -653,7 +652,7 @@ class Statistic(BaseModule):
                                   }
                                 }
                             "}"""
-                            )  # noqa: E501
+                            )
                             post = re.sub(r"\s+", " ", post)
                             page = Statistic._get(
                                 "https://leetcode.cn/graphql/noj-go/",
@@ -673,7 +672,7 @@ class Statistic(BaseModule):
                                 {"operationName":"userPublicProfile","variables":{"username":"'''
                                 + handle.encode()
                                 + b""""},"query":"    query userPublicProfile($username: String!) {  matchedUser(username: $username) {    username    profile {      ranking      userAvatar      realName      aboutMe      school      websites      countryName      company      jobTitle      skillTags      postViewCount      postViewCountDiff      reputation      reputationDiff      solutionCount      solutionCountDiff      categoryDiscussCount      categoryDiscussCountDiff    }  }}    "
-}""",  # noqa: E501
+}""",  # ruff: ignore[line-too-long]
                                 content_type="application/json",
                             )
                             profile_data = json.loads(profile_page)
@@ -691,7 +690,7 @@ class Statistic(BaseModule):
                                 post=b'''
                                 {"operationName":"getContentRankingData","variables":{"username":"'''
                                 + handle.encode()
-                                + b""""},"query":"query getContentRankingData($username: String!) {  userContestRanking(username: $username) {  attendedContestsCount    rating    globalRanking    __typename  }  userContestRankingHistory(username: $username) {    contest {      title      startTime      __typename    }   rating    ranking    attended    __typename  }}"}""",  # noqa: E501
+                                + b""""},"query":"query getContentRankingData($username: String!) {  userContestRanking(username: $username) {  attendedContestsCount    rating    globalRanking    __typename  }  userContestRankingHistory(username: $username) {    contest {      title      startTime      __typename    }   rating    ranking    attended    __typename  }}"}""",  # ruff: ignore[line-too-long]
                                 content_type="application/json",
                             )
                             contest_data = json.loads(contest_page)["data"]
@@ -798,7 +797,7 @@ class Statistic(BaseModule):
             PoolExecutor(max_workers=8) as executor,
         ):
             if os.path.exists(Statistic.STATE_FILE):
-                with open(Statistic.STATE_FILE, "r") as fo:
+                with open(Statistic.STATE_FILE) as fo:
                     state = yaml.safe_load(fo)
             else:
                 state = {}
@@ -857,7 +856,7 @@ class Statistic(BaseModule):
                             data_region = node["dataRegion"].lower()
                             data_domain = Statistic.DOMAINS[data_region]
                             username = node["user"]["profile"]["userSlug"].lower()
-                            global_ranking_users[(data_domain, username)] = {
+                            global_ranking_users[data_domain, username] = {
                                 "profile": {"userProfilePublicProfile": node["user"]},
                             }
                     else:
@@ -935,7 +934,7 @@ class Statistic(BaseModule):
                     info["rating"] = None
 
                 if "global_ranking" in info:
-                    global_ranking = int(re.split("[^0-9]", str(info["global_ranking"]))[0])
+                    global_ranking = int(re.split(r"[^0-9]", str(info["global_ranking"]))[0])
                 elif "globalRanking" in info:
                     global_ranking = info["globalRanking"]
                 else:
@@ -1193,7 +1192,7 @@ class Statistic(BaseModule):
         params = {
             "operationName": "questionData",
             "variables": {"titleSlug": slug},
-            "query": "query questionData($titleSlug: String!) { question(titleSlug: $titleSlug) { questionId difficulty topicTags { name } hints acRate questionFrontendId isPaidOnly hasVideoSolution hasSolution likes dislikes stats } }",  # noqa: E501
+            "query": "query questionData($titleSlug: String!) { question(titleSlug: $titleSlug) { questionId difficulty topicTags { name } hints acRate questionFrontendId isPaidOnly hasVideoSolution hasSolution likes dislikes stats } }",  # ruff: ignore[line-too-long]
         }
         page = Statistic._get(
             "https://leetcode.com/graphql",
@@ -1229,7 +1228,7 @@ class Statistic(BaseModule):
                         questions: data { title titleSlug questionId difficulty topicTags { name } hints acRate questionFrontendId isPaidOnly hasVideoSolution hasSolution likes dislikes stats categoryTitle }
                     }
                 }
-                """,  # noqa: E501
+                """,  # ruff: ignore[line-too-long]
                 "variables": {
                     "categorySlug": "all-code-essentials",
                     "skip": n_page * per_page,

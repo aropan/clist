@@ -1,8 +1,7 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 
-from utils.requester import FailOnGetResponse, ProxyLimitReached  # noqa
+from utils.requester import FailOnGetResponse, ProxyLimitReached  # ruff: ignore[unused-import]
 
 
 class BaseException(Exception):

@@ -9,7 +9,7 @@ import fire
 
 
 def main(input_file, output_file):
-    with open(input_file, "r") as fo:
+    with open(input_file) as fo:
         data = fo.read()
 
     data = base64.b64decode(data)

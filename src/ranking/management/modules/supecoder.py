@@ -29,10 +29,10 @@ class Statistic(BaseModule):
             problem_info["url"] = urljoin(
                 self.host,
                 f"/contest/{self.info['parse']['slug']}/{problem_info['name']}?questionId={problem_info['code']}&contestId={self.key}",
-            )  # noqa
+            )
             problem_info["archive_url"] = urljoin(
                 self.host, f"/questions/{problem_info['name']}?questionId={problem_info['code']}"
-            )  # noqa
+            )
             problems_infos[problem_info["code"]] = problem_info
 
         url = urljoin(self.resource.parse_url, f"/api/contests/ranking/{self.key}")

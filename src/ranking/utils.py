@@ -142,7 +142,7 @@ def to_canonize_str(data):
 
 def renaming_check(account, contest_keys, fields, contest_addition_update):
     if len(contest_keys) < 3:
-        return
+        return None
     key_counter = defaultdict(int)
     total_counter = 0
     max_counter_key = None
@@ -159,7 +159,7 @@ def renaming_check(account, contest_keys, fields, contest_addition_update):
         condition &= Q(**{rank_field: addition_update["_rank"]})
         queryset_filter |= condition
     if not queryset_filter:
-        return
+        return None
     for contest_id, old_account_key in tqdm.tqdm(
         Statistics.objects.filter(queryset_filter).values_list("contest_id", "account__key").iterator(),
         total=total_counter,
@@ -171,7 +171,7 @@ def renaming_check(account, contest_keys, fields, contest_addition_update):
         if max_counter_key is None or key_counter[max_counter_key] < key_counter[old_account_key]:
             max_counter_key = old_account_key
     if max_counter_key is None:
-        return
+        return None
 
     account.try_renaming_check_time = timezone.now()
     account.save(update_fields=["try_renaming_check_time"])
@@ -188,7 +188,7 @@ def renaming_check(account, contest_keys, fields, contest_addition_update):
             threshold_val,
             len(key_counter),
         )
-        return
+        return None
     old_account = account.resource.account_set.get(key=max_counter_key)
     LOG.info("Renaming %s to %s", old_account, account)
     rename_account(old_account, account)
@@ -755,7 +755,7 @@ def update_stage(self):
                         continue
                     inp = field["field"]
                     out = field.get("out", inp)
-                    if field.get("first") and out in row or (inp not in stat.addition and not hasattr(stat, inp)):
+                    if (field.get("first") and out in row) or (inp not in stat.addition and not hasattr(stat, inp)):
                         continue
                     val = stat.addition[inp] if inp in stat.addition else getattr(stat, inp)
                     if not field.get("safe") and isinstance(val, str):
@@ -782,7 +782,7 @@ def update_stage(self):
                     if not values:
                         continue
                     problem_values[contest_field] |= set(values)
-                    row[field] = list(sorted(set(row.get(field, []) + values)))
+                    row[field] = sorted(set(row.get(field, []) + values))
 
                 if "solved" in stat.addition and isinstance(stat.addition["solved"], dict):
                     solved = row.setdefault("solved", {})
@@ -1082,7 +1082,7 @@ def update_stage(self):
         stage.info["problems"] = list(problems_infos.values())
 
         for contest_field, values in problem_values.items():
-            stage.info[contest_field] = list(sorted(values))
+            stage.info[contest_field] = sorted(values)
         for _, field, contest_field in settings.PROBLEM_STATISTIC_FIELDS:
             if field not in fields_set and stage.info.get(contest_field):
                 fields_set.add(field)

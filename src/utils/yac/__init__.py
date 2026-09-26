@@ -9,7 +9,7 @@ from utils.requester import requester
 
 def get_auth():
     dirname = os.path.dirname(__file__)
-    with open(os.path.join(dirname, "auth.yaml"), "r") as fo:
+    with open(os.path.join(dirname, "auth.yaml")) as fo:
         return yaml.safe_load(fo)
 
 

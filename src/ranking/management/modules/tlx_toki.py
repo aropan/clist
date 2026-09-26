@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import collections
 import json
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
@@ -17,7 +15,7 @@ class Statistic(BaseModule):
     PROBLEM_URL_FORMAT_ = "{url}/problems/{short}"
     CONFIG_URL_FORMAT_ = "https://api.tlx.toki.id/v2/contest-web/slug/{slug}/with-config"
     API_STANDINGS_URL_FORMAT_ = (
-        "https://api.tlx.toki.id/v2/contests/{jid}/scoreboard?frozen=false&showClosedProblems=false&page={page}"  # noqa
+        "https://api.tlx.toki.id/v2/contests/{jid}/scoreboard?frozen=false&showClosedProblems=false&page={page}"
     )
     API_PROBLEMS_URL_FORMAT_ = "https://api.tlx.toki.id/v2/contests/{jid}/problems"
     API_HISTORY_URL_FORMAT_ = "https://api.tlx.toki.id/v2/contest-history/public?username={handle}"
@@ -26,7 +24,7 @@ class Statistic(BaseModule):
     API_AVATAR_URL_FORMAT_ = "https://api.tlx.toki.id/v2/users/{jid}/avatar"
 
     def __init__(self, **kwargs):
-        super(Statistic, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def get_standings(self, users=None, statistics=None, **kwargs):
         slug = self.url.rstrip("/").rsplit("/", 1)[-1]

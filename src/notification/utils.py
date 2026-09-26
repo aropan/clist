@@ -36,7 +36,7 @@ def lazy_compose_message(func):
         if cache is not None and subscription is not None:
             cache_key = subscription.notification_key
             if cache_key in cache:
-                return
+                return None
             cache.add(cache_key)
 
         with_subscription_names = subscription and subscription.with_coder_list_names
@@ -204,7 +204,7 @@ def compose_message_by_submissions(resource, account, submissions, subscription,
     if messages:
         return messages
     if not contest_problems:
-        return
+        return None
 
     account_name = account.short_display(resource=resource)
     if subscription and (name := subscription.account_name(account)):

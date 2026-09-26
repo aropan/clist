@@ -5,7 +5,7 @@ import re
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from copy import deepcopy
-from pprint import pprint  # noqa
+from pprint import pprint  # ruff: ignore[unused-import]
 
 import blackboxprotobuf
 
@@ -15,7 +15,7 @@ from ranking.management.modules.excepts import ExceptionParseStandings
 
 class Statistic(BaseModule):
     def __init__(self, **kwargs):
-        super(Statistic, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         if not self.standings_url:
             self.standings_url = f"{self.url.rstrip('/')}/leaderboard"
 
@@ -51,10 +51,9 @@ class Statistic(BaseModule):
 
                 if to_conv:
                     raise ExceptionParseStandings(f"Excepted str value for path = {path}")
-                else:
-                    for k, v in types.items():
-                        if k in message:
-                            rec_fix_type(message[k], v.get("message_typedef"), path + [k])
+                for k, v in types.items():
+                    if k in message:
+                        rec_fix_type(message[k], v.get("message_typedef"), path + [k])
 
         def get_response(url, message, types, force_str_paths=(), xmessage_type=None):
             query = blackboxprotobuf.encode_message(message, types)

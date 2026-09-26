@@ -74,7 +74,7 @@ def RequestIsAjaxFunction(get_response):
         return request.META.get("HTTP_X_REQUESTED_WITH") == "XMLHttpRequest"
 
     def middleware(request):
-        setattr(request, "is_ajax", partial(is_ajax, request))
+        request.is_ajax = partial(is_ajax, request)
         response = get_response(request)
         return response
 
@@ -119,7 +119,7 @@ def SetAsCoder(get_response):
             as_coder = Coder.objects.get(coder_filter)
         else:
             as_coder = None
-        setattr(request, "as_coder", as_coder)
+        request.as_coder = as_coder
         response = get_response(request)
         return response
 
@@ -171,10 +171,9 @@ def StatementTimeoutMiddleware(get_response):
 def NonHtmlDebugToolbarMiddleware(get_response):
     def middleware(request):
         response = get_response(request)
-        if "debug_dtb" in request.GET:
-            if "application/json" in response["Content-Type"]:
-                content = json.dumps(json.loads(response.content), sort_keys=True, indent=2)
-                response = HttpResponse("<html><body><pre>{}</pre></body></html>".format(content))
+        if "debug_dtb" in request.GET and "application/json" in response["Content-Type"]:
+            content = json.dumps(json.loads(response.content), sort_keys=True, indent=2)
+            response = HttpResponse(f"<html><body><pre>{content}</pre></body></html>")
         return response
 
     return middleware

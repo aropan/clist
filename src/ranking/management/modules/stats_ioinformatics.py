@@ -221,7 +221,7 @@ class Statistic(BaseModule):
 
                 for k, v in r.items():
                     k = k.strip("▲").strip()
-                    if re.search("[a-z]", k):
+                    if re.search(r"[a-z]", k):
                         k = k.replace(" ", "_").lower()
                     else:
                         k = k.replace(" ", "")
@@ -512,7 +512,7 @@ class Statistic(BaseModule):
             samples = re.finditer(
                 r'<a[^>]*href="(?P<href>[^>]*)"[^>]*>\s*<img[^>]*src="[^"]*/contacts/[^"]*"[^>]*alt="(?P<name>[^"]*)"[^>]*>',
                 page,
-            )  # noqa
+            )
             for sample in samples:
                 key = sample.group("name").lower()
                 info.setdefault("contacts", {})[key] = sample.group("href")

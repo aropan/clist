@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 
@@ -11,7 +9,7 @@ from utils.ratelimiter import RateLimiter
 
 class Statistic(BaseModule):
     _API_LEADERBOARD_URL_FORMAT = (
-        "{resource.api_url}/contest_leaderboard?slug={contest.key}&count={{count}}&page={{page}}"  # noqa
+        "{resource.api_url}/contest_leaderboard?slug={contest.key}&count={{count}}&page={{page}}"
     )
     _API_USER_DETAILS_URL_FORMAT = "{resource.api_url}/profile/user_details?uuid={handle}"
     _API_USER_RATING_DATA_URL_FORMAT = "{resource.api_url}/user_rating_data?uuid={handle}"

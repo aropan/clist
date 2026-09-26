@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import logging
 import re
@@ -22,7 +21,7 @@ class Statistic(BaseModule):
             return {}
 
         page = REQ.get(self.standings_url)
-        page = re.sub("<(/?)tl([^>]*)>", r"<\1tr\2>", page)
+        page = re.sub(r"<(/?)tl([^>]*)>", r"<\1tr\2>", page)
 
         for regex in [
             '<table[^>]*class="standings"[^>]*>.*?</table>',
@@ -84,14 +83,14 @@ class Statistic(BaseModule):
             letter = chr(ord("A") - 1)
             solved = 0
             for k, v in list(r.items()):
-                is_russian = bool(re.search("[а-яА-Я]", k))
+                is_russian = bool(re.search(r"[а-яА-Я]", k))
                 c = v.attrs.get("class")
                 c = c.split()[0] if c else k.lower()
                 if c and c.startswith("st_"):
                     c = c[3:].lower()
-                if c in ["prob"] or c not in c_mapping and not is_russian:
+                if c in ["prob"] or (c not in c_mapping and not is_russian):
                     letter = chr(ord(letter) + 1)
-                    short = k if re.match("^[A-Z][0-9]+$", k) else letter
+                    short = k if re.match(r"^[A-Z][0-9]+$", k) else letter
                     problem_info = problems_info.setdefault(
                         short,
                         {
@@ -141,7 +140,7 @@ class Statistic(BaseModule):
                     if c == "diploma":
                         row["_medal_title_field"] = "diploma"
                         v = v.lower().split()[0]
-                        if re.search("(^в.к|^вне)", v):
+                        if re.search(r"(^в.к|^вне)", v):
                             continue
                         if v in ["gold", "i", "1"] or v.startswith("перв"):
                             row["medal"] = "gold"
@@ -221,8 +220,8 @@ class Statistic(BaseModule):
                 if "extra" in row:
                     extra = row["extra"]
                     extra = re.sub(r"\s*(Не\s*РФ|Not\s*RF|Участник\s*вне\s*конкурса):\s*", " ", extra, re.IGNORECASE)
-                    extra = re.sub("<[^>]*>", "", extra)
-                    locs.extend(re.split("[,:]", extra))
+                    extra = re.sub(r"<[^>]*>", "", extra)
+                    locs.extend(re.split(r"[,:]", extra))
                 for loc in locs:
                     loc = re.sub(r"\s*[0-9]+\s*", " ", loc)
                     loc = loc.strip()

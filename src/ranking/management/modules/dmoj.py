@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import collections
 import html
@@ -200,7 +199,7 @@ class Statistic(BaseModule):
 
                 # url = resource.profile_url.format(**account.dict_with_info())
                 # page = REQ.get(url)
-                # match = re.search(r'<div[^>]*class="content-description"[^>]*>\s*<h4>[^<]*</h4>\s*<p>(?P<value>[^<]*)</p>', page)  # noqa
+                # match = re.search(r'<div[^>]*class="content-description"[^>]*>\s*<h4>[^<]*</h4>\s*<p>(?P<value>[^<]*)</p>', page)  # ruff: ignore[line-too-long]
                 # if match:
                 #     data['description'] = html.unescape(match.group('value'))
             except FailOnGetResponse:

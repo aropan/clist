@@ -31,7 +31,7 @@ class Statistic(BaseModule):
         ) as req:
             page = req.proxer.get_connect_ret()
 
-        html_table = re.search("<table[^>]*>.*?</table>", page, re.MULTILINE | re.DOTALL)
+        html_table = re.search(r"<table[^>]*>.*?</table>", page, re.MULTILINE | re.DOTALL)
         if not html_table:
             raise ExceptionParseStandings("Not found html table")
         mapping = {

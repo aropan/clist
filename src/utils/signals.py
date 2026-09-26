@@ -9,9 +9,8 @@ def get_m2m_field_for_through(instance, sender):
         if isinstance(field, models.ManyToManyRel):
             if field.through == sender:
                 return field
-        elif field.is_relation and field.many_to_many:
-            if field.remote_field.through == sender:
-                return field
+        elif field.is_relation and field.many_to_many and field.remote_field.through == sender:
+            return field
     raise ValueError("No ManyToManyField for through model")
 
 

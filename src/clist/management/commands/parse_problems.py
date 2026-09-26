@@ -22,7 +22,7 @@ class Command(BaseCommand):
     help = "Parsing problems infos"
 
     def __init__(self, *args, **kw):
-        super(Command, self).__init__(*args, **kw)
+        super().__init__(*args, **kw)
         self.logger = getLogger("clist.parse.problem")
 
     def add_arguments(self, parser):

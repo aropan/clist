@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import html
 import re
@@ -20,7 +19,7 @@ class Statistic(BaseModule):
         except FailOnGetResponse as e:
             return {"action": "delete"} if e.code == 404 else {}
 
-        match = re.search("<table[^>]*past_event_rating[^>]*>.*?</table>", page, re.DOTALL)
+        match = re.search(r"<table[^>]*past_event_rating[^>]*>.*?</table>", page, re.DOTALL)
         if not match:
             raise ExceptionParseStandings("not found table")
 
@@ -41,7 +40,7 @@ class Statistic(BaseModule):
                 value = " ".join([c.value for c in v]).strip() if isinstance(v, list) else v.value
                 if k == "name":
                     href = v.column.node.xpath(".//a/@href")[0]
-                    match = re.search("/([0-9]+)/?$", href)
+                    match = re.search(r"/([0-9]+)/?$", href)
                     row["member"] = match.group(1)
                     row["name"] = value
                 else:
@@ -89,7 +88,7 @@ class Statistic(BaseModule):
                 info["name"] = match.group("name")
             match = re.search(
                 r'<img[^>]*src="(?P<img>[^"]*)"(?:[^>]*(?:width|height)="[^"]*"){2}[^>]*>\s*<br[^>]*>', page
-            )  # noqa
+            )
             if match:
                 info["avatar_url"] = urljoin(url, match.group("img"))
             return user, info
