@@ -148,11 +148,11 @@
       {% endif %}
 
       {% for external_url in contest.info.standings.external_urls %}
-      <a href="{{ external_url.url }}" class="badge progress-bar-info" rel="external noopener" target="_blank">{% icon_to 'extra_url' external_url.name %}</a>
+      <a href="{{ external_url.url|safe_href }}" class="badge progress-bar-info" rel="external noopener" target="_blank">{% icon_to 'extra_url' external_url.name %}</a>
       {% endfor %}
 
       {% if contest.upsolving_url %}
-      <a href="{{ contest.upsolving_url }}" class="badge progress-bar-info" rel="external noopener" target="_blank">{% icon_to 'extra_url' 'upsolving' %}</a>
+      <a href="{{ contest.upsolving_url|safe_href }}" class="badge progress-bar-info" rel="external noopener" target="_blank">{% icon_to 'extra_url' 'upsolving' %}</a>
       {% endif %}
 
       {% endif %}
@@ -248,7 +248,7 @@
           {% if round.match %}
           {% with match_result=round.match.result|get_item:member %}
           <td class="team-score">
-            {% if round.match.url %}<a href="{{ round.match.url }}" target="_blank" rel="noopener">{% endif %}
+            {% if round.match.url %}<a href="{{ round.match.url|safe_href }}" target="_blank" rel="noopener">{% endif %}
             <span class="{% if match_result.place|as_number == 1%}acc{% else %}rej{% endif %}">{{ match_result|get_item:"solving" }}</span>
             {% if round.match.url %}</a>{% endif %}
           </td>
@@ -340,7 +340,7 @@
                 {% coder_color_circle contest.resource problem.rating size=12 %}
                 {% endif %}
 
-                {% if problem.url %}<a href="{{ problem.url }}">{% endif %}
+                {% if problem.url %}<a href="{{ problem.url|safe_href }}">{% endif %}
                 <span{% if mod_penalty and not problem.n_accepted and contest.n_statistics %} class="rej"{% endif %}>
                 {% if problem.group %}
                   {{ problem.group|truncatechars:truncatechars_name_problem }}
@@ -399,7 +399,7 @@
               {% for problem in problems %}
               <th class="problem-cell{% if problem.colspan %} subheader-score{% endif %}"{% if problem %} data-problem-key="{{ problem|get_problem_short }}"{% endif %}>
                 <small{% if problem.group %} title="{{ problem|get_problem_name }}" data-placement="bottom" data-toggle="tooltip"{% endif %}>
-                  {% if problem.suburl %}<a href="{{ problem.suburl }}">{% endif %}
+                  {% if problem.suburl %}<a href="{{ problem.suburl|safe_href }}">{% endif %}
                     {% if problem.subname %}<div{% if problem.subname_class %} class="{{ problem.subname_class }}"{% endif %}>{{ problem.subname }}</div>{% endif %}
                   {% if problem.suburl %}</a>{% endif %}
                   {% if problem.full_score %}<div>{{ problem.full_score|floatformat|default:problem.full_score }}</div>{% endif %}

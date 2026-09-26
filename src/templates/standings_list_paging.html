@@ -40,7 +40,7 @@
     <span class="toggle" data-group=".group-resource-{{ resource.pk }}"><i class="fa fa-caret-down"></i></span>
   {% endif %}
 
-  <a href="{{ contest.actual_url }}" class="{% if status %} text-{{ status }}{% endif %}">{% trim_to contest.title 60 %}</a>
+  <a href="{{ contest.actual_url|safe_href }}" class="{% if status %} text-{{ status }}{% endif %}">{% trim_to contest.title 60 %}</a>
 
   {% if contest.has_submissions %}
   <a href="{% url 'submissions:submissions' contest.title|slug contest.pk %}" class="submissions">{% icon_to 'submissions' %}</a>
@@ -78,7 +78,7 @@
           {% if problem.rating is not None %}
             {% coder_color_circle contest.resource problem.rating %}
           {% endif %}
-          {% if problem.url %}<a href="{{ problem.url }}" rel="noopener noreferrer">{% endif %}
+          {% if problem.url %}<a href="{{ problem.url|safe_href }}" rel="noopener noreferrer">{% endif %}
           <span title="{{ problem|get_problem_title }}" data-toggle="tooltip">{% trim_to problem|get_problem_short 4 raw_text=True %}</span>
           {% if problem.url %}</a>{% endif %}
         </div>

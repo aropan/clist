@@ -1,6 +1,7 @@
 from html.parser import HTMLParser
 from types import SimpleNamespace
 
+from django.template.loader import render_to_string
 from django.test import SimpleTestCase
 from django.test.client import RequestFactory
 
@@ -34,6 +35,24 @@ def parse_elements(markup):
 
 
 class StandingsHtmlSecurityTest(SimpleTestCase):
+    def test_versus_game_links_reject_active_urls(self):
+        context = {
+            "statistic": SimpleNamespace(pk=1),
+            "versus_data": {"games": {"fields": ["url"]}},
+            "versus_data_row": {
+                "games": [
+                    {"players": [{"name": "Alice"}], "url": "javascript:alert(1)"},
+                    {"url": "data:text/html,<script>alert(1)</script>"},
+                ],
+            },
+        }
+
+        elements = parse_elements(render_to_string("standings_versus_games.html", context))
+        links = [attrs for tag, attrs in elements if tag == "a"]
+
+        assert len(links) == 2
+        assert all(attrs["href"] == "" for attrs in links)
+
     def test_problem_attributes_escape_parser_values(self):
         attack = 'value" onmouseover="alert(1)'
         context = {

@@ -12,7 +12,7 @@
             {% if g|contains:f %}
               {% if forloop.parentloop.first %}<td rowspan="{{ g.players|length }}">
                 {% if f == "url" %}
-                  <a href="{{ g|get_item:f }}" target="_blank" rel="noopener noreferrer"><i class="fas fa-external-link-alt"></i></a>
+                  <a href="{{ g|get_item:f|safe_href }}" target="_blank" rel="noopener noreferrer"><i class="fas fa-external-link-alt"></i></a>
                 {% else %}
                   {{ g|get_item:f }}
                 {% endif %}
@@ -27,7 +27,7 @@
           {% else %}
           <tr class="game-group-{{ forloop.counter }} {% if g.result == 'win' %}success{% elif g.result == 'lose' %}danger{% elif g.result == 'draw' %}warning{% endif %}" data-game-class="game-group-{{ forloop.counter }}">
           {% if g.url %}
-          <td><a href="{{ g.url }}" target="_blank" rel="noopener noreferrer"><i class="fas fa-external-link-alt"></i></a></td>
+          <td><a href="{{ g.url|safe_href }}" target="_blank" rel="noopener noreferrer"><i class="fas fa-external-link-alt"></i></a></td>
           {% endif %}
           <td>{{ forloop.revcounter }}</td>
           {% for f in versus_data.games.fields %}
