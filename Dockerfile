@@ -11,11 +11,24 @@ RUN apt install -y protobuf-compiler
 
 # Setup tesseract
 RUN apt install -y tesseract-ocr tesseract-ocr-eng
-RUN find / -name "tessdata" | grep tesseract | head -n 1 | xargs -I {} wget --quiet -O "{}/eng.traineddata" https://raw.githubusercontent.com/tesseract-ocr/tessdata/main/eng.traineddata
+ARG TESSDATA_COMMIT=ced78752cc61322fb554c280d13360b35b8684e4
+ARG TESSDATA_SHA256=daa0c97d651c19fba3b25e81317cd697e9908c8208090c94c3905381c23fc047
+RUN tessdata_dir="$(find /usr/share/tesseract-ocr -type d -name tessdata -print -quit)" \
+    && test -n "$tessdata_dir" \
+    && wget --quiet \
+        -O "$tessdata_dir/eng.traineddata" \
+        "https://raw.githubusercontent.com/tesseract-ocr/tessdata/$TESSDATA_COMMIT/eng.traineddata" \
+    && echo "$TESSDATA_SHA256  $tessdata_dir/eng.traineddata" | sha256sum --check --strict
 
 # Django bash completion
 RUN apt install -y bash-completion
-RUN wget -O /etc/bash_completion.d/django_bash_completion.sh https://raw.github.com/django/django/master/extras/django_bash_completion
+ARG DJANGO_SOURCE_COMMIT=fe0a859f537d4238cf49fca39073513206f83122
+ARG DJANGO_COMPLETION_SHA256=7e8e23ce8be3c9f7e82900ddcf7938aa202c4fe42e87374f09ed25f9ba2013cf
+RUN wget --quiet \
+        -O /etc/bash_completion.d/django_bash_completion.sh \
+        "https://raw.githubusercontent.com/django/django/$DJANGO_SOURCE_COMMIT/extras/django_bash_completion" \
+    && echo "$DJANGO_COMPLETION_SHA256  /etc/bash_completion.d/django_bash_completion.sh" \
+        | sha256sum --check --strict
 RUN echo "if [ -f /etc/bash_completion ]; then . /etc/bash_completion; fi" >> ~/.bashrc
 
 # Useful packages
@@ -27,7 +40,7 @@ ENV UV_PROJECT_ENVIRONMENT=/usr/local
 ENV UV_LINK_MODE=copy
 COPY pyproject.toml uv.lock .
 RUN --mount=type=cache,id=clist-uv-py314-trixie,target=/root/.cache/uv \
-    uv sync --locked --no-install-project --inexact --compile-bytecode
+    uv sync --locked --no-install-project --no-dev --inexact --compile-bytecode
 COPY src/scripts/patch_python_dependencies.py ./
 RUN python patch_python_dependencies.py && rm patch_python_dependencies.py
 
@@ -47,6 +60,8 @@ FROM base AS dev
 ENV DJANGO_ENV_FILE=.env.dev
 ENV PYTHONDONTWRITEBYTECODE=""
 ENV PYTHONPYCACHEPREFIX=/tmp/clist-pycache
+RUN --mount=type=cache,id=clist-uv-py314-trixie,target=/root/.cache/uv \
+    uv sync --project / --locked --no-install-project --inexact --compile-bytecode
 RUN apt install -y redis-server
 CMD ["sh", "-c", "bash scripts/wait-for-postgres.bash; redis-server --daemonize yes --save '' --dir /tmp; scripts/watchdog.bash 'python manage.py rqworker system default parse_statistics parse_accounts' '**/*.py'; exec python manage.py runserver 0.0.0.0:10042"]
 
@@ -85,7 +100,7 @@ RUN chmod 0644 /etc/logrotate.d/clist
 CMD ["scripts/start-production.bash"]
 
 
-FROM nginx:stable-alpine AS nginx
+FROM nginx:stable-alpine@sha256:985220252f3863977e468f611ef118ebd01421289dd86ee1ae99cb068c3bce2b AS nginx
 # logrotate
 RUN apk add --no-cache logrotate
 COPY config/nginx/logrotate.d/nginx /etc/logrotate.d/nginx
@@ -96,10 +111,10 @@ COPY config/nginx/cron /etc/cron.d/nginx
 RUN chmod 0644 /etc/cron.d/nginx
 RUN crontab /etc/cron.d/nginx
 
-CMD crond && nginx -g "daemon off;"
+CMD ["sh", "-c", "crond && exec nginx -g 'daemon off;'"]
 
 
-FROM postgres:18-alpine3.24 AS postgres
+FROM postgres:18-alpine3.24@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873 AS postgres
 # pg_repack
 RUN apk add --no-cache --virtual .build-deps \
     gcc \
