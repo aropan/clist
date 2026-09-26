@@ -33,8 +33,11 @@ jobs:
           install: true
           cache: true
 
-      - name: Check Python for critical errors
-        run: ruff check --select E9,F63,F7,F82 .
+      # Full project lint has existing violations; enforce the remaining E/F rules.
+      - name: Check Python lint baseline
+        run: >-
+          ruff check --select E4,E7,E9,F
+          --ignore E402,E711,E741,F401,F403 .
 
       - name: Check Python formatting
         run: mise run check-python
@@ -45,8 +48,10 @@ jobs:
       - name: Check PHP formatting
         run: mise run check-php
 
-      - name: Run standalone regression tests
+      - name: Run standalone script tests
         run: >-
-          uv run --no-project --with pytest==9.1.1 pytest -q
-          src/scripts/tests/test_configure.py
-          src/scripts/tests/test_patch_python_dependencies.py
+          uv run --no-project --python 3.14
+          --with pytest==9.1.1
+          --with rich==15.0.0
+          --with google-auth-oauthlib==1.4.0
+          pytest -q src/scripts/tests

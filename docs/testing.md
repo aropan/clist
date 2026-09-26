@@ -133,8 +133,9 @@ docker compose exec dev ./manage.py dump_parser_fixture --suggest -r nerc.itmo.r
 also prints temporary paths, standings keys, and cache-file counts.
 
 The same offline test command is suitable for application CI. The GitHub CI workflow
-runs critical Ruff checks, formatting, and standalone script tests but does not provision
-the Django/PostgreSQL environment, so parser tests are not attached to that workflow.
+runs baseline Ruff checks, formatting, and all standalone script tests on Python 3.14,
+but does not provision the Django/PostgreSQL environment, so parser tests are not
+attached to that workflow.
 
 ## Legacy schedule parser tests
 
