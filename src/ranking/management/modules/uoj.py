@@ -23,6 +23,7 @@ def req_get(*args, **kwargs):
     page, url = REQ.get(*args, **kwargs, return_url=True)
     if urlparse(url).path == "/login":
         variables = dict(re.findall(r'\s*([a-z_]+)\s*:\s*[^"\n]*"([^"\s]*)"', page))
+        # UOJ expects this HMAC-MD5 login value; it is not a stored password hash.
         password = hmac.new(
             key=variables["password"].encode("utf-8"),
             msg=conf.UOJ_PASSWORD.encode("utf-8"),

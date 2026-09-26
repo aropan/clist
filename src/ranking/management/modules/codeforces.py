@@ -64,6 +64,7 @@ def api_query(
             url_encode,
             secret,
         )
+        # Codeforces requires SHA-512 for API request signatures; this is not password storage.
         params["apiSig"] = api_sig_prefix + sha512(api_sig.encode("utf8")).hexdigest()
     url += "?" + urlencode(params)
 
