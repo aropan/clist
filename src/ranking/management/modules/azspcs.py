@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import collections
 import re
 import urllib.parse
@@ -15,7 +13,9 @@ from ranking.management.modules.excepts import ExceptionParseStandings
 class Statistic(BaseModule):
     def get_standings(self, users=None, statistics=None, **kwargs):
         url_info = urllib.parse.urlparse(self.url)
-        if not url_info.hostname.endswith("azspcs.com") or not url_info.path.startswith("/Contest/"):
+        hostname = url_info.hostname
+        valid_host = hostname == "azspcs.com" or (hostname and hostname.endswith(".azspcs.com"))
+        if not valid_host or not url_info.path.startswith("/Contest/"):
             return {"action": "skip"}
 
         standings_url = self.url.rstrip("/") + "/Standings"
@@ -35,10 +35,10 @@ class Statistic(BaseModule):
             team = match.group("team").strip()
             team_id = match.group("id")
             members = []
-            for match in re.finditer("<li[^>]*>(?P<member>.*?)</li>", match.group("members")):
-                groups = re.search(r'<[^>]*userid="([^"]*)"[^>]*>([^<]*)</', match.group("member")).groups()
+            for member_match in re.finditer(r"<li[^>]*>(?P<member>.*?)</li>", match.group("members")):
+                groups = re.search(r'<[^>]*userid="([^"]*)"[^>]*>([^<]*)</', member_match.group("member")).groups()
                 handle, name = map(str.strip, groups)
-                location = re.search(r"\((?P<loc>[^\)]*)\)", match.group("member")).group("loc").strip()
+                location = re.search(r"\((?P<loc>[^\)]*)\)", member_match.group("member")).group("loc").strip()
                 country = location.split(",")[-1].strip()
                 member = {
                     "team_id": team_id,
