@@ -132,9 +132,9 @@ docker compose exec dev ./manage.py dump_parser_fixture --suggest -r nerc.itmo.r
 `--verbosity 2` prints the main recording phases for each fixture; `--verbosity 3`
 also prints temporary paths, standings keys, and cache-file counts.
 
-The same offline test command is suitable for application CI. The current GitHub
-workflow only runs CodeQL and does not provision the Django/PostgreSQL environment,
-so parser tests are not attached to that workflow.
+The same offline test command is suitable for application CI. The GitHub CI workflow
+runs critical Ruff checks, formatting, and standalone script tests but does not provision
+the Django/PostgreSQL environment, so parser tests are not attached to that workflow.
 
 ## Legacy schedule parser tests
 
