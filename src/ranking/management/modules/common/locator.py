@@ -118,7 +118,7 @@ class Locator:
             self.locations = {}
             if os.path.exists(self.locations_file):
                 with open(self.locations_file) as fo:
-                    data = yaml.safe_load(fo) or dict()
+                    data = yaml.safe_load(fo) or {}
                     self.locations = {k: v for k, v in data.items() if v}
             if self.locations is None:
                 self.locations = {}

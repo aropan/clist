@@ -15,7 +15,7 @@ class Statistic(BaseModule):
     def get_standings(self, users=None, statistics=None, **kwargs):
         standings_url = self.STANDING_URL_FORMAT_.format(self)
 
-        headers = dict()
+        headers = {}
         user_agent = "logs/legacy/beecrowd.user_agent"
         if os.path.exists(user_agent):
             with open(user_agent) as fo:

@@ -85,11 +85,11 @@ class Command(BaseCommand):
                     host=original_contest.host,
                     resource=original_contest.resource,
                     key=slug(args.title),
-                    defaults=dict(
-                        start_time=start_time,
-                        end_time=end_time,
-                        url=args.url if args.url else original_contest.url,
-                    ),
+                    defaults={
+                        "start_time": start_time,
+                        "end_time": end_time,
+                        "url": args.url if args.url else original_contest.url,
+                    },
                 )
 
             if created:

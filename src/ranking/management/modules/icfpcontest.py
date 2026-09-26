@@ -222,13 +222,13 @@ class Statistic(BaseModule):
                     for field in disable_fields:
                         row.pop(field, None)
 
-        return dict(
-            result=results,
-            fields_types=fields_types,
-            divisions_addition={
-                k: dict(fields=list(fields_types.keys()), fields_types=fields_types)
+        return {
+            "result": results,
+            "fields_types": fields_types,
+            "divisions_addition": {
+                k: {"fields": list(fields_types.keys()), "fields_types": fields_types}
                 for k, fields_types in divisions_fields_types.items()
             },
-            divisions_order=divisions_order,
-            problems=list(problems_infos.values()),
-        )
+            "divisions_order": divisions_order,
+            "problems": list(problems_infos.values()),
+        }

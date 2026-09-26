@@ -116,7 +116,7 @@ class Statistic(BaseModule):
             n_limit=50,
             filepath_proxies="sharedfiles/resource/topcoder/proxies",
             connect=lambda req: req.get("https://www.topcoder.com/", n_attempts=1),
-            attributes=dict(n_attempts=5),
+            attributes={"n_attempts": 5},
             inplace=False,
         )
 
@@ -292,7 +292,7 @@ class Statistic(BaseModule):
                 if problems:
                     problems_sets.append([{"short": n, "url": urljoin(url, u), "code": k} for u, k, n in problems])
 
-            problems_info = dict() if len(problems_sets) > 1 else list()
+            problems_info = {} if len(problems_sets) > 1 else []
             with_adv = False
             for problems_set, result_url in zip(problems_sets, result_urls):
                 url = urljoin(self.standings_url, result_url + "&em=1000000042")
@@ -613,7 +613,7 @@ class Statistic(BaseModule):
             n_limit=20,
             filepath_proxies="sharedfiles/resource/topcoder/proxies",
             connect=lambda req: req.get(members_api_url, n_attempts=1),
-            attributes=dict(n_attempts=5),
+            attributes={"n_attempts": 5},
         ) as req:
             # page = req.proxer.get_connect_ret()
             # dd_active_algorithm = {}

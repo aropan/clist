@@ -28,7 +28,7 @@ class Statistic(BaseModule):
             r'<[^>]*class="task"[^>]*>\s*<b>(?P<short>[^<]*)</b>\s*<a[^>]*href="(?P<url>[^"]*)"[^>]*>(?P<name>[^<]*)</a>',
             page,
         )
-        problem_infos = dict()
+        problem_infos = {}
         for match in matches:
             short = match.group("short").strip()
             name = match.group("name").strip()
@@ -137,7 +137,7 @@ class Statistic(BaseModule):
                 name = match.group("name").strip()
                 key = re.findall(r"\d+", url)[-1]
                 info = {"tags": [slug(list_name)]}
-                problem = dict(url=url, key=key, name=name, time=problem_time, info=info)
+                problem = {"url": url, "key": key, "name": name, "time": problem_time, "info": info}
                 detail = match.group("detail").strip()
                 detail = re.findall(r"\d+", detail)
                 if len(detail) == 2:

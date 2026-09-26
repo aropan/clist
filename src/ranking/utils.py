@@ -202,7 +202,7 @@ def fill_missed_ranks(account, contest_keys, fields, contest_addition_update):
     missed = 0
     total = 0
     filled_groups = set()
-    missed_grouped_contest_keys = list()
+    missed_grouped_contest_keys = []
     seen_groups = set()
     for contest_key in tqdm.tqdm(contest_keys, desc="fill missed ranks", total=len(contest_keys)):
         addition_update = contest_addition_update[contest_key]
@@ -448,7 +448,7 @@ def update_stage(self):
     timezone_now = timezone.now()
 
     filter_params = dict(self.filter_params)
-    spec_filter_params = dict()
+    spec_filter_params = {}
     for field in ("info__fields_types__new_rating__isnull",):
         if field in filter_params:
             spec_filter_params[field] = filter_params.pop(field)
@@ -579,7 +579,7 @@ def update_stage(self):
     re_ranking = self.score_params.get("re_ranking")
     update_statistics_fields = self.score_params.get("update_statistics_fields", [])
 
-    account_keys = dict()
+    account_keys = {}
     problem_values = defaultdict(set)
     total = statistics.filter(contest__in=contests).count()
     with tqdm.tqdm(total=total, desc=f"getting statistics for stage {stage}") as pbar, print_sql(count_only=True):
@@ -915,7 +915,7 @@ def update_stage(self):
         elif t == "region_by_country":
             out = field["out"]
 
-            mapping_regions = dict()
+            mapping_regions = {}
             for regional_event in field["data"]:
                 for region in regional_event["regions"]:
                     mapping_regions[region["code"]] = {"regional_event": regional_event, "region": region}
@@ -991,7 +991,7 @@ def update_stage(self):
     field_to_problem = self.score_params.get("field_to_problem")
     with transaction.atomic():
         fields_set = set()
-        fields = list()
+        fields = []
 
         pks = set()
         placing_infos = {}

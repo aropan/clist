@@ -281,14 +281,14 @@ class Statistic(BaseModule):
                 return ret
 
             def multiset_hash(multiset):
-                ret = tuple()
+                ret = ()
                 for k, v in sorted(multiset.items()):
                     ret += (k, v)
                 return hash(ret)
 
-            user_mapping = dict()
+            user_mapping = {}
             rows = {k: v["name"] for k, v in result.items() if "name" in v}
-            rows_sets = dict()
+            rows_sets = {}
             name_data = self.info.get("_official_specific_name_data") or {}
 
             def row_name_hash(member, name):

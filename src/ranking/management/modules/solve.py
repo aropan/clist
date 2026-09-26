@@ -54,12 +54,12 @@ class Statistic(BaseModule):
                     problem["time_in_seconds"] = cell["time"]
                     problem["time"] = self.to_time(cell["time"] // 60, 2)
 
-        standings = dict()
+        standings = {}
 
         if len(problems_info.get("division", {})) == 1:
             problems_info = list(problems_info["division"].values())[0]
         else:
-            previous_values = dict()
+            previous_values = {}
             for row in result.values():
                 if "place" not in row:
                     continue

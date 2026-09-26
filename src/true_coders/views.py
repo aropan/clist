@@ -516,7 +516,7 @@ def account_context(request, key, host):
     account = accounts.filter(resource=resource, key=key).first()
     if account is None:
         renaming = get_object_or_404(AccountRenaming, resource=resource, old_key=key)
-        url = reverse("coder:account", kwargs=dict(host=resource.host, key=renaming.new_key))
+        url = reverse("coder:account", kwargs={"host": resource.host, "key": renaming.new_key})
         request.logger.info(f"Redirect to {renaming.new_key} account")
         raise RedirectException(redirect(url))
 
@@ -608,7 +608,7 @@ def account_verification(request, key, host, template="account_verification.html
             return HttpResponseBadRequest("Account already verified")
     verification, created = AccountVerification.objects.get_or_create(coder=coder, account=account)
     context["verification"] = verification
-    context["account_url"] = reverse("coder:account", kwargs=dict(key=key, host=host))
+    context["account_url"] = reverse("coder:account", kwargs={"key": key, "host": host})
 
     action = request.POST.get("action")
     if action == "verify":
@@ -1773,7 +1773,7 @@ def change(request):
                     return HttpResponseBadRequest("Account is already connect")
 
             if need_verification:
-                url = reverse("coder:account_verification", kwargs=dict(key=account.key, host=resource.host))
+                url = reverse("coder:account_verification", kwargs={"key": account.key, "host": resource.host})
                 return JsonResponse({"url": url, "message": "redirect"}, status=HttpResponseRedirect.status_code)
 
             coder.add_account(account)
@@ -1896,12 +1896,12 @@ def change(request):
         else:
             return HttpResponseBadRequest("invalid content type")
 
-        kwargs = dict(
-            coder=coder,
-            content_type=content_type,
-            object_id=object_id,
-            activity_type=activity_type,
-        )
+        kwargs = {
+            "coder": coder,
+            "content_type": content_type,
+            "object_id": object_id,
+            "activity_type": activity_type,
+        }
         if value:
             Activity.objects.get_or_create(**kwargs)
 
@@ -1925,11 +1925,11 @@ def change(request):
         if content_type == "problem":
             content_type = ContentType.objects.get(app_label="clist", model="problem")
 
-        kwargs = dict(
-            coder=coder,
-            content_type=content_type,
-            object_id=object_id,
-        )
+        kwargs = {
+            "coder": coder,
+            "content_type": content_type,
+            "object_id": object_id,
+        }
 
         action = request.POST.get("action")
 

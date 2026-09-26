@@ -160,7 +160,7 @@ def update_problems(contest, problems=None, force=False):
     new_problem_ids = set()
     old_problem_ids = set(contest.problem_set.values_list("id", flat=True))
     old_problem_ids |= set(contest.individual_problem_set.values_list("id", flat=True))
-    added_problems = dict()
+    added_problems = {}
 
     def link_problem_to_contest(problem, contest):
         ret = not problem.contests.filter(pk=contest.pk).exists()

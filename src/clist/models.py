@@ -469,7 +469,7 @@ class Resource(BaseModel):
 
     def problem_rating_predictor_features(self, problem):
         feature_fields = self.problem_rating_predictor["fields"]
-        problem_data = dict()
+        problem_data = {}
         problem_data.update(problem.__dict__)
         problem_data.update(problem.info)
         features = {}

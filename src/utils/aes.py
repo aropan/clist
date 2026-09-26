@@ -34,7 +34,7 @@ def strip_PKCS7_padding(s):
 
 class AES:
     # valid key sizes
-    keySize = dict(SIZE_128=16, SIZE_192=24, SIZE_256=32)
+    keySize = {"SIZE_128": 16, "SIZE_192": 24, "SIZE_256": 32}
 
     # Rijndael S-box
     sbox = [
@@ -1117,7 +1117,7 @@ class AESModeOfOperation:
     aes = AES()
 
     # structure of supported modes of operation
-    modeOfOperation = dict(OFB=0, CFB=1, CBC=2)
+    modeOfOperation = {"OFB": 0, "CFB": 1, "CBC": 2}
 
     # converts a 16 character string into a number array
     def convertString(self, string, start, end, mode):

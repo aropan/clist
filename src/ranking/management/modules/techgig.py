@@ -43,7 +43,7 @@ class Statistic(BaseModule):
 
         result = {}
         for r in table:
-            row = dict()
+            row = {}
             for k, v in r.items():
                 if v.value:
                     row[k] = v.value

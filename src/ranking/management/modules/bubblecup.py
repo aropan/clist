@@ -69,7 +69,7 @@ class Statistic(BaseModule):
                     p["full_score"] = level
         d_problems_info = OrderedDict()
 
-        result = dict()
+        result = {}
 
         has_scoring = {}
         divisions_order = []
@@ -93,7 +93,7 @@ class Statistic(BaseModule):
             }[ctype]
 
             sorted_data = sorted(data["standings"], key=lambda r: r["score"], reverse=True)
-            division_result = dict()
+            division_result = {}
 
             with PoolExecutor(max_workers=20) as executor, tqdm.tqdm(total=len(sorted_data)) as pbar:
 

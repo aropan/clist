@@ -35,14 +35,14 @@ class Statistic(BaseModule):
             data = data["data"]
             problem_progress.total = max(data["basicInfo"]["pageCount"], 1)
             for problem in data["data"]:
-                problem_info = dict(
-                    short=problem["index"],
-                    name=problem["title"],
-                    code=problem["problemId"],
-                    accepted_count=problem["acceptedCount"],
-                    submit_count=problem["submitCount"],
-                    url=f"{self.url}/{problem['index']}",
-                )
+                problem_info = {
+                    "short": problem["index"],
+                    "name": problem["title"],
+                    "code": problem["problemId"],
+                    "accepted_count": problem["acceptedCount"],
+                    "submit_count": problem["submitCount"],
+                    "url": f"{self.url}/{problem['index']}",
+                }
 
                 if self.contest.standings_kind == "scoring":
                     problem_info["full_score"] = problem["score"]
@@ -218,7 +218,7 @@ class Statistic(BaseModule):
                 if data.pop("handle") != user:
                     raise ExceptionParseAccounts("Handle is not same")
 
-                ret = dict(info=data)
+                ret = {"info": data}
                 contest_addition_update = {}
                 ratings = data.pop("ratings")
                 ratings.sort(key=lambda x: x["time"])
@@ -232,10 +232,10 @@ class Statistic(BaseModule):
                     data["rating"] = update["new_rating"]
 
                 if contest_addition_update:
-                    ret["contest_addition_update_params"] = dict(
-                        update=contest_addition_update,
-                        clear_rating_change=True,
-                    )
+                    ret["contest_addition_update_params"] = {
+                        "update": contest_addition_update,
+                        "clear_rating_change": True,
+                    }
 
                 yield ret
 

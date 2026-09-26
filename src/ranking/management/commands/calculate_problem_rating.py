@@ -288,8 +288,8 @@ class Command(BaseCommand):
                 contest.problem_rating_update_done()
                 continue
 
-            contests_divisions_data = dict()
-            stats = dict()
+            contests_divisions_data = {}
+            stats = {}
             team_ids = set()
             missing_account = False
             for current_contest, current_statistics in problems_contests.items():
@@ -353,7 +353,7 @@ class Command(BaseCommand):
 
                     weight = 1 - 0.9 ** (n_contests + 1)
 
-                    stats[stat.pk] = dict(old_rating=old_rating, weight=weight)
+                    stats[stat.pk] = {"old_rating": old_rating, "weight": weight}
 
                     info = contests_divisions_data.setdefault(
                         get_info_key(stat),
@@ -379,8 +379,8 @@ class Command(BaseCommand):
                     info["orders"][place] = rank + size / 2
                     rank += size
 
-            problems_infos = dict()
-            caches = dict()
+            problems_infos = {}
+            caches = {}
             skip_problems = set()
             for current_contest, current_statistics in problems_contests.items():
                 for stat in tqdm.tqdm(current_statistics, total=current_statistics.count(), desc="performances"):
@@ -436,7 +436,7 @@ class Command(BaseCommand):
                         list_problems.extend(d)
                 else:
                     list_problems = problems
-                rating_diff = dict()
+                rating_diff = {}
                 updated_rating = set()
                 for problem in list_problems:
                     key = get_problem_key(problem)

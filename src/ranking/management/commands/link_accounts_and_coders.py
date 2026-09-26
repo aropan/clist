@@ -62,13 +62,13 @@ class Command(BaseCommand):
                 account = statistic_account
 
                 is_handle = " " not in name
-                matching_data = dict(
-                    name=name,
-                    account=account,
-                    statistic=statistic,
-                    contest=contest,
-                    resource=resource,
-                )
+                matching_data = {
+                    "name": name,
+                    "account": account,
+                    "statistic": statistic,
+                    "contest": contest,
+                    "resource": resource,
+                }
                 if is_handle and account.name != name:
                     counter["skip_handle"] += 1
                     with suppress_db_logging_context():

@@ -412,7 +412,7 @@ def resources_account_ratings(request, template="resources_account_ratings.html"
     else:
         coder = None
         coder_accounts_ids = set()
-        primary_accounts = dict()
+        primary_accounts = {}
 
     resources = Resource.priority_objects.filter(has_rating_history=True)
     request_resources = request.get_resources()
@@ -497,7 +497,7 @@ def resources_country_ratings(request, template="resources_country_ratings.html"
             primary_countries.setdefault(country_account.resource_id, country_account)
     else:
         coder = None
-        primary_countries = dict()
+        primary_countries = {}
         coder_country_accounts_ids = set()
 
     resources = Resource.priority_objects.filter(has_country_rating=True)
@@ -1103,7 +1103,7 @@ def problems(request, template="problems.html"):
                 custom_options.append(field)
                 custom_info_fields.add(field)
     else:
-        fields_types = dict()
+        fields_types = {}
         fixed_fields = []
         fixed_fields_set = set()
     custom_fields_select = {

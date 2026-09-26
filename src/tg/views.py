@@ -29,7 +29,7 @@ def me(request):
 def unlink(request):
     coder = request.user.coder
     coder.chat.delete()
-    return HttpResponseRedirect(reverse("coder:settings", kwargs=dict(tab="social")))
+    return HttpResponseRedirect(reverse("coder:settings", kwargs={"tab": "social"}))
 
 
 class Incoming(View):

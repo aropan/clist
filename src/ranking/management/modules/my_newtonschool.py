@@ -27,11 +27,11 @@ class Statistic(BaseModule):
         for idx, question in enumerate(data["assignment_questions"], start=1):
             short = f"Q{idx}"
             code = question["hash"]
-            problems_infos[code] = dict(
-                code=code,
-                name=question["question_title"],
-                short=short,
-            )
+            problems_infos[code] = {
+                "code": code,
+                "name": question["question_title"],
+                "short": short,
+            }
 
         url = urljoin(self.url, self.API_STANDING_URL_FORMAT_.format(*hashes))
 

@@ -59,11 +59,11 @@ class Statistic(BaseModule):
         if has_medals:
             options["medals"] = [{"name": "gold", "count": 1}]
 
-        return dict(
-            standings_url=self.url,
-            result=results,
-            options=options,
-        )
+        return {
+            "standings_url": self.url,
+            "result": results,
+            "options": options,
+        }
 
     @staticmethod
     def get_users_infos(users, resource, accounts, pbar=None):

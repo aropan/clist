@@ -1087,12 +1087,12 @@ class Statistic(BaseModule):
                     info["submission_id"] = submission_id
                     save_account = True
 
-                submission = dict(
-                    binary=is_accepted,
-                    result="+" if is_accepted else "-",
-                    submission_id=submission_id,
-                    submission_time=submission_timestamp,
-                )
+                submission = {
+                    "binary": is_accepted,
+                    "result": "+" if is_accepted else "-",
+                    "submission_id": submission_id,
+                    "submission_time": submission_timestamp,
+                }
 
                 stat, _ = create_upsolving_statistic(resource=resource, contest=contest, account=account)
                 problems = stat.addition.setdefault("problems", {})
@@ -1151,19 +1151,19 @@ class Statistic(BaseModule):
         return ret
 
     def get_problem_info_from_dict(question):
-        ret = dict(
-            tags=[t["name"].lower() for t in question["topicTags"]],
-            difficulty=question["difficulty"].lower(),
-            hints=question["hints"],
-            premium=question["isPaidOnly"],
-            accepted_rate=round_sig(question["acRate"], 3),
-            id=as_number(question["questionFrontendId"]),
-            likes=as_number(question["likes"]),
-            dislikes=as_number(question["dislikes"]),
-            has_text_editorial=question["hasSolution"],
-            has_video_editorial=question["hasVideoSolution"],
-            has_editorial=question["hasSolution"] or question["hasVideoSolution"],
-        )
+        ret = {
+            "tags": [t["name"].lower() for t in question["topicTags"]],
+            "difficulty": question["difficulty"].lower(),
+            "hints": question["hints"],
+            "premium": question["isPaidOnly"],
+            "accepted_rate": round_sig(question["acRate"], 3),
+            "id": as_number(question["questionFrontendId"]),
+            "likes": as_number(question["likes"]),
+            "dislikes": as_number(question["dislikes"]),
+            "has_text_editorial": question["hasSolution"],
+            "has_video_editorial": question["hasVideoSolution"],
+            "has_editorial": question["hasSolution"] or question["hasVideoSolution"],
+        }
 
         if ret["likes"] or ret["dislikes"]:
             ret["likes_percent"] = round_sig(ret["likes"] * 100 / (ret["likes"] + ret["dislikes"]), 4)
@@ -1250,15 +1250,15 @@ class Statistic(BaseModule):
             for question in questions:
                 info = Statistic.get_problem_info_from_dict(question)
                 kinds = info.pop("kinds", [])
-                problem = dict(
-                    key=question["questionId"],
-                    name=question["title"],
-                    slug=question["titleSlug"],
-                    kinds=kinds,
-                    n_accepted_submissions=info.pop("n_accepted_submissions", None),
-                    n_total_submissions=info.pop("n_total_submissions", None),
-                    info=info,
-                )
+                problem = {
+                    "key": question["questionId"],
+                    "name": question["title"],
+                    "slug": question["titleSlug"],
+                    "kinds": kinds,
+                    "n_accepted_submissions": info.pop("n_accepted_submissions", None),
+                    "n_total_submissions": info.pop("n_total_submissions", None),
+                    "info": info,
+                }
                 archive_problems.append(problem)
                 if len(archive_problems) == limit:
                     break

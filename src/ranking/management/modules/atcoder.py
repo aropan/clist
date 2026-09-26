@@ -155,7 +155,7 @@ class Statistic(BaseModule):
                 def process_page(url, page, table):
                     last_submission_time = 0
                     for r in table:
-                        row = dict()
+                        row = {}
                         for k, v in list(r.items()):
                             if v.value == "Detail":
                                 href = first(v.column.node.xpath(".//a/@href"))
@@ -318,7 +318,7 @@ class Statistic(BaseModule):
         writers = []
         if match:
             matches = re.findall(r"(?<=>)[^<]+(?=</)", match.group())
-            writers = list()
+            writers = []
             for m in matches:
                 writers.extend(map(str.strip, re.split(r"[,\s]+", m)))
             writers = [w for w in writers if w and w != "?"]

@@ -60,7 +60,7 @@ class Statistic(BaseModule):
         result = {}
         problems_info = OrderedDict()
         for row in table:
-            r = dict()
+            r = {}
             problems = r.setdefault("problems", {})
             pid = 0
             solving = 0

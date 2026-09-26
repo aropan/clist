@@ -64,9 +64,9 @@ class Command(BaseCommand):
         contests = contests.select_related("resource")
         contests = contests.order_by("-end_time")
 
-        modules_cache = dict()
+        modules_cache = {}
         for contest in tqdm(contests, total=contests.count(), desc="Contests"):
-            cache = dict()
+            cache = {}
             resource = contest.resource
             if resource not in modules_cache:
                 modules_cache[resource] = resource.plugin.Statistic

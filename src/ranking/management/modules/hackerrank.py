@@ -67,7 +67,7 @@ class Statistic(BaseModule):
 
         result = {}
         hidden_fields = set()
-        schools = dict()
+        schools = {}
 
         def process_data(data):
             rows = data["models"] if "models" in data else data["data"]

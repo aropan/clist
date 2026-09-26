@@ -124,7 +124,7 @@ class Statistic(BaseModule):
 
         result = {}
 
-        problems_info = dict() if len(contest_infos) > 1 else list()
+        problems_info = {} if len(contest_infos) > 1 else []
         hidden_fields = set()
         problems_data = defaultdict(dict)
         writers = defaultdict(int)
@@ -505,8 +505,8 @@ class Statistic(BaseModule):
 
         ret = defaultdict(int)
         seen = set()
-        contests_cache = dict()
-        stats_cache = dict()
+        contests_cache = {}
+        stats_cache = {}
 
         def fetch_submissions(page=0):
             nonlocal max_page
