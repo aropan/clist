@@ -698,6 +698,8 @@ class Command(BaseCommand):
                         ("variables", "variables"),
                         ("elimination_tournament_info", "elimination_tournament_info"),
                     ):
+                        if attr == "submissions_info" and no_update_results:
+                            continue
                         if field in standings and standings[field] != getattr(contest, attr):
                             setattr(contest, attr, standings[field])
                             update_fields.append(attr)

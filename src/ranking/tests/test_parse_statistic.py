@@ -118,6 +118,17 @@ class ParseStatisticConcurrencyTest(TestCase):
                 **parse_kwargs,
             )
 
+    def test_no_update_results_does_not_advance_submissions_cursor(self):
+        class Statistic(BaseModule):
+            def get_standings(inner_self, **kwargs):
+                return {"result": {}, "submissions_info": {"last_submission_id": 10}}
+
+        self.run_with_plugin(Statistic, no_update_results=True)
+
+        self.contest.refresh_from_db()
+        assert self.contest.submissions_info == {}
+        assert not Statistics.objects.filter(contest=self.contest).exists()
+
     def test_completed_result_does_not_append_applied_name_override(self):
         self.contest.info["additions"] = {
             "Original Name": {"name": "Corrected Name"},
