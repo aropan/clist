@@ -1,0 +1,72 @@
+[
+    {
+        "end_time": "2026-07-30T21:30:00+05:00",
+        "host": "samcoding.uz",
+        "key": "1",
+        "rid": 192,
+        "start_time": "2026-07-30T19:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "SamCoding Round 1 (Div. 3)",
+        "url": "https://samcoding.uz/contest/1"
+    },
+    {
+        "end_time": "2026-08-06T22:00:00+05:00",
+        "host": "samcoding.uz",
+        "key": "2",
+        "rid": 192,
+        "start_time": "2026-08-06T19:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "SamCoding Round 2 (Div. 4)",
+        "url": "https://samcoding.uz/contest/2"
+    },
+    {
+        "end_time": "2026-08-13T21:30:00+05:00",
+        "host": "samcoding.uz",
+        "key": "7",
+        "rid": 192,
+        "start_time": "2026-08-13T19:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "SamCoding Round 3 (Div. 2)",
+        "url": "https://samcoding.uz/contest/7"
+    },
+    {
+        "end_time": "2026-08-20T21:30:00+05:00",
+        "host": "samcoding.uz",
+        "key": "12",
+        "rid": 192,
+        "start_time": "2026-08-20T19:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "SamCoding Round 4 (Div. 4)",
+        "url": "https://samcoding.uz/contest/12"
+    },
+    {
+        "end_time": "2026-08-30T21:30:00+05:00",
+        "host": "samcoding.uz",
+        "key": "15",
+        "rid": 192,
+        "start_time": "2026-08-30T19:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "SamCoding Round 5 (Div. 3)",
+        "url": "https://samcoding.uz/contest/15"
+    },
+    {
+        "end_time": "2026-09-13T22:00:00+05:00",
+        "host": "samcoding.uz",
+        "key": "16",
+        "rid": 192,
+        "start_time": "2026-09-13T19:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "SamCoding Round 6 (Div. 3)",
+        "url": "https://samcoding.uz/contest/16"
+    },
+    {
+        "end_time": "2026-10-07T22:00:00+05:00",
+        "host": "samcoding.uz",
+        "key": "22",
+        "rid": 192,
+        "start_time": "2026-10-07T19:30:00+05:00",
+        "timezone": "Asia/Tashkent",
+        "title": "SamCoding Round 7 (Div. 2)",
+        "url": "https://samcoding.uz/contest/22"
+    }
+]

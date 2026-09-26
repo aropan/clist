@@ -1,0 +1,19 @@
+{
+    "host": "samcoding.uz",
+    "rid": 192,
+    "path": "./module/samcoding.uz/index.php",
+    "url": "https://samcoding.uz/contests",
+    "parse_url": "https://samcoding.uz/api/contests/",
+    "timezone": "Asia/Tashkent",
+    "api_url": null,
+    "info": {
+        "get_events": {
+            "colors": {
+                "darken": "#221644",
+                "lighten": "#D8D0EF"
+            }
+        }
+    },
+    "parse_full_list": true,
+    "recorded_at": "2026-09-26 15:12:19"
+}
