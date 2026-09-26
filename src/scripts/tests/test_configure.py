@@ -76,7 +76,7 @@ def test_fill_template_leaves_up_to_date_file_unchanged(tmp_path: Path, monkeypa
     assert Path("settings.env").read_text(encoding="utf-8") == "# Local comment\nVALUE=custom"
 
 
-def test_create_admin_passes_password_as_argument_without_logging_it(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_create_admin_sends_password_on_stdin_without_logging_it(monkeypatch: pytest.MonkeyPatch) -> None:
     run = Mock()
     log = Mock()
     monkeypatch.setattr(configure.subprocess, "run", run)
@@ -90,17 +90,19 @@ def test_create_admin_passes_password_as_argument_without_logging_it(monkeypatch
             "docker",
             "compose",
             "run",
+            "-T",
             "dev",
             "./manage.py",
             "createadmin",
             "--username",
             "admin",
-            "--password",
-            password,
+            "--password-stdin",
             "--email",
             "admin@example.com",
             "--noinput",
         ],
+        input=password + "\n",
+        text=True,
         check=True,
     )
     assert password not in str(log.call_args_list)
