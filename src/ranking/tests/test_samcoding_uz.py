@@ -242,6 +242,8 @@ class SamcodingParserTest(SimpleTestCase):
                     "country": "UZ",
                     "city": "Navoiy",
                     "school": "School",
+                    "first_name": "Code",
+                    "last_name": "Writer",
                     "rating": 1990,
                     "max_rating": 2000,
                     "rating_name": "Candidate Master",
