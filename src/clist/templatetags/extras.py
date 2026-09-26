@@ -2293,7 +2293,12 @@ def standings_statistic_problem_detail(context, small, stat=None, scoreformat_ca
                 result_html.append(f"<span{subscore_cls}>{html.escape(str(subscore.get('status', '')))}</span>")
             result_html.append("</div>")
         if has_failed_verdict:
-            result_html.append(f'<div class="rej">{format_verdict(stat["verdict"], stat["test"])}</div>')
+            full_verdict = stat.get("verdict_full")
+            if full_verdict:
+                verdict_text = html.escape(str(full_verdict))
+            else:
+                verdict_text = format_verdict(stat["verdict"], stat["test"])
+            result_html.append(f'<div class="rej">{verdict_text}</div>')
         if result_rank := stat["result_rank"]:
             result_html.append(f"<div>Rank: {html.escape(str(result_rank))}</div>")
 
@@ -2336,7 +2341,9 @@ def standings_statistic_problem_detail(context, small, stat=None, scoreformat_ca
     elif time_cond:
         result_html.append(f"<span>{format_time_display(stat_time, stat_penalty, stat_time_rank, stat_attempt)}</span>")
     elif failed_verdict_cond:
-        result_html.append(f"<span>{format_verdict(stat['verdict'], stat['test'])}</span>")
+        full_verdict = stat.get("verdict_full")
+        title = f' title="{html.escape(str(full_verdict))}" data-toggle="tooltip"' if full_verdict else ""
+        result_html.append(f"<span{title}>{format_verdict(stat['verdict'], stat['test'])}</span>")
     elif virtual_start_cond:
         time_passed = has_passed_since_timestamp(stat_virtual_start_ts)
         countdown_str = countdown(time_passed)
@@ -2479,7 +2486,8 @@ def standings_statistic_problem(context, scoreformat_cache=None):
 
     if stat.get("icon"):
         icon_title = (
-            f' title="{html.escape(str(stat["verdict"]))}" data-toggle="tooltip"' if stat.get("verdict") else ""
+            f' title="{html.escape(str(stat.get("verdict_full") or stat["verdict"]))}" data-toggle="tooltip"'
+            if stat.get("verdict") else ""
         )
         icon = str(stat["icon"])
         if not re.fullmatch(r'<i class="fas fa-[a-z0-9-]+"></i>', icon):
@@ -2487,7 +2495,8 @@ def standings_statistic_problem(context, scoreformat_cache=None):
         html_parts.append(f"<span{icon_title}>{icon}</span>")
     elif stat.get("binary") is not None:
         icon_title = (
-            f' title="{html.escape(str(stat["verdict"]))}" data-toggle="tooltip"' if stat.get("verdict") else ""
+            f' title="{html.escape(str(stat.get("verdict_full") or stat["verdict"]))}" data-toggle="tooltip"'
+            if stat.get("verdict") else ""
         )
         icon_class = "check" if is_solved(stat) else "times"
         html_parts.append(f'<span{icon_title}><i class="fas fa-{icon_class}"></i></span>')
@@ -2530,7 +2539,7 @@ def standings_statistic_problem(context, scoreformat_cache=None):
             else ""
         )
         result_title = (
-            f' title="{html.escape(str(stat["verdict"]))}" data-toggle="tooltip"'
+            f' title="{html.escape(str(stat.get("verdict_full") or stat["verdict"]))}" data-toggle="tooltip"'
             if stat.get("verdict") and "time" in stat
             else ""
         )

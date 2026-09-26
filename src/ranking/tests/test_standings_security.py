@@ -15,6 +15,7 @@ from clist.templatetags.extras import (
     safe_href,
     standings_statistic_problem,
     standings_statistic_problem_attributes,
+    standings_statistic_problem_detail,
     submission_info_field,
 )
 
@@ -35,6 +36,16 @@ def parse_elements(markup):
 
 
 class StandingsHtmlSecurityTest(SimpleTestCase):
+    def test_failed_verdict_shows_short_code_with_full_text_on_hover(self):
+        stat = {"result": "-2", "verdict": "WA", "verdict_full": "Wrong Answer #1", "test": 1}
+
+        detail = str(standings_statistic_problem_detail({"stat": stat}, small=True))
+        tooltip = str(standings_statistic_problem_detail({"stat": stat}, small=False))
+
+        assert 'title="Wrong Answer #1"' in detail
+        assert "WA(1)" in detail
+        assert "Wrong Answer #1" in tooltip
+
     def test_versus_game_links_reject_active_urls(self):
         context = {
             "statistic": SimpleNamespace(pk=1),

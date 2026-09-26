@@ -215,7 +215,7 @@ class Statistic(BaseModule):
             if not isinstance(data, dict) or data.get("username", "").lower() != member.lower():
                 raise ExceptionParseAccounts(f"Unexpected profile response: {url}")
             info = {"name": " ".join(filter(None, (data.get("first_name"), data.get("last_name"))))}
-            for field in ("avatar", "country", "city", "school"):
+            for field in ("avatar", "country", "city", "school", "first_name", "last_name", "tg_link", "cf_link"):
                 if data.get(field):
                     info[field] = data[field]
             if isinstance(data.get("rating"), dict):
