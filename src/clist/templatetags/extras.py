@@ -2487,7 +2487,8 @@ def standings_statistic_problem(context, scoreformat_cache=None):
     if stat.get("icon"):
         icon_title = (
             f' title="{html.escape(str(stat.get("verdict_full") or stat["verdict"]))}" data-toggle="tooltip"'
-            if stat.get("verdict") else ""
+            if stat.get("verdict")
+            else ""
         )
         icon = str(stat["icon"])
         if not re.fullmatch(r'<i class="fas fa-[a-z0-9-]+"></i>', icon):
@@ -2496,7 +2497,8 @@ def standings_statistic_problem(context, scoreformat_cache=None):
     elif stat.get("binary") is not None:
         icon_title = (
             f' title="{html.escape(str(stat.get("verdict_full") or stat["verdict"]))}" data-toggle="tooltip"'
-            if stat.get("verdict") else ""
+            if stat.get("verdict")
+            else ""
         )
         icon_class = "check" if is_solved(stat) else "times"
         html_parts.append(f'<span{icon_title}><i class="fas fa-{icon_class}"></i></span>')
