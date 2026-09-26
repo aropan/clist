@@ -1,15 +1,15 @@
 import time
-
-from django.core.management.base import BaseCommand
-from django.utils.timezone import now
-from django.template.loader import get_template
-from django.core.mail import EmailMultiAlternatives
-from django.conf import settings
 from datetime import timedelta
-from true_coders.models import Coder
-from events.models import Team, Event, TeamStatus
 
 import tqdm
+from django.conf import settings
+from django.core.mail import EmailMultiAlternatives
+from django.core.management.base import BaseCommand
+from django.template.loader import get_template
+from django.utils.timezone import now
+
+from events.models import Event, Team, TeamStatus
+from true_coders.models import Coder
 
 
 class Command(BaseCommand):

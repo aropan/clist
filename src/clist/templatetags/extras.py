@@ -2524,7 +2524,10 @@ def standings_statistic_problem(context, scoreformat_cache=None):
         start_time_dt = timestamp_to_datetime(stat["start_time"])
         title_attr = ""
         if ctx_timezone and start_time_dt and (ctx_timeformat := context.get("timeformat")):
-            title_attr = f' title="{html.escape(format_time(timezone(start_time_dt, ctx_timezone), ctx_timeformat))}" data-placement="top" data-toggle="tooltip"'
+            title_attr = (
+                f' title="{html.escape(format_time(timezone(start_time_dt, ctx_timezone), ctx_timeformat))}"'
+                ' data-placement="top" data-toggle="tooltip"'
+            )
         countdown_val = countdown(start_time_dt) if start_time_dt else ""
         start_time = html.escape(str(stat["start_time"]))
         html_parts.append(
@@ -2582,7 +2585,8 @@ def standings_statistic_problem(context, scoreformat_cache=None):
     if with_admin_url and perms and perms["ranking"]["change_statistics"] and statistic:
         admin_change_url = reverse("admin:ranking_statistics_change", args=[statistic.pk])
         html_parts.append(
-            f'<a href="{admin_change_url}" class="hover-visible" target="_blank" rel="noopener"><i class="fas fa-database"></i></a>'
+            f'<a href="{admin_change_url}" class="hover-visible" target="_blank" rel="noopener">'
+            '<i class="fas fa-database"></i></a>'
         )
 
     html_parts.append("</div>")

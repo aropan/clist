@@ -1,6 +1,5 @@
-from submissions.models import Language, Submission, Testing, Verdict
-
 from pyclist.admin import BaseModelAdmin, admin_register
+from submissions.models import Language, Submission, Testing, Verdict
 
 
 @admin_register(Language)

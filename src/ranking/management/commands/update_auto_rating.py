@@ -2,8 +2,8 @@
 
 import tqdm
 from django.core.management.base import BaseCommand
+from django.db.models import Exists, OuterRef
 from django.utils import timezone
-from django.db.models import OuterRef, Exists
 
 from clist.models import Contest
 from ranking.models import AutoRating, Rating

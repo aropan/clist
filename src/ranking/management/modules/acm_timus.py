@@ -2,13 +2,12 @@
 # -*- coding: utf-8 -*-
 
 import collections
-import urllib.parse
 import re
+import urllib.parse
 
 from first import first
 
-from ranking.management.modules.common import REQ
-from ranking.management.modules.common import BaseModule, parsed_table
+from ranking.management.modules.common import REQ, BaseModule, parsed_table
 
 
 class Statistic(BaseModule):

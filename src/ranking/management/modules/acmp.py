@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import re
 import json
+import re
 from collections import OrderedDict
 
-from ranking.management.modules.common import REQ, DOT, BaseModule, parsed_table
+from ranking.management.modules.common import DOT, REQ, BaseModule, parsed_table
 
 
 class Statistic(BaseModule):

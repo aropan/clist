@@ -1,11 +1,10 @@
 from django.db.models import Q
 from el_pagination.decorators import page_templates
 
-from submissions.models import Submission
-
 from clist.templatetags.extras import allowed_redirect, get_problem_name, get_problem_short
 from pyclist.decorators import context_pagination, inject_contest
 from ranking.models import Account
+from submissions.models import Submission
 
 
 @page_templates((

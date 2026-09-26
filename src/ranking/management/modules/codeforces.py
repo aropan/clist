@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
+import html
 import json
 import os
 import re
-import html
 from collections import OrderedDict, defaultdict
 from copy import deepcopy
 from datetime import datetime, timedelta
@@ -627,7 +627,8 @@ class Statistic(BaseModule):
             # translation_data = api_query(method='contest.standings', params=translation_params, api_key=self.api_key)
             # for p in translation_data['result']['problems']:
             #     short = p['index']
-            #     if not (problem_info := problems_info.get(short)) or problem_info['name'] == p['name'] or not p['name']:
+            #     if (not (problem_info := problems_info.get(short))
+            #             or problem_info['name'] == p['name'] or not p['name']):
             #         continue
             #     translation = problem_info.setdefault('translation', {})
             #     translation = translation.setdefault('ru', {})

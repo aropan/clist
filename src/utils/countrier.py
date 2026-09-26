@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-from logging import getLogger
 from collections import defaultdict
+from logging import getLogger
 
 from django.utils.translation import override
 from django_countries import countries

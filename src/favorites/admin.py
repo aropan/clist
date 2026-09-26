@@ -1,5 +1,4 @@
 from favorites.models import Activity
-
 from pyclist.admin import BaseModelAdmin, admin_register
 
 

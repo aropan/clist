@@ -1,5 +1,4 @@
 from donation.models import DonationSource
-
 from pyclist.admin import BaseModelAdmin, admin_register
 
 

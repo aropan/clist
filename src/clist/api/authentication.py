@@ -1,7 +1,7 @@
-import logging
 import json
-import six
+import logging
 
+import six
 from django.contrib.auth.models import AnonymousUser
 from django.utils import timezone
 from oauth2_provider.models import AccessToken

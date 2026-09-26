@@ -982,12 +982,13 @@ class Statistic(BaseModule):
         def recent_accepted_submissions(req=REQ):
             if Statistic.is_china(account):
                 post = (
-                    '''
-                {"query":"query recentAcSubmissions($userSlug: String!) { recentACSubmissions(userSlug: $userSlug) { submissionId submitTime question { title translatedTitle titleSlug questionFrontendId } } } ","variables":{"userSlug":"'''
+                    '\n                {"query":"query recentAcSubmissions($userSlug: '
+                    "String!) { recentACSubmissions(userSlug: $userSlug) { submissionId "
+                    "submitTime question { title translatedTitle titleSlug "
+                    'questionFrontendId } } } ","variables":{"userSlug":"'
                     + handle
-                    + """"},"operationName":"recentAcSubmissions"}
-                """
-                )  # noqa: E501
+                    + '"},"operationName":"recentAcSubmissions"}\n                '
+                )
                 page = Statistic._get(
                     "https://leetcode.cn/graphql/noj-go/",
                     content_type="application/json",
@@ -997,12 +998,13 @@ class Statistic(BaseModule):
                 data = json.loads(page)["data"]["recentACSubmissions"]
             else:
                 post = (
-                    '''
-                {"query":"query recentAcSubmissions($username: String!, $limit: Int!) { recentAcSubmissionList(username: $username, limit: $limit) { id title titleSlug timestamp } } ","variables":{"username":"'''
+                    '\n                {"query":"query recentAcSubmissions($username: '
+                    "String!, $limit: Int!) { recentAcSubmissionList(username: $username, "
+                    "limit: $limit) { id title titleSlug timestamp } } "
+                    '","variables":{"username":"'
                     + handle
-                    + """","limit":20},"operationName":"recentAcSubmissions"}
-                """
-                )  # noqa: E501
+                    + '","limit":20},"operationName":"recentAcSubmissions"}\n                '
+                )
                 page = Statistic._get(
                     "https://leetcode.com/graphql",
                     content_type="application/json",

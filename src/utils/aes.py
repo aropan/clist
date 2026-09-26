@@ -11,9 +11,9 @@
 # Licensed under the Apache License, Version 2.0
 # http://www.apache.org/licenses/
 #
+import math
 import os
 import sys
-import math
 
 
 def append_PKCS7_padding(s):

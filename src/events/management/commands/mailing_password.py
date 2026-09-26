@@ -2,14 +2,14 @@ import os
 import time
 from datetime import timedelta
 
-import yaml
-import tqdm
 import arrow
+import tqdm
+import yaml
 from django.core.management.base import BaseCommand
+from django.db.models import Exists, OuterRef, Q
 from django.utils import timezone
-from django.db.models import OuterRef, Exists, Q
 
-from events.models import Team, Event, TeamStatus, Login
+from events.models import Event, Login, Team, TeamStatus
 from utils.yac import change_names
 
 

@@ -90,8 +90,16 @@ class Statistic(BaseModule):
                     + handle
                     + '","limit":'
                     + str(limit)
-                    + ',"fromEventStart":true},"query":"query GeneralLeaderboard($handle: String\u0021, $groupIds: [String\u0021], $fromEventStart: Boolean, $search: String, $limit: Int) { liveEventLeaderboard( eventHandle: $handle groupIds: $groupIds fromEventStart: $fromEventStart search: $search limit: $limit ) { totalCount teams { id group { id name } rank timeSinceEventStart gameSession { id status previousElapsedTime timePenalty hints { category unlocked total } players(type: Player) { id creationTime type alive user { id nickname avatar type company { id region } } } checkpoints { id completed } } teamName } } } "}'
-                )  # noqa
+                    + ',"fromEventStart":true},"query":"query GeneralLeaderboard($handle: '
+                    "String!, $groupIds: [String!], $fromEventStart: Boolean, $search: "
+                    "String, $limit: Int) { liveEventLeaderboard( eventHandle: $handle "
+                    "groupIds: $groupIds fromEventStart: $fromEventStart search: $search "
+                    "limit: $limit ) { totalCount teams { id group { id name } rank "
+                    "timeSinceEventStart gameSession { id status previousElapsedTime "
+                    "timePenalty hints { category unlocked total } players(type: Player) "
+                    "{ id creationTime type alive user { id nickname avatar type company "
+                    '{ id region } } } checkpoints { id completed } } teamName } } } "}'
+                )
             else:
                 public_handle_value = f'"{public_handle}"' if public_handle else "null"
                 post = f'["{self.key}",{public_handle_value},"global",{filt}]'

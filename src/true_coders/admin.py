@@ -8,8 +8,8 @@ from true_coders.models import (
     CoderProblem,
     Filter,
     ListGroup,
-    ListValue,
     ListProblem,
+    ListValue,
     Organization,
     Party,
 )

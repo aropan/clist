@@ -7,10 +7,11 @@ import sys
 sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), "..", ".."))  # noqa
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pyclist.settings")  # noqa
 
-import tqdm
-import fire
 import xml.etree.ElementTree as ET
+
 import django
+import fire
+import tqdm
 
 django.setup()  # noqa
 
