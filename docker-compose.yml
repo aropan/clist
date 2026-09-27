@@ -123,7 +123,7 @@ services:
     mem_limit: 512m
     restart: unless-stopped
   healthchecks:
-    image: healthchecks/healthchecks:v4.3
+    image: healthchecks/healthchecks:v4.4
     networks:
       - clist_network
     volumes:
