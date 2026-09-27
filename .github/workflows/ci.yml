@@ -17,7 +17,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  quality:
+  checks:
     name: Checks
     runs-on: ubuntu-24.04
     timeout-minutes: 20
