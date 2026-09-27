@@ -1,0 +1,31 @@
+repos:
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: Ruff lint
+        entry: mise exec -- ruff check --force-exclude
+        language: system
+        files: \.(py|pyi)$
+        types: [file]
+
+      - id: ruff-format
+        name: Ruff format
+        entry: mise exec -- ruff format --check --force-exclude
+        language: system
+        files: \.(py|pyi|md)$
+        types: [file]
+
+      - id: biome-format
+        name: Biome format
+        entry: mise exec -- biome format --no-errors-on-unmatched
+        language: system
+        files: \.(js|css|json)$
+        types: [file]
+
+      - id: php-cs-fixer
+        name: PHP-CS-Fixer check
+        entry: mise exec -- php-cs-fixer check --config=.php-cs-fixer.dist.php --path-mode=intersection --using-cache=no --
+        language: system
+        files: ^legacy/.*\.php$
+        exclude: ^legacy/libs/
+        types: [file]

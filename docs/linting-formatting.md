@@ -17,6 +17,26 @@ The mise shims are stable entry points that select the version configured by
 the nearest `mise.toml`. Different projects can use different versions of the
 same formatter on one machine.
 
+## Pre-commit checks
+
+Install [pre-commit](https://pre-commit.com/#install), then enable the hook in
+this checkout:
+
+```bash
+pre-commit install
+```
+
+The hook runs the pinned mise tools against staged Python, Markdown, JS, CSS,
+JSON, and project-owned PHP files. It checks Ruff lint and formatting (including
+Python examples in Markdown), Biome formatting, and PHP-CS-Fixer formatting
+without changing files. Tool-specific exclusions still apply. If a check fails,
+fix the file, stage the fix, and commit again.
+
+The hook checks changed files for quick feedback; CI checks the entire project.
+After changing a tool configuration such as `.ruff.toml`, `biome.json`, or
+`.php-cs-fixer.dist.php`, run the corresponding full-project `mise run` checks
+below. To check all tracked files locally, run `pre-commit run --all-files`.
+
 ## Python — Ruff
 
 Config lives in [`.ruff.toml`](../.ruff.toml).
