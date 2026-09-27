@@ -112,6 +112,6 @@ def test_password_prompt_requires_a_nonempty_value(monkeypatch: pytest.MonkeyPat
     prompt = Mock(side_effect=["", "entered-secret"])
     monkeypatch.setattr(configure, "getpass", prompt)
 
-    assert configure.enter_value("password", None, secret=True) == "entered-secret"
+    assert configure.enter_secret("password") == "entered-secret"
     assert prompt.call_count == 2
     assert prompt.call_args.args[0] == "Enter password: "

@@ -25,12 +25,13 @@ def create_logger():
     return logger
 
 
-def enter_value(variable, old_value, secret=False):
-    if secret:
-        while not (value := getpass(f"Enter {variable}: ")):
-            print(f"{variable} cannot be empty")
-        return value
+def enter_secret(variable):
+    while not (value := getpass(f"Enter {variable}: ")):
+        print(f"{variable} cannot be empty")
+    return value
 
+
+def enter_value(variable, old_value):
     if not old_value:
         logger.info(f"Generated new value for {variable} default")
         old_value = random_string()
@@ -211,7 +212,7 @@ def main():
     run_command("docker compose run dev ./manage.py migrate")
 
     username = enter_value("username", os.getlogin())
-    password = enter_value("password", None, secret=True)
+    password = enter_secret("password")
     email = enter_value("email", "admin@localhost")
     create_admin(username, password, email)
 
