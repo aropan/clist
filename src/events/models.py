@@ -2,6 +2,7 @@ import csv
 import random
 from collections import Counter
 from datetime import timedelta
+from typing import ClassVar
 from urllib.parse import urlparse
 
 from django.core.mail import EmailMultiAlternatives
@@ -22,7 +23,8 @@ class Event(BaseModel):
     name = models.CharField(max_length=255)
     slug = models.SlugField(max_length=255, unique=True)
     registration_deadline = models.DateTimeField()
-    website_url = models.URLField(null=True, blank=True)
+    # These columns retain historical SQL NULL values; changing them requires a migration.
+    website_url = models.URLField(null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
     information = models.CharField(max_length=4096)
     email_conf = models.JSONField(default=dict, blank=True)
     logins_paths = models.JSONField(default=dict, blank=True)
@@ -35,7 +37,7 @@ class Event(BaseModel):
         return EmailBackend(alias=f"event-{self.pk}", **self.email_conf["connection"])
 
     def __str__(self):
-        return "%s" % (self.name)
+        return f"{self.name}"
 
     def host_website_url(self):
         return urlparse(self.website_url).netloc
@@ -49,7 +51,7 @@ class TshirtSize(enum.Enum):
     XXL = 5
     XXXL = 6
 
-    __labels__ = {
+    __labels__: ClassVar = {
         S: "S",
         M: "M",
         L: "L",
@@ -77,7 +79,7 @@ class Participant(BaseModel):
     first_name_native = models.CharField(max_length=255, blank=True)
     last_name_native = models.CharField(max_length=255, blank=True)
     middle_name_native = models.CharField(max_length=255, blank=True)
-    email = models.EmailField(null=True, blank=True)
+    email = models.EmailField(null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
     phone_number = PhoneNumberField(blank=True)
     date_of_birth = models.DateField(null=True, blank=True)
     organization = models.ForeignKey(Organization, null=True, blank=True, on_delete=models.SET_NULL)
@@ -90,7 +92,7 @@ class Participant(BaseModel):
     objects = ParticipantManager()
 
     def __str__(self):
-        return "%s %s" % (self.first_name, self.last_name)
+        return f"{self.first_name} {self.last_name}"
 
     @property
     def tshirt_size_value(self):
@@ -113,7 +115,7 @@ class TeamStatus(enum.Enum):
     SCHOOL_FINAL = 13
     SCHOOL_SEMIFINAL = 15
 
-    __labels__ = {
+    __labels__: ClassVar = {
         PENDING: "pending",
         EDITING: "editing",
         CANCELLED: "cancelled",
@@ -234,7 +236,7 @@ class Team(BaseModel):
     @property
     def title(self):
         organizations = "+".join(
-            sorted(set(p.organization.abbreviation or "none" for p in self.participants.all() if p.organization))
+            sorted({p.organization.abbreviation or "none" for p in self.participants.all() if p.organization})
         )
         names = ", ".join(p.last_name for p in self.ordered_participants)
         ret = f"{self.name}: {names}"
@@ -258,7 +260,7 @@ class Team(BaseModel):
 
     @property
     def country(self):
-        country, repeat = Counter(p.country.name for p in self.participants.all()).most_common(1)[0]
+        country, _repeat = Counter(p.country.name for p in self.participants.all()).most_common(1)[0]
         return country
 
     @property
@@ -313,7 +315,7 @@ class JoinRequest(BaseModel):
     participant = models.ForeignKey(Participant, on_delete=models.CASCADE)
 
     def __str__(self):
-        return "%s to %s" % (self.participant, self.team)
+        return f"{self.participant} to {self.team}"
 
     def repeat_request_timedelta(self):
         return JoinRequest.objects.DELAY_BEFORE_DELETE - (now() - self.created)
@@ -355,7 +357,7 @@ class Login(BaseModel):
         return result
 
     def __str__(self):
-        return "%s in %s" % (self.username, TeamStatus.labels[self.stage])
+        return f"{self.username} in {TeamStatus.labels[self.stage]}"
 
     class Meta:
         unique_together = (("team", "stage"), ("stage", "username"))

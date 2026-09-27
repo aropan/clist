@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 from django import forms
 from django.contrib import admin
 from django.contrib.auth import get_permission_codename
@@ -90,11 +92,11 @@ class CustomJSONEditorWidget(JSONEditorWidget):
 
 
 class BaseModelAdmin(GuardedModelAdmin):
-    readonly_fields = ["created", "modified"]
+    readonly_fields: ClassVar = ["created", "modified"]
     save_as = True
     paginator = CachingPaginator
 
-    formfield_overrides = {
+    formfield_overrides: ClassVar = {
         models.JSONField: {"widget": CustomJSONEditorWidget(mode="code", height="300px")},
     }
 
@@ -137,7 +139,7 @@ class BaseModelAdmin(GuardedModelAdmin):
         if obj is not None:
             opts = self.opts
             codename = get_permission_codename("change", opts)
-            return request.user.has_perm("%s.%s" % (opts.app_label, codename), obj)
+            return request.user.has_perm(f"{opts.app_label}.{codename}", obj)
         return False
 
     def has_view_permission(self, request, obj=None):
@@ -146,7 +148,7 @@ class BaseModelAdmin(GuardedModelAdmin):
         if obj is not None:
             opts = self.opts
             codename = get_permission_codename("view", opts)
-            return request.user.has_perm("%s.%s" % (opts.app_label, codename), obj)
+            return request.user.has_perm(f"{opts.app_label}.{codename}", obj)
         return False
 
     class Meta:
@@ -155,5 +157,5 @@ class BaseModelAdmin(GuardedModelAdmin):
 
 @admin_register(Permission)
 class PermissionAdmin(admin.ModelAdmin):
-    list_display = ["name", "content_type", "codename"]
-    search_fields = ["name", "codename"]
+    list_display: ClassVar = ["name", "content_type", "codename"]
+    search_fields: ClassVar = ["name", "codename"]

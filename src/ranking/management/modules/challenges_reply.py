@@ -61,7 +61,7 @@ class Statistic(BaseModule):
                 if isinstance(data, str):
                     data = json.loads(data)
             except FailOnGetResponse as e:
-                raise ExceptionParseStandings(str(e))
+                raise ExceptionParseStandings(str(e)) from e
 
             for k in "error", "errorMessage":
                 if data.get(k):
@@ -83,7 +83,7 @@ class Statistic(BaseModule):
             for r in data["list"]:
                 row = {}
                 name = r["competitorName"]
-                name = re.sub("[\r\n]", "", name)
+                name = re.sub(r"[\r\n]", "", name)
                 row["member"] = f"{name} {season}"
                 row["name"] = name
                 row["solving"] = r["score"]

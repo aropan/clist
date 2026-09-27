@@ -83,7 +83,8 @@ class Statistic(BaseModule):
             letter = chr(ord("A") - 1)
             solved = 0
             for k, v in list(r.items()):
-                is_russian = bool(re.search(r"[а-яА-Я]", k))
+                # Match the exact Unicode text used by the source data.
+                is_russian = bool(re.search(r"[а-яА-Я]", k))  # ruff: ignore[ambiguous-unicode-character-string]
                 c = v.attrs.get("class")
                 c = c.split()[0] if c else k.lower()
                 if c and c.startswith("st_"):
@@ -219,7 +220,9 @@ class Statistic(BaseModule):
                     locs.append(row["city"])
                 if "extra" in row:
                     extra = row["extra"]
-                    extra = re.sub(r"\s*(Не\s*РФ|Not\s*RF|Участник\s*вне\s*конкурса):\s*", " ", extra, re.IGNORECASE)
+                    # Match the exact Unicode text used by the source data.
+                    participant_suffix = r"\s*(Не\s*РФ|Not\s*RF|Участник\s*вне\s*конкурса):\s*"  # ruff: ignore[ambiguous-unicode-character-string]
+                    extra = re.sub(participant_suffix, " ", extra, flags=re.IGNORECASE)
                     extra = re.sub(r"<[^>]*>", "", extra)
                     locs.extend(re.split(r"[,:]", extra))
                 for loc in locs:

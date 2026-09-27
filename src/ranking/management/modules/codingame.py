@@ -333,10 +333,7 @@ class Statistic(BaseModule):
 
                 names = [name for name in result if name not in names_mapping]
 
-                names_mapping.update({
-                    name: key
-                    for name, key in self.resource.account_set.filter(name__in=names).values_list("name", "key")
-                })
+                names_mapping.update(dict(self.resource.account_set.filter(name__in=names).values_list("name", "key")))
 
                 names = [name for name in names if name not in names_mapping]
 
@@ -607,7 +604,7 @@ class Statistic(BaseModule):
             return user, info, ratings
 
         with PoolExecutor(max_workers=8) as executor:
-            for user, info, ratings in executor.map(fetch_ratings, users, accounts):
+            for _user, info, ratings in executor.map(fetch_ratings, users, accounts):
                 if pbar:
                     pbar.update()
                 if not info:

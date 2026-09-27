@@ -57,7 +57,7 @@ class Statistic(BaseModule):
         standings = {}
 
         if len(problems_info.get("division", {})) == 1:
-            problems_info = list(problems_info["division"].values())[0]
+            problems_info = next(iter(problems_info["division"].values()))
         else:
             previous_values = {}
             for row in result.values():

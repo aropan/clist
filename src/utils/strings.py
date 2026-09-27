@@ -31,8 +31,8 @@ def string_iou(a, b):
 
 def list_string_iou(a, b):
     intersection = 0
-    intersection += sum([max(string_iou(x, y) for y in b) for x in a])
-    intersection += sum([max(string_iou(x, y) for y in a) for x in b])
+    intersection += sum(max(string_iou(x, y) for y in b) for x in a)
+    intersection += sum(max(string_iou(x, y) for y in a) for x in b)
     union = len(a) + len(b)
     return intersection / union if union > 0 else 0.0
 

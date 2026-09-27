@@ -24,12 +24,12 @@ def access_token_from_response(service, response):
                     audience=service.app_id,
                     **service.signed_args,
                 )
-            except jwt.ExpiredSignatureError:
-                raise Exception("Signature has expired.")
-            except jwt.InvalidAudienceError:
-                raise Exception("Invalid audience.")
-            except jwt.DecodeError:
-                raise Exception("Error decoding signature.")
+            except jwt.ExpiredSignatureError as e:
+                raise Exception("Signature has expired.") from e
+            except jwt.InvalidAudienceError as e:
+                raise Exception("Invalid audience.") from e
+            except jwt.DecodeError as e:
+                raise Exception("Error decoding signature.") from e
             access_token.update(claims)
         else:
             raise Exception("Unknown signed method.")

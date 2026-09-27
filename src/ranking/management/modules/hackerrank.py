@@ -77,10 +77,11 @@ class Statistic(BaseModule):
                 if isinstance(r.get("attributes"), dict):
                     r = r["attributes"]
 
-                def get(*fields):
+                def get(*fields, r=r):
                     for f in fields:
                         if f in r:
                             return r.pop(f)
+                    return None
 
                 handle = get("hacker", "name")
                 if handle is None:

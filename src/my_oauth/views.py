@@ -48,7 +48,7 @@ def query(request, name):
     if code_args := request.session.pop("token_code_args", None):
         args.update(json.loads(code_args % args))
     request.session["state"] = args["state"]
-    url = re.sub("[\n\r]", "", service.code_uri % args)
+    url = re.sub(r"[\n\r]", "", service.code_uri % args)
     return redirect(url)
 
 
@@ -166,7 +166,7 @@ def response(request, name):
             post = json.loads(service.token_post % args)
             response = requests.post(service.token_uri, data=post)
         else:
-            url = re.sub("[\n\r]", "", service.token_uri % args)
+            url = re.sub(r"[\n\r]", "", service.token_uri % args)
             response = requests.get(url)
         access_token = access_token_from_response(service, response)
         return process_access_token(request, service, access_token)

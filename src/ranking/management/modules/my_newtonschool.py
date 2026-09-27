@@ -148,7 +148,7 @@ class Statistic(BaseModule):
             return user, info, ratings
 
         with PoolExecutor(max_workers=8) as executor:
-            for user, info, ratings in executor.map(fetch_user, users):
+            for _user, info, ratings in executor.map(fetch_user, users):
                 if pbar:
                     pbar.update()
                 if not info:

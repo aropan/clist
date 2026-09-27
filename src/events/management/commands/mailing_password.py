@@ -63,7 +63,7 @@ class Command(BaseCommand):
         if not options["dryrun"]:
             with event.email_backend() as connection:
                 for login in tqdm.tqdm(logins):
-                    for i in range(n_attempet):
+                    for _i in range(n_attempet):
                         if login.send_email(connection=connection):
                             done += 1
                             time.sleep(time_wait_on_success)

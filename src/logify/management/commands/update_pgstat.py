@@ -70,7 +70,7 @@ class Command(BaseCommand):
 
                 defaults = {"app_name": find_app_by_table(table), **tuple_stats, **table_stats}
 
-                pg_stat, created = PgStat.objects.update_or_create(table_name=table, defaults=defaults)
+                pg_stat, _created = PgStat.objects.update_or_create(table_name=table, defaults=defaults)
                 if pg_stat.initial_table_size is None or args.reset:
                     pg_stat.initial_table_size = pg_stat.table_size
                     pg_stat.diff_size = 0

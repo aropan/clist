@@ -3,6 +3,7 @@
 import logging
 import os
 import re
+from typing import ClassVar
 
 import yaml
 from filelock import FileLock
@@ -13,7 +14,7 @@ logging.getLogger("geopy").setLevel(logging.INFO)
 
 
 class Locator:
-    location_fields = ["country", "city", "region", "district", "location"]
+    location_fields: ClassVar = ["country", "city", "region", "district", "location"]
 
     def __init__(
         self,
@@ -31,7 +32,8 @@ class Locator:
         if not location:
             return None
 
-        location = re.sub(r"(\bг\.|\bг\b)", "", location)
+        # Match the exact Unicode text used by the source data.
+        location = re.sub(r"(\bг\.|\bг\b)", "", location)  # ruff: ignore[ambiguous-unicode-character-string]
         location = re.sub(r"<[^>]*>", " ", location)
         location = re.sub(r"[.,\s]+", " ", location)
         location = location.strip()
@@ -76,6 +78,7 @@ class Locator:
             if not city or name in ["район", "district", "область", "обл", "region"]:
                 continue
             return city
+        return None
 
     def get_additional_info(self, location, lang="en"):
         address = self.get_address(location=location, lang=lang)

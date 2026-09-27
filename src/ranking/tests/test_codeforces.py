@@ -6,7 +6,25 @@ from unittest import mock
 from django.test import SimpleTestCase
 from django.utils.timezone import now
 
+from ranking.management.modules import codeforces
 from ranking.management.modules.codeforces import REQ, Statistic
+
+
+class CodeforcesApiQueryTest(SimpleTestCase):
+    def test_default_rate_limit_history_is_shared_between_calls(self):
+        api_key = ("test", "secret")
+        with (
+            mock.patch.dict(codeforces._API_QUERY_TIMES, {}, clear=True),
+            mock.patch.object(REQ, "get", return_value={"status": "OK"}),
+        ):
+            codeforces.api_query("user.info", {"handles": "alice"}, api_key=api_key)
+            codeforces.api_query("user.info", {"handles": "bob"}, api_key=api_key)
+            assert len(codeforces._API_QUERY_TIMES[api_key]) == 2
+
+            custom_history = {}
+            codeforces.api_query("user.info", {"handles": "carol"}, api_key=api_key, prev_time_queries=custom_history)
+            assert len(custom_history[api_key]) == 1
+            assert len(codeforces._API_QUERY_TIMES[api_key]) == 2
 
 
 class CodeforcesStandingsTest(SimpleTestCase):

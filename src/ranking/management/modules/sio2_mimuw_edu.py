@@ -14,7 +14,7 @@ class Statistic(BaseModule):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         if not self.standings_url:
-            raise InitModuleException("Not set standings url for %s" % self.name)
+            raise InitModuleException(f"Not set standings url for {self.name}")
 
     def get_standings(self, users=None, statistics=None, **kwargs):
         def parse_problems_infos():
@@ -41,10 +41,7 @@ class Statistic(BaseModule):
 
                 problem_info = {}
                 for k, vs in list(r.items()):
-                    if isinstance(vs, list):
-                        v = " ".join([v.value for v in vs]).strip()
-                    else:
-                        v = vs.value
+                    v = " ".join([v.value for v in vs]).strip() if isinstance(vs, list) else vs.value
                     if not k:
                         problem_info["short"] = v
                     elif k in ("Nazwa", "Name"):
@@ -129,6 +126,6 @@ class Statistic(BaseModule):
         }
 
         if len(full_scores) == 1:
-            ret["default_problem_full_score"] = list(full_scores)[0]
+            ret["default_problem_full_score"] = next(iter(full_scores))
 
         return ret

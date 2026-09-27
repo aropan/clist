@@ -356,7 +356,7 @@ def coders(request, template="coders.html"):
         coders = coders.filter(filt)
 
     countries = request.GET.getlist("country")
-    countries = set([c for c in countries if c])
+    countries = {c for c in countries if c}
     if countries:
         coders = coders.annotate(filter_country=Exists("account", filter=Q(account__country__in=countries)))
         coders = coders.filter(Q(country__in=countries) | Q(filter_country=True))
@@ -606,7 +606,7 @@ def account_verification(request, key, host, template="account_verification.html
             return HttpResponseBadRequest(f"Allow only one account for {resource.host} resource")
         if not context.get("need_verify"):
             return HttpResponseBadRequest("Account already verified")
-    verification, created = AccountVerification.objects.get_or_create(coder=coder, account=account)
+    verification, _created = AccountVerification.objects.get_or_create(coder=coder, account=account)
     context["verification"] = verification
     context["account_url"] = reverse("coder:account", kwargs={"key": key, "host": host})
 
@@ -620,7 +620,7 @@ def account_verification(request, key, host, template="account_verification.html
             info = resource.plugin.Statistic.get_account_fields(account)
             verified = False
             verification_text = verification.text()
-            for field, value in info.items():
+            for _field, value in info.items():
                 if isinstance(value, str) and verification_text in value:
                     verified = True
                     break
@@ -1052,8 +1052,8 @@ def get_ratings_data(
                 date = timezone.localtime(date, pytz.timezone(request.user.coder.timezone))
             date_format = stat.pop("date_format", "%b %-d, %Y")
             stat["when"] = date.strftime(date_format)
-        resource_info["min"] = min([stat["new_rating"] for stat in resource_info["data"]])
-        resource_info["max"] = max([stat["new_rating"] for stat in resource_info["data"]])
+        resource_info["min"] = min(stat["new_rating"] for stat in resource_info["data"])
+        resource_info["max"] = max(stat["new_rating"] for stat in resource_info["data"])
         resource_info["data"] = [resource_info["data"]]
         resource_info["fields"] = sorted(resource_info.get("fields", []))
 
@@ -1236,7 +1236,7 @@ def change(request):
             coder.settings.pop("time_format")
         coder.save()
     elif name == "add-to-calendar":
-        if value not in django_settings.ACE_CALENDARS_.keys():
+        if value not in django_settings.ACE_CALENDARS_:
             return HttpResponseBadRequest("invalid add-to-calendar value")
         coder.settings["add_to_calendar"] = value
         coder.save()
@@ -1248,9 +1248,10 @@ def change(request):
         coder.save()
     elif name == "event-limit-calendar":
         value = request.POST.get("value", None)
-        if value not in ["true", "false"]:
-            if not value.isdigit() or len(value) > 2 or int(value) < 1 or int(value) >= 20:
-                return HttpResponseBadRequest("invalid event-limit-calendar value")
+        if value not in ["true", "false"] and (
+            not value.isdigit() or len(value) > 2 or int(value) < 1 or int(value) >= 20
+        ):
+            return HttpResponseBadRequest("invalid event-limit-calendar value")
         coder.settings["event_limit_calendar"] = value
         coder.save()
     elif name == "share-to-category":
@@ -1380,7 +1381,7 @@ def change(request):
             categories = [c["id"] for c in coder.get_categories()]
             field = "Categories"
             filter_.categories = request.POST.getlist("value[categories][]", [])
-            if not all([c in categories for c in filter_.categories]):
+            if not all(c in categories for c in filter_.categories):
                 raise Exception("invalid value(s)")
             if len(filter_.categories) == 0:
                 raise Exception("empty")
@@ -1392,7 +1393,7 @@ def change(request):
             if len(filter_.week_days) != len(set(filter_.week_days)):
                 raise Exception("Duplicate week days")
             allow_days = set(range(1, 8))
-            if any([d not in allow_days for d in filter_.week_days]):
+            if any(d not in allow_days for d in filter_.week_days):
                 raise Exception(f"Week days should be in {allow_days}")
             filter_.week_days.sort()
 
@@ -1651,6 +1652,7 @@ def change(request):
                 bot.send_message(message, chat_id=chat.chat_id)
             else:
                 subscription.send(message=message, contest=contest)
+            return None
 
         def view_statistic_by_filter(query):
             statistics = Statistics.objects.filter(query, skip_in_stats=False)
@@ -1938,7 +1940,7 @@ def change(request):
                 return HttpResponseBadRequest("empty value")
             if len(value) > 1000:
                 return HttpResponseBadRequest("too long value")
-            note, created = Note.objects.get_or_create(**kwargs)
+            note, _created = Note.objects.get_or_create(**kwargs)
             note.text = value
             note.save(update_fields=["text"])
         elif action == "delete":
@@ -2004,10 +2006,7 @@ def change(request):
         else:
             if result[0].isdigit():
                 result = as_number(result)
-            if problem_short in problems:
-                message = "result was updated"
-            else:
-                message = "result was added"
+            message = "result was updated" if problem_short in problems else "result was added"
             problems[problem_short] = {"result": result, "time": time}
         if penalty is not None:
             addition["penalty"] = penalty
@@ -2112,7 +2111,7 @@ def search(request, **kwargs):
                     output_field=BooleanField(),
                 )
             )
-            order = ["-is_short"] + order
+            order = ["-is_short", *order]
         qs = qs.order_by(*order)
         qs = qs[(page - 1) * count : page * count]
         ret = [{"id": r.id, "host": r.host, "text": r.host, "icon": r.icon_file.name} for r in qs]
@@ -2281,7 +2280,7 @@ def search(request, **kwargs):
             qs = contest.info.get(field, [])
             qs = [q for q in qs if not text or text.lower() in q.lower()]
             if field not in without_any:
-                qs = ["any"] + qs
+                qs = ["any", *qs]
         elif field == "rating":
             qs = ["rated", "unrated"]
         elif f"_{field}" in contest.info:
@@ -2412,7 +2411,7 @@ def search(request, **kwargs):
                     output_field=BooleanField(),
                 )
             )
-            order = ["-search_match"] + order
+            order = ["-search_match", *order]
         qs = qs.order_by(*order, "pk")
 
         qs = qs[(page - 1) * count : page * count]
@@ -2474,16 +2473,16 @@ def party_action(request, secret_key, action):
     coder = request.user.coder
     if coder.party_set.filter(pk=party.id).exists():
         if action == "join":
-            messages.warning(request, "You are already in %s." % party.name)
+            messages.warning(request, f"You are already in {party.name}.")
         elif action == "leave":
             coder.party_set.remove(party)
-            messages.success(request, "You leave party %s." % party.name)
+            messages.success(request, f"You leave party {party.name}.")
     else:
         if action == "join":
             party.coders.add(coder)
-            messages.success(request, "You join to %s." % party.name)
+            messages.success(request, f"You join to {party.name}.")
         elif action == "leave":
-            messages.warning(request, "You are not there in %s." % party.name)
+            messages.warning(request, f"You are not there in {party.name}.")
     return HttpResponseRedirect(reverse("coder:party", args=[party.slug]))
 
 
@@ -2551,10 +2550,10 @@ def party(request, slug, tab="ranking"):
         fields = collections.OrderedDict()
         if len(divisions) > 1 or "__none__" not in divisions:
             fields["division"] = ("Div", "division", "Division")
-        for division, statistics in divisions.items():
+        for _division, statistics in divisions.items():
             if statistics:
-                max_solving = max([s["solving"] for s in statistics]) or 1
-                max_total = max([s["solving"] + s["upsolving"] for s in statistics]) or 1
+                max_solving = max(s["solving"] for s in statistics) or 1
+                max_total = max(s["solving"] + s["upsolving"] for s in statistics) or 1
 
                 for s in statistics:
                     solving = s["solving"]
@@ -2563,7 +2562,7 @@ def party(request, slug, tab="ranking"):
                     s["interpretation"] = f"4 * ({solving} + {upsolving}) / {max_total} + {solving} / {max_solving}"
                     s["division"] = s["stat"].addition.get("division", "").replace("_", " ")
 
-                max_score = max([s["score"] for s in statistics]) or 1
+                max_score = max(s["score"] for s in statistics) or 1
                 for s in statistics:
                     s["score"] = 100.0 * s["score"] / max_score
                     s["interpretation"] = [f"100 * ({s['interpretation']}) / {max_score}"]
@@ -2592,7 +2591,7 @@ def party(request, slug, tab="ranking"):
             "fields": list(fields.values()),
         })
 
-    total = sorted(list(total.values()), key=lambda d: d["score"], reverse=True)
+    total = sorted(total.values(), key=lambda d: d["score"], reverse=True)
     results.insert(
         0,
         {
@@ -2984,7 +2983,7 @@ def accounts(request, template="accounts.html"):
                 params["link_coders"] = [link_coder]
 
     countries = request.GET.getlist("country")
-    countries = set([c for c in countries if c])
+    countries = {c for c in countries if c}
     if countries:
         accounts = accounts.filter(country__in=countries)
         params["countries"] = countries
@@ -3171,7 +3170,7 @@ def accounts(request, template="accounts.html"):
 
     context["accounts"] = accounts
     context["resources_custom_fields"] = custom_fields
-    context["with_account_ratings"] = not resources or any([r.ratings for r in resources])
+    context["with_account_ratings"] = not resources or any(r.ratings for r in resources)
     context["with_table_inner_scroll"] = not request.user_agent.is_mobile
 
     if coder and len(resources) == 1:

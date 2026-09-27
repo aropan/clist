@@ -19,7 +19,10 @@ class TooManyBinsException(Exception):
     pass
 
 
-def make_bins(src, dst, n_bins, logger=NullLogger(), field=None, step=None, qs=None):
+_NULL_LOGGER = NullLogger()
+
+
+def make_bins(src, dst, n_bins, logger=_NULL_LOGGER, field=None, step=None, qs=None):
     n_bins += 1
     force_ending = False
     if isinstance(src, str):
@@ -36,7 +39,7 @@ def make_bins(src, dst, n_bins, logger=NullLogger(), field=None, step=None, qs=N
         else:
             st = ord(src[0]) + 1 if src else 32
             fn = ord(dst[0])
-            bins = [src] + [chr(int(round(st + (fn - st) * i / (n_bins - 1)))) for i in range(n_bins)] + [dst]
+            bins = [src] + [chr(round(st + (fn - st) * i / (n_bins - 1))) for i in range(n_bins)] + [dst]
     else:
         if step is not None:
             for divisor in get_divisors(step, reverse=True):
@@ -49,7 +52,7 @@ def make_bins(src, dst, n_bins, logger=NullLogger(), field=None, step=None, qs=N
                     break
         bins = [src + (dst - src) * i / (n_bins - 1) for i in range(n_bins)]
     if isinstance(src, int):
-        bins = [int(round(b)) for b in bins]
+        bins = [round(b) for b in bins]
     elif isinstance(src, float):
         bins = [round(b, 2) for b in bins]
     bins = sorted(set(bins))
@@ -95,7 +98,7 @@ def make_chart(
     qs,
     field,
     groupby=None,
-    logger=NullLogger(),
+    logger=_NULL_LOGGER,
     n_bins=None,
     cast=None,
     step=None,
@@ -130,10 +133,7 @@ def make_chart(
         cast = cast or IntegerField()
         qs = qs.annotate(value=Cast(JSONF(field), cast))
     else:
-        if cast:
-            qs = qs.annotate(value=Cast(F(field), cast))
-        else:
-            qs = qs.annotate(value=F(field))
+        qs = qs.annotate(value=Cast(F(field), cast)) if cast else qs.annotate(value=F(field))
     context["queryset"] = qs
     context["field"] = field
 

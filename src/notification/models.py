@@ -2,7 +2,7 @@ import re
 import traceback
 import uuid
 from datetime import timedelta
-from typing import Optional
+from typing import ClassVar
 
 from django.conf import settings as django_settings
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
@@ -72,7 +72,7 @@ class Notification(TaskNotification):
         (MONTH, "Month"),
     )
 
-    DELTAS = {
+    DELTAS: ClassVar = {
         EVENT: timedelta(minutes=1),
         HOUR: timedelta(hours=1),
         DAY: timedelta(days=1),
@@ -87,7 +87,8 @@ class Notification(TaskNotification):
     with_virtual = models.BooleanField(default=False)
     clear_on_delete = models.BooleanField(default=True)
     last_time = models.DateTimeField(null=True, blank=True)
-    secret = models.CharField(max_length=50, blank=True, null=True)
+    # These columns retain historical SQL NULL values; changing them requires a migration.
+    secret = models.CharField(max_length=50, blank=True, null=True)  # ruff: ignore[django-nullable-model-string-field]
 
     tasks = GenericRelation(
         "Task",
@@ -167,7 +168,8 @@ class Subscription(TaskNotification):
     for_upsolving = UpsolvingSubscriptionManager()
 
     class Meta:
-        indexes = [
+        # Django Meta consumes this value directly; an annotation adds an invalid Meta attribute.
+        indexes = [  # ruff: ignore[mutable-class-default]
             models.Index(fields=["contest"]),
             models.Index(fields=["resource"]),
             models.Index(fields=["enable", "resource", "contest", "with_statistics"]),
@@ -246,8 +248,8 @@ class Task(BaseModel):
     notification_object_id = models.PositiveIntegerField()
     notification = GenericForeignKey("notification_content_type", "notification_object_id")
 
-    subject = models.CharField(max_length=4096, null=True, blank=True)
-    message = models.TextField(null=True, blank=True)
+    subject = models.CharField(max_length=4096, null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
+    message = models.TextField(null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
     addition = models.JSONField(default=dict, blank=True)
     response = models.JSONField(default=dict, blank=True, null=True)
     is_sent = models.BooleanField(default=False)
@@ -305,10 +307,11 @@ class Calendar(BaseModel):
                 return f"Host: {event.host}"
             if description == cls.DURATION:
                 return f"Duration: {event.hr_duration}"
+            return None
 
     coder = models.ForeignKey(Coder, on_delete=models.CASCADE)
     name = models.CharField(max_length=64)
-    category = models.CharField(max_length=256, null=True, blank=True)
+    category = models.CharField(max_length=256, null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
     resources = ArrayField(models.PositiveIntegerField(), null=True, blank=True)
     descriptions = ArrayField(models.PositiveSmallIntegerField(choices=EventDescription.choices), null=True, blank=True)
     uuid = models.UUIDField(default=uuid.uuid4, unique=True, db_index=True, editable=False)
@@ -317,13 +320,14 @@ class Calendar(BaseModel):
 class NotificationMessage(BaseModel):
     to = models.ForeignKey(Coder, on_delete=models.CASCADE, related_name="messages_set")
     text = models.TextField()
-    level = models.TextField(null=True, blank=True)
+    level = models.TextField(null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
     is_read = models.BooleanField(default=False)
     read_at = models.DateTimeField(null=True, blank=True)
     sender = models.ForeignKey(Coder, null=True, blank=True, on_delete=models.CASCADE, related_name="sender_set")
 
     class Meta:
-        indexes = [
+        # Django Meta consumes this value directly; an annotation adds an invalid Meta attribute.
+        indexes = [  # ruff: ignore[mutable-class-default]
             models.Index(fields=["to", "is_read"]),
         ]
         verbose_name = "Message"

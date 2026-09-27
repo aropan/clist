@@ -16,7 +16,7 @@ urlpatterns = [
 if settings.TELEGRAM_TOKEN is not None:
     urlpatterns += [
         re_path(
-            r"^incoming/%s/$" % hashlib.md5(settings.TELEGRAM_TOKEN.encode("utf8")).hexdigest(),
+            r"^incoming/{}/$".format(hashlib.md5(settings.TELEGRAM_TOKEN.encode("utf8")).hexdigest()),
             csrf_exempt(views.Incoming.as_view()),
             name="incoming",
         ),

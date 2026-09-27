@@ -3,7 +3,6 @@
 import re
 import urllib.parse
 from collections import OrderedDict, defaultdict
-from pprint import pprint
 
 from clist.templatetags.extras import as_number
 from ranking.management.modules.common import REQ, BaseModule, parsed_table
@@ -51,10 +50,7 @@ class Statistic(BaseModule):
             other = OrderedDict()
             problems = row.setdefault("problems", {})
             for key, v in list(r.items()):
-                if re.match(r"^Stage [0-9]+$", key):
-                    k = key.split()[1]
-                else:
-                    k = key.split()[0]
+                k = key.split()[1] if re.match(r"^Stage [0-9]+$", key) else key.split()[0]
                 if (len(k) == 1 and "A" <= k <= "Z") or k.isdigit():
                     if k >= "X":
                         continue

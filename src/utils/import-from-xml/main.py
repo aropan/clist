@@ -50,10 +50,7 @@ def main(
             if n_attempt == 0:
                 continue
 
-            if accepted:
-                result = "+" if n_attempt == 1 else f"+{n_attempt - 1}"
-            else:
-                result = f"-{n_attempt}"
+            result = ("+" if n_attempt == 1 else f"+{n_attempt - 1}") if accepted else f"-{n_attempt}"
             stat_result = statistic.addition["problems"].get(letter, {}).get("result")
             assert stat_result == result
 

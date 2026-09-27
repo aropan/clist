@@ -18,7 +18,7 @@ class Statistic(BaseModule):
     def get_standings(self, users=None, statistics=None, **kwargs):
         year = self.start_time.year
         year = year if self.start_time.month >= 9 else year - 1
-        season = "%d-%d" % (year, year + 1)
+        season = f"{year:d}-{year + 1:d}"
 
         if not self.standings_url:
             return {}
@@ -67,10 +67,7 @@ class Statistic(BaseModule):
                         if not k:
                             continue
                         ignore_class = True
-                        if "name" in row and len(k) == 1 and n_problem is not False:
-                            c = "problem"
-                        else:
-                            c = k
+                        c = "problem" if "name" in row and len(k) == 1 and n_problem is not False else k
                     if c in ["problem", "ioiprob"]:
                         if n_problem is not False:
                             n_problem += 1
@@ -107,9 +104,11 @@ class Statistic(BaseModule):
                         if c in ("diploma", "medal", "d"):
                             medal = row.pop(c, None)
                             if medal:
-                                if medal in ["1", "З", "G"]:
+                                # Match the exact Unicode text used by the source data.
+                                if medal in ["1", "З", "G"]:  # ruff: ignore[ambiguous-unicode-character-string]
                                     row["medal"] = "gold"
-                                elif medal in ["2", "С", "S"]:
+                                # Match the exact Unicode text used by the source data.
+                                elif medal in ["2", "С", "S"]:  # ruff: ignore[ambiguous-unicode-character-string]
                                     row["medal"] = "silver"
                                 elif medal in ["3", "Б", "B"]:
                                     row["medal"] = "bronze"
@@ -190,7 +189,7 @@ class Statistic(BaseModule):
                                 if country:
                                     countries[country] += 1
                             if len(countries) == 1:
-                                country = list(countries.keys())[0]
+                                country = next(iter(countries.keys()))
                                 row["country"] = country
 
                 result[row["member"]] = row

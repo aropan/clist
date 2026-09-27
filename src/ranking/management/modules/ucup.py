@@ -247,10 +247,7 @@ class Statistic(BaseModule):
         hidden_fields = ["original_handle", "affiliation", "rating", "standings_rating", "out_of_competition"]
         for standings_row in standings:
             solving, penalty, name, rank, rating = standings_row
-            if isinstance(name, dict):
-                row_data = name
-            else:
-                row_data = dict(zip(map(str, range(len(name))), name))
+            row_data = name if isinstance(name, dict) else dict(zip(map(str, range(len(name))), name))
             orig_handle, name = row_data.pop("0"), row_data.pop("3")
 
             scoring = scorings[orig_handle]

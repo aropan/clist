@@ -6,14 +6,13 @@ from urllib.parse import urljoin, urlparse
 
 import tqdm
 from django.core.management.base import BaseCommand
-from django.db.models import OuterRef, Q
+from django.db.models import Q
 from django.utils import timezone
-from sql_util.utils import Exists
 
 from clist.models import Contest, Resource
 from clist.templatetags.extras import get_item
 from ranking.management.modules.common import REQ
-from ranking.models import Account, Finalist, FinalistResourceInfo, Statistics
+from ranking.models import Account, Finalist, FinalistResourceInfo
 from utils.attrdict import AttrDict
 from utils.parsed_table import ParsedTable
 from utils.rating import get_rating

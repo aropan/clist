@@ -7,10 +7,7 @@ import re
 import urllib.parse
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
-from datetime import datetime
 from html import unescape
-from pprint import pprint
-from random import choice
 
 import flag
 from django.utils.timezone import now
@@ -103,7 +100,7 @@ class Statistic(BaseModule):
                     problem_info["subname"] = name
                     problems_info.append(dict(problem_info))
             else:
-                problem_info["full_score"] = sum([test["value"] for test in task["tests"]])
+                problem_info["full_score"] = sum(test["value"] for test in task["tests"])
                 problems_info.append(problem_info)
 
         num_consecutive_users = 200

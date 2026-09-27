@@ -11,7 +11,6 @@ from django.db import connection
 from django.http import HttpResponse, HttpResponseNotFound
 from django.shortcuts import redirect, render
 from django.urls import resolve, reverse
-from el_pagination.decorators import PAGE_LABEL, QS_KEY
 from stringcolor import bold, cs
 
 from clist.models import Contest
@@ -130,10 +129,12 @@ def context_pagination():
 @contextlib.contextmanager
 def analyze_db_queries():
     initial_queries = len(connection.queries)
-    yield
-    final_queries = connection.queries[initial_queries:]
-    grouped_times = group_and_calculate_times(final_queries)
-    log_grouped_times(grouped_times)
+    try:
+        yield
+    finally:
+        final_queries = connection.queries[initial_queries:]
+        grouped_times = group_and_calculate_times(final_queries)
+        log_grouped_times(grouped_times)
 
 
 def group_and_calculate_times(queries):
@@ -176,6 +177,7 @@ def run_only_in_production(func):
     def wrapper(*args, **kwargs):
         if not settings.DEBUG:
             return func(*args, **kwargs)
+        return None
 
     return wrapper
 

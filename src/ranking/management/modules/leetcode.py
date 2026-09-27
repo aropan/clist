@@ -10,6 +10,7 @@ from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from copy import deepcopy
 from datetime import datetime, timedelta
 from functools import lru_cache, partial
+from typing import ClassVar
 from urllib.parse import urljoin, urlparse
 
 import arrow
@@ -58,7 +59,7 @@ class Statistic(BaseModule):
     RANKING_URL_FORMAT_ = "{url}/ranking"
     API_SUBMISSION_URL_FORMAT_ = "https://leetcode{}/api/submissions/{}/"
     STATE_FILE = os.path.join(os.path.dirname(__file__), ".leetcode.yaml")
-    DOMAINS = {"": ".com", "us": ".com", "cn": ".cn", "ly": ".com"}
+    DOMAINS: ClassVar = {"": ".com", "us": ".com", "cn": ".cn", "ly": ".com"}
     API_SUBMISSIONS_URL_FORMAT_ = "https://leetcode.com/api/submissions/?offset={}&limit={}"
 
     @staticmethod
@@ -676,9 +677,9 @@ class Statistic(BaseModule):
                                 content_type="application/json",
                             )
                             profile_data = json.loads(profile_page)
-                            user_does_not_exist = any([
+                            user_does_not_exist = any(
                                 "user does not exist" in e["message"] for e in profile_data.get("errors", [])
-                            ])
+                            )
                             if user_does_not_exist:
                                 page = None
                                 break
@@ -957,7 +958,8 @@ class Statistic(BaseModule):
 
                 profile_url = account.info.setdefault("profile_url", {})
                 handle = profile_url["_handle"]
-                assert info and info["slug"].lower() == handle, (
+                assert info
+                assert info["slug"].lower() == handle, (
                     f"Account handle {handle} should be equal username {info['slug']}"
                 )
 
@@ -1024,12 +1026,13 @@ class Statistic(BaseModule):
             nonlocal save_account
             for submission in submissions:
 
-                def get_field(*fields, raise_not_found=True):
+                def get_field(*fields, raise_not_found=True, submission=submission):
                     for field in fields:
                         if field in submission:
                             return submission.pop(field)
                     if raise_not_found:
                         raise KeyError(f"No field {fields} in {submission}")
+                    return None
 
                 if "question" in submission:
                     submission.update(submission.pop("question"))

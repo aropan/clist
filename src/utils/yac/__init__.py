@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# The Yandex administration helpers are exposed from this package path.
+# ruff: file-ignore[non-empty-init-module]
 
 import os
 

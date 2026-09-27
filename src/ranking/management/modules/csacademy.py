@@ -1,12 +1,10 @@
 #!/usr/bin/env python
 
-import itertools
 import json
 import re
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from datetime import timedelta
-from pprint import pprint
 
 from ranking.management.modules.common import REQ, BaseModule
 from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse

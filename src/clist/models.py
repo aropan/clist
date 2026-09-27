@@ -8,8 +8,8 @@ import os
 import re
 from collections import defaultdict
 from collections.abc import Iterable
-from datetime import UTC, datetime, timedelta, timezone
-from typing import List, Optional
+from datetime import UTC, datetime, timedelta
+from typing import ClassVar
 from urllib.parse import urljoin, urlparse
 
 import numpy as np
@@ -92,17 +92,18 @@ class Resource(BaseModel):
     short_host = models.CharField(max_length=20, unique=True, null=True, blank=True)
     enable = models.BooleanField()
     url = models.CharField(max_length=255)
-    regexp = models.CharField(max_length=1024, null=True, blank=True)
-    path = models.CharField(max_length=255, null=True, blank=True)
-    parse_url = models.CharField(max_length=255, null=True, blank=True)
-    api_url = models.URLField(null=True, blank=True)
-    timezone = models.CharField(max_length=30, null=True, blank=True)
+    # These columns retain historical SQL NULL values; changing them requires a migration.
+    regexp = models.CharField(max_length=1024, null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
+    path = models.CharField(max_length=255, null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
+    parse_url = models.CharField(max_length=255, null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
+    api_url = models.URLField(null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
+    timezone = models.CharField(max_length=30, null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
     auto_remove_started = models.BooleanField(default=False, null=False, blank=False)
-    color = models.CharField(max_length=20, null=True, blank=True)
-    profile_url = models.CharField(max_length=255, null=True, blank=True, default=None)
-    avatar_url = models.CharField(max_length=255, null=True, blank=True, default=None)
-    problem_url = models.CharField(max_length=255, null=True, blank=True, default=None)
-    uid = models.CharField(max_length=100, null=True, blank=True)
+    color = models.CharField(max_length=20, null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
+    profile_url = models.CharField(max_length=255, null=True, blank=True, default=None)  # ruff: ignore[django-nullable-model-string-field]
+    avatar_url = models.CharField(max_length=255, null=True, blank=True, default=None)  # ruff: ignore[django-nullable-model-string-field]
+    problem_url = models.CharField(max_length=255, null=True, blank=True, default=None)  # ruff: ignore[django-nullable-model-string-field]
+    uid = models.CharField(max_length=100, null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
     info = models.JSONField(default=dict, blank=True)
     ratings = models.JSONField(default=list, blank=True)
     has_rating_history = models.BooleanField(default=False)
@@ -128,7 +129,7 @@ class Resource(BaseModel):
     n_team_accounts = models.IntegerField(default=None, null=True, blank=True)
     n_member_accounts = models.IntegerField(default=None, null=True, blank=True)
     icon_file = models.ImageField(upload_to="resources", null=True, blank=True, storage=OverwriteStorage())
-    icon_url = models.CharField(max_length=255, null=True, blank=True)
+    icon_url = models.CharField(max_length=255, null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
     icon_updated_at = models.DateTimeField(null=True, blank=True)
     accounts_fields = models.JSONField(default=dict, blank=True)
     avg_rating = models.FloatField(default=None, null=True, blank=True)
@@ -174,7 +175,7 @@ class Resource(BaseModel):
         "rating_prediction_raw_rating",
         "native_rating",
     )
-    ALL_RATING_FIELDS = RATING_FIELDS + ("rating_change",)
+    ALL_RATING_FIELDS = (*RATING_FIELDS, "rating_change")
 
     event_logs = GenericRelation("logify.EventLog", related_query_name="resource")
 
@@ -183,7 +184,8 @@ class Resource(BaseModel):
     available_for_update_objects = AvailableForUpdateResourceManager()
 
     class Meta:
-        indexes = [
+        # Django Meta consumes this value directly; an annotation adds an invalid Meta attribute.
+        indexes = [  # ruff: ignore[mutable-class-default]
             GinIndexTrgrmOps(fields=["host"]),
             GinIndexTrgrmOps(fields=["short_host"]),
         ]
@@ -376,7 +378,7 @@ class Resource(BaseModel):
     def update_icon(self):
         urls = self.get_icon_urls()
 
-        for url, ext in urls:
+        for url, _ext in urls:
             response = requests.get(url)
             if response.status_code == 200:
                 try:
@@ -578,16 +580,16 @@ class OngoingContestManager(SignificantContestManager):
 
 
 class Contest(BaseModel):
-    STANDINGS_KINDS = {
+    STANDINGS_KINDS: ClassVar = {
         "icpc": "ICPC",
         "scoring": "SCORING",
         "cf": "CF",
     }
 
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
-    kind = models.CharField(max_length=30, blank=True, null=True, db_index=True)
+    kind = models.CharField(max_length=30, blank=True, null=True, db_index=True)  # ruff: ignore[django-nullable-model-string-field]
     title = models.CharField(max_length=2048)
-    slug = models.CharField(max_length=2048, null=True, blank=True, db_index=True)
+    slug = models.CharField(max_length=2048, null=True, blank=True, db_index=True)  # ruff: ignore[django-nullable-model-string-field]
     title_path = PathField(null=True, blank=True, db_index=True)
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
@@ -595,15 +597,15 @@ class Contest(BaseModel):
     url = models.CharField(max_length=255)
     key = models.CharField(max_length=255, blank=True)
     host = models.CharField(max_length=255)
-    uid = models.CharField(max_length=100, null=True, blank=True)
-    edit = models.CharField(max_length=100, null=True, blank=True)
+    uid = models.CharField(max_length=100, null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
+    edit = models.CharField(max_length=100, null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
     invisible = models.BooleanField(default=False, db_index=True)
-    standings_url = models.CharField(max_length=2048, null=True, blank=True)
-    trial_standings_url = models.CharField(max_length=2048, null=True, blank=True)
-    standings_kind = models.CharField(
+    standings_url = models.CharField(max_length=2048, null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
+    trial_standings_url = models.CharField(max_length=2048, null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
+    standings_kind = models.CharField(  # ruff: ignore[django-nullable-model-string-field]
         max_length=10, blank=True, null=True, db_index=True, choices=STANDINGS_KINDS.items()
     )
-    registration_url = models.CharField(max_length=2048, null=True, blank=True)
+    registration_url = models.CharField(max_length=2048, null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
     calculate_time = models.BooleanField(default=False)
     info = models.JSONField(default=dict, blank=True)
     raw_info = models.JSONField(default=dict, blank=True)
@@ -632,15 +634,15 @@ class Contest(BaseModel):
     wait_for_successful_update_timing = models.DateTimeField(default=None, null=True, blank=True)
     link_statistic_timing = models.DateTimeField(default=None, null=True, blank=True)
     statistics_update_required = models.BooleanField(default=False)
-    upsolving_url = models.CharField(max_length=255, default=None, null=True, blank=True)
-    upsolving_key = models.CharField(max_length=255, default=None, null=True, blank=True)
+    upsolving_url = models.CharField(max_length=255, default=None, null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
+    upsolving_key = models.CharField(max_length=255, default=None, null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
     has_unlimited_statistics = models.BooleanField(default=None, null=True, blank=True)
 
     rating_prediction_fields = models.JSONField(default=dict, blank=True, null=True)
     has_fixed_rating_prediction_field = models.BooleanField(default=False, null=True, blank=True)
-    rating_prediction_hash = models.CharField(max_length=64, default=None, null=True, blank=True)
+    rating_prediction_hash = models.CharField(max_length=64, default=None, null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
 
-    problem_rating_hash = models.CharField(max_length=64, default=None, null=True, blank=True)
+    problem_rating_hash = models.CharField(max_length=64, default=None, null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
     problem_rating_update_required = models.BooleanField(default=False)
 
     created = models.DateTimeField(auto_now_add=True)
@@ -677,7 +679,8 @@ class Contest(BaseModel):
             "key",
         )
 
-        indexes = [
+        # Django Meta consumes this value directly; an annotation adds an invalid Meta attribute.
+        indexes = [  # ruff: ignore[mutable-class-default]
             models.Index(fields=["invisible"]),
             models.Index(fields=["start_time"]),
             models.Index(fields=["end_time"]),
@@ -783,7 +786,7 @@ class Contest(BaseModel):
             return 0
         delta = self.next_time_datetime() - (now or timezone_now())
         seconds = delta.total_seconds()
-        return int(round(seconds))
+        return round(seconds)
 
     def next_time_datetime(self):
         return self.end_time if self.is_running() else self.start_time
@@ -803,11 +806,11 @@ class Contest(BaseModel):
     def hr_duration(self):
         duration = self.duration
         if duration > timedelta(days=999):
-            return "%d years" % (duration.days // 364)
+            return f"{duration.days // 364:d} years"
         if duration > timedelta(days=3):
-            return "%d days" % duration.days
+            return f"{duration.days:d} days"
         total = duration.total_seconds()
-        return "%02d:%02d" % ((total + 1e-9) // 3600, (total + 1e-9) % 3600 // 60)
+        return f"{int((total + 1e-9) // 3600):02d}:{int((total + 1e-9) % 3600 // 60):02d}"
 
     @classmethod
     def month_regex(cls):
@@ -831,7 +834,7 @@ class Contest(BaseModel):
                 base_title = title
                 values = []
                 if value := match.group("number"):
-                    value = re.sub(r"[0-9]+", lambda x: str(int(x.group()) + delta), value)
+                    value = re.sub(r"[0-9]+", lambda x, delta=delta: str(int(x.group()) + delta), value)
                 elif value := match.group("letter"):
                     value = chr(ord(value) + delta)
                 elif value := match.group("month"):
@@ -864,10 +867,7 @@ class Contest(BaseModel):
 
         def add(q):
             nonlocal qs
-            if qs is None:
-                qs = q
-            else:
-                qs = qs | q
+            qs = q if qs is None else qs | q
 
         viewed.discard(self.title)
         if viewed:
@@ -891,10 +891,7 @@ class Contest(BaseModel):
                 q = q.order_by("-lcp", order)
                 add(q[:1])
 
-        if qs is not None:
-            qs = qs.order_by("end_time", "id")
-        else:
-            qs = []
+        qs = qs.order_by("end_time", "id") if qs is not None else []
         return qs
 
     def previous_standings_contest(self):
@@ -993,7 +990,7 @@ class Contest(BaseModel):
     def problems_list(self):
         problems = self.info.get("problems")
         if not problems:
-            return []
+            return
         if isinstance(problems, dict):
             division_problems = list(problems.get("division", {}).values())
             problems = []
@@ -1223,10 +1220,10 @@ class Problem(BaseModel):
     index = models.SmallIntegerField(null=True, blank=True)
     key = models.TextField()
     name = models.TextField()
-    slug = models.TextField(default=None, null=True, blank=True)
-    short = models.TextField(default=None, null=True, blank=True)
-    url = models.TextField(default=None, null=True, blank=True)
-    archive_url = models.TextField(default=None, null=True, blank=True)
+    slug = models.TextField(default=None, null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
+    short = models.TextField(default=None, null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
+    url = models.TextField(default=None, null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
+    archive_url = models.TextField(default=None, null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
     divisions = ArrayField(models.TextField(), default=list, blank=True, db_index=True)
     kinds = ArrayField(models.CharField(max_length=30), default=list, blank=True, db_index=True)
     n_attempts = models.IntegerField(default=None, null=True, blank=True)
@@ -1268,7 +1265,8 @@ class Problem(BaseModel):
     class Meta:
         unique_together = ("contest", "key")
 
-        indexes = [
+        # Django Meta consumes this value directly; an annotation adds an invalid Meta attribute.
+        indexes = [  # ruff: ignore[mutable-class-default]
             models.Index(fields=["resource_id", "url", "-time", "contest_id", "index"]),
             models.Index(fields=["-time", "contest_id", "index"]),
             models.Index(fields=["resource_id", "rating"]),
@@ -1299,6 +1297,7 @@ class Problem(BaseModel):
             return True
         if field in {"first_ac"}:
             return True
+        return None
 
     def rating_is_coming(self):
         return self.end_time <= timezone_now() <= self.end_time + self.resource.module.max_delay_after_end
@@ -1372,7 +1371,7 @@ class Banner(BaseModel):
     name = models.CharField(max_length=255)
     url = models.URLField()
     end_time = models.DateTimeField()
-    template = models.CharField(max_length=255, null=True, blank=True)
+    template = models.CharField(max_length=255, null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
     data = models.JSONField(default=dict, blank=True)
     enable = models.BooleanField(default=True)
 
@@ -1384,7 +1383,7 @@ class Banner(BaseModel):
         now = timezone_now()
         if self.end_time < now:
             return 0
-        return int(round((self.end_time - now).total_seconds()))
+        return round((self.end_time - now).total_seconds())
 
 
 class PromotionManager(models.Manager):
@@ -1410,7 +1409,7 @@ class PromotionTimeAttribute(models.TextChoices):
 class Promotion(BaseModel):
     name = models.CharField(max_length=200)
     contest = models.ForeignKey(Contest, on_delete=models.CASCADE)
-    timer_message = models.CharField(max_length=200, null=True, blank=True)
+    timer_message = models.CharField(max_length=200, null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
     time_attribute = models.CharField(max_length=50, choices=PromotionTimeAttribute.choices)
     enable = models.BooleanField(default=True, null=True, blank=True)
     background = models.ImageField(upload_to="promotions", null=True, blank=True)
@@ -1465,7 +1464,7 @@ class PromoLinkManager(BaseManager):
 
 class PromoLink(BaseModel):
     name = models.CharField(max_length=200)
-    desc = models.TextField(default=None, null=True, blank=True)
+    desc = models.TextField(default=None, null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
     icon = models.ImageField(upload_to="promolinks", null=True, blank=True)
     url = models.URLField()
     order = models.IntegerField(default=None, blank=True)
@@ -1504,6 +1503,7 @@ class Discussion(BaseModel):
 
     class Meta:
         unique_together = ("what_type", "what_id", "where_type", "where_id")
-        indexes = [
+        # Django Meta consumes this value directly; an annotation adds an invalid Meta attribute.
+        indexes = [  # ruff: ignore[mutable-class-default]
             models.Index(fields=["what_type", "what_id", "with_problem_discussions"]),
         ]

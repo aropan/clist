@@ -176,7 +176,7 @@ class Command(BaseCommand):
                 statistic_filter = Q(skip_in_stats=False, contest__stage__isnull=True, contest__invisible=False)
                 medal_fields = get_resource_medal_fields(resource)
 
-                def set_n_field(count_annotation, count_field):
+                def set_n_field(count_annotation, count_field, accounts=accounts, counters=counters):
                     qs = accounts.annotate(count=count_annotation).exclude(**{count_field: F("count")})
                     qs = qs.only("resource_id", count_field)
                     counter = 0
@@ -229,7 +229,9 @@ class Command(BaseCommand):
                     self.logger.info(f"updated n_medals = {counter}")
                     counters["n_medals"] = counter
 
-                def set_n_place_field():
+                def set_n_place_field(
+                    statistic_filter=statistic_filter, resource=resource, accounts=accounts, counters=counters
+                ):
                     place_filter = Q(place_as_int__gte=1, place_as_int__lte=10, contest__end_time__lt=timezone.now())
                     place_filter = place_filter & statistic_filter
                     statistics_with_places = resource.statistics_set.filter(place_filter)
@@ -263,7 +265,7 @@ class Command(BaseCommand):
                     self.logger.info(f"updated n_places = {counter}")
                     counters["n_places"] = counter
 
-                def set_sum_field(sum_annotations, annotation_filter, name):
+                def set_sum_field(sum_annotations, annotation_filter, name, accounts=accounts, counters=counters):
                     fields = list(sum_annotations.keys())
                     qs = accounts
                     qs = qs.filter(annotation_filter)
@@ -286,7 +288,7 @@ class Command(BaseCommand):
                     self.logger.info(f"updated {name} = {counter}")
                     counters[name] = counter
 
-                def set_account_url(accounts):
+                def set_account_url(accounts, counters=counters):
                     with tqdm(total=accounts.count(), desc="updating account urls") as pbar:
                         counters["n_urls"] = update_accounts_by_coders(accounts, progress_bar=pbar)
 
@@ -301,7 +303,7 @@ class Command(BaseCommand):
                     or resource.has_statistic_n_total_solved
                 ):
                     statistic_fields_annotation = {
-                        field: f"statistics__{field}" for field in ["solving"] + settings.STANDINGS_STATISTIC_FIELDS
+                        field: f"statistics__{field}" for field in ["solving", *settings.STANDINGS_STATISTIC_FIELDS]
                     }
                     set_sum_field(
                         statistic_fields_annotation,
@@ -355,7 +357,7 @@ class Command(BaseCommand):
 
             fields = []
             for resource_data in resources_data:
-                for field in resource_data.keys():
+                for field in resource_data:
                     if field not in fields:
                         fields.append(field)
 

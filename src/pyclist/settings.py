@@ -841,7 +841,8 @@ PROBLEM_IGNORE_KINDS = {INSIVIBLE_CONTEST_KIND, STAGE_CONTEST_KIND}
 PROBLEM_API_IGNORE_FIELDS = {"solution", "external_solution", "user_solution"}
 PROBLEM_USER_SOLUTION_SIZE_LIMIT = 65536
 
-VIRTUAL_CODER_PREFIX_ = "∨"
+# The virtual coder prefix intentionally uses this symbol.
+VIRTUAL_CODER_PREFIX_ = "∨"  # ruff: ignore[ambiguous-unicode-character-string]
 
 DEFAULT_API_THROTTLE_AT_ = 10
 

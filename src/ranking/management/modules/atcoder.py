@@ -152,7 +152,7 @@ class Statistic(BaseModule):
 
                 submissions_times = {}
 
-                def process_page(url, page, table):
+                def process_page(url, page, table, submissions_times=submissions_times):
                     last_submission_time = 0
                     for r in table:
                         row = {}

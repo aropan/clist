@@ -4,7 +4,6 @@ from collections import defaultdict
 from logging import getLogger
 from math import isclose
 
-from django.conf import settings
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
 from flatten_dict import flatten

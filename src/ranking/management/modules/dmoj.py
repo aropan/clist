@@ -1,14 +1,12 @@
 #!/usr/bin/env python
 
 import collections
-import html
 import json
-import re
 import time
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from contextlib import ExitStack
 from datetime import timedelta
-from pprint import pprint
+from typing import ClassVar
 from urllib.parse import quote_plus, urlparse
 
 import arrow
@@ -20,7 +18,7 @@ from utils.ratelimiter import RateLimiter
 
 
 class Statistic(BaseModule):
-    API_RANKING_URL_FORMATS_ = {
+    API_RANKING_URL_FORMATS_: ClassVar = {
         "v2": "{resource}/api/v2/contest/{key}",
         "v1": "{resource}/api/contest/info/{key}",
     }
@@ -40,7 +38,7 @@ class Statistic(BaseModule):
         except FailOnGetResponse as e:
             if e.code == 404:
                 return {"action": "delete"}
-            raise ExceptionParseStandings("not found api ranking url")
+            raise ExceptionParseStandings("not found api ranking url") from e
 
         data = json.loads(page)
         if "data" in data and "object" in data["data"]:

@@ -33,10 +33,7 @@ def update_account_by_coders(account) -> bool:
     url = False
     custom_countries = None
     for coder in account.coders.all():
-        if url:
-            url = True
-        else:
-            url = reverse("coder:profile", args=[coder.username]) + f"?resource={account.resource_id}"
+        url = True if url else reverse("coder:profile", args=[coder.username]) + f"?resource={account.resource_id}"
 
         coder_custom_countries = coder.settings.get("custom_countries", {})
         if custom_countries is None:
@@ -87,6 +84,7 @@ def similar_contests_replacing(match):
     for group, regex in patterns.items():
         if match.group(group):
             return regex.replace(r"\b", r"\y")
+    return None
 
 
 def similar_contests_queryset(contest):
@@ -136,7 +134,7 @@ def create_contest_problem_discussion(contest, problem):
             except Exception as e:
                 if topic is not None:
                     TelegramBot.delete_topic(telegram_chat.chat_id, topic.message_thread_id)
-                raise CreateContestProblemDiscussionError(e)
+                raise CreateContestProblemDiscussionError(e) from e
 
 
 @transaction.atomic
@@ -301,7 +299,7 @@ def update_problems(contest, problems=None, force=False):
                     info = added_info
                 defaults["info"] = info
 
-                problem, created = Problem.objects.update_or_create(
+                problem, _created = Problem.objects.update_or_create(
                     contest=problem_contest,
                     resource=contest.resource,
                     key=key,
@@ -401,7 +399,7 @@ def update_writers(contest, writers=None, force=False) -> bool | None:
             writer = renaming.new_key
             account = get_account(writer)
         if account is None:
-            account, created = resource.account_set.get_or_create(key=writer)
+            account, _created = resource.account_set.get_or_create(key=writer)
         account.writer_set.add(contest)
         modified_writers.append(account.key)
 

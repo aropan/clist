@@ -43,7 +43,8 @@ class Statistic(BaseModule):
                         problems_info[k]["url"] = urllib.parse.urljoin(self.standings_url, url)
                     if v.value:
                         p = problems.setdefault(k, {})
-                        values = v.value.replace("–", "-").split(" ")
+                        # Match the exact Unicode text used by the source data.
+                        values = v.value.replace("–", "-").split(" ")  # ruff: ignore[ambiguous-unicode-character-string]
                         p["result"] = values[0]
                         if len(values) > 1:
                             p["time"] = values[1]

@@ -2,6 +2,7 @@
 
 import json
 from collections.abc import Iterable
+from typing import ClassVar
 
 import arrow
 from django.conf import settings
@@ -20,15 +21,13 @@ def reverse_url(name):
 
 
 class ContestAtomSerializer(Serializer):
-    formats = Serializer.formats + ["rss", "atom"]
+    formats: ClassVar[list[str]] = [*Serializer.formats, "rss", "atom"]
 
-    content_types = dict(
-        list(Serializer.content_types.items())
-        + [
-            ("atom", "application/atom+xml"),
-            ("rss", "application/rss+xml"),
-        ]
-    )
+    content_types: ClassVar[dict[str, str]] = {
+        **Serializer.content_types,
+        "atom": "application/atom+xml",
+        "rss": "application/rss+xml",
+    }
 
     def generate_feed(self, data, options=None):
         options = options or {}

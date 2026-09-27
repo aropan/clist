@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any
 
 from django.apps import apps
 from django.contrib.auth.models import AnonymousUser, User
@@ -48,6 +48,13 @@ class BaseModel(models.Model):
     created = models.DateTimeField(auto_now_add=True, db_index=True)
     modified = models.DateTimeField(auto_now=True, db_index=True)
 
+    class Meta:
+        abstract = True
+
+    def save(self, *args, **kwargs):
+        self.add_to_update_fields(["modified"], kwargs.get("update_fields"))
+        return super().save(*args, **kwargs)
+
     @staticmethod
     def add_to_update_fields(fields, update_fields):
         if not update_fields:
@@ -58,10 +65,6 @@ class BaseModel(models.Model):
             update_fields.update(fields)
         elif isinstance(update_fields, tuple):
             raise ValueError("update_fields cannot be a tuple")
-
-    def save(self, *args, **kwargs):
-        self.add_to_update_fields(["modified"], kwargs.get("update_fields"))
-        return super().save(*args, **kwargs)
 
     def fetched_field(self, field) -> Any | None:
         fields = field.split("__")
@@ -80,9 +83,6 @@ class BaseModel(models.Model):
                 return False
             obj = getattr(obj, field)
         return key in obj.__dict__
-
-    class Meta:
-        abstract = True
 
     @property
     def channel_group_name(self):

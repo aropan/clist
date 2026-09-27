@@ -1,3 +1,4 @@
+import contextlib
 import json
 import logging
 
@@ -51,13 +52,10 @@ class OAuth20Authentication(Authentication):
                     if auth_header_value and " " in auth_header_value:
                         key = auth_header_value.split(" ", 1)[1]
                         break
-            if not key and request.method == "POST":
-                if request.META.get("CONTENT_TYPE") == "application/json":
-                    decoded_body = request.body.decode("utf8")
-                    try:
-                        key = json.loads(decoded_body)["oauth_consumer_key"]
-                    except ValueError, KeyError:
-                        pass
+            if not key and request.method == "POST" and request.META.get("CONTENT_TYPE") == "application/json":
+                decoded_body = request.body.decode("utf8")
+                with contextlib.suppress(ValueError, KeyError):
+                    key = json.loads(decoded_body)["oauth_consumer_key"]
             if not key:
                 log.info("OAuth20Authentication. No consumer_key found.")
                 return None
@@ -92,8 +90,8 @@ class OAuth20Authentication(Authentication):
             # Check if token has expired
             if token.expires < timezone.now():
                 raise OAuthError("AccessToken has expired.")
-        except AccessToken.DoesNotExist:
-            raise OAuthError("AccessToken not found at all.")
+        except AccessToken.DoesNotExist as e:
+            raise OAuthError("AccessToken not found at all.") from e
 
         log.info("Valid access")
         return token
@@ -168,7 +166,7 @@ class OAuth2ScopedAuthentication(OAuth20Authentication):
             for scope in required_scopes:
                 if token.allow_scopes(scope.split()):
                     allowed_scopes.append(scope)
-        except Exception:
-            raise Exception("Invalid required scope values")
+        except Exception as e:
+            raise Exception("Invalid required scope values") from e
         else:
             return allowed_scopes

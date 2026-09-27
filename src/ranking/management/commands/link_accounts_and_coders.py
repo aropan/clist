@@ -93,10 +93,7 @@ class Command(BaseCommand):
                     coders_counter = Counter(coders)
                     n_coders = sum(coders_counter.values())
                     n_different_coders = len(coders_counter)
-                    if n_different_coders == 1:
-                        coder = next(iter(coders_counter))
-                    else:
-                        coder = None
+                    coder = next(iter(coders_counter)) if n_different_coders == 1 else None
 
                     updates = {
                         "n_found_accounts": n_accounts,

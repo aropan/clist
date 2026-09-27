@@ -39,7 +39,7 @@ class Statistic(BaseModule):
                     return {"action": "delete"}
                 if e.code == 403:
                     return {"action": "skip"}
-                raise ExceptionParseStandings(e)
+                raise ExceptionParseStandings(e) from e
 
             users = data["data"]["users"]
             if not users:
@@ -84,7 +84,7 @@ class Statistic(BaseModule):
                 if e.code == 404:
                     user_data["delete"] = True
                     return user_data
-                raise ExceptionParseAccounts(e)
+                raise ExceptionParseAccounts(e) from e
 
             if name := get_item(data, "profile.name"):
                 info["name"] = name

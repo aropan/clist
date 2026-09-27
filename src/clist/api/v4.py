@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 
+from typing import ClassVar
+
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.fields import ArrayField
@@ -10,10 +12,12 @@ from sql_util.utils import Exists
 from tastypie import fields
 
 from clist.api import v3
+
+# Keep these resource classes available through the v4 API module.
 from clist.api.v3 import (
     BaseModelResource,
-    ContestResource,
-    ResourceResource,
+    ContestResource,  # ruff: ignore[unused-import]
+    ResourceResource,  # ruff: ignore[unused-import]
     StatisticsResource,  # ruff: ignore[unused-import]
     use_for_is_real,
     use_for_is_virtual,
@@ -37,7 +41,7 @@ class AccountResource(v3.AccountResource):
     total_count = fields.BooleanField()
 
     class Meta(v3.AccountResource.Meta):
-        filtering = {
+        filtering: ClassVar = {
             "total_count": ["exact"],
             "id": ["exact", "in"],
             "resource_id": ["exact", "in"],
@@ -47,7 +51,7 @@ class AccountResource(v3.AccountResource):
             "resource_rank": ["exact", "gt", "lt", "gte", "lte", "isnull"],
             "last_activity": ["exact", "gt", "lt", "gte", "lte", "week_day"],
         }
-        ordering = ["id", "handle", "rating", "resource_rank", "n_contests", "last_activity"]
+        ordering: ClassVar = ["id", "handle", "rating", "resource_rank", "n_contests", "last_activity"]
 
 
 class CoderResource(v3.CoderResource):
@@ -115,7 +119,7 @@ class ProblemResource(BaseModelResource):
         abstract = False
         queryset = Problem.objects.all()
         excludes = ("total_count", "solved", "reject")
-        filtering = {
+        filtering: ClassVar = {
             "total_count": ["exact"],
             "name": ["exact", "in"],
             "time": ["exact", "gt", "lt", "gte", "lte", "week_day"],
@@ -142,7 +146,7 @@ class ProblemResource(BaseModelResource):
             "user_todo": ["exact"],
             "user_reject": ["exact"],
         }
-        ordering = [
+        ordering: ClassVar = [
             "id",
             "name",
             "time",

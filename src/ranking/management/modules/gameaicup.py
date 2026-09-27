@@ -1,31 +1,16 @@
 #!/usr/bin/env python
 
-import bisect
-import json
-import os
-import re
-import zlib
-from base64 import b64decode, b64encode
-from collections import OrderedDict, defaultdict
-from copy import deepcopy
-from datetime import datetime, timedelta
-from functools import partial
-from math import isclose
-from pprint import pprint
-from statistics import mean
+from collections import defaultdict
+from datetime import timedelta
 from urllib.parse import urljoin
 
-import pytz
-from django.core.cache import cache
 from django.utils import timezone
-from django.utils.safestring import mark_safe
-from flatten_dict import flatten
 from prettytable import PrettyTable
 
 from clist.templatetags.extras import get_item, normalize_field
 from logify import live as tqdm
 from ranking.management.modules.common import REQ, BaseModule
-from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse, InitModuleException
+from ranking.management.modules.excepts import InitModuleException
 from ranking.models import StatisticsLog
 from utils.ratelimiter import RateLimiter
 from utils.timetools import parse_datetime
@@ -234,7 +219,7 @@ class Statistic(BaseModule):
 
         results = {
             "stats": stats,
-            "games": {"fields": ["index"] + ["url", "id", "preset", "rank", "username", "score", "rating_change"]},
+            "games": {"fields": ["index", "url", "id", "preset", "rank", "username", "score", "rating_change"]},
         }
         return True, results
 

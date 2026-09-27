@@ -137,7 +137,7 @@ class ParsedTable:
             columns = []
             for c in self.header.columns:
                 if rs > int(c.attrs.get("rowspan", 0)):
-                    for cs in range(c.colspan):
+                    for _cs in range(c.colspan):
                         col = next(iter_row)
                         col.attrs["_top_column"] = c
                         columns.append(col)
@@ -147,7 +147,7 @@ class ParsedTable:
 
         columns = []
         for c in self.header.columns:
-            for cs in range(c.colspan):
+            for _cs in range(c.colspan):
                 columns.append(c)
         self.header.columns = columns
 
@@ -199,7 +199,7 @@ class ParsedTable:
                         row.columns.insert(index, c)
 
             if self.with_duplicate_colspan:
-                row.columns = sum([[c] * c.colspan for c in row.columns], [])
+                row.columns = [c for c in row.columns for _ in range(c.colspan)]
 
             if self.ignore_display_none:
                 row.columns = [c for c in row.columns if not re.search(r"display\s*:\s*none", c.attrs.get("style", ""))]

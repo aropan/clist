@@ -117,7 +117,7 @@ class Statistic(BaseModule):
 
         with PoolExecutor(max_workers=8) as executor:
             profiles = executor.map(fetch_profile, users)
-            for user, (data, history) in zip(users, profiles):
+            for _user, (data, history) in zip(users, profiles):
                 if pbar:
                     pbar.update()
 

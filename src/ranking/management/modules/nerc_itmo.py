@@ -18,12 +18,12 @@ class Statistic(BaseModule):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         if not self.standings_url:
-            raise InitModuleException("Not set standings url for %s" % self.name)
+            raise InitModuleException(f"Not set standings url for {self.name}")
 
     def get_standings(self, users=None, statistics=None, **kwargs):
         year = self.start_time.year
         year = year if self.start_time.month >= 9 else year - 1
-        season = "%d-%d" % (year, year + 1)
+        season = f"{year:d}-{year + 1:d}"
 
         result = {}
         problems_info = OrderedDict()
@@ -92,9 +92,11 @@ class Statistic(BaseModule):
                 words = value.split()
                 skipped = []
                 for w in words:
-                    if w in ["З", "G"]:
+                    # Match the exact Unicode text used by the source data.
+                    if w in ["З", "G"]:  # ruff: ignore[ambiguous-unicode-character-string]
                         row["medal"] = "gold"
-                    elif w in ["С", "S"]:
+                    # Match the exact Unicode text used by the source data.
+                    elif w in ["С", "S"]:  # ruff: ignore[ambiguous-unicode-character-string]
                         row["medal"] = "silver"
                     elif w in ["Б", "B"]:
                         row["medal"] = "bronze"
@@ -107,7 +109,7 @@ class Statistic(BaseModule):
                 if "diploma" in row and "medal" not in row:
                     row.update({"medal": "Diploma", "_medal_title_field": "diploma"})
                 if skipped:
-                    row["_{f}"] = " ".join(skipped)
+                    row[f"_{f}"] = " ".join(skipped)
             if university_regex:
                 match = re.search(university_regex, row["name"])
                 if match:

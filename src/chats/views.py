@@ -2,7 +2,7 @@ from django.shortcuts import render
 from el_pagination.decorators import page_template
 
 from chats.models import ExternalChat
-from clist.models import Contest, Resource
+from clist.models import Contest
 from pyclist.decorators import context_pagination
 
 
@@ -27,9 +27,7 @@ def chats(request, template="chats.html"):
         "nourl": True,
         "nogroupby": True,
         "required": True,
-        "options": dict(
-            (k, v) for k, v in ExternalChat.ExternalChatType.choices if k != ExternalChat.ExternalChatType.BLANK
-        ),
+        "options": {k: v for k, v in ExternalChat.ExternalChatType.choices if k != ExternalChat.ExternalChatType.BLANK},
         "values": [r for r in request.GET.getlist("app") if r],
     }
 

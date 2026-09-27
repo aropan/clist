@@ -9,6 +9,7 @@ from base64 import b64decode, b64encode
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from datetime import datetime, timedelta
+from typing import ClassVar
 
 import pytz
 
@@ -20,7 +21,7 @@ from utils.ratelimiter import RateLimiter
 
 class Statistic(BaseModule):
     TIMESTAMP_DELTA = timedelta(hours=4).total_seconds()
-    LANGUAGES_MAPPING = {
+    LANGUAGES_MAPPING: ClassVar = {
         "1": "java",
         "5": "csharp",
         "20": "cpp",
@@ -48,6 +49,7 @@ class Statistic(BaseModule):
                     time.sleep(3 + iteration)
                     continue
                 raise e
+        return None
 
     @staticmethod
     def norm_timestamp(t):

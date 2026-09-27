@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 from pytimeparse.timeparse import timeparse
 from tastypie import fields
 from tastypie.resources import ALL_WITH_RELATIONS
@@ -16,11 +18,11 @@ class ResourceResource(BaseModelResource):
         abstract = False
         queryset = Resource.objects.all()
         resource_name = "resource"
-        filtering = {
+        filtering: ClassVar = {
             "id": ["exact", "in"],
             "name": ["exact", "in"],
         }
-        ordering = [
+        ordering: ClassVar = [
             "id",
             "name",
         ]
@@ -49,7 +51,7 @@ class ContestResource(BaseModelResource):
             "filtered",
             "category",
         )
-        filtering = {
+        filtering: ClassVar = {
             "id": ["exact", "in"],
             "resource": ALL_WITH_RELATIONS,
             "event": ["exact", "iregex", "regex"],
@@ -59,7 +61,7 @@ class ContestResource(BaseModelResource):
             "filtered": ["exact"],
             "category": ["exact"],
         }
-        ordering = ["id", "event", "start", "end", "resource_id", "duration"]
+        ordering: ClassVar = ["id", "event", "start", "end", "resource_id", "duration"]
 
     def dehydrate(self, *args, **kwargs):
         bundle = super().dehydrate(*args, **kwargs)

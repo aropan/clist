@@ -111,5 +111,4 @@ class Statistic(BaseModule):
 
                 assert user == data["_id"]
 
-                ret = {"info": data}
-                yield ret
+                yield {"info": data}

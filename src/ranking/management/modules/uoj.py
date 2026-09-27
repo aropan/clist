@@ -186,14 +186,14 @@ class Statistic(BaseModule):
 
         with PoolExecutor(max_workers=8) as executor:
             profiles = executor.map(fetch_profile, users)
-            for user, account, (data, history) in zip(users, accounts, profiles):
+            for _user, account, (data, history) in zip(users, accounts, profiles):
                 if pbar:
                     pbar.update()
 
                 contest_addition_update = {}
                 last_rating = None
                 for contest in history:
-                    timestamp, rating, contest_key, _, rank, _, rating_change = contest
+                    _timestamp, rating, contest_key, _, rank, _, rating_change = contest
                     contest_key = str(contest_key)
                     update = contest_addition_update.setdefault(contest_key, {})
                     if (rating := as_number(rating, force=True)) is not None:

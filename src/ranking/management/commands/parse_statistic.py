@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+# The row helpers in both result loops are called before the next iteration;
+# no closure escapes its loop, so their captured row values cannot change.
+# ruff: file-ignore[function-uses-loop-variable]
 
 import copy
 import logging
@@ -11,7 +14,7 @@ import traceback
 from collections import OrderedDict, defaultdict
 from contextlib import contextmanager
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from functools import cache
 from html import unescape
 from math import isclose

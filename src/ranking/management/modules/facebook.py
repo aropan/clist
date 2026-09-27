@@ -155,6 +155,7 @@ class Statistic(BaseModule):
             for k in "contest", "fetch__CodingContest":
                 if k in data:
                     return data[k]
+            return None
 
         problems_info = OrderedDict()
         contest_data = get_contest(scoreboard_data)

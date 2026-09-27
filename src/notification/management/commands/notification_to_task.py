@@ -74,10 +74,7 @@ class Command(BaseCommand):
 
         for notify in tqdm(notifies.iterator()):
             try:
-                if ":" in notify.method:
-                    category = notify.method.split(":", 1)[-1]
-                else:
-                    category = notify.method
+                category = notify.method.split(":", 1)[-1] if ":" in notify.method else notify.method
                 filt = notify.coder.get_contest_filter(category)
 
                 before = timedelta(minutes=notify.before)

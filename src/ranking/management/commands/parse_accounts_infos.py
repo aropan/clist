@@ -225,9 +225,9 @@ class Command(BaseCommand):
                 order = ["-has_coders", "updated"]
                 if args.top:
                     order_field = "rating" if resource.has_rating_history else "n_contests"
-                    order = [F(order_field).desc(nulls_last=True)] + order
+                    order = [F(order_field).desc(nulls_last=True), *order]
                 elif args.contest_id:
-                    order = ["statistics__place_as_int"] + order
+                    order = ["statistics__place_as_int", *order]
                 elif args.limit:
                     order = ["updated"]
                 accounts = accounts.order_by(*order)
@@ -277,7 +277,7 @@ class Command(BaseCommand):
                     for account, data in zip(accounts, infos):
                         if args.all:
                             member = data.pop("member")
-                            account, created = Account.objects.get_or_create(key=member, resource=resource)
+                            account, _created = Account.objects.get_or_create(key=member, resource=resource)
                         else:
                             account.refresh_from_db()
 

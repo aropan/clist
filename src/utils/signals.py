@@ -18,7 +18,7 @@ def update_n_field_on_change(sender, instance, action, reverse, pk_set, model, f
     ADD_ACTION = "post_add"
     REMOVE_ACTION = "pre_remove"
     CLEAR_ACTION = "pre_clear"
-    if action == ADD_ACTION or action == REMOVE_ACTION:
+    if action in (ADD_ACTION, REMOVE_ACTION):
         delta = len(pk_set) if reverse else 1
         delta = -delta if action == REMOVE_ACTION else delta
     elif action == CLEAR_ACTION:
@@ -52,14 +52,14 @@ def update_foreign_key_n_field_on_change(instance, signal, attr, field, **kwargs
     if signal == post_init:
         setattr(instance, f"_{attr_id}", getattr(instance, attr_id))
     elif signal == post_save:
-        _value, value = getattr(instance, f"_{attr_id}", None), getattr(instance, attr_id)
+        value_, value = getattr(instance, f"_{attr_id}", None), getattr(instance, attr_id)
         if kwargs.get("created"):
-            _value = None
-        if _value == value:
+            value_ = None
+        if value_ == value:
             return
         with transaction.atomic():
-            if _value:
-                model.objects.filter(pk=_value).update(**{field: models.F(field) - 1})
+            if value_:
+                model.objects.filter(pk=value_).update(**{field: models.F(field) - 1})
             if value:
                 model.objects.filter(pk=value).update(**{field: models.F(field) + 1})
     elif signal == post_delete:

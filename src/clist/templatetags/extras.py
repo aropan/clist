@@ -169,7 +169,7 @@ def hr_timedelta(delta, n_significant=2):
     ]
 
     rounded_delta = 0
-    for seconds_per_unit, unit_name in units:
+    for seconds_per_unit, _unit_name in units:
         if delta >= seconds_per_unit:
             n_significant -= 1
             val = round(delta / seconds_per_unit) if n_significant == 0 else delta // seconds_per_unit
@@ -185,7 +185,7 @@ def hr_timedelta(delta, n_significant=2):
         if rounded_delta >= seconds_per_unit:
             val = rounded_delta // seconds_per_unit
             rounded_delta %= seconds_per_unit
-            ret.append("%d %s%s" % (val, unit_name, "s" if val > 1 else ""))
+            ret.append(f"{int(val)} {unit_name}{'s' if val > 1 else ''}")
     ret = " ".join(ret)
     return ret.strip()
 
@@ -210,12 +210,12 @@ def countdown(timer):
     d = (h + 12) // 24
     c = 0
     if d > 2:
-        return "%d days" % d
+        return f"{d:d} days"
     if h > 5:
-        return "%d hours" % h
+        return f"{h:d} hours"
     if m + h > 0:
-        return "%d:%02d:%02d" % (h, m, s)
-    return "%d.%d" % (s, c)
+        return f"{h:d}:{m:02d}:{s:02d}"
+    return f"{s:d}.{c:d}"
 
 
 @register.filter
@@ -270,7 +270,7 @@ def get_emails(tokens):
     result = set()
     for token in tokens:
         if token.email:
-            result.add("'%s'" % token.email)
+            result.add(f"'{token.email}'")
     return mark_safe(", ".join(result))
 
 
@@ -330,7 +330,6 @@ def listsort(value):
     if isinstance(value, Iterable):
         return sorted(value)
     return value
-    listsort.is_safe = True
 
 
 @register.filter
@@ -358,7 +357,7 @@ def calc_mod_penalty(info, contest, solving, penalty):
     if not isinstance(penalty, (int, float)):
         return None
     time = min((now() - contest.start_time).total_seconds(), contest.duration_in_secs) // 60
-    return int(round(penalty - info["penalty"] + (info["solving"] - solving) * time))
+    return round(penalty - info["penalty"] + (info["solving"] - solving) * time)
 
 
 @register.filter
@@ -401,7 +400,7 @@ def get_division_problems(contest_or_problems, info):
         divisions = list(division_addition.keys()) if division_addition else []
         division = info.get("division")
         if division and division not in divisions:
-            divisions = [division] + divisions
+            divisions = [division, *divisions]
         for division in get_standings_divisions_order(contest_or_problems):
             if division not in divisions:
                 divisions.append(division)
@@ -433,6 +432,7 @@ def get_problem_key(problem):
         has, value = get_problem_field(problem, k)
         if has:
             return value
+    return None
 
 
 @register.filter
@@ -441,6 +441,7 @@ def get_problem_name(problem):
         has, value = get_problem_field(problem, k)
         if has:
             return value
+    return None
 
 
 @register.filter
@@ -449,6 +450,7 @@ def get_problem_short(problem):
         has, value = get_problem_field(problem, k)
         if has:
             return value
+    return None
 
 
 @register.filter
@@ -467,6 +469,7 @@ def get_problem_header(problem):
         has, value = get_problem_field(problem, k)
         if has:
             return value
+    return None
 
 
 @register.filter
@@ -1061,14 +1064,12 @@ def place_as_n_place_field(place):
     if place and 1 <= place <= 10:
         ret = {1: "first", 2: "second", 3: "third"}.get(place, "top_ten")
         return f"n_{ret}_places"
+    return None
 
 
 def medal_as_n_medal_fields(medal, place: int | None = None):
     medal = medal.lower()
-    if medal in ("gold", "silver", "bronze"):
-        ret = [f"n_{medal}", "n_medals"]
-    else:
-        ret = ["n_other_medals"]
+    ret = [f"n_{medal}", "n_medals"] if medal in ("gold", "silver", "bronze") else ["n_other_medals"]
     if medal and place == 1:
         ret.append("n_win")
     return ret
@@ -1083,7 +1084,7 @@ def get_statistic_stats(addition, solving=None, with_n_medal_field=False, with_n
     n_solved = 0
     n_upsolved = 0
     n_first_ac = 0
-    for k, v in problems.items():
+    for _k, v in problems.items():
         if is_solved(v):
             n_solved += 1
         elif is_upsolved(v):
@@ -1150,10 +1151,7 @@ def is_improved_solution(curr, prev, with_upsolving=False):
 
 
 def time_compare_value(val):
-    if isinstance(val, Number):
-        val = [val]
-    else:
-        val = list(map(int, val.split(":")))
+    val = [val] if isinstance(val, Number) else list(map(int, val.split(":")))
     return len(val), val
 
 
@@ -1225,6 +1223,7 @@ def split_account_key(value, regex):
             name = (value[:st] + value[fn:]).strip()
             subname = match.group("value")
             return name, subname
+    return None
 
 
 @register.simple_tag
@@ -1272,7 +1271,8 @@ def title_field_div(value, split=False):
 def normalize_field(k):
     if k[0].isalpha() and not re.match(r"^[A-Z]+([0-9]+)?$", k):
         k = k[0].upper() + k[1:]
-        k = "_".join(map(str.lower, re.findall(r"([A-ZА-Я]+[^A-ZА-Я]+|[A-ZА-Я]+$)", k)))
+        # Match the exact Unicode text used by the source data.
+        k = "_".join(map(str.lower, re.findall(r"([A-ZА-Я]+[^A-ZА-Я]+|[A-ZА-Я]+$)", k)))  # ruff: ignore[ambiguous-unicode-character-string]
         k = re.sub(r"_+", "_", k)
     return k
 
@@ -1314,12 +1314,14 @@ def contains(arr, value):
 def iftrue(val, ret=True):
     if val:
         return ret
+    return None
 
 
 @register.filter
 def iffalse(val, ret=True):
     if not val:
         return ret
+    return None
 
 
 @register.filter
@@ -1336,7 +1338,8 @@ def time_in_seconds(timeline, val):
         val = asfloat(part)
         if val is None and (match := re.match(r"(?P<val>[0-9]+)(?P<factor>[дмчс])\.?", part)):
             val = asfloat(match.group("val"))
-            factor = {"д": 24 * 60 * 60, "ч": 60 * 60, "м": 60, "с": 1}[match.group("factor")]
+            # Match the exact Unicode text used by the source data.
+            factor = {"д": 24 * 60 * 60, "ч": 60 * 60, "м": 60, "с": 1}[match.group("factor")]  # ruff: ignore[ambiguous-unicode-character-string]
             time += val * factor
         elif factors:
             time += val * factors[idx]
@@ -1795,10 +1798,7 @@ def coder_account_filter(queryset, entity, row_number_field=None, operator=None)
             combined_filter = Q()
             fields_values = list(zip(fields, values))
             for idx, (field, value) in enumerate(fields_values):
-                if value is None:
-                    condition = Q(**{f"{field}__isnull": False})
-                else:
-                    condition = Q(**{field + operator: value})
+                condition = Q(**{f"{field}__isnull": False}) if value is None else Q(**{field + operator: value})
                 for field, value in fields_values[:idx]:
                     condition &= Q(**{field: value})
                 combined_filter |= condition
@@ -1837,7 +1837,7 @@ def get_admin_url(obj):
         return None
     content_type = ContentType.objects.get_for_model(obj.__class__)
     try:
-        return reverse("admin:%s_%s_change" % (content_type.app_label, content_type.model), args=(obj.pk,))
+        return reverse(f"admin:{content_type.app_label}_{content_type.model}_change", args=(obj.pk,))
     except NoReverseMatch:
         return None
 
@@ -2096,9 +2096,7 @@ def field_to_select_collapse(context):
         return context["data"]["collapse"]
     if context["values"] or context.get("noinputgroup"):
         return False
-    if not context["data"].get("nogroupby") and context["groupby"] == context["field"]:
-        return False
-    return True
+    return not (not context["data"].get("nogroupby") and context["groupby"] == context["field"])
 
 
 @register.simple_tag(takes_context=True)

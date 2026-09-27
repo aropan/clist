@@ -51,7 +51,8 @@ class Statistic(BaseModule):
         tables = re.findall(r"<table[^<]*>.*?</table>", page, re.DOTALL)
         rating_name = self.info.get("_rating_name", self.name)
 
-        for index, (tab, table) in enumerate(zip(tabs, tables), start=1):
+        # The selected table is used after the loop.
+        for index, (tab, table) in enumerate(zip(tabs, tables), start=1):  # ruff: ignore[unused-loop-control-variable]
             if tab in rating_name:
                 standings_url = self.standings_url.split("#")[0] + f"#{index}"
                 break
@@ -96,7 +97,8 @@ class Statistic(BaseModule):
 
         options = {"fixed_fields": list(fixed_fields)}
 
-        is_final = bool(re.search(r"\bФинал", self.name))
+        # Match the exact Unicode text used by the source data.
+        is_final = bool(re.search(r"\bФинал", self.name))  # ruff: ignore[ambiguous-unicode-character-string]
         if is_final:
             options["medals"] = [
                 {"name": "gold", "count": 1},
@@ -116,6 +118,7 @@ class Statistic(BaseModule):
             for dround in dcontest["rounds"]:
                 if str(dround["id"]) == key and dround["tasks"]:
                     return dround["tasks"][0]["id"]
+        return None
 
     def get_standings(self, users=None, statistics=None, **kwargs):
         if self.standings_url and "/aicups.ru/" in self.standings_url:
@@ -385,7 +388,7 @@ class Statistic(BaseModule):
                     r["average_points"] = r["solving"]
 
             if is_running:
-                ordered = sorted(list(result.values()), key=lambda r: r["solving"], reverse=True)
+                ordered = sorted(result.values(), key=lambda r: r["solving"], reverse=True)
                 last_score = None
                 last_rank = None
                 for rank, row in enumerate(ordered, start=1):

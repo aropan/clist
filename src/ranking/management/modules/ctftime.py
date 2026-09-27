@@ -94,7 +94,7 @@ class Statistic(BaseModule):
             return user, info
 
         with PoolExecutor(max_workers=6) as executor:
-            for user, info in executor.map(fetch_user, users, accounts):
+            for _user, info in executor.map(fetch_user, users, accounts):
                 if pbar:
                     pbar.update()
                 if not info:

@@ -160,7 +160,7 @@ def renaming_check(account, contest_keys, fields, contest_addition_update):
         queryset_filter |= condition
     if not queryset_filter:
         return None
-    for contest_id, old_account_key in tqdm.tqdm(
+    for _contest_id, old_account_key in tqdm.tqdm(
         Statistics.objects.filter(queryset_filter).values_list("contest_id", "account__key").iterator(),
         total=total_counter,
         desc="renaming check",
@@ -373,7 +373,7 @@ def account_update_contest_additions(
             contest_fields = contest.info.setdefault("fields", [])
             external_fields = contest.info.setdefault("_external_fields", [])
             updated_external_fields = False
-            for k in ordered_dict.keys():
+            for k in ordered_dict:
                 if k not in contest_fields:
                     contest_fields.append(k)
                     to_save = True
@@ -528,7 +528,7 @@ def update_stage(self):
         if not detail_problems:
             full_score = None
             if stage_placing:
-                full_score = max([max(placing_value.values()) for placing_value in _get_placing_values(stage_placing)])
+                full_score = max(max(placing_value.values()) for placing_value in _get_placing_values(stage_placing))
             elif "division" in problems:
                 full_scores = []
                 for ps in problems["division"].values():
@@ -637,7 +637,7 @@ def update_stage(self):
                             group_scores = []
                     placing_value.update(placing_value.pop("_scores"))
 
-            for stat_idx, stat in enumerate(stats, start=1):
+            for _stat_idx, stat in enumerate(stats, start=1):
                 if not detail_problems and not skip_problem_stat:
                     problems_infos[problem_info_key].setdefault("n_total", 0)
                     problems_infos[problem_info_key]["n_total"] += 1
@@ -811,7 +811,7 @@ def update_stage(self):
             for writer in contest.writers.all():
                 account_keys[writer.key] = writer
 
-    total = sum([len(contest.info.get("writers", [])) for contest in contests])
+    total = sum(len(contest.info.get("writers", [])) for contest in contests)
     with tqdm.tqdm(total=total, desc=f"getting writers for stage {stage}") as pbar, print_sql(count_only=True):
         writers = set()
         for contest in contests:
@@ -879,7 +879,7 @@ def update_stage(self):
                 groups[key].append(row)
 
             advancement_position = 1
-            for key, rows in sorted(groups.items(), key=lambda kv: kv[0], reverse=True):
+            for _key, rows in sorted(groups.items(), key=lambda kv: kv[0], reverse=True):
                 common_problems = None
                 for row in rows:
                     handle = row["member"].key
@@ -968,7 +968,7 @@ def update_stage(self):
 
         problems = r.setdefault("problems", {})
 
-        for idx, contest in enumerate(contests, start=1):
+        for _idx, contest in enumerate(contests, start=1):
             skip_problem_stat = "_skip_for_problem_stat" in contest.info.get("fields", [])
             if skip_problem_stat:
                 continue
@@ -1070,10 +1070,10 @@ def update_stage(self):
                 stat.advanced = defaults["advanced"]
                 stat.save(update_fields=["addition", "skip_in_stats", "advanced"])
             else:
-                stat, created = Statistics.objects.update_or_create(account=account, contest=stage, defaults=defaults)
+                stat, _created = Statistics.objects.update_or_create(account=account, contest=stage, defaults=defaults)
             pks.add(stat.pk)
 
-            for k in stat.addition.keys():
+            for k in stat.addition:
                 if field_to_problem and re.search(field_to_problem["regex"], k):
                     continue
                 if k not in fields_set:
@@ -1088,9 +1088,9 @@ def update_stage(self):
                 fields_set.add(field)
                 fields.append(field)
 
-        stage.duration_in_secs = sum([contest.duration_in_secs for contest in contests])
+        stage.duration_in_secs = sum(contest.duration_in_secs for contest in contests)
         if stage.duration_in_secs:
-            time_elapsed = sum([contest.duration_in_secs for contest in contests if contest.is_over()])
+            time_elapsed = sum(contest.duration_in_secs for contest in contests if contest.is_over())
             stage.info["_time_percentage"] = time_elapsed / stage.duration_in_secs
         else:
             stage.info.pop("_time_percentage", None)

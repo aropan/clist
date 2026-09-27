@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from logging import getLogger
 
 from django.core.management.base import BaseCommand
@@ -100,7 +100,7 @@ class Command(BaseCommand):
         with suppress_db_logging_context(), transaction.atomic():
             for coder in tqdm(coders, total=coders.count(), desc="coders"):
 
-                def process_problem(problems, desc):
+                def process_problem(problems, desc, coder=coder):
                     nonlocal n_created, n_total, n_deleted
 
                     def get_problem_ids():
@@ -132,7 +132,8 @@ class Command(BaseCommand):
                             continue
                         result = solution["result"]
                         upsolving = False
-                        for func, verdict in (
+                        # The matching verdict is used after the loop.
+                        for func, verdict in (  # ruff: ignore[unused-loop-control-variable]
                             (is_solved, ProblemVerdict.SOLVED),
                             (is_reject, ProblemVerdict.REJECT),
                             (is_partial, ProblemVerdict.PARTIAL),

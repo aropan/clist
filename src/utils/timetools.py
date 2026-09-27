@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import re
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from functools import wraps
 from urllib.parse import parse_qs, urlparse
 

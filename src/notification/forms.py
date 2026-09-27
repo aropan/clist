@@ -9,8 +9,18 @@ from notification.models import Notification
 class NotificationForm(ModelForm):
     class Meta:
         model = Notification
-        exclude = ["coder", "last_time", "secret"]
-        help_texts = {
+        fields = (
+            "method",
+            "enable",
+            "before",
+            "period",
+            "with_updates",
+            "with_results",
+            "with_virtual",
+            "clear_on_delete",
+        )
+        # Django Meta consumes this value directly; an annotation adds an invalid Meta attribute.
+        help_texts = {  # ruff: ignore[mutable-class-default]
             "method": ('You can <a href="/settings/filters/">configure filters</a> for each method'),
             "before": ("How much before event to send notifications"),
             "period": ("Frequency of notifications"),
@@ -19,7 +29,8 @@ class NotificationForm(ModelForm):
             "with_virtual": ("Notify about end of the virtual a day before"),
             "clear_on_delete": ("Delete message in a day (only for telegram, need delete message permission)"),
         }
-        labels = {
+        # Django Meta consumes this value directly; an annotation adds an invalid Meta attribute.
+        labels = {  # ruff: ignore[mutable-class-default]
             "with_updates": "Updates",
             "with_results": "Results",
             "with_virtual": "Virtual",

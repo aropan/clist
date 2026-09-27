@@ -28,8 +28,8 @@ def preload_statistics(instances, base_resource, attr=None):
                     members[resource].append(member["account"])
     if members:
         accounts_filter = Q()
-        for resource, members in members.items():
-            accounts_filter |= Q(resource_id=resource, key__in=set(members))
+        for resource, account_keys in members.items():
+            accounts_filter |= Q(resource_id=resource, key__in=set(account_keys))
         qs = Account.objects.filter(accounts_filter).select_related("resource")
         ret["accounts"] = defaultdict(dict)
         ret["accounts"].update({a.key: a for a in qs})

@@ -172,7 +172,7 @@ def update_context_by_source(request, context):
         for field in dir(entity_first):
             if field.startswith("_") or field in entity_fields:
                 continue
-            if hasattr(getattr(entity_first, field, None), "__call__"):
+            if callable(getattr(entity_first, field, None)):
                 continue
             entity_fields.append(field)
     entity_fields_select = create_field_to_select(options=entity_fields, multiply=True)
@@ -218,7 +218,7 @@ def charts(request, template="charts.html"):
         model_name = model.__name__
         source = f"{app_label}.{model_name}"
         try:
-            admin_url = reverse("admin:%s_%s_changelist" % (app_label, model_name.lower()))
+            admin_url = reverse(f"admin:{app_label}_{model_name.lower()}_changelist")
         except NoReverseMatch:
             admin_url = None
 

@@ -17,6 +17,8 @@ from ranking.management.modules.common import REQ, BaseModule, parsed_table
 from ranking.management.modules.common.locator import Locator
 from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse
 
+_LOGIN_LOCK = Lock()
+
 
 class Statistic(BaseModule):
     RANKING_URL_FORMAT_ = "https://www.hackerearth.com/AJAX/feed/newsfeed/icpc-leaderboard/event/{event_id}/{page}/"
@@ -29,7 +31,7 @@ class Statistic(BaseModule):
         super().__init__(**kwargs)
 
     @staticmethod
-    def _get(url, lock=Lock()):
+    def _get(url, lock=_LOGIN_LOCK):
         attempt = 0
         while True:
             attempt += 1
@@ -58,7 +60,7 @@ class Statistic(BaseModule):
                 return page
             except FailOnGetResponse as e:
                 if attempt == 15 or getattr(e.args[0], "code", None) != 500:
-                    raise ExceptionParseStandings(e.args[0])
+                    raise ExceptionParseStandings(e.args[0]) from e
                 sleep(2 * attempt)
 
     def get_standings(self, users=None, statistics=None, fixed_rank=None, **kwargs):
@@ -73,7 +75,7 @@ class Statistic(BaseModule):
         try:
             page = self._get(standings_url)
         except ExceptionParseStandings as e:
-            raise ExceptionParseStandings(e.args[0])
+            raise ExceptionParseStandings(e.args[0]) from e
 
         match = re.search(r'<div[^>]*class="event-id hidden"[^>]*>(?P<id>[0-9]*)</div>', page)
         if not match:

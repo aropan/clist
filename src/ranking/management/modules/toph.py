@@ -28,7 +28,7 @@ class Statistic(BaseModule):
             page = REQ.get(f"/problems/contests/{self.key}")
         except FailOnGetResponse as e:
             if e.code == 404:
-                raise ExceptionParseStandings("not found problems")
+                raise ExceptionParseStandings("not found problems") from e
             raise e
 
         table = parsed_table.ParsedTable(html=page)
@@ -100,7 +100,7 @@ class Statistic(BaseModule):
                     if k == "#":
                         row["place"] = v.value
                     elif not k:
-                        name, *infos, score = v
+                        name, *_infos, score = v
 
                         texts = name.column.node.xpath('.//a[contains(@class,"handle")]/text()')
                         row["name"] = str(texts[0]) if texts else name.value
@@ -227,10 +227,7 @@ class Statistic(BaseModule):
                                     if attempt > 1:
                                         p["penalty"] = attempt - 1
                                 elif attempt is not None:
-                                    if time:
-                                        result = "+" if attempt == 1 else f"+{attempt - 1}"
-                                    else:
-                                        result = f"-{attempt}"
+                                    result = ("+" if attempt == 1 else f"+{attempt - 1}") if time else f"-{attempt}"
                                 elif is_failed:
                                     result = 0
                                     p["binary"] = False
@@ -361,7 +358,7 @@ class Statistic(BaseModule):
             return user, info, ratings
 
         with PoolExecutor(max_workers=8) as executor:
-            for user, info, ratings in executor.map(fetch_ratings, users, accounts):
+            for _user, info, ratings in executor.map(fetch_ratings, users, accounts):
                 if pbar:
                     pbar.update()
                 if not info:

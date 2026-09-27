@@ -26,7 +26,7 @@ def parse_xml(page, exc=None):
         root = ET.fromstring(page)
     except ET.ParseError as e:
         if exc is not None:
-            raise exc(f"Failed to parse xml: {e}")
+            raise exc(f"Failed to parse xml: {e}") from e
         raise e
     for child in root:
         data = {}
@@ -259,7 +259,7 @@ class Statistic(BaseModule):
                 raise ExceptionParseStandings("not enough participants")
         else:  # single round match
             if not self.standings_url:
-                raise InitModuleException("Not set standings url for %s" % self.name)
+                raise InitModuleException(f"Not set standings url for {self.name}")
             url = self.standings_url + "&nr=100000042"
             page = req.get(url, time_out=100)
             result_urls = re.findall(r'<a[^>]*href="(?P<url>[^"]*)"[^>]*>Results</a>', str(page), re.I)
@@ -302,7 +302,7 @@ class Statistic(BaseModule):
 
                 with PoolExecutor(max_workers=3) as executor:
 
-                    def fetch_problem(p):
+                    def fetch_problem(p, division_str=division_str):
                         page = req.get(p["url"], time_out=30)
                         match = re.search(r'<a[^>]*href="(?P<href>[^"]*module=ProblemDetail[^"]*)"[^>]*>', page)
                         page = req.get(urljoin(p["url"], match.group("href")), time_out=30)
@@ -546,7 +546,7 @@ class Statistic(BaseModule):
                 fields = set()
                 hidden_fields_set = set(hidden_fields)
                 for data in result.values():
-                    for field in data.keys():
+                    for field in data:
                         fields.add(field)
 
                 k_mapping = {"new_vol": "new_volatility", "advanced": None}

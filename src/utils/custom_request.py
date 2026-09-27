@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 from functools import partial
-from typing import Optional
 
 from django.contrib import messages
 
@@ -83,7 +82,7 @@ def get_filtered_list(self, field, options: list[str] | None = None, method: str
 
 def get_filtered_value(self, field, options=None, default_first=None, allow_empty=False, method="GET"):
     if allow_empty and "" not in options:
-        options = options + [""]
+        options = [*options, ""]
     ret = self.get_filtered_list(field, options, method=method)
     if ret:
         return ret[-1]

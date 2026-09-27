@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+# Parser modules import this package's public helpers directly; moving the
+# implementations would change the long-standing import path.
+# ruff: file-ignore[non-empty-init-module]
 
 import csv
 import json

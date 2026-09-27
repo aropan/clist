@@ -264,7 +264,7 @@ class Command(BaseCommand):
                         result = stat.addition.get("problems", {}).get(short, {})
                         row.append((key, get_solved(result, problem)))
                     row.sort()
-                    row_value = (get_info_key(stat), stat.account_id) + tuple(row)
+                    row_value = (get_info_key(stat), stat.account_id, *tuple(row))
                     rows_values.append(row_value)
             if not rows_values:
                 n_empty += 1

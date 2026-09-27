@@ -1,3 +1,4 @@
+import contextlib
 import re
 from collections import OrderedDict, defaultdict
 from datetime import timedelta
@@ -67,7 +68,7 @@ class Statistic(BaseModule):
                 continue
             page = Statistic._get(href[0])
             table = parsed_table.ParsedTable(page, as_list=True)
-            for idx, row in enumerate(table):
+            for _idx, row in enumerate(table):
                 (_, name), *_, (_, full_score) = row
                 url = urljoin(req.last_url, name.column.node.xpath("a/@href")[0])
                 name = name.value.split(". ", 1)[-1].strip()
@@ -135,9 +136,9 @@ class Statistic(BaseModule):
                 raise ExceptionParseStandings("Not found standings url")
 
             if len(datas) > 1:
-                _datas = [d for d in datas if d["date"] == dates[0]]
-                if _datas:
-                    datas = _datas
+                datas_ = [d for d in datas if d["date"] == dates[0]]
+                if datas_:
+                    datas = datas_
 
             if len(datas) > 1:
                 ok = True
@@ -155,7 +156,7 @@ class Statistic(BaseModule):
                 elif not ok:
                     raise ExceptionParseStandings("Too much standing url")
                 else:
-                    standings_data = list(urls_map.values())[0]
+                    standings_data = next(iter(urls_map.values()))
             else:
                 standings_data = datas[0]
 
@@ -166,7 +167,7 @@ class Statistic(BaseModule):
             page = req.get(self.standings_url)
         except FailOnGetResponse as e:
             if e.code == 404:
-                raise ExceptionParseStandings("Not found response from standings url")
+                raise ExceptionParseStandings("Not found response from standings url") from e
             raise e
 
         def get_table(page):
@@ -252,10 +253,8 @@ class Statistic(BaseModule):
                             scoring = True
                             solving += float(v.value)
 
-                        try:
+                        with contextlib.suppress(ValueError):
                             max_score[k] = max(max_score[k], float(v.value))
-                        except ValueError:
-                            pass
                 elif k:
                     row[k.strip()] = v.value.strip()
                 elif v.value.strip().lower() == "log":
@@ -277,7 +276,8 @@ class Statistic(BaseModule):
                         "_diploma": "I" * diploma,
                         "_medal_title_field": "_diploma",
                     })
-                elif diploma.lower().replace(" ", "") == "п.о.":
+                # Match the exact Unicode text used by the source data.
+                elif diploma.lower().replace(" ", "") == "п.о.":  # ruff: ignore[ambiguous-unicode-character-string]
                     row.update({"medal": "honorable", "_honorable": "mention", "_medal_title_field": "_honorable"})
             if "member" not in row:
                 continue

@@ -13,7 +13,7 @@
 #
 import math
 import os
-import sys
+from typing import ClassVar
 
 
 def append_PKCS7_padding(s):
@@ -25,19 +25,19 @@ def append_PKCS7_padding(s):
 def strip_PKCS7_padding(s):
     """return s stripped of PKCS7 padding"""
     if len(s) % 16 or not s:
-        raise ValueError("String of len %d can't be PCKS7-padded" % len(s))
+        raise ValueError(f"String of len {len(s):d} can't be PCKS7-padded")
     numpads = ord(s[-1])
     if numpads > 16:
-        raise ValueError("String ending with %r can't be PCKS7-padded" % s[-1])
+        raise ValueError(f"String ending with {s[-1]!r} can't be PCKS7-padded")
     return s[:-numpads]
 
 
 class AES:
     # valid key sizes
-    keySize = {"SIZE_128": 16, "SIZE_192": 24, "SIZE_256": 32}
+    keySize: ClassVar = {"SIZE_128": 16, "SIZE_192": 24, "SIZE_256": 32}
 
     # Rijndael S-box
-    sbox = [
+    sbox: ClassVar = [
         0x63,
         0x7C,
         0x77,
@@ -297,7 +297,7 @@ class AES:
     ]
 
     # Rijndael Inverted S-box
-    rsbox = [
+    rsbox: ClassVar = [
         0x52,
         0x09,
         0x6A,
@@ -573,7 +573,7 @@ class AES:
         return word[1:] + word[:1]
 
     # Rijndael Rcon
-    Rcon = [
+    Rcon: ClassVar = [
         0x8D,
         0x01,
         0x02,
@@ -876,8 +876,8 @@ class AES:
                 rconIteration += 1
             # For 256-bit keys, we add an extra sbox to the calculation
             if size == self.keySize["SIZE_256"] and ((currentSize % size) == 16):
-                for l in range(4):
-                    t[l] = self.getSBoxValue(t[l])
+                for index in range(4):
+                    t[index] = self.getSBoxValue(t[index])
 
             # We XOR t with the four-byte block 16,24,32 bytes before the new
             # expanded key.  This becomes the next four bytes in the expanded
@@ -908,7 +908,7 @@ class AES:
     def galois_multiplication(self, a, b):
         """Galois multiplication of 8 bit characters a and b."""
         p = 0
-        for counter in range(8):
+        for _counter in range(8):
             if b & 1:
                 p ^= a
             hi_bit_set = a & 0x80
@@ -925,10 +925,7 @@ class AES:
     # using the state value as index for the SBox
     #
     def subBytes(self, state, isInv):
-        if isInv:
-            getter = self.getSBoxInvert
-        else:
-            getter = self.getSBoxValue
+        getter = self.getSBoxInvert if isInv else self.getSBoxValue
         for i in range(16):
             state[i] = getter(state[i])
         return state
@@ -941,7 +938,7 @@ class AES:
 
     # each iteration shifts the row to the left by 1
     def shiftRow(self, state, statePointer, nbr, isInv):
-        for i in range(nbr):
+        for _i in range(nbr):
             if isInv:
                 state[statePointer : statePointer + 4] = (
                     state[statePointer + 3 : statePointer + 4] + state[statePointer : statePointer + 3]
@@ -967,10 +964,7 @@ class AES:
 
     # galois multiplication of 1 column of the 4x4 matrix
     def mixColumn(self, column, isInv):
-        if isInv:
-            mult = [14, 9, 13, 11]
-        else:
-            mult = [2, 1, 1, 3]
+        mult = [14, 9, 13, 11] if isInv else [2, 1, 1, 3]
         cpy = list(column)
         g = self.galois_multiplication
 
@@ -1065,8 +1059,8 @@ class AES:
         # unmap the block again into the output
         for k in range(4):
             # iterate over the rows
-            for l in range(4):
-                output[(k * 4) + l] = block[(k + (l * 4))]
+            for index in range(4):
+                output[(k * 4) + index] = block[(k + (index * 4))]
         return output
 
     # decrypts a 128 bit input block against the given key of size specified
@@ -1108,8 +1102,8 @@ class AES:
         # unmap the block again into the output
         for k in range(4):
             # iterate over the rows
-            for l in range(4):
-                output[(k * 4) + l] = block[(k + (l * 4))]
+            for index in range(4):
+                output[(k * 4) + index] = block[(k + (index * 4))]
         return output
 
 
@@ -1117,16 +1111,13 @@ class AESModeOfOperation:
     aes = AES()
 
     # structure of supported modes of operation
-    modeOfOperation = {"OFB": 0, "CFB": 1, "CBC": 2}
+    modeOfOperation: ClassVar = {"OFB": 0, "CFB": 1, "CBC": 2}
 
     # converts a 16 character string into a number array
     def convertString(self, string, start, end, mode):
         if end - start > 16:
             end = start + 16
-        if mode == self.modeOfOperation["CBC"]:
-            ar = [0] * 16
-        else:
-            ar = []
+        ar = [0] * 16 if mode == self.modeOfOperation["CBC"] else []
 
         i = start
         j = 0
@@ -1158,8 +1149,8 @@ class AESModeOfOperation:
         cipherOut = []
         # char firstRound
         firstRound = True
-        if stringIn != None:
-            for j in range(int(math.ceil(float(len(stringIn)) / 16))):
+        if stringIn is not None:
+            for j in range(math.ceil(float(len(stringIn)) / 16)):
                 start = j * 16
                 end = j * 16 + 16
                 if end > len(stringIn):
@@ -1238,8 +1229,8 @@ class AESModeOfOperation:
         stringOut = ""
         # char firstRound
         firstRound = True
-        if cipherIn != None:
-            for j in range(int(math.ceil(float(len(cipherIn)) / 16))):
+        if cipherIn is not None:
+            for j in range(math.ceil(float(len(cipherIn)) / 16)):
                 start = j * 16
                 end = j * 16 + 16
                 if j * 16 + 16 > len(cipherIn):
@@ -1312,11 +1303,11 @@ def encryptData(key, data, mode=AESModeOfOperation.modeOfOperation["CBC"]):
     if mode == AESModeOfOperation.modeOfOperation["CBC"]:
         data = append_PKCS7_padding(data)
     keysize = len(key)
-    assert keysize in list(AES.keySize.values()), "invalid key size: %s" % keysize
+    assert keysize in list(AES.keySize.values()), f"invalid key size: {keysize}"
     # create a new iv using random data
     iv = [ord(i) for i in os.urandom(16)]
     moo = AESModeOfOperation()
-    (mode, length, ciph) = moo.encrypt(data, mode, key, keysize, iv)
+    (mode, _length, ciph) = moo.encrypt(data, mode, key, keysize, iv)
     # With padding, the original length does not need to be known. It's a bad
     # idea to store the original message length.
     # prepend the iv.
@@ -1335,7 +1326,7 @@ def decryptData(key, data, mode=AESModeOfOperation.modeOfOperation["CBC"]):
 
     key = list(map(ord, key))
     keysize = len(key)
-    assert keysize in list(AES.keySize.values()), "invalid key size: %s" % keysize
+    assert keysize in list(AES.keySize.values()), f"invalid key size: {keysize}"
     # iv is first 16 bytes
     iv = list(map(ord, data[:16]))
     data = list(map(ord, data[16:]))
@@ -1366,6 +1357,6 @@ if __name__ == "__main__":
     mode, orig_len, ciph = moo.encrypt(
         cleartext, moo.modeOfOperation["CBC"], cypherkey, moo.aes.keySize["SIZE_128"], iv
     )
-    print("m=%s, ol=%s (%s), ciph=%s" % (mode, orig_len, len(cleartext), ciph))
+    print(f"m={mode}, ol={orig_len} ({len(cleartext)}), ciph={ciph}")
     decr = moo.decrypt(ciph, orig_len, mode, cypherkey, moo.aes.keySize["SIZE_128"], iv)
     print(decr)

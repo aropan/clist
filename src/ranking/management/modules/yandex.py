@@ -1,3 +1,4 @@
+import contextlib
 import html
 import os
 import random
@@ -6,6 +7,7 @@ from collections import OrderedDict, defaultdict
 from concurrent.futures import ThreadPoolExecutor as PoolExecutor
 from copy import deepcopy
 from datetime import timedelta
+from typing import ClassVar
 from urllib.parse import urljoin
 
 from django.utils import timezone
@@ -39,7 +41,7 @@ def request_get(*args, **kwargs):
 
 class Statistic(BaseModule):
     YANDEX_API_URL = "https://api.contest.yandex.net/api/public/v2"
-    SUBMISSION_FIELDS_MAPPING = {
+    SUBMISSION_FIELDS_MAPPING: ClassVar = {
         "result": lambda submission: as_number(submission.get("finalScore")),
         "submission_id": "runId",
         "verdict_full": "verdict",
@@ -514,16 +516,11 @@ class Statistic(BaseModule):
                                 p["first_ac"] = True
                             if "+" in res or res.startswith("100"):
                                 solved += 1
-                            try:
+                            with contextlib.suppress(ValueError):
                                 has_solved = has_solved or ("+" not in res and float(res) > 0)
-                            except ValueError:
-                                pass
                         elif "table__cell_role_participant" in v.attrs["class"]:
                             title = v.column.node.xpath(".//@title")
-                            if title:
-                                name = str(title[0])
-                            else:
-                                name = v.value.replace(" ", "", 1)
+                            name = str(title[0]) if title else v.value.replace(" ", "", 1)
                             row["name"] = name
                             row["member"] = name if " " not in name else f"{name} {season}"
 
@@ -544,7 +541,7 @@ class Statistic(BaseModule):
 
                     member = row["member"]
 
-                    def set_member(new_member):
+                    def set_member(new_member, row=row):
                         nonlocal member
                         if member == new_member:
                             return
@@ -655,7 +652,7 @@ class Statistic(BaseModule):
             row["problems"] = self.merge_dict(submission_infos[name], row["problems"])
 
             ips = set()
-            for short, problem in row["problems"].items():
+            for _short, problem in row["problems"].items():
                 ips |= {info["ip"] for info in problem.get("_submission_infos", [])}
             contest_ips |= ips
             row["_ips"] = sorted(ips)
@@ -716,8 +713,7 @@ class Statistic(BaseModule):
                 standings[field] = sorted(values)
 
         now = timezone.now()
-        if now < self.end_time < now + timedelta(hours=2):
-            if submissions_percentage and submissions_percentage < 100:
-                standings["timing_statistic_delta"] = timedelta(minutes=1)
+        if now < self.end_time < now + timedelta(hours=2) and submissions_percentage and submissions_percentage < 100:
+            standings["timing_statistic_delta"] = timedelta(minutes=1)
 
         return standings

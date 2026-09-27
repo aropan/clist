@@ -41,9 +41,10 @@ class Statistic(BaseModule):
                 problems_info[info["code"]] = info
                 problems_ids.append(info["code"])
 
-            def fetch_results(page):
+            def fetch_results(page, session=session):
                 nonlocal stop
-                if stop:
+                # The stop flag is shared with workers and subsequent sessions.
+                if stop:  # ruff: ignore[function-uses-loop-variable]
                     return None
                 url = self.API_RANKING_URL_FORMAT_.format(id=self.key, sid=session["id"], page=page)
                 page = REQ.get(url)
@@ -171,7 +172,7 @@ class Statistic(BaseModule):
                     update["new_rating"] = rating["rating"]
                     data["rating"] = update["new_rating"]
 
-                ret = {
+                yield {
                     "info": data,
                     "contest_addition_update_params": {
                         "update": contest_addition_update,
@@ -179,5 +180,3 @@ class Statistic(BaseModule):
                         "clear_rating_change": True,
                     },
                 }
-
-                yield ret

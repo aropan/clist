@@ -158,10 +158,7 @@ class Statistic(BaseModule):
         page = REQ.get(self.standings_url)
         regex = "<table[^>]*>.*?</table>"
         found = re.search(regex, page, re.DOTALL)
-        if found:
-            table = parsed_table.ParsedTable(found.group(0), as_list=True)
-        else:
-            table = []
+        table = parsed_table.ParsedTable(found.group(0), as_list=True) if found else []
         has_standings_table = bool(found)
         custom_start_time = 0
 
@@ -201,7 +198,7 @@ class Statistic(BaseModule):
                             val = "honorable"
                     if val:
                         row[k.lower()] = val
-            for k in row.keys():
+            for k in row:
                 hidden_fields.setdefault(k, False)
             result[row["member"]] = row
 
@@ -211,7 +208,7 @@ class Statistic(BaseModule):
         found = re.search(regex, page, re.DOTALL)
         if found:
             table = parsed_table.ParsedTable(found.group(0))
-            for idx, r in enumerate(table):
+            for _idx, r in enumerate(table):
                 contestant = r.pop("Contestant", None)
                 if contestant is None:
                     continue
@@ -221,10 +218,7 @@ class Statistic(BaseModule):
 
                 for k, v in r.items():
                     k = k.strip("▲").strip()
-                    if re.search(r"[a-z]", k):
-                        k = k.replace(" ", "_").lower()
-                    else:
-                        k = k.replace(" ", "")
+                    k = k.replace(" ", "_").lower() if re.search(r"[a-z]", k) else k.replace(" ", "")
                     hidden_fields.setdefault(k, k not in ["country"])
 
                     href = first(v.column.node.xpath('.//a[contains(@class, "tableimglink")]/@href'))
@@ -528,7 +522,7 @@ class Statistic(BaseModule):
             return user, info
 
         with PoolExecutor(max_workers=8) as executor:
-            for user, info in executor.map(fetch_ratings, users, accounts):
+            for _user, info in executor.map(fetch_ratings, users, accounts):
                 if pbar:
                     pbar.update()
                 if not info:

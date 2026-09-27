@@ -65,7 +65,8 @@ class Statistic(BaseModule):
             r["member"] = member
             r["place"] = row["Место"]
             r["attempts"] = row["Попыток"]
-            r["solving"] = row["Всего"]
+            # Match the exact Unicode text used by the source data.
+            r["solving"] = row["Всего"]  # ruff: ignore[ambiguous-unicode-character-string]
 
             problems = r.setdefault("problems", {})
             for k, v in row.items():

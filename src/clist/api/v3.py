@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
 
 
+from typing import ClassVar
+
 from django.urls import re_path
 from tastypie import fields
 from tastypie.utils import trailing_slash
 
+# Keep these resource classes available through the v3 API module.
 from clist.api.v2 import (
     AccountResource,
     BaseModelResource,
-    ContestResource,
+    ContestResource,  # ruff: ignore[unused-import]
     ResourceResource,  # ruff: ignore[unused-import]
-    StatisticsResource,
+    StatisticsResource,  # ruff: ignore[unused-import]
     use_in_detail_only,
     use_in_me_only,
 )
@@ -59,7 +62,7 @@ class CoderResource(BaseModelResource):
         queryset = Coder.objects.all()
         resource_name = "coder"
         excludes = ("total_count", "with_accounts")
-        filtering = {
+        filtering: ClassVar = {
             "total_count": ["exact"],
             "with_accounts": ["exact"],
             "country": ["exact"],
@@ -67,7 +70,7 @@ class CoderResource(BaseModelResource):
             "handle": ["exact", "in"],
             "is_virtual": ["exact"],
         }
-        extra_actions = [
+        extra_actions: ClassVar = [
             {
                 "name": "me",
                 "summary": "Retrieve your coder",
@@ -75,7 +78,7 @@ class CoderResource(BaseModelResource):
                 "responseClass": "coder",
             }
         ]
-        ordering = ["id", "n_accounts"]
+        ordering: ClassVar = ["id", "n_accounts"]
 
     def me(self, request, *args, **kwargs):
         kwargs["me"] = True
@@ -84,7 +87,7 @@ class CoderResource(BaseModelResource):
     def prepend_urls(self):
         return [
             re_path(
-                r"^(?P<resource_name>%s)/me%s$" % (self._meta.resource_name, trailing_slash),
+                rf"^(?P<resource_name>{self._meta.resource_name})/me{trailing_slash}$",
                 self.wrap_view("me"),
                 name="api_dispatch_me",
             )
@@ -92,7 +95,7 @@ class CoderResource(BaseModelResource):
 
     def dehydrate(self, *args, **kwargs):
         bundle = super().dehydrate(*args, **kwargs)
-        for k in self.fields.keys():
+        for k in self.fields:
             if k in bundle.data and not bundle.data[k] and isinstance(bundle.data[k], str):
                 bundle.data[k] = None
         bundle.data.pop("with_accounts", None)

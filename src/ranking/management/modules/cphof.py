@@ -72,7 +72,7 @@ class Statistic(BaseModule):
                 url = match.group("url")
                 url = url.strip("/")
                 _, _, host, *_, key = url.split("/")
-                host = host.strip("www.")
+                host = host.removeprefix("www.")
                 accounts.add((host, key))
         info["accounts"] = [{"host": host, "key": key} for host, key in accounts]
 
@@ -308,9 +308,7 @@ class Statistic(BaseModule):
                 return True
             a = re.split(r"\W+", a)
             b = re.split(r"\W+", b)
-            if is_similar_sets(a, b):
-                return True
-            return False
+            return bool(is_similar_sets(a, b))
 
         def link_accounts(info, user, cphof_resource, cphof_account):
             stats = cphof_account.statistics_set.select_related("contest__related__resource")

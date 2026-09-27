@@ -163,9 +163,12 @@ def get_events(request):
     elif has_filter:
         query = Coder.get_contest_filter(None, categories, ignore_filters)
 
-    if not coder or coder.settings.get("calendar_filter_long", True):
-        if categories == ["calendar"] and "0" not in ignore_filters:
-            query &= Q(duration_in_secs__lt=timedelta(days=1).total_seconds())
+    if (
+        (not coder or coder.settings.get("calendar_filter_long", True))
+        and categories == ["calendar"]
+        and "0" not in ignore_filters
+    ):
+        query &= Q(duration_in_secs__lt=timedelta(days=1).total_seconds())
 
     past_action = settings.PAST_CALENDAR_DEFAULT_ACTION_
     if coder:
@@ -316,7 +319,7 @@ def main(request, party=None):
         ignore_filters = []
 
     if not coder or coder.settings.get("calendar_filter_long", True):
-        ignore_filters = ignore_filters + [{"id": 0, "name": "Disabled filter"}]
+        ignore_filters = [*ignore_filters, {"id": 0, "name": "Disabled filter"}]
 
     context = {
         "ignore_filters": ignore_filters,
@@ -421,7 +424,7 @@ def resources_account_ratings(request, template="resources_account_ratings.html"
         resources = resources.filter(pk__in=request_resources)
 
     countries = request.GET.getlist("country")
-    countries = set([c for c in countries if c])
+    countries = {c for c in countries if c}
     if countries:
         params["countries"] = countries
         accounts_filter &= Q(country__in=countries)
@@ -507,7 +510,7 @@ def resources_country_ratings(request, template="resources_country_ratings.html"
         resources = resources.filter(pk__in=request_resources)
 
     countries = request.GET.getlist("country")
-    countries = set([c for c in countries if c])
+    countries = {c for c in countries if c}
     if countries:
         params["countries"] = countries
         country_accounts = country_accounts.filter(country__in=countries)
@@ -702,7 +705,7 @@ def resource(request, resource, template="resource.html", extra_context=None):
 
     has_country = accounts.filter(country__isnull=False).exists()
     countries = request.GET.getlist("country")
-    countries = set([c for c in countries if c])
+    countries = {c for c in countries if c}
     if countries:
         params["countries"] = countries
         accounts = accounts.filter(country__in=countries)
@@ -1261,7 +1264,7 @@ def problems(request, template="problems.html"):
     groupby_fields["n_problems"] = "Num"
 
     # sort problems
-    sort_options = ["date", "rating", "name"] + custom_fields
+    sort_options = ["date", "rating", "name", *custom_fields]
     sort_select = {"options": sort_options, "rev_order": True}
     sort_field = request.GET.get("sort")
     sort_order = request.GET.get("sort_order")

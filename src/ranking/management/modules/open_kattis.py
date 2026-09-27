@@ -139,10 +139,7 @@ class Statistic(BaseModule):
                             p = problems.setdefault(k, {})
 
                             score, *values = v.value.split()
-                            if "+" in score:
-                                score = sum(map(int, score.split("+")))
-                            else:
-                                score = as_number(score)
+                            score = sum(map(int, score.split("+"))) if "+" in score else as_number(score)
                             classes = v.column.node.xpath("@class")[0].split()
 
                             pending = "pending" in classes
@@ -302,7 +299,7 @@ class Statistic(BaseModule):
             return page, url
 
         with PoolExecutor(max_workers=10) as executor:
-            for user, (page, url) in zip(users, executor.map(fetch_profle_page, users)):
+            for _user, (page, url) in zip(users, executor.map(fetch_profle_page, users)):
                 if pbar:
                     pbar.update()
 

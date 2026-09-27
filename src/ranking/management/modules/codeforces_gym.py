@@ -13,5 +13,4 @@ class Statistic(codeforces.Statistic):
         for user in users:
             if pbar:
                 pbar.update()
-            data = {"rename": renamings[user]} if user in renamings else {"skip": True}
-            yield data
+            yield {"rename": renamings[user]} if user in renamings else {"skip": True}

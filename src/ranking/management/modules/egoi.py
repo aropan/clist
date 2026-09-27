@@ -1,18 +1,9 @@
 #!/usr/bin/env python
 
-import html
-import json
 import re
-from collections import OrderedDict
-from concurrent.futures import ThreadPoolExecutor as PoolExecutor
-from pprint import pprint
 from urllib.parse import urljoin
 
-from first import first
-from multiset import Multiset
-
-from clist.templatetags.extras import as_number
-from ranking.management.modules.common import REQ, BaseModule, parsed_table
+from ranking.management.modules.common import REQ, BaseModule
 from ranking.management.modules.excepts import ExceptionParseStandings
 
 

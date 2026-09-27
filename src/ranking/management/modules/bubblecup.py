@@ -97,7 +97,7 @@ class Statistic(BaseModule):
 
             with PoolExecutor(max_workers=20) as executor, tqdm.tqdm(total=len(sorted_data)) as pbar:
 
-                def fetch_team_results(d):
+                def fetch_team_results(d, cid=cid, participaty_type=participaty_type, problems_info=problems_info):
                     member = str(d["id"])
                     url = self.TEAM_RESULTS_URL_.format(cid=cid, uid=member, name=participaty_type)
                     page = REQ.get(url)
@@ -173,7 +173,7 @@ class Statistic(BaseModule):
                     pbar.update()
 
             if max_points_challenge_problem is not None:
-                for code, problem_info in problems_info.items():
+                for _code, problem_info in problems_info.items():
                     key = problem_info["short"]
                     target = self.info.get("parse", {}).get("problems", {}).get(key, {}).get("target")
 
@@ -206,10 +206,7 @@ class Statistic(BaseModule):
                         if res is None:
                             continue
                         res = float(res)
-                        if opt is None:
-                            opt = res
-                        else:
-                            opt = func(opt, res)
+                        opt = res if opt is None else func(opt, res)
 
                     for r in division_result.values():
                         p = r["problems"].get(key, {})

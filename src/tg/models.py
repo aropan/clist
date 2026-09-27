@@ -9,12 +9,13 @@ from true_coders.models import Coder
 
 
 class Chat(BaseModel):
-    chat_id = models.CharField(max_length=100, blank=True, null=True)
-    thread_id = models.TextField(blank=True, null=True, default=None)
+    # These columns retain historical SQL NULL values; changing them requires a migration.
+    chat_id = models.CharField(max_length=100, blank=True, null=True)  # ruff: ignore[django-nullable-model-string-field]
+    thread_id = models.TextField(blank=True, null=True, default=None)  # ruff: ignore[django-nullable-model-string-field]
     coder = models.ForeignKey(Coder, on_delete=models.CASCADE)
-    title = models.CharField(max_length=100, blank=True, null=True)
-    name = models.TextField(blank=True, null=True)
-    secret_key = models.CharField(max_length=20, blank=True, null=True)
+    title = models.CharField(max_length=100, blank=True, null=True)  # ruff: ignore[django-nullable-model-string-field]
+    name = models.TextField(blank=True, null=True)  # ruff: ignore[django-nullable-model-string-field]
+    secret_key = models.CharField(max_length=20, blank=True, null=True)  # ruff: ignore[django-nullable-model-string-field]
     last_command = models.JSONField(default=dict, blank=True)
     is_group = models.BooleanField(default=False)
     coders = models.ManyToManyField(Coder, blank=True, related_name="chats")
@@ -30,7 +31,7 @@ class Chat(BaseModel):
     )
 
     def __str__(self):
-        return "%s Chat#%s" % (self.title or self.name or self.chat_id, self.id)
+        return f"{self.title or self.name or self.chat_id} Chat#{self.id}"
 
     def save(self, *args, **kwargs):
         if not self.thread_id:
@@ -38,7 +39,7 @@ class Chat(BaseModel):
         super().save(*args, **kwargs)
 
     def get_group_name(self):
-        return "%s@%s" % (self.chat_id, self.title)
+        return f"{self.chat_id}@{self.title}"
 
     def get_notification_method(self):
         ret = f"telegram:{self.chat_id}"
@@ -47,7 +48,8 @@ class Chat(BaseModel):
         return ret
 
     class Meta:
-        unique_together = ["chat_id", "thread_id"]
+        # Django Meta consumes this value directly; an annotation adds an invalid Meta attribute.
+        unique_together = ["chat_id", "thread_id"]  # ruff: ignore[mutable-class-default]
 
     def update_coders_or_accounts(self):
         coders, accounts = list(self.coders.all()), list(self.accounts.all())
@@ -74,7 +76,7 @@ class History(BaseModel):
     message = models.JSONField()
 
     def __str__(self):
-        return "Histroy %s" % (self.chat)
+        return f"Histroy {self.chat}"
 
     def save(self, *args, **kwargs):
         q = History.objects.filter(chat=self.chat).order_by("created")
@@ -86,4 +88,5 @@ class History(BaseModel):
 
     class Meta:
         verbose_name_plural = "History"
-        ordering = ["-created"]
+        # Django Meta consumes this value directly; an annotation adds an invalid Meta attribute.
+        ordering = ["-created"]  # ruff: ignore[mutable-class-default]

@@ -28,7 +28,7 @@ def main(input_file, output_file):
             d = d["message_typedef"]
         d[key] = {"type": "bytes"}
 
-    message, types = blackboxprotobuf.decode_message(data, message_type)
+    message, _types = blackboxprotobuf.decode_message(data, message_type)
     print(output_file)
 
     class ForceBytes2Str(json.JSONEncoder):

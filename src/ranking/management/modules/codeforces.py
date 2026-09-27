@@ -9,6 +9,7 @@ from hashlib import sha512
 from random import choice
 from string import ascii_lowercase
 from time import sleep, time
+from typing import ClassVar
 from urllib.parse import urlencode, urljoin, urlparse
 
 import pytz
@@ -33,15 +34,19 @@ from utils.timetools import parse_datetime
 API_KEYS = conf.CODEFORCES_API_KEYS
 DEFAULT_API_KEY = API_KEYS[API_KEYS["__default__"]]
 SUBDOMAIN = ""
+_API_QUERY_TIMES = {}
 
 
 def api_query(
     method,
     params,
     api_key=DEFAULT_API_KEY,
-    prev_time_queries={},
+    prev_time_queries=None,
     api_url_format="https://codeforces.com/api/%s",
 ):
+    if prev_time_queries is None:
+        # Keep the rate limit history shared between calls using the default.
+        prev_time_queries = _API_QUERY_TIMES
     url = api_url_format % method
     key, secret = api_key
     params = dict(params)
@@ -54,14 +59,9 @@ def api_query(
         params = new_params
     else:
         params.update({"time": int(time()), "apiKey": key})
-        url_encode = "&".join(("%s=%s" % (k, v) for k, v in sorted(params.items())))
+        url_encode = "&".join((f"{k}={v}" for k, v in sorted(params.items())))
         api_sig_prefix = "".join(choice(ascii_lowercase) for x in range(6))
-        api_sig = "%s/%s?%s#%s" % (
-            api_sig_prefix,
-            method,
-            url_encode,
-            secret,
-        )
+        api_sig = f"{api_sig_prefix}/{method}?{url_encode}#{secret}"
         # Codeforces requires SHA-512 for API request signatures; this is not password storage.
         params["apiSig"] = api_sig_prefix + sha512(api_sig.encode("utf8")).hexdigest()
     url += "?" + urlencode(params)
@@ -77,7 +77,7 @@ def api_query(
 
     md5_file_cache = url
     for k in ("apiSig", "time"):
-        md5_file_cache = re.sub("%s=[0-9a-z]+" % k, "", md5_file_cache)
+        md5_file_cache = re.sub(f"{k}=[0-9a-z]+", "", md5_file_cache)
 
     for attempt in reversed(range(5)):
         try:
@@ -104,7 +104,7 @@ def api_query(
 
 def _get(url, *args, lang="en", return_url=False, **kwargs):
     if SUBDOMAIN and SUBDOMAIN not in url:
-        url = url.replace("://codeforces.", "://%scodeforces." % SUBDOMAIN, 1)
+        url = url.replace("://codeforces.", f"://{SUBDOMAIN}codeforces.", 1)
     url = urljoin(url, f"?lang={lang}")
     page, last_url = REQ.get(url, *args, return_url=True, **kwargs)
     if 'document.cookie="RCPC="+toHex(slowAES.decrypt(c,2,a,b))+";' in page:
@@ -126,7 +126,7 @@ def _get(url, *args, lang="en", return_url=False, **kwargs):
 
 
 class Statistic(BaseModule):
-    OFFICIAL_PARTICIPANT_TYPES = {"CONTESTANT"}
+    OFFICIAL_PARTICIPANT_TYPES: ClassVar = {"CONTESTANT"}
     PARTICIPANT_TYPES = OFFICIAL_PARTICIPANT_TYPES | {"OUT_OF_COMPETITION"}
     SUBMISSION_URL_FORMAT_ = "{url}/submission/{sid}"
     PROBLEM_STATUS_URL_FORMAT_ = "/problemset/status/{cid}/problem/{short}"
@@ -429,9 +429,12 @@ class Statistic(BaseModule):
                 contest_time = parse_datetime(contest_time).timestamp()
             else:
                 contest_time = None
-            if contest_time and contest_time > now.timestamp():
-                if delay is None or contest_time - now.timestamp() < delay:
-                    delay = contest_time - now.timestamp()
+            if (
+                contest_time
+                and contest_time > now.timestamp()
+                and (delay is None or contest_time - now.timestamp() < delay)
+            ):
+                delay = contest_time - now.timestamp()
 
             advancing_members = members.copy()
             for member in members:
@@ -736,7 +739,7 @@ class Statistic(BaseModule):
                             else:
                                 p["time_in_seconds"] = time
                                 time /= 60
-                                p["time"] = "%02d:%02d" % (time / 60, time % 60)
+                                p["time"] = f"{int(time / 60):02d}:{int(time % 60):02d}"
                         a = problems.setdefault(k, {})
                         if u:
                             a["upsolving"] = p

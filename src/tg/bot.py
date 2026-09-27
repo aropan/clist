@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
+import contextlib
 import json
 import logging
 import random
@@ -142,12 +143,12 @@ class Bot:
                 if self.coder:
                     yield "Hmm, you are already connected."
                 else:
-                    yield 'We having problems. Key "%s" can not be found.' % escape(args.key)
+                    yield f'We having problems. Key "{escape(args.key)}" can not be found.'
             else:
                 qs = Chat.objects.filter(chat_id=self.from_id).filter(~Q(secret_key=args.key))
                 if qs.count():
                     chat.delete()
-                    yield "Oops, chat id are already connected to %s." % (qs[0].coder.user.username)
+                    yield f"Oops, chat id are already connected to {qs[0].coder.user.username}."
                     return
                 chat.chat_id = self.from_id
                 self.update_chat_info(chat, self.message)
@@ -157,7 +158,7 @@ class Bot:
                 success = True
 
         if self.coder:
-            yield "Hi, %s." % escape(self.coder.user.username)
+            yield f"Hi, {escape(self.coder.user.username)}."
         if success:
             yield "Successfully connected. Now you can see /help."
 
@@ -165,7 +166,7 @@ class Bot:
         yield (
             "Here's what I can do:\n"
             + ";\n".join(
-                "%s _%s_" % escape(choice, subparser.description)
+                "{} _{}_".format(*escape(choice, subparser.description))
                 for s in self.parser._subparsers._actions
                 if isinstance(s, argparse._SubParsersAction)
                 for choice, subparser in list(s.choices.items())
@@ -254,7 +255,7 @@ class Bot:
         num_pages = (total + args.limit - 1) / args.limit
         if not args.no_paging and num_pages > 1:
             no_page = args.offset / args.limit + 1
-            result += args.delimiter + "%d of %d" % (no_page, num_pages)
+            result += args.delimiter + f"{int(no_page)} of {int(num_pages)}"
             args.paging__ = {"no_page": no_page, "num_pages": num_pages}
 
         yield result
@@ -274,8 +275,7 @@ class Bot:
         qs = Resource.objects.all()
         if args.grep:
             qs = qs.filter(host__iregex=args.grep)
-        result = args.delimiter.join(f"[{r.host}](http://{r.host}]/)" for r in qs)
-        yield result
+        yield args.delimiter.join(f"[{r.host}](http://{r.host}]/)" for r in qs)
 
     def iamadmin(self, args):
         if not self.coder:
@@ -285,7 +285,7 @@ class Bot:
         else:
             admins = self._request("get_chat_administrators", chat_id=self.chat_id)
             if not any(str(admin.user.id) == self.from_id for admin in admins):
-                msg = 'You are not admin in "%s" chat.' % self.chat_title
+                msg = f'You are not admin in "{self.chat_title}" chat.'
             elif self.chat is None:
                 title = self.chat_title
                 if self.thread_id:
@@ -299,12 +299,12 @@ class Bot:
                     is_group=True,
                 )
                 if created:
-                    msg = '%s is new admin @%s for "%s".' % (self.coder.user, settings.TELEGRAM_NAME, chat.title)
+                    msg = f'{self.coder.user} is new admin @{settings.TELEGRAM_NAME} for "{chat.title}".'
                     del self.group_
                 else:
                     msg = "Hmmmm, problem with set new admin."
             else:
-                msg = 'Group "%s" already has %s admin.' % (self.chat_title, self.chat.coder.user)
+                msg = f'Group "{self.chat_title}" already has {self.chat.coder.user} admin.'
         yield msg
 
     def iamnotadmin(self, args):
@@ -401,10 +401,7 @@ class Bot:
             if self.thread_id:
                 method += f":{self.thread_id}"
 
-        if args.contest:
-            contest = Contest.get(args.contest)
-        else:
-            contest = ParseStatistics.relevant_contest()
+        contest = Contest.get(args.contest) if args.contest else ParseStatistics.relevant_contest()
         if not contest:
             if args.contest:
                 yield f'Contest "{args.contest}" not found.'
@@ -649,7 +646,7 @@ class Bot:
             for a in list_p._actions:
                 if not isinstance(a, argparse._HelpAction) and a.default is not None:
                     d = str(a.default).replace("\n", r"\n")
-                    a.help = a.help + '. Default: "%s"' % d.replace("%", "%%")
+                    a.help = a.help + '. Default: "{}"'.format(d.replace("%", "%%"))
 
             command_p.add_parser("/prev", description="Show previous page in paging")
             command_p.add_parser("/next", description="Show next page in paging")
@@ -660,10 +657,8 @@ class Bot:
         return self.parser_
 
     def delete_message_id(self, message_id):
-        try:
+        with contextlib.suppress(telegram.error.BadRequest):
             self.delete_message(self.chat_id, message_id)
-        except telegram.error.BadRequest:
-            pass
 
     def execute_command(self, raw_query):
         try:
@@ -677,7 +672,7 @@ class Bot:
                 if isinstance(s, argparse._SubParsersAction)
                 for choice in list(s.choices.keys())
             )
-            regex = "(^%s)@%s" % (regex, settings.TELEGRAM_NAME)
+            regex = f"(^{regex})@{settings.TELEGRAM_NAME}"
             query = re.sub(regex, r"\1", query)
             args = self.parser.parse_args(shlex.split(query))
             if args.command in ["/prev", "/next", "/repeat"]:
@@ -701,7 +696,7 @@ class Bot:
                     elif c == "/next":
                         args.offset = args.offset + args.limit
 
-            self.logger.info("args = %s" % args)
+            self.logger.info(f"args = {args}")
             if self.coder_chat:
                 dargs = vars(args)
                 dargs["chat_id__"] = self.chat_id
@@ -731,7 +726,7 @@ class Bot:
         except Exception as e:
             self._send_telegram_message(
                 chat_id=self.ADMIN_CHAT_ID,
-                text="Query: %s\n\n%s" % (raw_query, format_exc()),
+                text=f"Query: {raw_query}\n\n{format_exc()}",
             )
             yield "Oops, I'm having a little trouble:\n" + escape(str(e))
 
@@ -809,7 +804,7 @@ class Bot:
     def incoming(self, raw_data):
         try:
             data = json.loads(raw_data)
-            self.logger.info("incoming = \n%s" % json.dumps(data, indent=2))
+            self.logger.info(f"incoming = \n{json.dumps(data, indent=2)}")
 
             if "from" in data.get("message", {}):
                 self.message = data["message"]
@@ -874,16 +869,14 @@ class Bot:
             if self.current_chat:
                 History.objects.create(chat=self.current_chat, message=data).save()
         except Exception as e:
-            self.logger.info("Exception incoming message:\n%s\n%s" % (format_exc(), raw_data))
+            self.logger.info(f"Exception incoming message:\n{format_exc()}\n{raw_data}")
             self.logger.error(f"Exception incoming message: {e}")
-            try:
+            with contextlib.suppress(Exception):
                 self._send_telegram_message(
                     chat_id=self.ADMIN_CHAT_ID,
                     text="What need from me?",
                     reply_parameters=telegram.ReplyParameters(message_id=self.message["message_id"]),
                 )
-            except Exception:
-                pass
             if hasattr(self, "from_id"):
                 self._send_telegram_message(
                     chat_id=self.from_id,
@@ -892,7 +885,7 @@ class Bot:
 
     def get_commands(self):
         return "\n".join(
-            "%s - %s" % (choice[1:], subparser.description)
+            f"{choice[1:]} - {subparser.description}"
             for s in self.parser._subparsers._actions
             if isinstance(s, argparse._SubParsersAction)
             for choice, subparser in list(s.choices.items())
@@ -904,7 +897,7 @@ class Bot:
             + settings.TELEGRAM_NAME
             + "\n\n"
             + "\n\n".join(
-                "##%s\n```\n#!text\n%s```" % (choice[1:], subparser.format_help())
+                f"##{choice[1:]}\n```\n#!text\n{subparser.format_help()}```"
                 for s in self.parser._subparsers._actions
                 if isinstance(s, argparse._SubParsersAction)
                 for choice, subparser in list(s.choices.items())
@@ -920,7 +913,7 @@ class Bot:
 
     def webhook(self):
         url = self.webhook_url
-        self.logger.info("webhook url = %s" % url)
+        self.logger.info(f"webhook url = {url}")
         return self._request("set_webhook", url=url)
 
     def unwebhook(self):

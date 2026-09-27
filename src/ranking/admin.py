@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 from django.contrib import admin
 from django.utils.html import format_html
 from django.utils.timezone import now
@@ -67,9 +69,9 @@ class HasInfo(admin.SimpleListFilter):
 
 @admin_register(Account)
 class AccountAdmin(BaseModelAdmin):
-    list_display = ["resource", "key", "name", "country", "_has_coder", "deleted", "updated"]
-    search_fields = ["=key", "=name"]
-    list_filter = [HasCoders, HasInfo, "deleted", "resource__host", "account_type"]
+    list_display: ClassVar = ["resource", "key", "name", "country", "_has_coder", "deleted", "updated"]
+    search_fields: ClassVar = ["=key", "=name"]
+    list_filter: ClassVar = [HasCoders, HasInfo, "deleted", "resource__host", "account_type"]
 
     def _has_coder(self, obj):
         return obj.has_coder
@@ -88,7 +90,8 @@ class AccountAdmin(BaseModelAdmin):
             "last_rating_activity",
             "rating_update_time",
             "account_type",
-        ] + super().get_readonly_fields(request, obj)
+            *super().get_readonly_fields(request, obj),
+        ]
 
     def get_queryset(self, request):
         return super().get_queryset(request).annotate(has_coder=Exists("coders"))
@@ -96,16 +99,16 @@ class AccountAdmin(BaseModelAdmin):
 
 @admin_register(AccountRenaming)
 class AccountRenamingAdmin(BaseModelAdmin):
-    list_display = ["pk", "resource", "old_key", "new_key", "created"]
-    search_fields = ["old_key", "new_key"]
-    list_filter = ["resource"]
+    list_display: ClassVar = ["pk", "resource", "old_key", "new_key", "created"]
+    search_fields: ClassVar = ["old_key", "new_key"]
+    list_filter: ClassVar = ["resource"]
 
 
 @admin_register(AccountVerification)
 class AccountVerificationAdmin(BaseModelAdmin):
-    list_display = ["coder", "account", "resource"]
-    search_fields = ["=coder__username", "=account__key"]
-    list_filter = ["account__resource__host"]
+    list_display: ClassVar = ["coder", "account", "resource"]
+    search_fields: ClassVar = ["=coder__username", "=account__key"]
+    list_filter: ClassVar = ["account__resource__host"]
 
     def resource(self, obj):
         return obj.account.resource.host
@@ -113,9 +116,9 @@ class AccountVerificationAdmin(BaseModelAdmin):
 
 @admin_register(VerifiedAccount)
 class VerifiedAccountAdmin(BaseModelAdmin):
-    list_display = ["coder", "account", "resource"]
-    search_fields = ["=coder__username", "=account__key"]
-    list_filter = ["account__resource__host"]
+    list_display: ClassVar = ["coder", "account", "resource"]
+    search_fields: ClassVar = ["=coder__username", "=account__key"]
+    list_filter: ClassVar = ["account__resource__host"]
 
     def resource(self, obj):
         return obj.account.resource.host
@@ -123,36 +126,36 @@ class VerifiedAccountAdmin(BaseModelAdmin):
 
 @admin_register(Rating)
 class RatingAdmin(BaseModelAdmin):
-    list_display = ["contest", "party"]
-    search_fields = ["contest__title", "party__name"]
-    list_filter = ["party__name", "contest__host"]
+    list_display: ClassVar = ["contest", "party"]
+    search_fields: ClassVar = ["contest__title", "party__name"]
+    list_filter: ClassVar = ["party__name", "contest__host"]
 
     def parse_statistic(self, request, queryset):
         ids = queryset.values_list("contest", flat=True).distinct()
         contests = Contest.objects.filter(id__in=ids)
         result = parse_stat().parse_statistic(contests=contests, with_check=False)
-        self.message_user(request, "%d of %d parsed." % (result.count, result.total))
+        self.message_user(request, f"{result.count:d} of {result.total:d} parsed.")
 
     parse_statistic.short_description = "Parse statistic"
 
-    actions = [parse_statistic]
+    actions: ClassVar = [parse_statistic]
 
 
 @admin_register(AutoRating)
 class AutoRatingAdmin(BaseModelAdmin):
-    list_display = ["party", "deadline", "info"]
-    search_fields = ["party__name"]
-    list_filter = ["party"]
+    list_display: ClassVar = ["party", "deadline", "info"]
+    search_fields: ClassVar = ["party__name"]
+    list_filter: ClassVar = ["party"]
 
 
 @admin_register(Statistics)
 class StatisticsAdmin(BaseModelAdmin):
-    list_display = ["account", "contest", "place", "solving", "upsolving", "_skip", "_adv"]
-    search_fields = ["=account__key"]
-    list_filter = ["skip_in_stats"]
+    list_display: ClassVar = ["account", "contest", "place", "solving", "upsolving", "_skip", "_adv"]
+    search_fields: ClassVar = ["=account__key"]
+    list_filter: ClassVar = ["skip_in_stats"]
 
     def get_readonly_fields(self, *args, **kwargs):
-        return ["last_activity"] + super().get_readonly_fields(*args, **kwargs)
+        return ["last_activity", *super().get_readonly_fields(*args, **kwargs)]
 
     def _skip(self, obj):
         return obj.skip_in_stats
@@ -169,8 +172,8 @@ class StatisticsAdmin(BaseModelAdmin):
 
 @admin_register(StatisticsLog)
 class StatistcsLogAdmin(BaseModelAdmin):
-    list_display = ["pk", "time", "contest", "log_type", "log_id"]
-    search_fields = ["=account__key"]
+    list_display: ClassVar = ["pk", "time", "contest", "log_type", "log_id"]
+    search_fields: ClassVar = ["=account__key"]
     list_filter = (
         ("resource", admin.RelatedOnlyFieldListFilter),
         "log_type",
@@ -179,15 +182,15 @@ class StatistcsLogAdmin(BaseModelAdmin):
 
 @admin_register(Stage)
 class StageAdmin(BaseModelAdmin):
-    list_display = ["contest", "filter_params"]
-    search_fields = ["contest__title", "contest__resource__host", "filter_params", "score_params"]
-    list_filter = ["contest__host"]
-    ordering = ["-contest__start_time"]
+    list_display: ClassVar = ["contest", "filter_params"]
+    search_fields: ClassVar = ["contest__title", "contest__resource__host", "filter_params", "score_params"]
+    list_filter: ClassVar = ["contest__host"]
+    ordering: ClassVar = ["-contest__start_time"]
 
     class StageContestInline(admin.TabularInline):
         model = StageContest
-        raw_id_fields = ["contest"]
-        ordering = ["-contest__start_time"]
+        raw_id_fields: ClassVar = ["contest"]
+        ordering: ClassVar = ["-contest__start_time"]
 
         def has_add_permission(self, request, obj=None):
             return False
@@ -195,12 +198,12 @@ class StageAdmin(BaseModelAdmin):
         def has_change_permission(self, request, obj=None):
             return False
 
-    inlines = [StageContestInline]
+    inlines: ClassVar = [StageContestInline]
 
 
 @admin_register(Module)
 class ModuleAdmin(BaseModelAdmin):
-    list_display = [
+    list_display: ClassVar = [
         "resource",
         "enable",
         "min_delay_after_end",
@@ -211,26 +214,26 @@ class ModuleAdmin(BaseModelAdmin):
         "long_contest_divider",
         "path",
     ]
-    search_fields = ["resource__host"]
-    list_filter = ["enable"]
+    search_fields: ClassVar = ["resource__host"]
+    list_filter: ClassVar = ["enable"]
 
 
 @admin_register(VirtualStart)
 class VirtualStartAdmin(BaseModelAdmin):
-    list_display = ["id", "coder", "entity", "start_time"]
+    list_display: ClassVar = ["id", "coder", "entity", "start_time"]
     date_hierarchy = "created"
-    search_fields = ["coder__username"]
+    search_fields: ClassVar = ["coder__username"]
 
 
 @admin_register(StageContest)
 class StageContestAdmin(BaseModelAdmin):
-    list_display = ["stage", "contest", "created", "modified"]
-    list_filter = ["contest__resource"]
+    list_display: ClassVar = ["stage", "contest", "created", "modified"]
+    list_filter: ClassVar = ["contest__resource"]
 
 
 @admin_register(CountryAccount)
 class CountryAccountAdmin(BaseModelAdmin):
-    list_display = [
+    list_display: ClassVar = [
         "resource",
         "country",
         "n_accounts",
@@ -249,8 +252,8 @@ class CountryAccountAdmin(BaseModelAdmin):
         "n_third_places",
         "n_top_ten_places",
     ]
-    search_fields = ["country"]
-    list_filter = [
+    search_fields: ClassVar = ["country"]
+    list_filter: ClassVar = [
         ("resource__has_country_rating", admin.BooleanFieldListFilter),
         ("resource__has_country_medal", admin.BooleanFieldListFilter),
         ("resource", admin.RelatedOnlyFieldListFilter),
@@ -259,7 +262,7 @@ class CountryAccountAdmin(BaseModelAdmin):
 
 @admin_register(AccountMatching)
 class AccountMatchingAdmin(BaseModelAdmin):
-    list_display = [
+    list_display: ClassVar = [
         "name",
         "status",
         "coder",
@@ -269,8 +272,8 @@ class AccountMatchingAdmin(BaseModelAdmin):
         "modified",
         "statistic",
     ]
-    search_fields = ["name", "account__key", "contest__title", "resource__host", "coder__username"]
-    list_filter = [
+    search_fields: ClassVar = ["name", "account__key", "contest__title", "resource__host", "coder__username"]
+    list_filter: ClassVar = [
         "status",
         ("contest", admin.RelatedOnlyFieldListFilter),
     ]
@@ -296,19 +299,19 @@ class AccountMatchingAdmin(BaseModelAdmin):
 
 @admin_register(ParseStatistics)
 class ParseStatisticsAdmin(BaseModelAdmin):
-    list_display = ["enable", "delay", "contest__start_time", "contest", "created", "modified"]
-    search_fields = ["contest__title", "contest__host", "contest__resource__host"]
-    list_filter = ["contest__resource"]
+    list_display: ClassVar = ["enable", "delay", "contest__start_time", "contest", "created", "modified"]
+    search_fields: ClassVar = ["contest__title", "contest__host", "contest__resource__host"]
+    list_filter: ClassVar = ["contest__resource"]
 
     def get_readonly_fields(self, *args, **kwargs):
-        return ["parse_time"] + super().get_readonly_fields(*args, **kwargs)
+        return ["parse_time", *super().get_readonly_fields(*args, **kwargs)]
 
 
 @admin_register(Finalist)
 class FinalistAdmin(BaseModelAdmin):
-    list_display = ["contest", "name", "get_accounts", "modified"]
-    search_fields = ["contest__title", "name"]
-    list_filter = [("contest", admin.RelatedOnlyFieldListFilter)]
+    list_display: ClassVar = ["contest", "name", "get_accounts", "modified"]
+    search_fields: ClassVar = ["contest__title", "name"]
+    list_filter: ClassVar = [("contest", admin.RelatedOnlyFieldListFilter)]
 
     def get_accounts(self, obj):
         return format_html(
@@ -321,17 +324,17 @@ class FinalistAdmin(BaseModelAdmin):
     get_accounts.short_description = "Accounts"
 
     def get_readonly_fields(self, *args, **kwargs):
-        return ["achievement_updated", "achievement_hash"] + super().get_readonly_fields(*args, **kwargs)
+        return ["achievement_updated", "achievement_hash", *super().get_readonly_fields(*args, **kwargs)]
 
 
 @admin_register(FinalistResourceInfo)
 class FinalistResourceInfoAdmin(BaseModelAdmin):
-    list_display = ["finalist", "resource", "rating", "updated"]
-    search_fields = ["finalist__name", "resource__host"]
-    list_filter = [
+    list_display: ClassVar = ["finalist", "resource", "rating", "updated"]
+    search_fields: ClassVar = ["finalist__name", "resource__host"]
+    list_filter: ClassVar = [
         ("resource", admin.RelatedOnlyFieldListFilter),
         ("finalist__contest", admin.RelatedOnlyFieldListFilter),
     ]
 
     def get_readonly_fields(self, *args, **kwargs):
-        return ["updated"] + super().get_readonly_fields(*args, **kwargs)
+        return ["updated", *super().get_readonly_fields(*args, **kwargs)]

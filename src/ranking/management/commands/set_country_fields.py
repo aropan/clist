@@ -111,7 +111,7 @@ class Command(BaseCommand):
                         country_accounts = {c.country: c for c in country_accounts}
                         CountryAccount.objects.filter(resource=resource).exclude(country__in=country_accounts).delete()
 
-                def statistics_base_queryset():
+                def statistics_base_queryset(resource=resource):
                     ret = resource.statistics_set.annotate(
                         country=Case(
                             When(addition__country__gt="", then=CharJSONF("addition__country")),
@@ -127,7 +127,7 @@ class Command(BaseCommand):
 
                     return ret
 
-                def update_medal_fields():
+                def update_medal_fields(resource=resource):
                     qs = statistics_base_queryset()
                     qs = qs.filter(medal__isnull=False)
                     qs = qs.values("country", "medal", "place_as_int").annotate(count=Count("medal"))
@@ -145,7 +145,7 @@ class Command(BaseCommand):
                         if updated_fields:
                             country_account.save(update_fields=updated_fields)
 
-                def update_n_place_fields():
+                def update_n_place_fields(resource=resource):
                     qs = statistics_base_queryset()
                     qs = qs.filter(contest__stage__isnull=True)
                     qs = qs.filter(place_as_int__gte=1, place_as_int__lte=10, contest__end_time__lt=timezone.now())
@@ -169,7 +169,7 @@ class Command(BaseCommand):
                         update_fields = list(country_data.keys())
                         country_account.save(update_fields=update_fields)
 
-                def update_rating_fields():
+                def update_rating_fields(last_rated_contest, resource=resource, country_accounts=country_accounts):
                     qs = resource.account_set.filter(
                         rating__isnull=False, country__isnull=False, last_rating_activity__isnull=False
                     )
@@ -233,7 +233,7 @@ class Command(BaseCommand):
                 last_rated_contest = resource.major_contests().filter(is_rated=True).order_by("-end_time").first()
                 if resource.has_country_rating and last_rated_contest:
                     with measure_time("update_rating_fields", logger=self.logger):
-                        update_rating_fields()
+                        update_rating_fields(last_rated_contest)
                 else:
                     CountryAccount.objects.filter(resource=resource).update(
                         rating=None, n_rating_accounts=0, raw_rating=None, resource_rank=None

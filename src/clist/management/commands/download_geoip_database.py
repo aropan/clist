@@ -36,7 +36,7 @@ class Command(BaseCommand):
             self.logger.info(f"extracted to {extract_dir}")
 
             geoip_path_basename = os.path.basename(settings.GEOIP_PATH)
-            for root, dirs, files in os.walk(extract_dir):
+            for root, _dirs, files in os.walk(extract_dir):
                 for file in files:
                     file_path = os.path.join(root, file)
                     self.logger.info(f"downloaded file = {file_path}")

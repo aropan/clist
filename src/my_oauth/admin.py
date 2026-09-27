@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 from import_export import fields, resources, widgets
 from import_export.admin import ImportExportModelAdmin
 
@@ -7,8 +9,8 @@ from pyclist.admin import BaseModelAdmin, admin_register
 
 @admin_register(Service)
 class ServiceAdmin(BaseModelAdmin):
-    list_display = ["name", "title", "_has_refresh_token", "disable"]
-    search_fields = ["name", "title"]
+    list_display: ClassVar = ["name", "title", "_has_refresh_token", "disable"]
+    search_fields: ClassVar = ["name", "title"]
 
     def _has_refresh_token(self, obj):
         return bool(obj.refresh_token_uri)
@@ -19,20 +21,20 @@ class ServiceAdmin(BaseModelAdmin):
 
 @admin_register(Token)
 class TokenAdmin(BaseModelAdmin):
-    list_display = ["service", "coder", "user_id", "email", "modified"]
-    search_fields = ["coder__user__username", "email", "data"]
-    list_filter = ["service"]
+    list_display: ClassVar = ["service", "coder", "user_id", "email", "modified"]
+    search_fields: ClassVar = ["coder__user__username", "email", "data"]
+    list_filter: ClassVar = ["service"]
 
 
 @admin_register(Form)
 class FormAdmin(BaseModelAdmin):
-    list_display = ["id", "name", "service", "modified"]
-    search_fields = ["name"]
-    list_filter = ["service"]
-    ordering = ["-modified"]
+    list_display: ClassVar = ["id", "name", "service", "modified"]
+    search_fields: ClassVar = ["name"]
+    list_filter: ClassVar = ["service"]
+    ordering: ClassVar = ["-modified"]
 
     def get_readonly_fields(self, *args, **kwargs):
-        return ["id"] + list(super().get_readonly_fields(*args, **kwargs))
+        return ["id", *list(super().get_readonly_fields(*args, **kwargs))]
 
 
 class CredentialResource(resources.ModelResource):
@@ -53,5 +55,5 @@ class CredentialAdmin(ImportExportModelAdmin, BaseModelAdmin):
     list_filter = ("state", "form")
     search_fields = ("login", "token__coder__user__username", "token__email", "token__user_id")
     raw_id_fields = ("form", "token")
-    resource_classes = [CredentialResource]
+    resource_classes: ClassVar = [CredentialResource]
     skip_import_confirm = True

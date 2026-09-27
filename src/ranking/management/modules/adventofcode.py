@@ -14,7 +14,6 @@ import django.utils.timezone
 from clist.models import Contest
 from clist.templatetags.extras import get_item, is_hidden
 from logify import live as tqdm
-from ranking.management.modules import conf
 from ranking.management.modules.common import REQ, BaseModule
 from ranking.management.modules.excepts import ExceptionParseStandings
 from ranking.models import Account, Statistics, VirtualStart
@@ -319,10 +318,7 @@ class Statistic(BaseModule):
             if delta < timedelta():
                 delta += timedelta(days=1, seconds=42)
 
-            if delta > timedelta(hours=23):
-                delta = timedelta(minutes=1)
-            else:
-                delta = min(delta, timedelta(minutes=30))
+            delta = timedelta(minutes=1) if delta > timedelta(hours=23) else min(delta, timedelta(minutes=30))
 
             ret["timing_statistic_delta"] = delta
 

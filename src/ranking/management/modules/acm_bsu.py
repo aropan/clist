@@ -15,7 +15,7 @@ class Statistic(BaseModule):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         if not self.standings_url:
-            raise InitModuleException("Not set standings url for %s" % self.name)
+            raise InitModuleException(f"Not set standings url for {self.name}")
 
     def get_standings(self, users=None, statistics=None, **kwargs):
         year = self.start_time.year - (0 if self.start_time.month > 8 else 1)
@@ -29,12 +29,12 @@ class Statistic(BaseModule):
             page = REQ.get(self.standings_url)
         except FailOnGetResponse as e:
             if e.code == 403:
-                raise ExceptionParseStandings("Forbidden")
+                raise ExceptionParseStandings("Forbidden") from e
             raise e
         try:
             table = parsed_table.ParsedTable(html=page, xpath="//table[@class='ir-contest-standings']//tr")
-        except StopIteration:
-            raise ExceptionParseStandings("Not found table with standings")
+        except StopIteration as e:
+            raise ExceptionParseStandings("Not found table with standings") from e
         problems_info = collections.OrderedDict()
         for r in table:
             row = collections.OrderedDict()
@@ -58,7 +58,8 @@ class Statistic(BaseModule):
                     if v.value == DOT:
                         continue
                     p = problems.setdefault(letter, {})
-                    values = re.split(r"\s", v.value.replace("−", "-"))
+                    # Match the exact Unicode text used by the source data.
+                    values = re.split(r"\s", v.value.replace("−", "-"))  # ruff: ignore[ambiguous-unicode-character-string]
                     if values and values[0] and values[0][0] in "+-?":
                         p["result"] = values[0]
                         if len(values) > 1:

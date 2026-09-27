@@ -60,6 +60,7 @@ class Statistic(BaseModule):
             if match:
                 csrf_token = match.group(1)
                 return {"x-csrf-token": csrf_token, "x-requested-with": "XMLHttpRequest"}
+        return None
 
     @RateLimiter(max_calls=1, period=1)
     @staticmethod
@@ -146,10 +147,7 @@ class Statistic(BaseModule):
                 time.sleep(2)
                 url = self.API_RANKING_URL_FORMAT_.format(key=key, page=n_page, per_page=per_page)
 
-                if users:
-                    urls = [f"{url}&search={user}" for user in users]
-                else:
-                    urls = [url]
+                urls = [f"{url}&search={user}" for user in users] if users else [url]
 
                 for url in urls:
                     delay = 5
@@ -287,7 +285,7 @@ class Statistic(BaseModule):
                             for k in ("old_rating", "rating_change", "new_rating"):
                                 if k in stat:
                                     row[k] = stat[k]
-                        hidden_fields |= set(list(d.keys()))
+                        hidden_fields |= set(d.keys())
                     pbar.update()
 
             if not users:
@@ -352,7 +350,7 @@ class Statistic(BaseModule):
             inplace=False,
         ) as req:
             fetch_profle_page_func = partial(Statistic.fetch_profle_page, req=req)
-            for user, (page, url) in zip(users, map(fetch_profle_page_func, users)):
+            for _user, (page, url) in zip(users, map(fetch_profle_page_func, users)):
                 if pbar:
                     pbar.update()
 
@@ -617,13 +615,12 @@ class Statistic(BaseModule):
             submissions_info["count"] += 1
             ret["n_updated"] += 1
             stat.save()
+            return None
 
         def process_submissions(data):
             table = parsed_table.ParsedTable(data["content"])
             ret = False
-            n_rows = 0
             for r in table:
-                n_rows += 1
                 result = process_submission(r, data["url"])
                 if result is not False:
                     ret = True

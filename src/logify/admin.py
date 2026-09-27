@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 from django.urls import reverse
 from django.utils.html import format_html
 
@@ -7,7 +9,7 @@ from pyclist.admin import BaseModelAdmin, admin_register
 
 @admin_register(EventLog)
 class EventLogAdmin(BaseModelAdmin):
-    list_display = [
+    list_display: ClassVar = [
         "id",
         "related_object_link",
         "name",
@@ -20,8 +22,16 @@ class EventLogAdmin(BaseModelAdmin):
         "elapsed",
         "environment",
     ]
-    list_filter = ["environment", "name", "status", "is_live_stream", "resource"]
-    search_fields = ["contest__title", "contest__host", "resource__host", "name", "job_id", "message", "error"]
+    list_filter: ClassVar = ["environment", "name", "status", "is_live_stream", "resource"]
+    search_fields: ClassVar = [
+        "contest__title",
+        "contest__host",
+        "resource__host",
+        "name",
+        "job_id",
+        "message",
+        "error",
+    ]
     search_entirely = True
 
     def related_object_link(self, obj):
@@ -33,7 +43,7 @@ class EventLogAdmin(BaseModelAdmin):
 
 @admin_register(PgStat)
 class PgStatAdmin(BaseModelAdmin):
-    list_display = [
+    list_display: ClassVar = [
         "id",
         "table_name",
         "app_name",
@@ -50,9 +60,9 @@ class PgStatAdmin(BaseModelAdmin):
         "created",
         "modified",
     ]
-    list_filter = ["app_name"]
-    search_fields = ["table_name"]
-    ordering = ["-table_size"]
+    list_filter: ClassVar = ["app_name"]
+    search_fields: ClassVar = ["table_name"]
+    ordering: ClassVar = ["-table_size"]
 
     def get_readonly_fields(self, request, obj=None):
         return [f.name for f in self.model._meta.fields]

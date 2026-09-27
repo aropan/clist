@@ -2,6 +2,7 @@ import re
 import uuid
 from collections import Counter
 from datetime import timedelta
+from typing import ClassVar
 
 from django.apps import apps
 from django.conf import settings as django_settings
@@ -44,19 +45,21 @@ class Coder(BaseModel):
     n_contests = models.IntegerField(default=0, db_index=True)
     n_subscribers = models.IntegerField(default=0, db_index=True, blank=True)
     n_listvalues = models.IntegerField(default=0, db_index=True, blank=True)
-    tshirt_size = models.CharField(max_length=10, default=None, null=True, blank=True)
+    # These columns retain historical SQL NULL values; changing them requires a migration.
+    tshirt_size = models.CharField(max_length=10, default=None, null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
     is_virtual = models.BooleanField(default=False, db_index=True)
     global_rating = models.IntegerField(null=True, blank=True, default=None, db_index=True)
     last_activity = models.DateTimeField(null=True, blank=True, default=None, db_index=True)
     bookmarks = models.JSONField(default=dict, blank=True)
 
     class Meta:
-        indexes = [
+        # Django Meta consumes this value directly; an annotation adds an invalid Meta attribute.
+        indexes = [  # ruff: ignore[mutable-class-default]
             GinIndexTrgrmOps(fields=["username"]),
         ]
 
     def __str__(self):
-        return "%s" % (self.username)
+        return f"{self.username}"
 
     @property
     def chat(self):
@@ -211,7 +214,7 @@ class Coder(BaseModel):
         countries = self.account_set.filter(country__isnull=False).values_list("country", flat=True)
         if countries:
             counter = Counter(countries)
-            max_counter, max_country = max([(v, k) for k, v in counter.items()])
+            max_counter, max_country = max((v, k) for k, v in counter.items())
             if self.country != max_country and 2 * max_counter > len(countries):
                 self.country = max_country
                 self.auto_detect_country = True
@@ -249,10 +252,7 @@ class Coder(BaseModel):
         return qs.order_by("account_type", "-has_rating", "-n_contests").first()
 
     def primary_accounts(self, accounts=None):
-        if accounts is not None:
-            qs = accounts.filter(coders=self)
-        else:
-            qs = self.account_set.all()
+        qs = accounts.filter(coders=self) if accounts is not None else self.account_set.all()
         qs = qs.annotate(has_rating=Case(When(rating__isnull=False, then=True), default=False))
         qs = qs.order_by("resource", "account_type", "-has_rating", "-n_contests")
         qs = qs.distinct("resource")
@@ -307,7 +307,7 @@ class CoderProblem(BaseModel):
     problem = models.ForeignKey(Problem, on_delete=models.CASCADE, related_name="verdicts")
     contest = models.ForeignKey(Contest, null=True, blank=True, on_delete=models.CASCADE)
     statistic = models.ForeignKey("ranking.Statistics", null=True, blank=True, on_delete=models.CASCADE)
-    problem_key = models.CharField(max_length=255, null=True, blank=True)
+    problem_key = models.CharField(max_length=255, null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
     verdict = models.CharField(max_length=2, choices=ProblemVerdict.choices, db_index=True)
     upsolving = models.BooleanField(null=True, blank=True, db_index=True)
     submission_time = models.DateTimeField(null=True, blank=True, db_index=True)
@@ -315,7 +315,8 @@ class CoderProblem(BaseModel):
     class Meta:
         unique_together = ("coder", "problem")
 
-        indexes = [
+        # Django Meta consumes this value directly; an annotation adds an invalid Meta attribute.
+        indexes = [  # ruff: ignore[mutable-class-default]
             models.Index(fields=["coder", "verdict"]),
             models.Index(fields=["problem", "verdict"]),
             models.Index(fields=["coder", "submission_time"]),
@@ -350,7 +351,7 @@ class Party(BaseModel):
     name = models.CharField(max_length=255, unique=True)
     slug = models.SlugField(max_length=255)
     coders = models.ManyToManyField(Coder, blank=True)
-    secret_key = models.CharField(max_length=20, blank=True, null=True)
+    secret_key = models.CharField(max_length=20, blank=True, null=True)  # ruff: ignore[django-nullable-model-string-field]
     author = models.ForeignKey(Coder, related_name="party_author_set", on_delete=models.CASCADE)
     admins = models.ManyToManyField(Coder, blank=True, related_name="party_admin_set")
     is_hidden = models.BooleanField(default=False)
@@ -381,20 +382,20 @@ def _get_default_week_days():
 
 
 class Filter(BaseModel):
-    CATEGORIES = ["list", "calendar", "email", "telegram", "api", "webbrowser"]
+    CATEGORIES: ClassVar = ["list", "calendar", "email", "telegram", "api", "webbrowser"]
 
     coder = models.ForeignKey(Coder, on_delete=models.CASCADE, db_index=True)
     enabled = models.BooleanField(default=True)
-    name = models.CharField(max_length=60, null=True, blank=True)
+    name = models.CharField(max_length=60, null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
     duration_from = models.IntegerField(null=True, blank=True)
     duration_to = models.IntegerField(null=True, blank=True)
     start_time_from = models.FloatField(null=True, blank=True)
     start_time_to = models.FloatField(null=True, blank=True)
-    regex = models.CharField(max_length=1000, null=True, blank=True)
+    regex = models.CharField(max_length=1000, null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
     inverse_regex = models.BooleanField(default=False)
     to_show = models.BooleanField(default=True)
     resources = models.JSONField(default=list, blank=True)
-    host = models.TextField(default=None, null=True, blank=True)
+    host = models.TextField(default=None, null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
     contest = models.ForeignKey(Contest, on_delete=models.CASCADE, default=None, null=True, blank=True, db_index=True)
     party = models.ForeignKey(Party, on_delete=models.CASCADE, default=None, null=True, blank=True, db_index=True)
     categories = ArrayField(models.CharField(max_length=20), blank=True, default=_get_default_categories)
@@ -454,7 +455,8 @@ class Filter(BaseModel):
         return ret
 
     class Meta:
-        indexes = [
+        # Django Meta consumes this value directly; an annotation adds an invalid Meta attribute.
+        indexes = [  # ruff: ignore[mutable-class-default]
             models.Index(fields=["coder"]),
             models.Index(fields=["contest"]),
             models.Index(fields=["coder", "contest"]),
@@ -475,7 +477,7 @@ class CoderList(BaseModel):
     shared_with_coders = models.ManyToManyField(Coder, related_name="shared_list_set", blank=True)
     custom_names = models.BooleanField(default=False)
     account_update_delay = models.DurationField(null=True, blank=True)
-    locale = models.CharField(max_length=5, choices=django_settings.LOCALE_CHOICES, null=True, blank=True)
+    locale = models.CharField(max_length=5, choices=django_settings.LOCALE_CHOICES, null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
 
     class Meta:
         permissions = (("manage_coderlist", "Can manage coder lists"),)
@@ -595,7 +597,7 @@ class CoderList(BaseModel):
 
 
 class ListGroup(BaseModel):
-    name = models.CharField(max_length=200, null=True, blank=True)
+    name = models.CharField(max_length=200, null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
     coder_list = models.ForeignKey(CoderList, related_name="groups", on_delete=models.CASCADE)
 
     def __str__(self):
@@ -626,7 +628,8 @@ class ListValue(BaseModel):
         return f"{self.name} ListValue#{self.id}"
 
     class Meta:
-        constraints = [
+        # Django Meta consumes this value directly; an annotation adds an invalid Meta attribute.
+        constraints = [  # ruff: ignore[mutable-class-default]
             models.UniqueConstraint(
                 fields=["coder_list", "coder"],
                 condition=Q(coder__isnull=False),
@@ -639,7 +642,8 @@ class ListValue(BaseModel):
             ),
         ]
 
-        indexes = [
+        # Django Meta consumes this value directly; an annotation adds an invalid Meta attribute.
+        indexes = [  # ruff: ignore[mutable-class-default]
             models.Index(fields=["coder_list", "group"]),
         ]
 
@@ -665,7 +669,7 @@ class ListProblem(BaseModel):
 
 class Organization(BaseModel):
     name = models.CharField(max_length=255, unique=True)
-    abbreviation = models.CharField(max_length=32, blank=True, null=True)
+    abbreviation = models.CharField(max_length=32, blank=True, null=True)  # ruff: ignore[django-nullable-model-string-field]
     name_ru = models.CharField(max_length=255, unique=True)
     author = models.ForeignKey(
         Coder,
@@ -676,4 +680,4 @@ class Organization(BaseModel):
     )
 
     def __str__(self):
-        return "%s" % (self.name)
+        return f"{self.name}"

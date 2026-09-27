@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 from django.conf import settings
 from django.http import HttpResponse
 from tastypie import fields, http
@@ -18,7 +20,7 @@ def build_content_type(format, encoding="utf-8"):
     """
     if "charset" in format:
         return format
-    return "%s; charset=%s" % (format, encoding)
+    return f"{format}; charset={encoding}"
 
 
 class BaseModelResource(ModelResource):
@@ -38,8 +40,8 @@ class BaseModelResource(ModelResource):
         limit = 100
         include_resource_uri = False
         include_absolute_url = False
-        allowed_methods = ["get"]
-        fields = ["id"]
+        allowed_methods: ClassVar = ["get"]
+        fields: ClassVar = ["id"]
 
         throttle = CustomCacheThrottle(throttle_at=settings.DEFAULT_API_THROTTLE_AT_, timeframe=60)
 

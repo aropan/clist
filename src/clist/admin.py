@@ -1,3 +1,6 @@
+import contextlib
+from typing import ClassVar
+
 from django.contrib import admin
 from django.contrib.admin import SimpleListFilter
 from django.utils import timezone
@@ -26,6 +29,7 @@ class ContestAdmin(BaseModelAdmin):
                 return queryset.filter(end_time__gt=timezone.now())
             if self.value() == "1":
                 return queryset.filter(end_time__lte=timezone.now())
+            return None
 
     class ComingContestListFilter(SimpleListFilter):
         title = "coming"
@@ -42,6 +46,7 @@ class ContestAdmin(BaseModelAdmin):
                 return queryset.filter(start_time__lte=timezone.now())
             if self.value() == "1":
                 return queryset.filter(start_time__gt=timezone.now())
+            return None
 
     class RatingSet(admin.TabularInline):
         model = Rating
@@ -49,11 +54,11 @@ class ContestAdmin(BaseModelAdmin):
 
     def parse_statistic(self, request, queryset):
         result = parse_stat().parse_statistic(queryset, with_check=False)
-        self.message_user(request, "%d of %d parsed." % (result.count, result.total))
+        self.message_user(request, f"{result.count:d} of {result.total:d} parsed.")
 
     parse_statistic.short_description = "Parse statistic"
 
-    fieldsets = [
+    fieldsets: ClassVar = [
         [
             None,
             {
@@ -140,7 +145,7 @@ class ContestAdmin(BaseModelAdmin):
         ],
         ["Submission", {"fields": ["has_submissions", "has_submissions_tests"]}],
     ]
-    list_display = [
+    list_display: ClassVar = [
         "title",
         "host",
         "start_time",
@@ -155,10 +160,10 @@ class ContestAdmin(BaseModelAdmin):
         "parsed_time",
         "auto_updated",
     ]
-    search_fields = ["title", "standings_url"]
-    list_filter = [ComingContestListFilter, PastContestListFilter, "invisible", "is_rated", "resource__host"]
+    search_fields: ClassVar = ["title", "standings_url"]
+    list_filter: ClassVar = [ComingContestListFilter, PastContestListFilter, "invisible", "is_rated", "resource__host"]
 
-    actions = [parse_statistic]
+    actions: ClassVar = [parse_statistic]
 
     def get_readonly_fields(self, request, obj=None):
         ret = [
@@ -176,13 +181,13 @@ class ContestAdmin(BaseModelAdmin):
         ret += list(super().get_readonly_fields(request, obj))
         return ret
 
-    inlines = [RatingSet]
+    inlines: ClassVar = [RatingSet]
 
 
 @admin_register(ContestSeries)
 class ContestSeriesAdmin(BaseModelAdmin):
-    list_display = ["name", "n_contests", "short", "slug", "aliases"]
-    search_fields = ["name", "short", "slug", "aliases"]
+    list_display: ClassVar = ["name", "n_contests", "short", "slug", "aliases"]
+    search_fields: ClassVar = ["name", "short", "slug", "aliases"]
 
     def n_contests(self, obj):
         return obj.n_contests
@@ -194,13 +199,13 @@ class ContestSeriesAdmin(BaseModelAdmin):
 
     class ContestInline(admin.TabularInline):
         model = Contest
-        fields = ["standings_url", "end_time"]
-        readonly_fields = ["standings_url", "end_time"]
-        ordering = ["-end_time"]
+        fields: ClassVar = ["standings_url", "end_time"]
+        readonly_fields: ClassVar = ["standings_url", "end_time"]
+        ordering: ClassVar = ["-end_time"]
         can_delete = False
         extra = 0
 
-    inlines = [ContestInline]
+    inlines: ClassVar = [ContestInline]
 
 
 @admin_register(Resource)
@@ -220,8 +225,9 @@ class ResourceAdmin(BaseModelAdmin):
                 return queryset.filter(profile_url__isnull=True)
             if self.value() == "1":
                 return queryset.filter(profile_url__isnull=False)
+            return None
 
-    fieldsets = [
+    fieldsets: ClassVar = [
         [
             None,
             {
@@ -321,7 +327,7 @@ class ResourceAdmin(BaseModelAdmin):
         ],
         ["Other information", {"fields": ["info"]}],
     ]
-    list_display = [
+    list_display: ClassVar = [
         "host",
         "short_host",
         "enable",
@@ -338,8 +344,8 @@ class ResourceAdmin(BaseModelAdmin):
         "_has_upsolving",
         "_has_verification",
     ]
-    search_fields = ["host", "url"]
-    list_filter = [
+    search_fields: ClassVar = ["host", "url"]
+    list_filter: ClassVar = [
         "has_rating_history",
         "has_country_rating",
         HasProfileListFilter,
@@ -404,14 +410,12 @@ class ResourceAdmin(BaseModelAdmin):
         ret = super().get_list_display(request)
         if request.GET.get("has_profile_url") == "1":
             ret = list(ret)
-            try:
+            with contextlib.suppress(ValueError):
                 ret[ret.index("_has_profile_url")] = "profile_url"
-            except ValueError:
-                pass
         return ret
 
     def get_readonly_fields(self, request, obj=None):
-        return ["n_accounts", "n_contests", "n_statistics"] + list(super().get_readonly_fields(request, obj))
+        return ["n_accounts", "n_contests", "n_statistics", *list(super().get_readonly_fields(request, obj))]
 
     class ModuleInline(admin.StackedInline):
         model = Module
@@ -422,37 +426,47 @@ class ResourceAdmin(BaseModelAdmin):
 
 @admin_register(Problem)
 class ProblemAdmin(BaseModelAdmin):
-    list_display = ["name", "index", "key", "short", "n_attempts", "n_accepted", "divisions", "url", "visible"]
-    list_filter = ["visible", "resource"]
-    search_fields = ["contest", "name"]
+    list_display: ClassVar = [
+        "name",
+        "index",
+        "key",
+        "short",
+        "n_attempts",
+        "n_accepted",
+        "divisions",
+        "url",
+        "visible",
+    ]
+    list_filter: ClassVar = ["visible", "resource"]
+    search_fields: ClassVar = ["contest", "name"]
 
 
 @admin_register(ProblemTag)
 class ProblemTagAdmin(BaseModelAdmin):
-    list_display = ["name"]
-    search_fields = ["name"]
+    list_display: ClassVar = ["name"]
+    search_fields: ClassVar = ["name"]
 
 
 @admin_register(Banner)
 class BannerAdmin(BaseModelAdmin):
-    list_display = ["name", "url", "end_time", "template"]
-    list_filter = ["template"]
-    search_fields = ["name", "url", "data"]
+    list_display: ClassVar = ["name", "url", "end_time", "template"]
+    list_filter: ClassVar = ["template"]
+    search_fields: ClassVar = ["name", "url", "data"]
 
 
 @admin_register(Promotion)
 class PromotionAdmin(BaseModelAdmin):
-    list_display = ["contest", "enable", "timer_message", "time_attribute", "background"]
-    list_filter = ["enable"]
+    list_display: ClassVar = ["contest", "enable", "timer_message", "time_attribute", "background"]
+    list_filter: ClassVar = ["enable"]
 
 
 @admin_register(PromoLink)
 class PromoLinkAdmin(BaseModelAdmin):
-    list_display = ["name", "enable", "desc", "url"]
-    search_fields = ["name"]
+    list_display: ClassVar = ["name", "enable", "desc", "url"]
+    search_fields: ClassVar = ["name"]
 
 
 @admin_register(Discussion)
 class DiscussionAdmin(BaseModelAdmin):
-    list_display = ["name", "resource", "contest", "problem", "what", "where", "created", "modified"]
-    search_fields = ["name", "resource", "contest", "problem"]
+    list_display: ClassVar = ["name", "resource", "contest", "problem", "what", "where", "created", "modified"]
+    search_fields: ClassVar = ["name", "resource", "contest", "problem"]

@@ -1,4 +1,5 @@
 import time
+from typing import ClassVar
 
 import unicodecsv as csv
 from django.contrib import admin
@@ -13,10 +14,10 @@ from pyclist.admin import BaseModelAdmin, admin_register
 
 @admin_register(Event)
 class EventAdmin(BaseModelAdmin):
-    list_display = ["name", "slug", "participants_count", "teams_count", "registration_deadline"]
-    search_fields = ["name"]
-    prepopulated_fields = {"slug": ("name",)}
-    textarea_fields = ["information"]
+    list_display: ClassVar = ["name", "slug", "participants_count", "teams_count", "registration_deadline"]
+    search_fields: ClassVar = ["name"]
+    prepopulated_fields: ClassVar = {"slug": ("name",)}
+    textarea_fields: ClassVar = ["information"]
 
     def participants_count(self, inst):
         return inst.participant_set.count()
@@ -27,8 +28,8 @@ class EventAdmin(BaseModelAdmin):
 
 @admin_register(Participant)
 class ParticipantAdmin(BaseModelAdmin):
-    search_fields = ["coder__user__username", "first_name", "last_name", "email", "team__name"]
-    list_display = [
+    search_fields: ClassVar = ["coder__user__username", "first_name", "last_name", "email", "team__name"]
+    list_display: ClassVar = [
         "coder",
         "first_name",
         "last_name",
@@ -53,20 +54,17 @@ class ParticipantAdmin(BaseModelAdmin):
                 for status in new_statuses:
                     cond |= Q(team__status=status)
                 cond |= Q(team__isnull=True)
-                if self.value() == "yes":
-                    queryset = queryset.exclude(cond)
-                else:
-                    queryset = queryset.filter(cond)
+                queryset = queryset.exclude(cond) if self.value() == "yes" else queryset.filter(cond)
             return queryset
 
-    list_filter = ["event", "is_coach", HasTeamFilter, "organization", "country"]
+    list_filter: ClassVar = ["event", "is_coach", HasTeamFilter, "organization", "country"]
 
     @print_sql_decorator(count_only=True)
     def import_to_csv(self, request, queryset):
         queryset = queryset.select_related("team")
         filename = "participants-{}.csv".format(timezone.now().strftime("%Y%m%d%H%M"))
         response = HttpResponse(content_type="text/csv")
-        response["Content-Disposition"] = "attachment; filename=%s" % filename
+        response["Content-Disposition"] = f"attachment; filename={filename}"
         encoding = "cp1251" if request.user_agent.os.family == "Windows" else "utf8"
         writer = csv.writer(response, delimiter=";", encoding=encoding, errors="replace")
         fields = [
@@ -90,13 +88,13 @@ class ParticipantAdmin(BaseModelAdmin):
 
     import_to_csv.short_description = "Import to csv"
 
-    actions = [import_to_csv]
+    actions: ClassVar = [import_to_csv]
 
 
 @admin_register(JoinRequest)
 class JoinRequestAdmin(BaseModelAdmin):
-    list_display = ["team", "participant", "created"]
-    search_fields = ["team", "participant"]
+    list_display: ClassVar = ["team", "participant", "created"]
+    search_fields: ClassVar = ["team", "participant"]
 
 
 class TeamHasLoginFilter(admin.SimpleListFilter):
@@ -119,9 +117,9 @@ class TeamHasLoginFilter(admin.SimpleListFilter):
 
 @admin_register(Team)
 class TeamAdmin(BaseModelAdmin):
-    list_display = ["name", "event", "status", "coach", "participants_count", "author"]
-    search_fields = ["name", "coach__last_name"]
-    list_filter = [TeamHasLoginFilter, "status", "event"]
+    list_display: ClassVar = ["name", "event", "status", "coach", "participants_count", "author"]
+    search_fields: ClassVar = ["name", "coach__last_name"]
+    list_filter: ClassVar = [TeamHasLoginFilter, "status", "event"]
 
     def participants_count(self, inst):
         return inst.participants_count
@@ -146,7 +144,7 @@ class TeamAdmin(BaseModelAdmin):
     def import_to_csv(self, request, queryset):
         filename = "teams-{}.csv".format(timezone.now().strftime("%Y%m%d%H%M"))
         response = HttpResponse(content_type="text/csv")
-        response["Content-Disposition"] = "attachment; filename=%s" % filename
+        response["Content-Disposition"] = f"attachment; filename={filename}"
         encoding = "cp1251" if request.user_agent.os.family == "Windows" else "utf8"
         writer = csv.writer(response, delimiter=";", encoding=encoding, errors="replace")
         fields = [
@@ -171,14 +169,14 @@ class TeamAdmin(BaseModelAdmin):
 
     import_to_csv.short_description = "Import to csv"
 
-    actions = [bind_login, import_to_csv]
+    actions: ClassVar = [bind_login, import_to_csv]
 
 
 @admin_register(Login)
 class LoginAdmin(BaseModelAdmin):
-    list_display = ["team", "stage", "username", "password", "is_sent"]
-    search_fields = ["team__name", "username", "stage"]
-    list_filter = ["stage", "is_sent", "team__event"]
+    list_display: ClassVar = ["team", "stage", "username", "password", "is_sent"]
+    search_fields: ClassVar = ["team__name", "username", "stage"]
+    list_filter: ClassVar = ["stage", "is_sent", "team__event"]
 
     def get_renaming_data(self, request, queryset):
         response = HttpResponse(content_type="text")
@@ -215,7 +213,7 @@ class LoginAdmin(BaseModelAdmin):
             if event.pk not in cache:
                 cache[event.pk] = event.email_backend().__enter__()
 
-            for i in range(n_attempet):
+            for _i in range(n_attempet):
                 if login.send_email(connection=cache[event.pk]):
                     done += 1
                     time.sleep(2)
@@ -231,4 +229,4 @@ class LoginAdmin(BaseModelAdmin):
 
     send_email.short_description = "Send email with template message by stage"
 
-    actions = [send_email, get_renaming_data, get_passwords]
+    actions: ClassVar = [send_email, get_renaming_data, get_passwords]

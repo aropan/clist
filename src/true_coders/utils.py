@@ -57,9 +57,6 @@ def get_or_set_upsolving_filter(request, field="upsolving"):
         else:
             upsolving_filter = session.get("upsolving_filter")
 
-    if upsolving_filter is None:
-        upsolving_filter = settings.UPSOLVING_FILTER_DEFAULT
-    else:
-        upsolving_filter = is_yes(upsolving_filter)
+    upsolving_filter = settings.UPSOLVING_FILTER_DEFAULT if upsolving_filter is None else is_yes(upsolving_filter)
 
     return upsolving_filter

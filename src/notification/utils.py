@@ -134,15 +134,15 @@ def compose_message_by_problems(
         if re.match(r"^[\w\d_]+$", problem_message):
             problem_message = f"#{problem_message}"
         if "name" in solution:
-            problem_message = "%s. %s" % (problem_message, md_escape(solution["name"]))
-        problem_message = "%s `%s`" % (problem_message, scoreformat(result, with_shorten=False))
+            problem_message = "{}. {}".format(problem_message, md_escape(solution["name"]))
+        problem_message = f"{problem_message} `{scoreformat(result, with_shorten=False)}`"
         if not is_solved_result and verdict:
-            problem_message = "%s %s" % (problem_message, md_escape(verdict))
+            problem_message = f"{problem_message} {md_escape(verdict)}"
 
         if previous_result and is_partial(solution):
             delta = as_number(result, default=0) - as_number(previous_result, default=0)
             is_improving |= delta > 0
-            problem_message += " `%s%s`" % ("+" if delta >= 0 else "", delta)
+            problem_message += " `{}{}`".format("+" if delta >= 0 else "", delta)
 
         if max_time_solution is None or solution_time_compare(max_time_solution, solution) < 0:
             max_time_solution = solution
@@ -154,15 +154,17 @@ def compose_message_by_problems(
         if solution.get("try_first_ac"):
             problem_message += " TRY FIRST AC"
         problem_messages.append(problem_message)
-    problem_message = "(%s)" % ", ".join(problem_messages) if problem_messages else ""
-    time_message = "`[%s]`" % max_time_solution["time"] if max_time_solution and "time" in max_time_solution else ""
+    problem_message = "({})".format(", ".join(problem_messages)) if problem_messages else ""
+    time_message = (
+        "`[{}]`".format(max_time_solution["time"]) if max_time_solution and "time" in max_time_solution else ""
+    )
 
     previous_place = previous_addition.get("place")
     previous_solving = previous_addition.get("score")
     has_solving_diff = previous_solving is None or previous_solving != statistic.solving
     place_message = statistic.place
     if previous_place and has_solving_diff:
-        place_message = "%s->%s" % (previous_place, statistic.place)
+        place_message = f"{previous_place}->{statistic.place}"
 
     account_message = compose_account_message(statistic, subscription)
 
@@ -209,7 +211,7 @@ def compose_message_by_submissions(resource, account, submissions, subscription,
     account_name = account.short_display(resource=resource)
     if subscription and (name := subscription.account_name(account)):
         account_name = name
-    account_message = "[%s](%s)" % (md_url_text(account_name), md_url(account.url))
+    account_message = f"[{md_url_text(account_name)}]({md_url(account.url)})"
     messages = [account_message]
     limit = 5
 
@@ -223,7 +225,7 @@ def compose_message_by_submissions(resource, account, submissions, subscription,
         else:
             time_ago = str(submission["submission_id"])
         if "url" in submission:
-            time_ago = "[%s](%s)" % (md_url_text(time_ago), md_url(submission["url"]))
+            time_ago = "[{}]({})".format(md_url_text(time_ago), md_url(submission["url"]))
         return time_ago
 
     more_verdicts = defaultdict(int)
@@ -235,7 +237,7 @@ def compose_message_by_submissions(resource, account, submissions, subscription,
             messages.append(md_escape(contest.title))
         else:
             more_contests += 1
-        for problem_key, problem_submissions in problems.items():
+        for _problem_key, problem_submissions in problems.items():
             index += 1
             problem = problem_submissions["problem"]
             submissions = problem_submissions["submissions"]
@@ -253,11 +255,11 @@ def compose_message_by_submissions(resource, account, submissions, subscription,
 
             problem_message = get_problem_title(problem)
             if url := get_problem_url(problem):
-                problem_message = "[%s](%s)" % (md_url_text(problem_message), md_url(url))
+                problem_message = f"[{md_url_text(problem_message)}]({md_url(url)})"
             else:
-                problem_message = "`%s`" % md_escape(problem_message)
-            problem_message = "%s = %s" % (problem_message, get_verdicts_message(verdicts))
-            problem_message = "%s. %s" % (problem_message, get_time_ago_message(last_submission))
+                problem_message = f"`{md_escape(problem_message)}`"
+            problem_message = f"{problem_message} = {get_verdicts_message(verdicts)}"
+            problem_message = f"{problem_message}. {get_time_ago_message(last_submission)}"
             messages.append(problem_message)
 
     if more_contests or more_problems or more_verdicts:

@@ -120,11 +120,12 @@ class EventLog(BaseModel):
     related = GenericForeignKey("content_type", "object_id")
     name = models.CharField(max_length=50, db_index=True)
     status = models.CharField(max_length=20, choices=EventStatus.choices, default=EventStatus.NONE, db_index=True)
-    message = models.TextField(blank=True, null=True, default=None)
-    error = models.TextField(blank=True, null=True, default=None)
+    # These columns retain historical SQL NULL values; changing them requires a migration.
+    message = models.TextField(blank=True, null=True, default=None)  # ruff: ignore[django-nullable-model-string-field]
+    error = models.TextField(blank=True, null=True, default=None)  # ruff: ignore[django-nullable-model-string-field]
     elapsed = models.DurationField(blank=True, null=True, default=None)
     environment = models.CharField(max_length=20, blank=True)
-    job_id = models.CharField(max_length=512, blank=True, null=True)
+    job_id = models.CharField(max_length=512, blank=True, null=True)  # ruff: ignore[django-nullable-model-string-field]
     is_live_stream = models.BooleanField(blank=True, null=True)
 
     objects = EventLogManager()
@@ -172,7 +173,7 @@ class EventLog(BaseModel):
 
 class PgStat(BaseModel):
     table_name = models.CharField(max_length=255, db_index=True, unique=True)
-    app_name = models.CharField(max_length=255, blank=True, null=True)
+    app_name = models.CharField(max_length=255, blank=True, null=True)  # ruff: ignore[django-nullable-model-string-field]
     table_len = models.BigIntegerField()
     tuple_count = models.BigIntegerField()
     tuple_len = models.BigIntegerField()
@@ -189,10 +190,10 @@ class PgStat(BaseModel):
     last_autoanalyze = models.DateTimeField(blank=True, null=True)
 
     table_size = models.BigIntegerField(blank=True, null=True)
-    pretty_table_size = models.CharField(max_length=20, blank=True, null=True)
+    pretty_table_size = models.CharField(max_length=20, blank=True, null=True)  # ruff: ignore[django-nullable-model-string-field]
     initial_table_size = models.BigIntegerField(blank=True, null=True)
     diff_size = models.BigIntegerField(blank=True, null=True)
-    pretty_diff_size = models.CharField(max_length=20, blank=True, null=True)
+    pretty_diff_size = models.CharField(max_length=20, blank=True, null=True)  # ruff: ignore[django-nullable-model-string-field]
 
     def __str__(self):
         return f"{self.table_name} PgStat#{self.id}"

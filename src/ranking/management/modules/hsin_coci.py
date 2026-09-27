@@ -38,10 +38,10 @@ class Statistic(BaseModule):
         else:
             page = req.get(self.url)
             try:
-                contest = re.search(r"<td[^<]*>\s*<div[^>]*>%s</div>.*?</td>" % self.name, page, re.DOTALL).group()
+                contest = re.search(rf"<td[^<]*>\s*<div[^>]*>{self.name}</div>.*?</td>", page, re.DOTALL).group()
                 standings_url = re.search(r'<a[^>]*href="(?P<href>[^"]*)"[^>]*>.*Result.*</a>', contest).group("href")
-            except Exception:
-                raise ExceptionParseStandings("Not found result url")
+            except Exception as e:
+                raise ExceptionParseStandings("Not found result url") from e
 
         page = req.get(standings_url)
         standings_url = req.last_url

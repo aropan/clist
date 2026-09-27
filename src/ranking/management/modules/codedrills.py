@@ -30,20 +30,19 @@ class Statistic(BaseModule):
             ret = None
             for k, v in list(message.items()):
                 if k == key or k.startswith(f"{key}-"):
-                    if ret is None:
-                        ret = v
-                    else:
-                        ret = to_list(ret) + to_list(v)
+                    ret = v if ret is None else to_list(ret) + to_list(v)
                     message.pop(k)
             return ret
 
-        def rec_fix_type(messages, types, path=[]):
+        def rec_fix_type(messages, types, path=None):
+            if path is None:
+                path = []
             if not types:
                 return
             for message in to_list(messages):
                 to_conv = True
                 a = []
-                for k, v in types.items():
+                for _k, v in types.items():
                     a.append(v["type"])
                     if not v["type"].startswith("fixed"):
                         to_conv = False
@@ -53,7 +52,7 @@ class Statistic(BaseModule):
                     raise ExceptionParseStandings(f"Excepted str value for path = {path}")
                 for k, v in types.items():
                     if k in message:
-                        rec_fix_type(message[k], v.get("message_typedef"), path + [k])
+                        rec_fix_type(message[k], v.get("message_typedef"), [*path, k])
 
         def get_response(url, message, types, force_str_paths=(), xmessage_type=None):
             query = blackboxprotobuf.encode_message(message, types)

@@ -77,10 +77,7 @@ class Statistic(BaseModule):
                         else:
                             problem["status"] = "closed"
 
-                    if problem.get("status") == "closed":
-                        full_score = 0
-                    else:
-                        full_score = problem.get("current_rate")
+                    full_score = 0 if problem.get("status") == "closed" else problem.get("current_rate")
                     if full_score is not None:
                         problem["full_score"] = full_score
                         if full_score and problems_scores and problems_scores.get(problem["difficulty"]):

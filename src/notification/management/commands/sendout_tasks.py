@@ -65,7 +65,7 @@ class Command(BaseCommand):
             subject = re.sub(r"\s+", " ", subject)
             context["subject"] = subject
             method = method.split(":", 1)[0]
-            message = render_to_string("message/%s" % method, context).strip()
+            message = render_to_string(f"message/{method}", context).strip()
         else:
             subject = ""
             message = ""
@@ -168,6 +168,7 @@ class Command(BaseCommand):
         if task is not None and response:
             task.response = response
             task.save()
+        return None
 
     def load_config(self):
         if os.path.exists(self.CONFIG_FILE):

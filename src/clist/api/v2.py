@@ -1,5 +1,6 @@
 import json
 import re
+from typing import ClassVar
 
 import arrow
 from django.conf import settings
@@ -53,7 +54,7 @@ class BaseModelResource(CommmonBaseModuelResource):
             lookup_bits = self.check_filtering(field_name, filter_type, filter_bits)
             value = self.filter_value_to_python(filters[filter_expr], field_name, filters, filter_expr, filter_type)
             db_field_name = LOOKUP_SEP.join(lookup_bits)
-            qs_filter = "%s%s%s" % (db_field_name, LOOKUP_SEP, filter_type)
+            qs_filter = f"{db_field_name}{LOOKUP_SEP}{filter_type}"
             custom_filters[qs_filter] = value
             filters.pop(filter_expr)
 
@@ -101,7 +102,7 @@ class ResourceResource(BaseModelResource):
         queryset = Resource.objects.all()
         resource_name = "resource"
         excludes = ("total_count", "url")
-        filtering = {
+        filtering: ClassVar = {
             "total_count": ["exact"],
             "id": ["exact", "in"],
             "name": ["exact", "in"],
@@ -109,7 +110,7 @@ class ResourceResource(BaseModelResource):
             "n_accounts": ["exact", "gt", "lt", "gte", "lte"],
             "n_contests": ["exact", "gt", "lt", "gte", "lte"],
         }
-        ordering = ["id", "name", "n_accounts", "n_contests"]
+        ordering: ClassVar = ["id", "name", "n_accounts", "n_contests"]
 
     def dehydrate(self, *args, **kwargs):
         bundle = super().dehydrate(*args, **kwargs)
@@ -163,7 +164,7 @@ class ContestResource(BaseModelResource):
             "start_time__during",
             "end_time__during",
         )
-        filtering = {
+        filtering: ClassVar = {
             "total_count": ["exact"],
             "with_problems": ["exact"],
             "upcoming": ["exact"],
@@ -184,7 +185,7 @@ class ContestResource(BaseModelResource):
             "filtered": ["exact"],
             "category": ["exact"],
         }
-        ordering = ["id", "event", "start", "end", "resource_id", "duration", "parsed_at"]
+        ordering: ClassVar = ["id", "event", "start", "end", "resource_id", "duration", "parsed_at"]
         serializer = ContestAtomSerializer()
 
     def dehydrate(self, *args, **kwargs):
@@ -298,7 +299,7 @@ class StatisticsResource(BaseModelResource):
         queryset = Statistics.objects.all()
         resource_name = "statistics"
         excludes = ("total_count", "with_problems", "with_more_fields", "coder_id")
-        filtering = {
+        filtering: ClassVar = {
             "total_count": ["exact"],
             "with_problems": ["exact"],
             "with_more_fields": ["exact"],
@@ -309,8 +310,8 @@ class StatisticsResource(BaseModelResource):
             "new_rating": ["isnull"],
             "rating_change": ["isnull"],
         }
-        ordering = ["id", "score", "place", "new_rating", "rating_change", "date"]
-        detail_allowed_methods = []
+        ordering: ClassVar = ["id", "score", "place", "new_rating", "rating_change", "date"]
+        detail_allowed_methods: ClassVar = []
 
     def build_filters(self, filters=None, *args, **kwargs):
         filters = filters or {}
@@ -402,7 +403,7 @@ class AccountResource(BaseModelResource):
         queryset = Account.objects.all()
         resource_name = "account"
         excludes = ("total_count",)
-        filtering = {
+        filtering: ClassVar = {
             "total_count": ["exact"],
             "id": ["exact", "in"],
             "resource_id": ["exact", "in"],
@@ -411,7 +412,7 @@ class AccountResource(BaseModelResource):
             "rating": ["exact", "gt", "lt", "gte", "lte", "isnull"],
             "overall_rank": ["exact", "gt", "lt", "gte", "lte", "isnull"],
         }
-        ordering = ["id", "handle", "rating", "overall_rank", "n_contests"]
+        ordering: ClassVar = ["id", "handle", "rating", "overall_rank", "n_contests"]
 
     def apply_filters(self, request, applicable_filters):
         qs = super().apply_filters(request, applicable_filters)
@@ -463,14 +464,14 @@ class CoderResource(BaseModelResource):
         queryset = Coder.objects.all()
         resource_name = "coder"
         excludes = ("total_count", "with_accounts")
-        filtering = {
+        filtering: ClassVar = {
             "total_count": ["exact"],
             "with_accounts": ["exact"],
             "country": ["exact"],
             "id": ["exact", "in"],
             "username": ["exact", "in"],
         }
-        extra_actions = [
+        extra_actions: ClassVar = [
             {
                 "name": "me",
                 "summary": "Retrieve your coder",
@@ -478,7 +479,7 @@ class CoderResource(BaseModelResource):
                 "responseClass": "coder",
             }
         ]
-        ordering = ["id", "n_accounts"]
+        ordering: ClassVar = ["id", "n_accounts"]
 
     def me(self, request, *args, **kwargs):
         kwargs["me"] = True
@@ -487,7 +488,7 @@ class CoderResource(BaseModelResource):
     def prepend_urls(self):
         return [
             re_path(
-                r"^(?P<resource_name>%s)/me%s$" % (self._meta.resource_name, trailing_slash),
+                rf"^(?P<resource_name>{self._meta.resource_name})/me{trailing_slash}$",
                 self.wrap_view("me"),
                 name="api_dispatch_me",
             )
@@ -495,7 +496,7 @@ class CoderResource(BaseModelResource):
 
     def dehydrate(self, *args, **kwargs):
         bundle = super().dehydrate(*args, **kwargs)
-        for k in self.fields.keys():
+        for k in self.fields:
             if k in bundle.data and not bundle.data[k] and isinstance(bundle.data[k], str):
                 bundle.data[k] = None
         bundle.data.pop("with_accounts", None)

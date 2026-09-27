@@ -1,5 +1,3 @@
-from typing import Optional
-
 from django.db import models
 from django.db.models import Q
 
@@ -63,7 +61,8 @@ class Submission(BaseModel):
     problem_short = models.CharField(max_length=50, db_index=True)
     problem_key = models.CharField(max_length=50, db_index=True)
     contest_time = models.DurationField(db_index=True)
-    current_result = models.CharField(max_length=20, default=None, null=True, blank=True)
+    # These columns retain historical SQL NULL values; changing them requires a migration.
+    current_result = models.CharField(max_length=20, default=None, null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
     current_attempt = models.IntegerField(default=None, null=True, blank=True)
     language = models.ForeignKey(Language, on_delete=models.PROTECT)
     verdict = models.ForeignKey(Verdict, on_delete=models.PROTECT)
@@ -74,7 +73,8 @@ class Submission(BaseModel):
     class Meta:
         unique_together = ("statistic", "secondary_key", "problem_short")
 
-        indexes = [
+        # Django Meta consumes this value directly; an annotation adds an invalid Meta attribute.
+        indexes = [  # ruff: ignore[mutable-class-default]
             models.Index(fields=["contest", "contest_time"]),
             models.Index(fields=["contest", "-contest_time"]),
             models.Index(fields=["contest", "account", "contest_time"]),

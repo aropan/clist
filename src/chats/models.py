@@ -19,7 +19,8 @@ class Chat(BaseModel):
         db_index=True,
     )
     name = models.TextField(null=False)
-    slug = models.TextField(null=True, blank=True, db_index=True)
+    # These columns retain historical SQL NULL values; changing them requires a migration.
+    slug = models.TextField(null=True, blank=True, db_index=True)  # ruff: ignore[django-nullable-model-string-field]
 
     def save(self, *args, **kwargs):
         self.slug = slug(self.name)
@@ -29,7 +30,8 @@ class Chat(BaseModel):
         return f"{self.chat_type}__{self.name}"
 
     class Meta:
-        indexes = [
+        # Django Meta consumes this list directly; an annotation would add an invalid Meta attribute.
+        indexes = [  # ruff: ignore[mutable-class-default]
             models.Index(fields=["chat_type"]),
             models.Index(fields=["slug"]),
             models.Index(fields=["chat_type", "slug"]),

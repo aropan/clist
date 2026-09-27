@@ -243,7 +243,7 @@ class Statistic(BaseModule):
             year = int(season.split("-")[-1])
         else:
             year = int(re.search(r"\b[0-9]{4}\b", self.key).group(0))
-            season = "%d-%d" % (year - 1, year)
+            season = f"{year - 1:d}-{year:d}"
 
         icpc_standings_url = f"https://icpc.global/community/results-{year}"
         icpc_api_standings_url = f"https://icpc.global/api/help/cms/virtpublic/community/results-{year}"
@@ -306,7 +306,7 @@ class Statistic(BaseModule):
             if "zibada" in standings_url and not force_parse_table:
                 names = None
                 for f in (
-                    lambda: page,
+                    lambda page=page: page,
                     lambda: REQ.get("teams.js"),
                 ):
                     try:
@@ -322,9 +322,9 @@ class Statistic(BaseModule):
                     standings_page = REQ.get("standings.js")
                     match = re.search(r" = (?P<data>\{.*?);?\s*$", standings_page, re.MULTILINE)
                     data = self._json_load(match.group("data"))
-                except Exception:
+                except Exception as e:
                     if not names:
-                        raise ExceptionParseStandings("Not found standings data")
+                        raise ExceptionParseStandings("Not found standings data") from e
                     data = names
 
                 for p_name in data["problems"]:
@@ -359,12 +359,12 @@ class Statistic(BaseModule):
                         team["name"] = name
                         penalty = 0
                         solving = 0
-                        for p_name, problem in team.get("problems", {}).items():
+                        for _p_name, problem in team.get("problems", {}).items():
                             if problem["result"].startswith("+"):
                                 solving += 1
                                 attempt_penalty = (int(problem["result"].lstrip("+") or 0)) * 20 * time_divider
                                 penalty += problem["time"] + attempt_penalty
-                        team["penalty"] = int(round(penalty / time_divider))
+                        team["penalty"] = round(penalty / time_divider)
                         team["solving"] = solving
 
                         more_members = names[int(tid)][1] or []
@@ -385,7 +385,7 @@ class Statistic(BaseModule):
                     for team in data_teams:
                         row = {}
 
-                        def get(key, index):
+                        def get(key, index, team=team):
                             return team[key] if isinstance(team, dict) else team[index]
 
                         name = get("name", 0)
@@ -491,7 +491,13 @@ class Statistic(BaseModule):
                     row["name"] = v
                     return True
 
-                def process_standings_table(table):
+                def process_standings_table(
+                    table,
+                    standings_url=standings_url,
+                    result=result,
+                    problems_info=problems_info,
+                    asterisk_represent_solved=asterisk_represent_solved,
+                ):
                     last_place = None
                     is_ineligible = False
                     participant_type = None
@@ -499,10 +505,7 @@ class Statistic(BaseModule):
                         row = {}
                         problems = row.setdefault("problems", {})
                         for k, vs in r.items():
-                            if isinstance(vs, list):
-                                v = " ".join(i.value for i in vs if i.value)
-                            else:
-                                v = vs.value
+                            v = " ".join(i.value for i in vs if i.value) if isinstance(vs, list) else vs.value
                             orig_k = k
                             k = k.lower().strip(".")
                             parts_k = k.split()
@@ -804,7 +807,7 @@ class Statistic(BaseModule):
 
             if (
                 not is_regional
-                and any(["region" not in r for r in result.values()])
+                and any("region" not in r for r in result.values())
                 and os.environ.get("USE_ICPC_REGION")
             ):
                 try:
@@ -823,7 +826,7 @@ class Statistic(BaseModule):
                         name = canonize_name(name)
                         matching.setdefault(name, key)
 
-                    def add_region(name, region, team):
+                    def add_region(name, region, team, result=result, matching=matching, hidden_fields=hidden_fields):
                         row = result[matching[name]]
                         row["region"] = region
                         for k, v in team.items():
@@ -865,7 +868,7 @@ class Statistic(BaseModule):
                             if team["university"] in processed:
                                 continue
                             for name in names:
-                                for key, row in result.items():
+                                for _key, row in result.items():
                                     if "region" in row:
                                         continue
                                     iou = names_iou(name, row["name"])
@@ -911,7 +914,7 @@ class Statistic(BaseModule):
                         if problem["time"] == first_ac_of_all:
                             problem["first_ac_of_all"] = True
                     if "time" in problem:
-                        problem["time"] = int(round(problem["time"] / time_divider))
+                        problem["time"] = round(problem["time"] / time_divider)
 
             without_medals = any(
                 p["result"].startswith("?") for row in result.values() for p in row.get("problems", {}).values()
@@ -938,7 +941,7 @@ class Statistic(BaseModule):
                     names_rows[name] = row
                 skipped = []
 
-                def add_team(university, handles):
+                def add_team(university, handles, names_rows=names_rows, cf_info=cf_info):
                     result_row = names_rows[university]
                     members = result_row.setdefault("_members", [])
                     accounts = {m["account"] for m in members}
@@ -980,7 +983,7 @@ class Statistic(BaseModule):
                     university_re = re.sub(
                         r"\b[A-Z]+\b", lambda m: "".join(f"{c}[^A-Z]*" for c in m.group(0)), university_re
                     )
-                    for name, row in names_rows.items():
+                    for name, _row in names_rows.items():
                         iou = names_iou(name, university)
                         if re.match(university_re, name):
                             iou = max(iou, 0.999)
@@ -1043,7 +1046,7 @@ class Statistic(BaseModule):
                 standings["series"] = "icpc"
 
                 info_external_urls = get_item(self.info, "standings.external_urls", [])
-                info_external_urls_set = set(i["url"] for i in info_external_urls)
+                info_external_urls_set = {i["url"] for i in info_external_urls}
                 external_urls = [
                     f"https://icpc.kimden.online/wf/{year}/",
                     f"https://zibada.guru/finals/{year}/",

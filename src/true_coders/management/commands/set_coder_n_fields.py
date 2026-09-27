@@ -44,13 +44,16 @@ class Command(BaseCommand):
                 return
             total_changes = 0
             self.logger.info(f"Updating {count_field} for {total_updates} of {total_coders} coders")
-            with tqdm(total=total_updates, desc="set {count_field} for coders") as pbar:
-                with transaction.atomic(), suppress_db_logging_context():
-                    for coder in qs.iterator():
-                        total_changes += abs(getattr(coder, count_field) - coder.count)
-                        setattr(coder, count_field, coder.count)
-                        coder.save(update_fields=[count_field])
-                        pbar.update()
+            with (
+                tqdm(total=total_updates, desc=f"set {count_field} for coders") as pbar,
+                transaction.atomic(),
+                suppress_db_logging_context(),
+            ):
+                for coder in qs.iterator():
+                    total_changes += abs(getattr(coder, count_field) - coder.count)
+                    setattr(coder, count_field, coder.count)
+                    coder.save(update_fields=[count_field])
+                    pbar.update()
             self.logger.info(f"Total average changes in {count_field}: {total_changes / total_updates:.2f}")
 
         set_n_field(Count("account"), "n_accounts")

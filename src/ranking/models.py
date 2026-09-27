@@ -2,7 +2,6 @@ import hashlib
 import itertools
 import os
 import re
-from typing import Optional
 from urllib.parse import quote, urljoin
 
 import magic
@@ -44,9 +43,10 @@ class Account(BaseModel):
     coders = models.ManyToManyField(Coder, blank=True)
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
     key = models.CharField(max_length=400, null=False, blank=False, db_index=True)
-    name = models.CharField(max_length=400, null=True, blank=True, db_index=True)
+    # These columns retain historical SQL NULL values; changing them requires a migration.
+    name = models.CharField(max_length=400, null=True, blank=True, db_index=True)  # ruff: ignore[django-nullable-model-string-field]
     country = CountryField(null=True, blank=True, db_index=True)
-    url = models.CharField(max_length=4096, null=True, blank=True)
+    url = models.CharField(max_length=4096, null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
     n_contests = models.IntegerField(default=0, db_index=True)
     n_writers = models.IntegerField(default=0, db_index=True)
     n_subscribers = models.IntegerField(default=0, db_index=True, blank=True)
@@ -95,7 +95,7 @@ class Account(BaseModel):
     priority_objects = PriorityAccountManager()
 
     def __str__(self):
-        return "Account#%d %s on %s" % (self.pk, str(self.key), str(self.resource_id))
+        return f"Account#{self.pk:d} {self.key!s} on {self.resource_id!s}"
 
     def dict(self):
         return {
@@ -126,6 +126,7 @@ class Account(BaseModel):
                 return url
             except KeyError:
                 pass
+        return None
 
     def profile_url(self, resource=None):
         resource = resource or self.resource
@@ -154,6 +155,7 @@ class Account(BaseModel):
         for word in ("email", "password", "phone", "birth", "telegram"):
             if word in field:
                 return True
+        return None
 
     def get_last_season(self):
         if not self.last_activity:
@@ -287,7 +289,8 @@ class Account(BaseModel):
         return ret
 
     class Meta:
-        indexes = [
+        # Django Meta consumes this value directly; an annotation adds an invalid Meta attribute.
+        indexes = [  # ruff: ignore[mutable-class-default]
             models.Index(fields=["resource"]),
             models.Index(fields=["resource", "name"]),
             models.Index(fields=["resource", "country"]),
@@ -396,7 +399,8 @@ class CountryAccount(BaseModel):
     n_top_ten_places = models.IntegerField(default=None, null=True, blank=True)
 
     class Meta:
-        indexes = [
+        # Django Meta consumes this value directly; an annotation adds an invalid Meta attribute.
+        indexes = [  # ruff: ignore[mutable-class-default]
             DescNullsLastIndex(fields=["resource", "country"]),
             DescNullsLastIndex(fields=["resource", "rating", "country"]),
             DescNullsLastIndex(fields=["resource", "-rating", "country"]),
@@ -425,13 +429,14 @@ class CountryAccount(BaseModel):
 class AccountRenaming(BaseModel):
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
     old_key = models.CharField(max_length=1024, null=False, blank=False)
-    new_key = models.CharField(max_length=1024, null=True, blank=True)
+    new_key = models.CharField(max_length=1024, null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
 
     def __str__(self):
         return f"{self.old_key} -> {self.new_key}"
 
     class Meta:
-        indexes = [
+        # Django Meta consumes this value directly; an annotation adds an invalid Meta attribute.
+        indexes = [  # ruff: ignore[mutable-class-default]
             GinIndexTrgrmOps(fields=["old_key"]),
             GinIndexTrgrmOps(fields=["new_key"]),
             models.Index(fields=["resource", "old_key"]),
@@ -619,7 +624,7 @@ class Rating(BaseModel):
     party = models.ForeignKey(Party, on_delete=models.CASCADE)
 
     def __str__(self):
-        return "rating %s by %s" % (str(self.party.name), str(self.contest.title))
+        return f"rating {self.party.name!s} by {self.contest.title!s}"
 
     class Meta:
         unique_together = ("contest", "party")
@@ -631,21 +636,21 @@ class AutoRating(BaseModel):
     deadline = models.DateTimeField()
 
     def __str__(self):
-        return "auto rating [%d] with party [%d]" % (self.pk, self.party_id)
+        return f"auto rating [{self.pk:d}] with party [{self.party_id:d}]"
 
 
 class Statistics(BaseModel):
     account = models.ForeignKey(Account, on_delete=models.CASCADE, db_index=True)
     contest = models.ForeignKey(Contest, on_delete=models.CASCADE)
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
-    place = models.CharField(max_length=17, default=None, null=True, blank=True)
+    place = models.CharField(max_length=17, default=None, null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
     place_as_int = models.IntegerField(default=None, null=True, blank=True)
     solving = models.FloatField(default=0, blank=True)
     upsolving = models.FloatField(default=None, null=True, blank=True)
     total_solving = models.FloatField(default=0, blank=True)
     penalty = models.FloatField(default=None, null=True, blank=True)
     addition = models.JSONField(default=dict, blank=True)
-    url = models.TextField(null=True, blank=True)
+    url = models.TextField(null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
     new_global_rating = models.IntegerField(null=True, blank=True, default=None)
     global_rating_change = models.IntegerField(null=True, blank=True, default=None)
     skip_in_stats = models.BooleanField(default=False)
@@ -656,7 +661,7 @@ class Statistics(BaseModel):
     n_upsolved = models.IntegerField(default=None, null=True, blank=True)
     n_total_solved = models.IntegerField(default=0, blank=True)
     n_first_ac = models.IntegerField(default=0, blank=True)
-    medal = models.CharField(max_length=20, null=True, blank=True)
+    medal = models.CharField(max_length=20, null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
     related = models.ForeignKey(
         "Statistics", null=True, blank=True, on_delete=models.CASCADE, related_name="related_statistics"
     )
@@ -689,7 +694,8 @@ class Statistics(BaseModel):
         verbose_name_plural = "Statistics"
         unique_together = ("account", "contest")
 
-        indexes = [
+        # Django Meta consumes this value directly; an annotation adds an invalid Meta attribute.
+        indexes = [  # ruff: ignore[mutable-class-default]
             models.Index(fields=["contest", "place_as_int", "-solving", "id"]),
             models.Index(fields=["account", "skip_in_stats"]),
             models.Index(fields=["-created"], condition=Q(place_as_int__lte=3), name="statistics_created_top3"),
@@ -717,6 +723,7 @@ class Statistics(BaseModel):
                 return rating_data["old_rating"]
             if "new_rating" in rating_data and "rating_change" in rating_data:
                 return rating_data["new_rating"] - rating_data["rating_change"]
+        return None
 
     def get_medal(self) -> str | None:
         return get_item(self, "addition.medal")
@@ -815,13 +822,14 @@ class StatisticsLog(BaseModel):
     statistic = models.ForeignKey(Statistics, on_delete=models.CASCADE, null=True, blank=True, default=None)
     account = models.ForeignKey(Account, on_delete=models.CASCADE, null=True, blank=True, default=None)
     log_type = models.CharField(max_length=16, choices=LogType.choices)
-    log_id = models.CharField(max_length=255, null=True, blank=True, default=None)
+    log_id = models.CharField(max_length=255, null=True, blank=True, default=None)  # ruff: ignore[django-nullable-model-string-field]
     time = models.DateTimeField()
     data = models.JSONField(default=dict)
     updated = models.DateTimeField()
 
     class Meta:
-        constraints = [
+        # Django Meta consumes this value directly; an annotation adds an invalid Meta attribute.
+        constraints = [  # ruff: ignore[mutable-class-default]
             models.UniqueConstraint(
                 fields=["resource", "contest", "statistic", "account", "log_type", "log_id"],
                 condition=Q(log_id__isnull=False),
@@ -829,7 +837,8 @@ class StatisticsLog(BaseModel):
             ),
         ]
 
-        indexes = [
+        # Django Meta consumes this value directly; an annotation adds an invalid Meta attribute.
+        indexes = [  # ruff: ignore[mutable-class-default]
             models.Index(fields=["-time", "resource", "log_type", "id"]),
             models.Index(fields=["-time", "resource", "log_type", "account", "id"]),
             models.Index(fields=["-time", "resource", "log_type", "contest", "id"]),
@@ -874,7 +883,7 @@ class Stage(BaseModel):
     contests = models.ManyToManyField(Contest, related_name="stages", through="StageContest", blank=True)
 
     def __str__(self):
-        return "Stage#%d %s" % (self.pk, self.contest)
+        return f"Stage#{self.pk:d} {self.contest}"
 
 
 class VirtualStart(BaseModel):
@@ -891,7 +900,8 @@ class VirtualStart(BaseModel):
 
     class Meta:
         unique_together = ("coder", "content_type", "object_id")
-        indexes = [models.Index(fields=["coder", "content_type", "object_id"])]
+        # Django Meta consumes this value directly; an annotation adds an invalid Meta attribute.
+        indexes = [models.Index(fields=["coder", "content_type", "object_id"])]  # ruff: ignore[mutable-class-default]
 
     class VirtualStartStatistic:
         def __init__(self, virtual_start):
@@ -985,17 +995,18 @@ class FinalistManager(BaseManager):
 
 class Finalist(BaseModel):
     contest = models.ForeignKey(Contest, on_delete=models.CASCADE)
-    name = models.CharField(max_length=400, null=True, blank=True)
+    name = models.CharField(max_length=400, null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
     accounts = models.ManyToManyField(Account, blank=True)
     info = models.JSONField(default=dict, blank=True)
     achievement_statistics = models.ManyToManyField(Statistics, blank=True)
     achievement_updated = models.DateTimeField(default=None, null=True, blank=True)
-    achievement_hash = models.CharField(max_length=32, null=True, blank=True)
+    achievement_hash = models.CharField(max_length=32, null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
 
     objects = FinalistManager()
 
     class Meta:
-        constraints = [
+        # Django Meta consumes this value directly; an annotation adds an invalid Meta attribute.
+        constraints = [  # ruff: ignore[mutable-class-default]
             models.UniqueConstraint(
                 fields=["contest", "name"],
                 name="unique_finalist_name",

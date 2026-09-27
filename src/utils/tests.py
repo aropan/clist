@@ -7,6 +7,7 @@ import urllib.error
 from datetime import UTC, datetime
 from unittest import mock
 
+import pytest
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sessions.models import Session
 from django.core.management.commands.test import Command as TestCommand
@@ -17,6 +18,7 @@ from django.test.utils import CaptureQueriesContext
 from rq.job import JobStatus, validate_job_id
 
 from clist.models import Resource
+from pyclist.decorators import analyze_db_queries
 from utils import is_interactive
 from utils.chart import make_chart
 from utils.db import get_order_by
@@ -30,6 +32,27 @@ class IsInteractiveTest(SimpleTestCase):
     def test_buffered_stdout_is_not_interactive(self):
         with mock.patch("sys.stdout", io.StringIO()):
             assert not is_interactive()
+
+
+class AnalyzeDbQueriesTest(SimpleTestCase):
+    def test_logs_queries_when_wrapped_block_raises(self):
+        query = {"sql": "SELECT 1", "time": "0.001"}
+
+        def fail_after_query():
+            db_connection.queries.append(query)
+            raise ValueError("test error")
+
+        with (
+            mock.patch("pyclist.decorators.connection") as db_connection,
+            mock.patch("pyclist.decorators.group_and_calculate_times") as group_queries,
+            mock.patch("pyclist.decorators.log_grouped_times") as log_queries,
+        ):
+            db_connection.queries = []
+            with pytest.raises(ValueError, match="test error"), analyze_db_queries():
+                fail_after_query()
+
+        group_queries.assert_called_once_with([query])
+        log_queries.assert_called_once_with(group_queries.return_value)
 
 
 class RequesterGetUrlTest(SimpleTestCase):

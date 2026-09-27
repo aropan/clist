@@ -30,6 +30,7 @@ def query(url, *args, **kwargs):
                 pass
             LOG.info("Rate limit wait: attempt=%d/%d, seconds=%d", attempt + 1, n_attempt, sleep_time)
             sleep(sleep_time)
+    return None
 
 
 class Statistic(BaseModule):
@@ -202,6 +203,4 @@ class Statistic(BaseModule):
 
             assert user.lower() == data["username"].lower()
 
-            ret = {"info": data}
-
-            yield ret
+            yield {"info": data}

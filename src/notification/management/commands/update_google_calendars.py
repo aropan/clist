@@ -45,7 +45,7 @@ def create_resource_calendar(resource, calendarId=None):
         entry = service.calendars().update(calendarId=calendarId, body=body).execute()
         if entry["id"] != resource.uid:
             raise Exception(
-                "Different id calendar for %s, excepted '%s', found '%s'" % (resource, resource.uid, entry["id"])
+                "Different id calendar for {}, excepted '{}', found '{}'".format(resource, resource.uid, entry["id"])
             )
     else:
         entry = service.calendars().insert(body=body).execute()
@@ -59,7 +59,9 @@ def create_contest_event(calendarId, contest, eventId=None):
         "summary": contest.title,
         "start": {"dateTime": contest.start_time.isoformat()},
         "end": {"dateTime": contest.end_time.isoformat()},
-        "description": "Link: %s\nUpdated: %s\n" % (contest.url, contest.modified.strftime("%Y-%m-%dT%H:%M:%S.%fZ")),
+        "description": "Link: {}\nUpdated: {}\n".format(
+            contest.url, contest.modified.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        ),
         "visibility": "public",
         "status": "confirmed",
         "transparency": "transparent",
@@ -69,7 +71,7 @@ def create_contest_event(calendarId, contest, eventId=None):
         entry = service.events().update(calendarId=calendarId, eventId=eventId, body=body).execute()
         if entry["id"] != contest.uid:
             raise Exception(
-                "Different id event for %s, excepted '%s', found '%s'" % (contest, contest.uid, entry["id"])
+                "Different id event for {}, excepted '{}', found '{}'".format(contest, contest.uid, entry["id"])
             )
     else:
         entry = service.events().insert(calendarId=calendarId, body=body).execute()
@@ -93,10 +95,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         args = AttrDict(options)
 
-        if args.resources:
-            resources = Resource.get(args.resources)
-        else:
-            resources = Resource.objects.all()
+        resources = Resource.get(args.resources) if args.resources else Resource.objects.all()
 
         now = timezone.now()
         print(now)
@@ -106,19 +105,19 @@ class Command(BaseCommand):
         calendars = {entry["id"]: entry for entry in get_all_calendars()}
 
         print(f"Calendars ({len(calendars)}):")
-        for c in sorted(list(calendars.values()), key=lambda c: c["summary"]):
-            print("    %(summary)s, %(id)s" % c)
+        for c in sorted(calendars.values(), key=lambda c: c["summary"]):
+            print("    {summary}, {id}".format(**c))
 
         resources_uids = set()
         for r in resources:
             if r.uid:
                 if r.uid not in calendars:
-                    raise Exception("Calendar with id='%s' not found, resource %s" % (r.uid, r.host))
+                    raise Exception(f"Calendar with id='{r.uid}' not found, resource {r.host}")
                 if calendars[r.uid]["summary"] != r.host:
-                    print("!   %s" % r)
+                    print(f"!   {r}")
                     create_resource_calendar(r, r.uid)
             else:
-                print("+   %s" % r)
+                print(f"+   {r}")
                 create_resource_calendar(r)
             resources_uids.add(r.uid)
 
@@ -134,18 +133,18 @@ class Command(BaseCommand):
             events = {entry["id"]: entry for entry in get_all_events(calendarId=r.uid, timeMin=current.isoformat())}
             contests = Contest.visible.filter(resource=r, end_time__gt=current)
 
-            print("%s <%d event(s), %d contest(s)>:" % (r, len(events), len(contests)))
+            print(f"{r} <{len(events):d} event(s), {len(contests):d} contest(s)>:")
             for c in contests:
                 if not c.uid or c.uid not in events:
                     create_contest_event(r.uid, c)
-                    print("+   %s" % c)
+                    print(f"+   {c}")
                 elif get_time_with_tz(events[c.uid]["updated"]) < c.modified - timedelta(minutes=1):
                     entry = create_contest_event(r.uid, c, c.uid)
                     updated = get_time_with_tz(entry["updated"])
                     if c.modified - updated > timedelta(minutes=1):
-                        print("!   %s" % c)
+                        print(f"!   {c}")
 
             for e in list(events.values()):
                 if not Contest.visible.filter(resource=r, uid=e["id"]):
-                    print("-   %s" % e["summary"])
+                    print("-   {}".format(e["summary"]))
                     service.events().delete(calendarId=r.uid, eventId=e["id"]).execute()

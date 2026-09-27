@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Callers import requester and its helpers from this package path directly.
+# Keep the implementation here to preserve that public module API.
+# ruff: file-ignore[non-empty-init-module]
 
 import atexit
 import base64
@@ -23,7 +26,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import zlib
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from datetime import datetime, timedelta
 from gzip import GzipFile
 from hashlib import md5
@@ -253,6 +256,7 @@ class Proxer:
         if self.proxy and self.proxy.get("_total_count", 0) > 9:
             time = self.time_response()
             return time > self.time_limit
+        return None
 
     @staticmethod
     def get_timestamp():
@@ -304,7 +308,7 @@ class Proxer:
     @property
     def proxy_address(self):
         try:
-            return "%(addr)s:%(port)s" % self.proxy
+            return "{addr}:{port}".format(**self.proxy)
         except Exception:
             return None
 
@@ -372,6 +376,7 @@ class Proxer:
     def time_response(self):
         if self.proxy and self.proxy.get("_total_count", 0):
             return round(self.proxy["_total_time"] / self.proxy["_total_count"], 3)
+        return None
 
     def print(self, *args):
         if self.logger:
@@ -544,7 +549,7 @@ def curl_response(url, headers=None, cookie_file=None, curl_args=None, post=None
     if post:
         args.extend(["--data-raw", post])
     process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout, stderr = process.communicate()
+    stdout, _stderr = process.communicate()
 
     output = stdout.decode("utf-8")
     headers_raw, body = output.split("\r\n\r\n", 1)
@@ -566,6 +571,11 @@ def curl_response(url, headers=None, cookie_file=None, curl_args=None, post=None
     response.info = lambda *args, **kwargs: response.headers
     response.read = lambda: response._content
     return response
+
+
+_DEFAULT_PROXY = environ.get("REQUESTER_PROXY")
+_DEFAULT_COOKIE_FILENAME = environ.get("REQUESTER_COOKIE_FILENAME")
+_DEFAULT_INSECURE = strtobool(environ.get("REQUESTER_INSECURE", "0"))
 
 
 class requester:
@@ -595,13 +605,13 @@ class requester:
 
     def __init__(
         self,
-        proxy=environ.get("REQUESTER_PROXY"),
-        cookie_filename=environ.get("REQUESTER_COOKIE_FILENAME"),
+        proxy=_DEFAULT_PROXY,
+        cookie_filename=_DEFAULT_COOKIE_FILENAME,
         caching=None,
         user_agent=None,
         headers=None,
         proxy_filepath=default_filepath_proxies,
-        insecure=strtobool(environ.get("REQUESTER_INSECURE", "0")),
+        insecure=_DEFAULT_INSECURE,
     ):
         if cookie_filename:
             self.cookie_filename = cookie_filename
@@ -790,10 +800,8 @@ class requester:
             elif charset in ("windows-1251", "cp1251"):
                 page = page.decode("cp1251", "replace")
             else:
-                try:
+                with suppress(LookupError):
                     page = page.decode(charset, "replace")
-                except LookupError:
-                    pass
 
             return page
 
@@ -946,10 +954,7 @@ class requester:
                 page, self.error, response, last_url, proxy = None, None, None, None, None
                 attempt_delay = self.attempt_delay * attempt / n_attempts
                 try:
-                    if headers:
-                        request = urllib.request.Request(url, headers=headers)
-                    else:
-                        request = url
+                    request = urllib.request.Request(url, headers=headers) if headers else url
 
                     time_start = datetime.utcnow()
 
@@ -1035,7 +1040,7 @@ class requester:
 
             self.time_response = datetime.utcnow() - time_start
             if page and self.verify_word and self.verify_word not in page:
-                raise NoVerifyWord("No verify word '%s', size page = %d" % (self.verify_word, len(page)))
+                raise NoVerifyWord(f"No verify word '{self.verify_word}', size page = {len(page):d}")
 
             response_content_type = response.info().get("Content-Type")
             if verbose:
@@ -1087,7 +1092,7 @@ class requester:
         try:
             self.opener.open(url).getheaders()
         except urllib.error.HTTPError as e:
-            raise FailOnGetResponse(e)
+            raise FailOnGetResponse(e) from e
 
     def geturl(self, url, time_out=None):
         try:
@@ -1104,9 +1109,8 @@ class requester:
             r"""
             <a[^>]*href="(?P<href>[^"]*)"[^>]*>\s*
                 (?:</?[^a][^>]*>\s*)*
-                %s
-            """
-            % text.replace(" ", r"\s"),
+                {}
+            """.format(text.replace(" ", r"\s")),
             page,
             re.VERBOSE,
         )
@@ -1203,7 +1207,7 @@ class requester:
                 stat_file = stat(self.dir_cache + file_cache)
                 file_list.append((stat_file.st_atime, file_cache))
             file_list.sort(reverse=True)
-            for atime, file_cache in file_list[self.limit_file_cache :]:
+            for _atime, file_cache in file_list[self.limit_file_cache :]:
                 remove(self.dir_cache + file_cache)
                 metadata_file_cache = self.dir_cache + file_cache + ".meta.json"
                 if path.isfile(metadata_file_cache):
@@ -1211,13 +1215,10 @@ class requester:
         self.counter_file_cache += 1
 
     def get_raw_cookies(self):
-        for c in self.cookiejar:
-            yield c
+        yield from self.cookiejar
 
     def get_cookies(self, domain_regex=None):
-        return dict(
-            (i.name, i.value) for i in self.cookiejar if domain_regex is None or re.search(domain_regex, i.domain)
-        )
+        return {i.name: i.value for i in self.cookiejar if domain_regex is None or re.search(domain_regex, i.domain)}
 
     def get_cookie(self, name, *args, **kwargs):
         return self.get_cookies(*args, **kwargs).get(name, None)

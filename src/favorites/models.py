@@ -23,7 +23,8 @@ class Activity(BaseModel):
 
     class Meta:
         verbose_name_plural = "Activities"
-        indexes = [
+        # Django Meta consumes this value directly; an annotation adds an invalid Meta attribute.
+        indexes = [  # ruff: ignore[mutable-class-default]
             models.Index(fields=["coder", "activity_type", "content_type", "object_id"]),
             models.Index(fields=["content_type", "object_id", "activity_type"]),
         ]

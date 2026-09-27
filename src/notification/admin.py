@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 from sql_util.utils import SubqueryCount
 
 from notification.models import Calendar, Notification, NotificationMessage, Subscription, Task
@@ -6,14 +8,14 @@ from pyclist.admin import BaseModelAdmin, admin_register
 
 @admin_register(Notification)
 class NotificationAdmin(BaseModelAdmin):
-    list_display = ["coder", "method", "before", "period", "last_time", "modified"]
-    list_filter = ["method"]
-    search_fields = ["coder__user__username", "method", "period"]
+    list_display: ClassVar = ["coder", "method", "before", "period", "last_time", "modified"]
+    list_filter: ClassVar = ["method"]
+    search_fields: ClassVar = ["coder__user__username", "method", "period"]
 
 
 @admin_register(Subscription)
 class SubscriptionAdmin(BaseModelAdmin):
-    list_display = [
+    list_display: ClassVar = [
         "coder",
         "method",
         "enable",
@@ -26,8 +28,8 @@ class SubscriptionAdmin(BaseModelAdmin):
         "coder_list",
         "coder_chat",
     ]
-    list_filter = ["enable", "method"]
-    search_fields = ["coder__username", "accounts__key", "coders__username"]
+    list_filter: ClassVar = ["enable", "method"]
+    search_fields: ClassVar = ["coder__username", "accounts__key", "coders__username"]
 
     def n_accounts(self, obj):
         return obj.n_accounts
@@ -48,31 +50,36 @@ class SubscriptionAdmin(BaseModelAdmin):
         return ret
 
     def get_readonly_fields(self, *args, **kwargs):
-        return ["last_contest", "last_update"] + super().get_readonly_fields(*args, **kwargs)
+        return ["last_contest", "last_update", *super().get_readonly_fields(*args, **kwargs)]
 
 
 @admin_register(Task)
 class TaskAdmin(BaseModelAdmin):
-    list_display = ["notification", "created", "modified", "is_sent"]
-    list_filter = ["is_sent"]
-    search_fields = ["subject", "message", "periodical_notification__coder__username", "subscription__coder__username"]
+    list_display: ClassVar = ["notification", "created", "modified", "is_sent"]
+    list_filter: ClassVar = ["is_sent"]
+    search_fields: ClassVar = [
+        "subject",
+        "message",
+        "periodical_notification__coder__username",
+        "subscription__coder__username",
+    ]
 
 
 @admin_register(Calendar)
 class CalendarAdmin(BaseModelAdmin):
-    list_display = ["name", "coder", "category", "resources", "descriptions", "created", "modified"]
-    search_fields = ["name", "coder__username", "category"]
+    list_display: ClassVar = ["name", "coder", "category", "resources", "descriptions", "created", "modified"]
+    search_fields: ClassVar = ["name", "coder__username", "category"]
 
 
 @admin_register(NotificationMessage)
 class NotificationMessageAdmin(BaseModelAdmin):
-    list_display = ["to", "level", "is_read", "read_at", "sender", "created"]
-    list_filter = ["is_read"]
-    search_fields = ["text", "to__username", "sender__username"]
+    list_display: ClassVar = ["to", "level", "is_read", "read_at", "sender", "created"]
+    list_filter: ClassVar = ["is_read"]
+    search_fields: ClassVar = ["text", "to__username", "sender__username"]
 
     def unread(self, request, queryset):
         self.message_user(request, queryset.update(is_read=False))
 
     unread.short_description = "Unread"
 
-    actions = [unread]
+    actions: ClassVar = [unread]

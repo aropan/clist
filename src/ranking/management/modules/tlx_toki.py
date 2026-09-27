@@ -42,7 +42,7 @@ class Statistic(BaseModule):
             problems_data = json.loads(REQ.get(problems_url))
         except FailOnGetResponse as e:
             if e.code == 403:
-                raise ExceptionParseStandings(e)
+                raise ExceptionParseStandings(e) from e
             raise e
 
         problems_info = collections.OrderedDict()

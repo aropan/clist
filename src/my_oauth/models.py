@@ -26,16 +26,17 @@ class Service(BaseModel):
     code_args = models.TextField(blank=True)
     token_uri = models.TextField()
     token_post = models.TextField(blank=True)
-    refresh_token_uri = models.TextField(null=True, blank=True)
-    refresh_token_post = models.TextField(null=True, blank=True)
+    # These columns retain historical SQL NULL values; changing them requires a migration.
+    refresh_token_uri = models.TextField(null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
+    refresh_token_post = models.TextField(null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
     state_field = models.CharField(max_length=255, default="state")
-    signed_field = models.CharField(max_length=255, null=True, blank=True, default=None)
-    signed_method = models.CharField(max_length=10, null=True, blank=True, default=None)
+    signed_field = models.CharField(max_length=255, null=True, blank=True, default=None)  # ruff: ignore[django-nullable-model-string-field]
+    signed_method = models.CharField(max_length=10, null=True, blank=True, default=None)  # ruff: ignore[django-nullable-model-string-field]
     signed_args = models.JSONField(default=dict, blank=True)
-    email_field = models.CharField(max_length=255, default="email", null=True, blank=True)
+    email_field = models.CharField(max_length=255, default="email", null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
     user_id_field = models.CharField(max_length=255)
     data_uri = models.TextField(blank=True)
-    data_header = models.TextField(null=True, blank=True, default=None)
+    data_header = models.TextField(null=True, blank=True, default=None)  # ruff: ignore[django-nullable-model-string-field]
     fa_icon = models.CharField(max_length=255)
     disable = models.BooleanField(default=False)
 
@@ -50,7 +51,7 @@ class Token(BaseModel):
     service = models.ForeignKey(Service, on_delete=models.CASCADE)
     coder = models.ForeignKey(Coder, null=True, on_delete=models.CASCADE, blank=True)
     user_id = models.CharField(max_length=255)
-    email = models.EmailField(null=True, blank=True)
+    email = models.EmailField(null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
     access_token = models.JSONField(default=dict, blank=True)
     expires_at = models.DateTimeField(null=True, blank=True)
     data = models.JSONField(default=dict, blank=True)
@@ -108,10 +109,10 @@ class Form(BaseModel):
     service_code_args = models.TextField(blank=True)
     secret = models.CharField(max_length=64, default=generate_secret_64, blank=True, unique=True)
     registration = models.BooleanField(default=False)
-    register_url = models.URLField(null=True, blank=True)
-    register_headers = models.TextField(null=True, blank=True)
+    register_url = models.URLField(null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
+    register_headers = models.TextField(null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
     grant_credentials = models.BooleanField(default=False)
-    approved_code = models.TextField(null=True, blank=True)
+    approved_code = models.TextField(null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
     start_time = models.DateTimeField(null=True, blank=True)
     end_time = models.DateTimeField(null=True, blank=True)
 
@@ -153,7 +154,8 @@ class Credential(BaseModel):
         return self.state == self.State.APPROVED
 
     class Meta:
-        constraints = [
+        # Django Meta consumes this value directly; an annotation adds an invalid Meta attribute.
+        constraints = [  # ruff: ignore[mutable-class-default]
             models.UniqueConstraint(fields=["form", "login"], name="unique_form_login"),
             models.UniqueConstraint(
                 fields=["form", "token"],

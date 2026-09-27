@@ -3,7 +3,6 @@
 import re
 from collections import OrderedDict
 from functools import partial
-from pprint import pprint
 
 from logify.live import tqdm
 from ranking.management.modules.common import REQ, BaseModule
@@ -20,7 +19,7 @@ class Statistic(BaseModule):
         for k in keys:
             if k in fields:
                 return fields[k]
-        raise ExceptionParseStandings("No found %s key in %s" % (keys, fields))
+        raise ExceptionParseStandings(f"No found {keys} key in {fields}")
 
     def get_standings(self, users=None, statistics=None, **kwargs):
         result = {}
@@ -66,7 +65,8 @@ class Statistic(BaseModule):
                 row = result.setdefault(member, {"member": member})
 
                 type_ = ("up" if upsolve else "") + "solving"
-                row[type_] = int(get_value("Всего", "Решённые задачи", "Total", "Score"))
+                # Match the exact Unicode text used by the source data.
+                row[type_] = int(get_value("Всего", "Решённые задачи", "Total", "Score"))  # ruff: ignore[ambiguous-unicode-character-string]
 
                 problems = row.setdefault("problems", {})
                 for k in sorted(fields.keys()):

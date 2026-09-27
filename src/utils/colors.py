@@ -32,8 +32,10 @@ def darken_hls(hue, lightness, saturation, alpha):
     return hue, lightness, saturation
 
 
-def get_n_colors(n, ignore_colors=[]):
-    ignore_colors = ignore_colors + [[0, 0, 0]]
+def get_n_colors(n, ignore_colors=None):
+    if ignore_colors is None:
+        ignore_colors = []
+    ignore_colors = [*ignore_colors, [0, 0, 0]]
     m = len(ignore_colors)
     n += m
     ignore_colors = color.rgb2lab(ignore_colors)
@@ -60,7 +62,7 @@ def get_n_colors(n, ignore_colors=[]):
 
     centroids = initialize_centroids(colors, n)
 
-    for i in range(42):
+    for _i in range(42):
         closest = closest_centroid(colors, centroids)
         new_centroids = move_centroids(colors, closest, centroids, n)
         diff = np.linalg.norm(centroids - new_centroids, axis=1).max()
@@ -72,7 +74,7 @@ def get_n_colors(n, ignore_colors=[]):
     for lab in centroids[m:]:
         # print(lab, np.linalg.norm(ignore_colors - lab, axis=1).min())
         rgb = color.lab2rgb(lab)
-        r, g, b = [int(round(x * 255)) for x in rgb]
+        r, g, b = [round(x * 255) for x in rgb]
         ret.append(f"#{r:02x}{g:02x}{b:02x}")
 
     return ret

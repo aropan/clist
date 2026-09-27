@@ -109,7 +109,7 @@ class Command(BaseCommand):
                     n_total=n_total,
                 )
 
-                for division, info in divisions.items():
+                for _division, info in divisions.items():
                     info["standings"] = [[key, lo, lo + info["ties"][lo] - 1] for key, lo, _ in info["standings"]]
                     standigns_data = {
                         "name": contest.title,
