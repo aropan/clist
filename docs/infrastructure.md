@@ -141,7 +141,7 @@ Runtime services use a mix of version channels and pinned releases in
 [`docker-compose.yml`](../docker-compose.yml): Redis, Netdata, pgAdmin and
 Bugsink follow a major release; Grafana, Loki and Healthchecks follow a minor
 release; Certbot is pinned to a version and digest, and Alloy to an exact
-version. A routine `up` reuses locally available images and the build cache.
+version tag. A routine `up` reuses locally available images and the build cache.
 Refresh runtime and base images explicitly, then recreate affected containers:
 
 ```bash
@@ -150,10 +150,11 @@ docker compose build --pull
 docker compose up --detach
 ```
 
-Compose downloads an image automatically when it is missing locally. Pinned
-image versions and digests require a deliberate change to the Compose file
-before they can advance. The Python application base remains pinned to its
-tested patch and digest.
+Compose downloads an image automatically when it is missing locally. Tags,
+including Alloy's exact version tag, can be republished; the `pull` command
+above may then fetch a different image without a Compose change. Certbot's
+digest keeps its image content fixed until the digest is updated in Compose.
+The Python application base remains pinned to its tested patch and digest.
 
 Grafana stores its SQLite database, users, plugins, and unified-storage data in
 `grafana_data`. Before a Grafana major upgrade, stop only Grafana and make a cold
