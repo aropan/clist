@@ -28,6 +28,8 @@ mise run format-python
 ```
 
 - Line length **120**, double-quoted strings, spaces for indent.
+- CI runs the full `mise run lint-python` check. Intentional legacy exceptions are
+  explained beside the affected code.
 - `*/migrations/*` are excluded; `__init__.py` may keep unused imports.
 - Unused imports are **not** auto-removed (`F401` unfixable) — clean them up by hand
   when appropriate.

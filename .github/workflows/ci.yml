@@ -33,11 +33,8 @@ jobs:
           install: true
           cache: true
 
-      # Full project lint has existing violations; enforce the remaining E/F rules.
-      - name: Check Python lint baseline
-        run: >-
-          ruff check --select E4,E7,E9,F
-          --ignore E402,E711,E741,F401,F403 .
+      - name: Check Python lint
+        run: mise run lint-python
 
       - name: Check Python formatting
         run: mise run check-python
