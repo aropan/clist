@@ -265,7 +265,7 @@ services:
       - loki
     restart: unless-stopped
   grafana:
-    image: grafana/grafana:13.1
+    image: grafana/grafana:13.2
     networks:
       - clist_network
     volumes:
