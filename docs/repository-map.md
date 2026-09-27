@@ -12,8 +12,9 @@ as a routing hint, not a blocker — high-risk areas just warrant a plan before 
 | `src/manage.py` | Django entry point (run all management commands through here) | — |
 | [`pyclist/`](../src/pyclist/) | Django settings, root URLs, middleware, ASGI/WSGI, shared base model/manager | high |
 | [`ranking/`](../src/ranking/) | Heart of the app: `Account`, `Statistics`, `Contest` models + parsers + commands | — |
-| `ranking/management/modules/` | **85 per-judge parsers** (+ 2 helpers: `conf.py`, `excepts.py`; `common/`, `external/`) | — |
-| `ranking/management/commands/` | `manage.py` commands: parsing, rating, account/statistic linking (16 commands) | — |
+| `ranking/management/modules/` | Per-judge standings parsers and shared helpers | — |
+| `ranking/management/commands/` | `manage.py` commands: parsing, rating, account/statistic linking | — |
+| `ranking/tests/` | Django tests and offline parser regression fixtures | — |
 | [`clist/`](../src/clist/) | Contests, resources, public API (`clist/api/`), templatetags | high |
 | [`true_coders/`](../src/true_coders/) | `Coder`, `User`, countries, profile data | high |
 | [`my_oauth/`](../src/my_oauth/) | OAuth layer (Google CLI/server, etc.), service access | high |
@@ -27,8 +28,8 @@ as a routing hint, not a blocker — high-risk areas just warrant a plan before 
 | [`tg/`](../src/tg/) | Telegram bot (`python-telegram-bot`), group admin | — |
 | [`logify/`](../src/logify/) | `EventLog` + `EventStatus` for job-execution monitoring | — |
 | [`legacy/`](../src/legacy/) | In-Django proxy bridge to the PHP `legacy/` app | — |
-| [`utils/`](../src/utils/) | Shared helpers (~26 modules — `requester/`, `regex`, `timetools`, `aes`, `attrdict`, `parsed_table`, …) | — |
-| [`scripts/`](../src/scripts/) | Operational bash/python scripts (watchdog, backups) | high |
+| [`utils/`](../src/utils/) | Shared helpers (`requester/`, `regex`, `timetools`, `aes`, `attrdict`, `parsed_table`, …) | — |
+| [`scripts/`](../src/scripts/) | Operational bash/python scripts (watchdog, backups) and standalone tests | high |
 | [`templates/`](../src/templates/) | Project-wide Django templates | — |
 | [`static/`](../src/static/) | Static assets | — |
 | `*/migrations/` | Django migrations per app | **high — see [migrations.md](migrations.md)** |
@@ -37,7 +38,7 @@ as a routing hint, not a blocker — high-risk areas just warrant a plan before 
 
 | Path | What it is | Risk |
 |------|------------|------|
-| [`legacy/`](../legacy/) | Legacy PHP app + parsers (`legacy/module/<host>/index.php`, ~100 host dirs) | legacy |
+| [`legacy/`](../legacy/) | Legacy PHP app and schedule parsers (`legacy/module/<host>/index.php`) | legacy |
 | [`config/`](../config/) | Infra config — see [infrastructure.md](infrastructure.md) | high |
 | `docker-compose.yml`, `Dockerfile` | Container stack | high |
 | `volumes/`, `logs/`, `.env*` | Data, logs, secrets — **[off-limits](git-and-safety.md#off-limits)** | **off-limits** |

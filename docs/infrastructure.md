@@ -137,13 +137,12 @@ The `backup` service is not started by this command because it belongs to the `t
 profile. Check active RQ jobs before intentionally recreating `prod`; interrupted jobs
 can be restored from Redis but may need to be requeued if RQ marks them abandoned.
 
-Runtime services follow maintained version channels rather than immutable digests:
-Redis, Netdata, pgAdmin and Bugsink follow their current major release; Grafana,
-Loki and Healthchecks follow their current minor release; Certbot follows `latest`
-because it has no moving major tag. Alloy uses an exact release because its official
-image does not publish moving major or minor tags. A routine `up` reuses locally
-available images and the build cache. Refresh runtime and base images explicitly,
-then recreate affected containers:
+Runtime services use a mix of version channels and pinned releases in
+[`docker-compose.yml`](../docker-compose.yml): Redis, Netdata, pgAdmin and
+Bugsink follow a major release; Grafana, Loki and Healthchecks follow a minor
+release; Certbot is pinned to a version and digest, and Alloy to an exact
+version. A routine `up` reuses locally available images and the build cache.
+Refresh runtime and base images explicitly, then recreate affected containers:
 
 ```bash
 docker compose pull --policy always --ignore-buildable
@@ -151,9 +150,10 @@ docker compose build --pull
 docker compose up --detach
 ```
 
-Compose downloads an image automatically when it is missing locally. Images tagged
-`latest`, currently Certbot, may also be refreshed by Compose during `up`. The Python
-application base remains pinned to its tested patch and digest.
+Compose downloads an image automatically when it is missing locally. Pinned
+image versions and digests require a deliberate change to the Compose file
+before they can advance. The Python application base remains pinned to its
+tested patch and digest.
 
 Grafana stores its SQLite database, users, plugins, and unified-storage data in
 `grafana_data`. Before a Grafana major upgrade, stop only Grafana and make a cold

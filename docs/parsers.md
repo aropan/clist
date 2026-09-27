@@ -4,30 +4,35 @@
 
 ## What & when
 
-Parsers are the most common contribution. Each **per-judge parser** under
-[`src/ranking/management/modules/`](../src/ranking/management/modules/) (85 modules)
-scrapes one judge's contests and standings and feeds the rating/leaderboard pipeline.
-Use this area when adding a new judge, fixing a broken scoreboard scrape, or re-parsing
-one contest to test a change.
+**Django standings parsers** under
+[`src/ranking/management/modules/`](../src/ranking/management/modules/)
+collect results and feed the rating and leaderboard pipeline. Use this area
+when adding a standings source or fixing a broken scoreboard scrape.
 
 ## For the step-by-step playbook
 
-**Read the [`add-parser` skill](../.agents/skills/add-parser/SKILL.md)** — it is the
-single source of truth for the procedure (module structure, the `Statistic.get_standings`
-contract, the safe read-only flags to test one contest end-to-end). It is loaded on
+**Read the [`add-parser` skill](../.agents/skills/add-parser/SKILL.md)** for
+the module structure, the `Statistic.get_standings` contract, and safe
+verification choices. It is loaded on
 demand by Codex / Copilot / Gemini CLI / Antigravity / Claude Code.
 See the [skills index in AGENTS.md](../AGENTS.md#skills) for how skills are discovered.
 
 ## Legacy PHP parsers
 
-Some judges still have a parser under
-[`legacy/module/<host>/index.php`](../legacy/module/) (~100 host dirs). A judge may exist
-in one codebase or both; when targeting the legacy one, match the surrounding PHP style.
+Legacy PHP schedule parsers live under
+[`legacy/module/<host>/index.php`](../legacy/module/). A judge may exist in
+one codebase or both. For a PHP parser, follow
+[`Legacy schedule parser tests`](testing.md#legacy-schedule-parser-tests).
 
-## Re-parsing a single contest
+## Checking a parser
 
-The narrowest read-only test for a parser change (see the skill for full flag list):
+Run recorded parser fixtures offline without making network requests or changing
+the development database:
 
 ```bash
-docker compose exec dev ./manage.py parse_statistic -r <host> -l 1 --no-update-results
+docker compose exec dev ./manage.py test --keepdb ranking.tests.test_parsers
 ```
+
+To select or record a fixture, see [testing.md](testing.md#parser-regression-tests).
+`parse_statistic --no-update-results` is a live command and can still write
+contest problems and event logs; use it only when those effects are acceptable.

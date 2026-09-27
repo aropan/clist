@@ -55,7 +55,9 @@ The most common ones:
 
 Every command exposes `--help`. For `parse_statistic` specifically, common flags include
 `-r <host>`, `-l <limit>`, `-e <event-regex>`, `-y <year>`, `-u <users>`, `--reparse`,
-`--no-update-results`.
+`--no-update-results`. The last flag skips standings-result updates, but the command
+can still write contest problems and event logs; use the offline regression tests in
+[testing.md](testing.md#parser-regression-tests) when you need a non-mutating check.
 
 To add or fix a management command (CLIST house style + cron/Healthchecks monitor wiring),
 follow the [`add-management-command` skill](../.agents/skills/add-management-command/SKILL.md).

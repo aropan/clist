@@ -9,6 +9,7 @@
 
 - [Python 3.14](https://www.python.org/downloads/)
 - [Docker (with Docker Compose v2)](https://www.docker.com/products/docker-desktop)
+- [Git LFS](https://git-lfs.com/) for offline parser test fixtures
 - Optional: [mise](https://mise.jdx.dev/installing-mise.html) for pinned host tools
   and a local Python virtualenv
 
@@ -24,10 +25,11 @@ cd clist
 mise trust
 mise install --locked
 
-# 3. Generate default environment files (press Enter to accept defaults):
+# 3. Configure secrets and the first administrator. This also builds the dev
+#    image, starts PostgreSQL, and applies migrations:
 python3 ./configure.py
 
-# 4. Build and start the long-running dev container:
+# 4. Start the long-running dev container:
 docker compose up --build dev
 
 # 5. Open the app:

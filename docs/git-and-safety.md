@@ -6,12 +6,12 @@
 
 `git status`, `git diff`, `git diff --cached`, `git log --oneline`.
 
-## Operations that need explicit approval
+## Operations that need an explicit request
 
-Ask first: `git add`, `git commit`, `git push`, `git reset`, `git checkout`, `git rebase`,
-`git clean`. Create or switch branches only when the user explicitly asks; a request
-to commit changes applies to the current branch. Never `git reset --hard` or
-`git clean -fd` unless explicitly requested.
+Stage and commit only when the user asks. `git push`, `git reset`, `git checkout`,
+`git rebase`, and `git clean` also require an explicit request. Create or switch
+branches only when the user asks; a request to commit applies to the current branch.
+Never run `git reset --hard` or `git clean -fd` unless explicitly requested.
 
 ## Commit style
 

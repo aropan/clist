@@ -1,57 +1,43 @@
 ---
 name: run-and-verify
 description: >-
-  Use after changing CLIST Python code to pick and run the correct, narrowest
-  checks — Django tests, Ruff lint/format, or running a management command in
-  the dev container — before considering work done. Keywords: test, run tests,
-  lint, ruff, verify, check, manage.py, docker compose exec.
+  Choose and run focused checks after changing CLIST Python code: Django tests,
+  standalone pytest tests, offline parser fixtures, Ruff, or a relevant
+  management-command check.
 ---
 
 # Run & verify CLIST changes
 
-The `dev` service is long-running and hosts `runserver` + RQ workers. Run
-commands **inside** it; don't start a second server.
+The long-running `dev` service hosts Django and RQ. Use it for Django tests and
+management commands; run standalone script tests on the host. See
+[docs/testing.md](../../../docs/testing.md) for fixtures, CI coverage, and
+legacy PHP tests.
 
-## Choose the narrowest check first, then widen
+## Choose checks by changed behavior
 
-> **Reality check on the test suite:** CLIST's `<app>/tests.py` files are mostly
-> stubs (`SimpleTest` doing `assertEqual(1, 1)`). Real coverage is near zero, so a
-> green test run is **weak evidence** of correctness. Treat it as a smoke check that
-> the app imports and the runner works — **the real verification is running the
-> actual management command / RQ job / parser in the dev container** and inspecting
-> its output. Add real tests alongside new behavior when feasible.
+- Django app code: start with a focused test label, then widen only if the
+  change affects more code:
+  ```bash
+  docker compose exec dev ./manage.py test --keepdb ranking.tests.test_parser_regression
+  ```
+- Parser output: run an existing offline fixture via
+  `./manage.py test --keepdb ranking.tests.test_parsers`. Fixture recording
+  makes live requests. `parse_statistic --no-update-results` can still write
+  contest problems and event logs, so it is not a read-only test.
+- Operational Python scripts: run the relevant `src/scripts/tests/` test with
+  host pytest. The full standalone command and its pinned dependencies are in
+  [docs/testing.md](../../../docs/testing.md#standalone-python-tests).
+- Management commands without a focused test: inspect `--help` and choose a
+  narrow invocation whose side effects are understood. A flag named
+  `--dryrun` is safe only if its implementation actually avoids writes.
 
-**Tests** (Django runner; `<app>/tests.py`):
+Run Ruff on changed Python files from the host:
+
 ```bash
-docker compose exec dev ./manage.py test <app>.tests.SomeTest.test_x   # one test
-docker compose exec dev ./manage.py test <app>                          # one app
-docker compose exec dev ./manage.py test                                # full suite (broad changes only)
+mise exec -- ruff check src/path/changed.py
+mise exec -- ruff format --check src/path/changed.py
 ```
 
-**Lint / format** (Ruff, config in `.ruff.toml`, line length 120, double quotes):
-```bash
-mise exec -- ruff check src/path/you/changed.py
-mise exec -- ruff format src/path/you/changed.py
-```
-Run Ruff from the host through mise. JS/CSS/JSON use Biome (`biome.json`).
-
-**Run a management command** (e.g. to exercise a parser or check a job):
-```bash
-docker compose exec dev ./manage.py <command>
-docker compose exec dev ./manage.py shell      # quick interactive check
-```
-
-## Order of operations after an edit
-
-1. Most specific test for the touched module.
-2. If it passes, the app's test group.
-3. Full suite only when the change is broad.
-4. `ruff check` (and `ruff format`) on changed files.
-5. Fix root causes, not symptoms. Don't weaken assertions or silence errors to
-   make checks pass.
-
-If a check can't run, say exactly why and give the human the command to run.
-
-## When done, report
-
-Which commands ran, their results, what you fixed, and anything left unverified.
+Use `ruff format` without `--check` only when intending to change formatting.
+Report the exact checks, results, and any behavior they did not cover. When a
+check fails, investigate the cause before widening or repeating it.

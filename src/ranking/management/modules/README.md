@@ -1,7 +1,11 @@
 ## conf.py
 
-File `conf.py` contains the following secrets:
-```
+The ignored `conf.py` supplies credentials used by parsers such as
+`codeforces.py` and `codechef.py`. Create it locally when needed;
+`configure.py` does not generate it. Never put real credentials in this
+README, a parser fixture, or a commit. The parsers currently use fields like:
+
+```python
 CODEFORCES_API_KEYS = {
     '{username_1}': (
         '{key_1}',

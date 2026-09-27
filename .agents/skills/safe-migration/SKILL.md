@@ -1,11 +1,9 @@
 ---
 name: safe-migration
 description: >-
-  Use for any Django database schema or data change in CLIST — editing models in
-  src/*/models.py, creating/running migrations, adding/renaming/removing model
-  fields or tables, or data migrations. Ensures additive, reversible, non-
-  destructive changes. Keywords: migration, makemigrations, migrate, schema,
-  model field, database, ORM.
+  Plan, create, or apply CLIST Django schema and data migrations, including
+  model field changes, makemigrations, migrate, and RunPython operations.
+  Preserve reversibility and check database impact.
 ---
 
 # Safe Django migrations in CLIST
@@ -18,22 +16,24 @@ Database changes are the highest-risk edits in this repo. The DB runs in the
 1. **Inspect first.** Read the target model in `src/<app>/models.py` and look at
    recent migrations in `src/<app>/migrations/` to match style.
 2. **Find all usages** of any field/table you plan to change or remove
-   (`grep`/search across `src/` and `legacy/`). Removing or renaming something
+   (`rg` across `src/` and `legacy/`). Removing or renaming something
    still referenced will break the app.
 3. **Prefer additive changes.** Add new nullable fields rather than renaming or
    dropping. For a rename, prefer add-new → backfill → switch readers → remove
    old, across separate migrations.
-4. **Generate, don't hand-write:**
+4. **Generate schema migrations and review them:**
    ```bash
    docker compose exec dev ./manage.py makemigrations <app>
+   docker compose exec dev ./manage.py makemigrations --check --dry-run
    ```
-   Review the generated migration file before applying.
-5. **Apply:**
+   Data migrations may require a reviewed `RunPython` operation.
+5. **Apply only when applying to the target database is part of the task.**
+   Confirm the environment and review the generated operations first:
    ```bash
    docker compose exec dev ./manage.py migrate <app>
    ```
-6. **Verify** the app still imports/serves and relevant tests pass
-   (`./manage.py test <app>`).
+6. **Verify** relevant tests and Django checks. If the migration was applied,
+   verify the affected app still imports and behaves as expected.
 
 ## Hard rules
 

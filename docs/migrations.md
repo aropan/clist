@@ -4,10 +4,9 @@
 
 ## What & when
 
-Any Django schema or data change: editing models in `src/*/models.py`, creating/running
-migrations, adding/renaming/removing model fields or tables, or data migrations. This is
-a **high-risk** area — schema drift and destructive data moves are the most common way
-to break a shared dev/prod database.
+Django schema changes and data migrations: editing model fields in
+`src/*/models.py`, creating or applying migrations, and moving stored data.
+This is a **high-risk** area because migrations can affect shared databases.
 
 ## Highest-risk rules (always)
 
@@ -17,7 +16,8 @@ to break a shared dev/prod database.
   explicit approval.
 - Before a schema change: inspect the model and search the codebase for all usages of
   the field/table; propose the plan before editing.
-- Generate migrations with `makemigrations`; never hand-write destructive SQL.
+- Generate schema migrations with `makemigrations` and review them; a data
+  migration may need a reviewed `RunPython` operation.
 
 ## For the step-by-step playbook
 
@@ -29,6 +29,7 @@ discovered.
 ## Commands
 
 ```bash
-docker compose exec dev ./manage.py makemigrations <app>     # generate
-docker compose exec dev ./manage.py migrate                  # apply
+docker compose exec dev ./manage.py makemigrations <app>        # generate
+docker compose exec dev ./manage.py makemigrations --check --dry-run
+docker compose exec dev ./manage.py migrate <app>                 # apply when in scope
 ```

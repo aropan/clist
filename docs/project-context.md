@@ -19,16 +19,15 @@ coder profiles, ratings, and notifications.
 
 ## The heart: parsers
 
-The central feature is the **per-judge parsers** under
-`src/ranking/management/modules/` (**85 modules**, one per judge). They scrape each
-site's contests and standings on a schedule and feed the rating/leaderboard pipeline.
-A parallel set of ~100 legacy PHP parsers lives under `legacy/module/<host>/index.php`
-— some judges exist in one codebase, some in both.
+The **per-judge standings parsers** under `src/ranking/management/modules/`
+feed the rating and leaderboard pipeline. Legacy PHP schedule parsers under
+`legacy/module/<host>/index.php` discover contests. Some judges have parsers
+in both codebases.
 
 ## Who reads what
 
 - **`README.md`** — onboarding/setup for a **human contributor**.
 - **`AGENTS.md`** — short operating contract for **AI coding agents**; it links into
   this `docs/` tree for depth.
-- **`.agents/skills/<name>/SKILL.md`** — reusable step-by-step playbooks for recurring
-  tasks (parsers, migrations, verification).
+- **`.agents/skills/<name>/SKILL.md`** — reusable guidance for recurring
+  tasks (parsers, management commands, migrations, verification).

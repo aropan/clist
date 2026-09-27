@@ -1,44 +1,25 @@
 ---
 name: add-parser
 description: >-
-  Use when adding, fixing, or debugging a CLIST contest/standings parser — any
-  task involving a judge scraper in src/ranking/management/modules/, the
-  Statistic.get_standings contract, scraping a new site's leaderboard, or
-  re-parsing one contest to test scraping. Keywords: parser, scraper, module,
-  standings, judge, resource, get_standings.
+  Add, fix, or debug a Django standings parser in
+  src/ranking/management/modules/, including Statistic.get_standings,
+  leaderboard scraping, and offline regression fixtures. Excludes legacy PHP
+  schedule parsers.
 ---
 
 # Add or fix a CLIST parser
 
-Each judge is one module in `src/ranking/management/modules/<host>.py` exposing a
-`Statistic` class that subclasses `BaseModule`. There are 85 existing modules —
-**always read 2–3 similar ones first and copy their conventions.**
+Judge parsers live in `src/ranking/management/modules/`. Most expose a
+`Statistic` class that subclasses `BaseModule`; some extend another parser.
+Read two similar modules before editing.
 
 ## The contract
 
-```python
-from ranking.management.modules.common import REQ, BaseModule
-from ranking.management.modules.excepts import ExceptionParseStandings
-
-
-class Statistic(BaseModule):
-    def get_standings(self, users=None, statistics=None, **kwargs):
-        # Contest metadata is on self: self.url, self.key, self.info,
-        # self.start_time, self.standings_url, self.resource, ...
-        data = REQ.get(self.standings_url, return_json=True)   # or post=..., headers=...
-        if not_ok(data):
-            raise ExceptionParseStandings(data)
-
-        result = {}
-        for row_data in data['rows']:
-            member = str(row_data['user_id'])          # stable unique handle
-            row = result.setdefault(member, {'member': member})
-            row['name'] = row_data['user_name']
-            row['solving'] = row_data['score']          # number of solved / score
-            row['place'] = row_data['rank']
-            row.setdefault('info', {})['avatar'] = row_data.get('avatar')
-        return {'result': result}
-```
+Implement `Statistic.get_standings(self, users=None, statistics=None, **kwargs)`
+using the contest metadata on `self` (`url`, `key`, `info`,
+`standings_url`, `resource`). Return site-specific standings in the shape
+below. Use a similar existing module for the request and row mapping; there
+is no shared response schema across judges.
 
 ### Return shape
 
@@ -71,21 +52,20 @@ Good clean references to read: `highload.py`, `algorithm_yandex.py`,
 `codeforces_gym.py`. For HTML scraping (not JSON) look at modules using
 `REQ.get(...)` + parsing.
 
-## Test loop (safe, narrow, no junk data)
+## Verification
 
-The `dev` container is already running. Re-parse a single contest read-only:
+Run a relevant recorded fixture offline when one exists:
 
 ```bash
-docker compose exec dev ./manage.py parse_statistic -r <host> -l 1 --no-update-results -s
+docker compose exec dev ./manage.py test --keepdb ranking.tests.test_parsers
 ```
 
-- `-r <host>` resource host (e.g. `highload.io`)   `-l 1` only one contest
-- `--no-update-results` don't write results   `-s` stop on first exception
-- Narrow further: `-e "<event regex>"`, `-y <year>`, `-u <user>`, `--reparse`
-- `parse_statistic --help` lists every flag.
-
-Iterate until the standings parse cleanly, then drop `--no-update-results` for a
-real run only if the task calls for it.
+See [parser regression tests](../../../docs/testing.md#parser-regression-tests)
+for fixture selection and recording. Recording makes live requests and writes
+fixture files. `parse_statistic` also makes live requests and can write to the
+development database even with `--no-update-results` (contest problems and
+event logs). Use it only when the task calls for a live parse and those effects
+are acceptable; consult `./manage.py parse_statistic --help` for current flags.
 
 ## Wiring a brand-new judge
 
@@ -96,5 +76,5 @@ and confirm how the resource row should be created before assuming.
 
 ## When done, report
 
-Module changed, how you tested (the exact `parse_statistic` command + result),
-and whether real results were written or only dry-run.
+Module changed, fixture/test commands and results, and whether any live
+requests or database writes were performed.

@@ -2,13 +2,13 @@
 
 ← [AGENTS.md](../AGENTS.md)
 
-Tests are Django-style (`<app>/tests.py`), run with the Django test runner inside the
-dev container:
+Django tests live in `src/<app>/tests.py` and `src/<app>/tests/`. Run them with
+the Django test runner inside the dev container:
 
 ```bash
-docker compose exec dev ./manage.py test --keepdb ranking                       # one app (narrow — start here)
-docker compose exec dev ./manage.py test --keepdb ranking.tests.SomeTest.test_x # one test
-docker compose exec dev ./manage.py test --keepdb                               # full suite (broad)
+docker compose exec dev ./manage.py test --keepdb ranking.tests.test_parser_regression # focused module
+docker compose exec dev ./manage.py test --keepdb ranking                              # one app
+docker compose exec dev ./manage.py test --keepdb                                      # full suite
 ```
 
 Use `--keepdb` for local development. The first run creates the test database and
@@ -16,17 +16,30 @@ applies all migrations; later runs preserve it and apply only migrations added s
 the previous run. Django's normal test isolation and data cleanup still apply;
 `--keepdb` only preserves the database schema between test runs.
 
-After editing an already applied migration in place, or if the test database becomes
-inconsistent, run once without `--keepdb` and confirm Django's prompt to recreate it.
+Do not edit an already applied migration to repair a test database. If its schema
+becomes inconsistent, review the target and recreate only the test database by
+running once without `--keepdb`.
 
 When you change code: run the most specific test for the touched module first; if it
 passes, widen to the app; run the full suite only for broad changes. If tests can't
 run, say exactly why and give the command a human should run.
 
+## Standalone Python tests
+
+The tests under `src/scripts/tests/` run directly with pytest, without Django
+or the application database. This is the command used by the CI workflow:
+
+```bash
+uv run --no-project --python 3.14 --with pytest==9.1.1 --with rich==15.0.0 --with google-auth-oauthlib==1.4.0 pytest -q src/scripts/tests
+```
+
 ## Parser regression tests
 
 Parser regression fixtures replay recorded HTTP responses without network access and
 compare normalized `get_standings()` output with a golden snapshot:
+
+The compressed fixtures use Git LFS. If the checkout contains pointer files,
+fetch their contents with `git lfs pull` before running these tests.
 
 ```bash
 docker compose exec dev ./manage.py test --keepdb ranking.tests.test_parsers
@@ -133,9 +146,10 @@ docker compose exec dev ./manage.py dump_parser_fixture --suggest -r nerc.itmo.r
 also prints temporary paths, standings keys, and cache-file counts.
 
 The same offline test command is suitable for application CI. The GitHub CI workflow
-runs baseline Ruff checks, formatting, and all standalone script tests on Python 3.14,
-but does not provision the Django/PostgreSQL environment, so parser tests are not
-attached to that workflow.
+runs the full Ruff lint check, Python/frontend/PHP formatting checks, and all standalone
+script tests on Python 3.14. It does not provision the Django/PostgreSQL environment,
+so parser tests are not attached to that workflow. A separate CodeQL workflow analyzes
+Python and JavaScript.
 
 ## Legacy schedule parser tests
 

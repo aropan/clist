@@ -1,15 +1,8 @@
-## conf.py
+## Local settings
 
-File `conf.py` contains the following secrets (check `conf.py.template` file):
-```
-EMAIL_HOST_PASSWORD = '{str}'
-SECRET_KEY = '{str}'
-TELEGRAM_TOKEN = '{int}:{str}'
-TELEGRAM_ADMIN_CHAT_ID = {int}
-
-DB_HOST = '{str}'
-DB_PORT = '{int}'
-DB_NAME = '{str}'
-DB_USER = '{str}'
-DB_PASSWORD = '{str}'
-```
+`configure.py` creates the ignored `conf.py` from
+[`conf.py.template`](conf.py.template). Keep real credentials out of Git.
+Database connection settings come from `.env.db` through the `db_conf`
+Docker secret, as read by [`settings.py`](settings.py). The
+`src/.env.dev` and `src/.env.prod` files select environment-specific
+application settings.
