@@ -119,6 +119,24 @@ calendars referenced by `Resource.uid` publicly readable without spending ACL qu
 on every synchronization pass. New resource calendars are made public immediately.
 Use `--dryrun` to audit access without changing Google ACLs.
 
+Resource Activity is recalculated daily at 03:30 UTC by
+`update_resource_activity` through [`config/cron`](../config/cron) and
+`src/run-manage.bash`. It reads recent contests and linked active CLIST coders,
+then publishes a 0–100 score for every resource. After deploying the additive
+`clist` migration, run a manual refresh in the development container with:
+
+```bash
+docker compose exec dev ./manage.py update_resource_activity
+```
+
+Until the first successful refresh, `/resources/` shows Activity as unavailable
+and orders resources by host. All `Resource.priority_objects` queries order by
+Activity descending, with uncalculated scores last and host as the tie-breaker;
+the legacy calculated priority is no longer used. The `resource-activity`
+Healthchecks entry is defined in `config/healthchecks/provision.py`; apply provisioning
+separately with the Healthchecks shell command shown earlier in this section
+when enabling the production cron.
+
 Static network `10.42.0.x`. `dev` mounts `./src/:/usr/src/clist/`.
 
 ## Routine Compose update

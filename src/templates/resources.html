@@ -18,6 +18,7 @@
         <a href="{% url 'clist:resources_account_ratings' %}">{% icon_to 'top' 'Account ratings' %}</a>
         <a href="{% url 'clist:resources_country_ratings' %}">{% icon_to 'top' 'Country ratings' %}</a>
       </th>
+      <th data-toggle="tooltip" data-placement="top" title="Recent contests, major events, and linked CLIST accounts">Activity</th>
       <th>Url</th>
       <th>Google<br/>calendar</th>
       <th>Auto<br/>update</th>
@@ -40,6 +41,17 @@
           {{ resource.host }}
         </a>
         {% include "resource_inline_buttons.html" %}
+      </td>
+      <td>
+        {% if resource.activity_score is None %}
+          <span class="activity-meter-empty" data-toggle="tooltip" data-placement="top" title="Activity has not been calculated">&mdash;</span>
+        {% else %}
+          <span class="activity-meter" role="meter" aria-label="Activity" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ resource.activity_score|floatformat:'1u' }}" data-toggle="tooltip" data-placement="top" title="{{ resource.activity_score|floatformat:'1u' }}" style="--activity-score: {{ resource.activity_score|floatformat:'3u' }}%">
+            <span class="activity-meter-track" aria-hidden="true">
+              {% if resource.activity_score %}<span class="activity-meter-fill"></span>{% endif %}
+            </span>
+          </span>
+        {% endif %}
       </td>
       <td>
         <a href="{{ resource.url }}" target="_blank" rel="noopener noreferrer"><i class="fas fa-external-link-alt"></i></a>

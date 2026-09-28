@@ -102,6 +102,11 @@ MONITORS = {
         timedelta(hours=2),
         "ensure_google_calendars_public: restores public read access to managed calendars daily.",
     ),
+    "resource-activity": (
+        "30 3 * * *",
+        timedelta(hours=2),
+        "update_resource_activity: refreshes resource Activity scores daily.",
+    ),
     "parse-archive-problems": (
         "30 * * * *",
         timedelta(minutes=40),

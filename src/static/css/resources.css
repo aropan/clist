@@ -25,6 +25,37 @@
   min-width: 30px;
 }
 
+#resources .activity-meter {
+  display: inline-block;
+  width: 100%;
+  vertical-align: middle;
+}
+
+#resources .activity-meter-track {
+  display: block;
+  height: 12px;
+  overflow: hidden;
+  background-color: #e3e8e4;
+  border-radius: 999px;
+}
+
+#resources .activity-meter-fill {
+  display: block;
+  width: var(--activity-score);
+  min-width: 3px;
+  height: 100%;
+  border-radius: inherit;
+  background-color: #5cb85c;
+  background-color: color-mix(in srgb, #a7ada8, #5cb85c var(--activity-score));
+}
+
+#resources .activity-meter-empty {
+  display: inline-block;
+  width: 100%;
+  color: #7a817b;
+  text-align: center;
+}
+
 #resources [data-column] {
   cursor: pointer;
 }

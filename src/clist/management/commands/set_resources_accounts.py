@@ -95,7 +95,7 @@ class Command(BaseCommand):
         parser.add_argument("--remove-empty", action="store_true", help="remove empty accounts")
         parser.add_argument("--update-statistic-stats", action="store_true", help="update statistic stats")
         parser.add_argument("--update-account-urls", action="store_true", help="update account urls")
-        parser.add_argument("--with-priority", action="store_true", help="update resources by priority")
+        parser.add_argument("--with-priority", action="store_true", help="update resources by Activity score")
 
     def handle(self, *args, **options):
         self.stdout.write(str(options))

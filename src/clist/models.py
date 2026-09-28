@@ -24,7 +24,6 @@ from django.core.files.base import ContentFile
 from django.db import models, transaction
 from django.db.models import Case, F, Max, Q, When
 from django.db.models.expressions import Exists, OuterRef
-from django.db.models.functions import Cast, Ln
 from django.http import Http404
 from django.urls import reverse
 from django.utils.timezone import now as timezone_now
@@ -53,13 +52,7 @@ contest_and_resource_permissions = (
 
 class PriorityResourceManager(BaseManager):
     def get_queryset(self):
-        ret = super().get_queryset()
-        ret = ret.annotate(rval=Cast(Cast("has_rating_history", models.IntegerField()), models.FloatField()))
-        ret = ret.annotate(pval=Cast(Cast("has_problem_rating", models.IntegerField()), models.FloatField()))
-        priority = Ln(F("n_contests") + 1) + Ln(F("n_accounts") + 1) + 4 * (F("rval") + F("pval"))
-        ret = ret.annotate(priority=priority)
-        ret = ret.order_by("-priority")
-        return ret
+        return super().get_queryset().order_by(F("activity_score").desc(nulls_last=True), "host")
 
 
 class AvailableForUpdateResourceManager(BaseManager):
@@ -124,6 +117,8 @@ class Resource(BaseModel):
     n_accounts = models.IntegerField(default=0)
     n_contests = models.IntegerField(default=0)
     n_statistics = models.IntegerField(default=0)
+    activity_score = models.FloatField(null=True, blank=True)
+    activity_updated_at = models.DateTimeField(null=True, blank=True)
     n_rating_accounts = models.IntegerField(default=None, null=True, blank=True)
     n_university_accounts = models.IntegerField(default=None, null=True, blank=True)
     n_team_accounts = models.IntegerField(default=None, null=True, blank=True)

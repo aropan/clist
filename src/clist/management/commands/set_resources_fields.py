@@ -207,7 +207,7 @@ class Command(BaseCommand):
         parser.add_argument("--avg-rating", action="store_true", help="update average rating")
         parser.add_argument("--problems-only", action="store_true", help="update problems only")
         parser.add_argument("--remove-empty-accounts", action="store_true", help="remove empty accounts")
-        parser.add_argument("--with-priority", action="store_true", help="update resources by priority")
+        parser.add_argument("--with-priority", action="store_true", help="update resources by Activity score")
 
     def handle(self, *args, **options):
         self.stdout.write(str(options))

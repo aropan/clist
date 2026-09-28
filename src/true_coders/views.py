@@ -2101,7 +2101,7 @@ def search(request, **kwargs):
         qs = Resource.priority_objects.all()
         if is_yes(request.GET.get("has_statistics_logs")):
             qs = get_objects_for_user(request.user, "view_statistics_logs", qs)
-        order = ["-priority", "pk"]
+        order = list(qs.query.order_by)
         if query := request.GET.get("text"):
             qs = qs.filter(get_iregex_filter(query, "host__icontains", "short_host", suffix=""))
             qs = qs.annotate(
