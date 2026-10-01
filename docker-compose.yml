@@ -249,7 +249,7 @@ services:
       - loki_data:/loki
     restart: unless-stopped
   alloy:
-    image: grafana/alloy:v1.19.2
+    image: grafana/alloy:v1.20.0
     networks:
       - clist_network
     command:
