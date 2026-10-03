@@ -1,0 +1,38 @@
+{
+    "host": "acm.timus.ru",
+    "rid": 7,
+    "path": "./module/acm.timus.ru/index.php",
+    "url": "https://acm.timus.ru/schedule.aspx?locale=en",
+    "parse_url": "https://acm.timus.ru/schedule.aspx?locale=en",
+    "timezone": "Asia/Yekaterinburg",
+    "api_url": null,
+    "info": {
+        "standings": {
+            "timeline": {
+                "time_factor": {
+                    "1": [
+                        60
+                    ],
+                    "2": [
+                        3600,
+                        60
+                    ],
+                    "3": [
+                        86400,
+                        3600,
+                        60
+                    ]
+                }
+            },
+            "name_instead_key": 1
+        },
+        "get_events": {
+            "colors": {
+                "darken": "#441638",
+                "lighten": "#EFD1E7"
+            }
+        }
+    },
+    "parse_full_list": false,
+    "recorded_at": "2026-10-02 16:45:18"
+}

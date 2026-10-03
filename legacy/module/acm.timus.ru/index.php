@@ -42,11 +42,13 @@ foreach ($urls as $url) {
     $url = str_replace('locale=en&', '', $url);
     $page = curlexec($url);
 
-    preg_match('#<H2 CLASS="title">(?<title>.*?)</H2>.*?Contest starts at <B>(?<start_time>.*?)</B>.*?\((?<utc_start_time>UTC[^\)]+)\).*?Contest finishes at <B>(?<end_time>.*?)</B>.*?\((?<utc_end_time>UTC[^\)]+)\)#s', $page, $match);
+    if (!preg_match('#<H2 CLASS="title">(?<title>.*?)</H2>.*?Contest starts at <B>(?<start_time>[^<]*?)(?:\s*\(UTC[^)]+\))?</B>.*?Contest finishes at <B>(?<end_time>[^<]*?)(?:\s*\(UTC[^)]+\))?</B>#s', $page, $match)) {
+        continue;
+    }
 
     $contests[] = [
-        'start_time' => trim($match['start_time']), // . ' ' . trim($match['utc_start_time']),
-        'end_time' => trim($match['end_time']), // . ' ' . trim($match['utc_start_time']),
+        'start_time' => trim($match['start_time']),
+        'end_time' => trim($match['end_time']),
         'title' => trim($match['title']),
         'url' => $url,
         'host' => $HOST,
