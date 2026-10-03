@@ -2,6 +2,7 @@ import json
 import math
 from datetime import UTC, datetime, timedelta
 from io import StringIO
+from itertools import pairwise
 from unittest import mock
 
 import pytest
@@ -14,7 +15,7 @@ from django.test import RequestFactory, SimpleTestCase, TestCase
 from django.test.utils import CaptureQueriesContext
 
 from clist.models import Contest, ContestSeries, Resource
-from clist.resource_activity import calculate_activity_scores, get_resource_activity_scores
+from clist.resource_activity import SCORE_SCALE, calculate_activity_scores, get_resource_activity_scores
 from clist.views import resources
 from ranking.models import Account
 from true_coders.models import Coder
@@ -74,7 +75,7 @@ class ActivityFormulaTest(SimpleTestCase):
         q1 = 2 ** (-1 / 120)
         q2 = 2 ** (-2 / 120)
         expected_raw = q1 + 0.25 * math.log1p(q1 + q2)
-        expected = -100 * math.expm1(-expected_raw / 20)
+        expected = -100 * math.expm1(-expected_raw / SCORE_SCALE)
         assert both > single
         assert math.isclose(both, expected)
 
@@ -101,6 +102,50 @@ class ActivityFormulaTest(SimpleTestCase):
         without_medals = contest_data(n_statistics=None, with_medals=False)
         with_medals = contest_data(n_statistics=0, with_medals=True)
         assert self.score([without_medals]) == self.score([with_medals])
+
+    def test_participation_outweighs_rating_status(self):
+        small = contest_data(n_statistics=100)
+        rated_small = contest_data(n_statistics=100, is_rated=True)
+        large = contest_data(n_statistics=1000)
+        small_score = self.score([small])[1]
+        rated_score = self.score([rated_small])[1]
+        large_score = self.score([large])[1]
+        assert large_score > rated_score > small_score
+        assert large_score > 2 * small_score
+
+    def test_participation_weight_grows_between_orders_of_magnitude(self):
+        scores = [self.score([contest_data(n_statistics=count)])[1] for count in (10, 100, 1000, 10000)]
+        assert all(before < after for before, after in pairwise(scores))
+        assert scores[3] > 2 * scores[2]
+
+    def test_participation_is_bounded_and_negative_counts_use_zero(self):
+        zero = self.score([contest_data(n_statistics=0)])
+        assert self.score([contest_data(n_statistics=None)]) == zero
+        assert self.score([contest_data(n_statistics=-1)]) == zero
+        capped = self.score([contest_data(n_statistics=10000)])
+        assert self.score([contest_data(n_statistics=100000)]) == capped
+
+    def test_seasonal_mass_contests_outweigh_recent_small_rated_rounds(self):
+        large = [
+            contest_data(
+                contest_id=i,
+                n_statistics=2000,
+                start_time=NOW - timedelta(days=age, hours=2),
+                end_time=NOW - timedelta(days=age),
+            )
+            for i, age in enumerate((12, 131, 193), start=1)
+        ]
+        small = [
+            contest_data(
+                contest_id=i,
+                n_statistics=30,
+                is_rated=True,
+                start_time=NOW - timedelta(days=age, hours=2),
+                end_time=NOW - timedelta(days=age),
+            )
+            for i, age in enumerate((19, 33, 43, 50, 57, 64), start=1)
+        ]
+        assert self.score(large)[1] > self.score(small)[1]
 
     def test_usage_is_capped_and_does_not_revive_empty_resource(self):
         contest = contest_data()

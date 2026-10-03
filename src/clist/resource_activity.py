@@ -12,7 +12,7 @@ UPCOMING_DAYS = 30
 CODER_ACTIVITY_DAYS = 365
 SERIES_HALF_LIFE_DAYS = 180
 SERIES_BONUS = 8
-SCORE_SCALE = 20
+SCORE_SCALE = 50
 
 
 def calculate_activity_scores(contests, linked_ids, major_series_ids, active_coders, now):
@@ -35,7 +35,7 @@ def calculate_activity_scores(contests, linked_ids, major_series_ids, active_cod
             importance, half_life = 1, 120
 
         statistics = min(max(contest["n_statistics"] or 0, 0), 10000)
-        reach = 1 + 0.5 * math.log1p(statistics) / math.log1p(10000)
+        reach = math.sqrt(1 + statistics / 100)
         upcoming = contest["start_time"] > now
         contribution = importance * reach * 2 ** (-age_days / half_life)
         if upcoming:
