@@ -1,8 +1,11 @@
 import os
 import re
+from contextlib import redirect_stdout
 from datetime import UTC, datetime, timedelta
+from importlib import import_module
+from io import StringIO
 from tempfile import TemporaryDirectory
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, call, patch
 
 from django.conf import settings
 from django.core.management import call_command
@@ -21,6 +24,43 @@ from notification.utils import (
     render_custom_message,
 )
 from ranking.models import Account, Statistics
+
+
+class UpdateGoogleCalendarsTest(SimpleTestCase):
+    def test_removes_unnamed_orphan_events_and_continues_cleanup(self):
+        for summary in ({}, {"summary": ""}, {"summary": None}):
+            with self.subTest(summary=summary):
+                service = Mock()
+                with patch.dict("sys.modules", {"legacy.api.google_calendar.common": Mock(service=service)}):
+                    command = import_module("notification.management.commands.update_google_calendars")
+                    resource = Resource(pk=93, host="atcoder.jp", uid="calendar-id")
+                    events = [
+                        {"id": "unnamed-event", **summary},
+                        {"id": "kept-event", "summary": "Current contest"},
+                        {"id": "named-event", "summary": "Old contest"},
+                    ]
+                    stdout = StringIO()
+                    with (
+                        patch.object(command.Resource, "get", return_value=[resource]),
+                        patch.object(command.Contest, "visible") as contests,
+                        patch.object(command, "service", service),
+                        patch.object(
+                            command, "get_all_calendars", return_value=[{"id": resource.uid, "summary": resource.host}]
+                        ),
+                        patch.object(command, "get_all_events", return_value=events),
+                        redirect_stdout(stdout),
+                    ):
+                        contests.filter.side_effect = [[], [], [Mock()], []]
+                        command.Command().handle(resources=[resource.host], days=8)
+
+                    delete = service.events.return_value.delete
+                    assert delete.call_args_list == [
+                        call(calendarId=resource.uid, eventId="unnamed-event"),
+                        call(calendarId=resource.uid, eventId="named-event"),
+                    ]
+                    assert delete.return_value.execute.call_count == 2
+                    assert "-   unnamed-event" in stdout.getvalue()
+                    assert "-   Old contest" in stdout.getvalue()
 
 
 class CheckLogsTest(SimpleTestCase):

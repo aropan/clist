@@ -146,5 +146,5 @@ class Command(BaseCommand):
 
             for e in list(events.values()):
                 if not Contest.visible.filter(resource=r, uid=e["id"]):
-                    print("-   {}".format(e["summary"]))
+                    print("-   {}".format(e.get("summary") or e["id"]))
                     service.events().delete(calendarId=r.uid, eventId=e["id"]).execute()
