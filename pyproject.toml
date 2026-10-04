@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Competitive programming contests aggregator"
 requires-python = ">=3.14,<3.15"
 dependencies = [
-    "Django==6.1",
+    "Django==6.1.1",
     "django-add-default-value==0.10.0",
     "django-autoslug==1.9.9",
     "django-brotli==0.4.0",
@@ -113,7 +113,7 @@ dependencies = [
     "pandas==3.0.5",
     "beautifulsoup4==4.15.0",
     "markdown==3.10.3",
-    "PyJWT==2.13.0",
+    "PyJWT==2.15.0",
 ]
 
 [dependency-groups]

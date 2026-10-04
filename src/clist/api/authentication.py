@@ -1,4 +1,5 @@
 import contextlib
+import hashlib
 import json
 import logging
 
@@ -85,7 +86,8 @@ class OAuth20Authentication(Authentication):
     def verify_access_token(self, key, request, **kwargs):
         # Check if key is in AccessToken key
         try:
-            token = AccessToken.objects.get(token=key)
+            token_checksum = hashlib.sha256(key.encode("utf-8")).hexdigest()
+            token = AccessToken.objects.get(token_checksum=token_checksum)
 
             # Check if token has expired
             if token.expires < timezone.now():
