@@ -14,7 +14,7 @@ from tqdm import tqdm
 from clist.models import Resource
 from clist.templatetags.extras import get_item, medal_as_n_medal_fields, place_as_n_place_field
 from clist.utils import update_accounts_by_coders
-from ranking.models import Account
+from ranking.models import Account, Statistics
 from utils.attrdict import AttrDict
 from utils.mathutils import is_close
 
@@ -77,6 +77,30 @@ def get_statistic_medal_stats(statistic, custom_medal_fields):
     return ret
 
 
+def get_statistic_medal_filter(medal_fields):
+    medal_filter = Q(medal__isnull=False)
+    for account_type, fields in medal_fields.items():
+        custom_medal_filter = Q()
+        for addition_field in fields.values():
+            lookup = addition_field.replace(".", "__")
+            custom_medal_filter |= Q(**{f"addition__{lookup}__isnull": False})
+        medal_filter |= Q(account__account_type=account_type) & custom_medal_filter
+    return medal_filter
+
+
+def update_medal_win_equals_gold(resource, medal_stats):
+    if resource.medal_win_equals_gold is not None or medal_stats.get("n_win", 0) == medal_stats.get("n_gold", 0):
+        return False
+    updated = Resource.objects.filter(pk=resource.pk, medal_win_equals_gold__isnull=True).update(
+        medal_win_equals_gold=False
+    )
+    if updated:
+        resource.medal_win_equals_gold = False
+    else:
+        resource.refresh_from_db(fields=["medal_win_equals_gold"])
+    return bool(updated)
+
+
 class Command(BaseCommand):
     help = "Set resources accounts"
 
@@ -96,10 +120,59 @@ class Command(BaseCommand):
         parser.add_argument("--update-statistic-stats", action="store_true", help="update statistic stats")
         parser.add_argument("--update-account-urls", action="store_true", help="update account urls")
         parser.add_argument("--with-priority", action="store_true", help="update resources by Activity score")
+        parser.add_argument(
+            "--initialize-medal-win-gold",
+            action="store_true",
+            help="Only initialize win/gold equivalence from saved medal results, including disabled resources",
+        )
+
+    def initialize_medal_win_gold(self, args):
+        resources = Resource.objects.all()
+        if args.resources:
+            resources = Resource.get(args.resources, queryset=resources)
+        resources = resources.filter(medal_win_equals_gold__isnull=True)
+        if args.orderby:
+            resources = resources.order_by(args.orderby)
+        if args.limit:
+            limit = args.limit if args.limit > 0 else resources.count() + args.limit
+            resources = resources[:limit]
+
+        checked = 0
+        downgraded = 0
+        for resource in tqdm(resources, desc="initializing medal win/gold", total=resources.count()):
+            medal_fields = get_resource_medal_fields(resource)
+            contests = resource.contest_set.all()
+            # Custom medal counts can appear on contests without standard medal metadata.
+            if not medal_fields:
+                contests = contests.filter(
+                    Q(with_medals=True) | Q(with_medals__isnull=True) | Q(info__fields__contains=["medal"])
+                )
+            contest_ids = list(contests.values_list("pk", flat=True))
+            statistics = Statistics.objects.filter(contest_id__in=contest_ids).filter(
+                get_statistic_medal_filter(medal_fields)
+            )
+            fields = ["pk", "medal", "place_as_int"]
+            if medal_fields:
+                fields.extend(["addition", "account__account_type"])
+            statistics = statistics.values(*fields)
+            for row in statistics.iterator(chunk_size=2000):
+                statistic = AttrDict(row)
+                medal_stats = get_statistic_medal_stats(
+                    statistic, medal_fields.get(row.get("account__account_type"), {})
+                )
+                downgraded += update_medal_win_equals_gold(resource, medal_stats)
+                if resource.medal_win_equals_gold is not None:
+                    break
+            checked += 1
+        self.stdout.write(f"Checked {checked} resources; downgraded {downgraded}.")
 
     def handle(self, *args, **options):
         self.stdout.write(str(options))
         args = AttrDict(options)
+
+        if args.initialize_medal_win_gold:
+            self.initialize_medal_win_gold(args)
+            return
 
         if args.with_priority or args.resources:
             resources = Resource.priority_objects.all()
@@ -193,13 +266,7 @@ class Command(BaseCommand):
                     counters[count_field] = counter
 
                 def set_n_medal_field(resource, accounts, counters, medal_fields):
-                    medal_filter = Q(medal__isnull=False)
-                    for account_type, fields in medal_fields.items():
-                        custom_medal_filter = Q()
-                        for addition_field in fields.values():
-                            lookup = addition_field.replace(".", "__")
-                            custom_medal_filter |= Q(**{f"addition__{lookup}__isnull": False})
-                        medal_filter |= Q(account__account_type=account_type) & custom_medal_filter
+                    medal_filter = get_statistic_medal_filter(medal_fields)
 
                     statistics_with_medals = resource.statistics_set.filter(medal_filter)
                     qs = accounts.prefetch_related(Prefetch("statistics_set", queryset=statistics_with_medals))
@@ -214,7 +281,10 @@ class Command(BaseCommand):
                             medal_stats = defaultdict(int)
                             custom_medal_fields = medal_fields.get(a.account_type, {})
                             for s in a.statistics_set.all():
-                                for field, value in get_statistic_medal_stats(s, custom_medal_fields).items():
+                                statistic_medal_stats = get_statistic_medal_stats(s, custom_medal_fields)
+                                if update_medal_win_equals_gold(resource, statistic_medal_stats):
+                                    counters["medal_win_equals_gold"] += 1
+                                for field, value in statistic_medal_stats.items():
                                     medal_stats[field] += value
                             updated_fields = []
                             for field in ACCOUNT_MEDAL_FIELDS:

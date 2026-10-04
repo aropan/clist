@@ -220,7 +220,7 @@
     </script>
     {% endif %}
 
-    {% include "resource_accounts_panel.html" with condition=resource.has_statistic_medal accounts=most_medals field="n_win,n_gold,n_silver,n_bronze,n_medals" title="Most medals" header="n_win,n_gold,n_silver,n_bronze,sum" paging="resource_most_medals_paging.html" header_icon=True %}
+    {% include "resource_accounts_panel.html" with condition=resource.has_statistic_medal accounts=most_medals field=medal_fields title="Most medals" header=medal_headers paging="resource_most_medals_paging.html" header_icon=True %}
 
     {% if has_country and resource.has_country_medal and country_medals.exists %}
     <div class="col-md-6 col-lg-4{% if mute_country_rating %} text-muted{% endif %}">
@@ -236,11 +236,9 @@
                 <tr>
                     <th>N</th>
                     <th>Country</th>
-                    <th>{% icon_to "n_win" %}</th>
-                    <th>{% icon_to "n_gold" %}</th>
-                    <th>{% icon_to "n_silver" %}</th>
-                    <th>{% icon_to "n_bronze" %}</th>
-                    <th>{% icon_to "sum" %}</th>
+                    {% for header in medal_headers|split:"," %}
+                    <th>{% icon_to header %}</th>
+                    {% endfor %}
                 </tr>
                 {% include "resource_country_most_medals.html" %}
             </table>

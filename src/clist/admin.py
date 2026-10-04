@@ -283,6 +283,7 @@ class ResourceAdmin(BaseModelAdmin):
                     "has_statistic_n_total_solved",
                     "has_statistic_n_first_ac",
                     "has_statistic_medal",
+                    "medal_win_equals_gold",
                     "has_statistic_place",
                     "has_account_n_writers",
                     "has_account_last_submission",

@@ -3,11 +3,14 @@ import os
 import tempfile
 from datetime import timedelta
 from unittest import mock
+from urllib.parse import parse_qs, urlsplit
 
 import pytest
 import yaml
+from bs4 import BeautifulSoup
 from django.conf import settings
-from django.contrib.auth.models import AnonymousUser
+from django.contrib import admin
+from django.contrib.auth.models import AnonymousUser, User
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
 from django.core.management.base import CommandError
@@ -35,7 +38,7 @@ from clist.templatetags.extras import (
 from clist.views import get_view_contests
 from pyclist.indexes import GinIndexTrgrmOps
 from pyclist.sitemaps import CodersSitemap, ResourcesSitemap, StandingsSitemap, StaticViewSitemap, sitemaps
-from ranking.models import Account
+from ranking.models import Account, CountryAccount
 from true_coders.models import Coder
 
 
@@ -381,6 +384,169 @@ class SitemapTest(TestCase):
 
         assert response.status_code == 200
         assert f'<link rel="canonical" href="http://testserver{location}">' in response.content.decode()
+
+
+@override_settings(MIDDLEWARE=MIDDLEWARE_WITHOUT_DEBUG_TOOLING)
+class ResourceMedalDisplayTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        patcher = mock.patch.object(Resource, "update_icon")
+        patcher.start()
+        cls.addClassCleanup(patcher.stop)
+        cls.resource = Resource.objects.create(
+            host="medal-display.example.com",
+            url="https://medal-display.example.com/",
+            enable=True,
+            has_statistic_medal=True,
+            has_country_medal=True,
+        )
+        Account.objects.bulk_create([
+            Account(
+                resource=cls.resource,
+                key=f"medal-user-{index}",
+                url=reverse("coder:account", args=[f"medal-user-{index}", cls.resource.host]),
+                country="PL",
+                n_win=3,
+                n_gold=5,
+                n_silver=7,
+                n_bronze=11,
+                n_medals=23,
+            )
+            for index in range(11)
+        ])
+        CountryAccount.objects.bulk_create([
+            CountryAccount(
+                resource=cls.resource,
+                country=country,
+                n_win=13,
+                n_gold=17,
+                n_silver=19,
+                n_bronze=23,
+                n_medals=59,
+            )
+            for country in ("PL", "DE", "FR", "ES", "IT", "GB", "US", "CA", "JP", "KR", "CN")
+        ])
+
+    def get_page(self, flag, **params):
+        self.resource.medal_win_equals_gold = flag
+        self.resource.save(update_fields=["medal_win_equals_gold"])
+        response = self.client.get(
+            reverse("clist:resource", args=[self.resource.host]),
+            params,
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest" if params else "",
+        )
+        assert response.status_code == 200
+        return response
+
+    def assert_medal_row(self, row, flag, country=False):
+        expected = [13, 19, 23, 59] if country else [3, 7, 11, 23]
+        if flag is False:
+            expected.insert(1, 17 if country else 5)
+        cells = row.find_all("td", recursive=False)[2:]
+        assert [int(cell.get_text(strip=True)) for cell in cells] == expected
+        if not country:
+            filters = ["place:1", "medal:silver", "medal:bronze", "medal:"]
+            if flag is False:
+                filters.insert(1, "medal:gold")
+            assert [parse_qs(urlsplit(cell.find("a")["href"]).query)["search"][0] for cell in cells] == filters
+
+    def test_admin_form_accepts_all_three_states(self):
+        request = RequestFactory().get("/admin/clist/resource/")
+        request.user = mock.Mock(is_superuser=True)
+        form_class = admin.site._registry[Resource].get_form(request)
+        field = form_class.base_fields["medal_win_equals_gold"]
+        for value, expected in (("unknown", None), ("true", True), ("false", False)):
+            assert field.clean(value) is expected
+
+    def test_resource_medal_tables_and_shortcut_follow_setting(self):
+        for flag in (None, True, False):
+            with self.subTest(flag=flag):
+                response = self.get_page(flag)
+                soup = BeautifulSoup(response.content, "html.parser")
+                for title, country in (("Most medals", False), ("Countries most medals", True)):
+                    header = next(element for element in soup.find_all("h4") if title in element.get_text())
+                    table = header.find_next("table")
+                    columns = table.find("tr").find_all("th")[2:]
+                    assert len(columns) == (5 if flag is False else 4)
+                    assert "fa-trophy" in str(columns[0])
+                    assert ("gold-trophy" in str(columns[1])) is (flag is False)
+                    row = next(row for row in table.find_all("tr") if len(row.find_all("td", recursive=False)) > 2)
+                    self.assert_medal_row(row, flag, country=country)
+                    if not country:
+                        shortcut = parse_qs(urlsplit(header.find("a")["href"]).query)
+                        fields = ["n_win", "n_silver", "n_bronze", "n_medals"]
+                        if flag is False:
+                            fields.insert(1, "n_gold")
+                        assert shortcut["field"] == shortcut["sort_column"] == fields
+
+                account = Account.objects.filter(resource=self.resource).first()
+                assert account.n_gold == 5
+                assert account.n_medals == 23
+                self.resource.refresh_from_db()
+                assert self.resource.medal_win_equals_gold is flag
+
+    def test_medal_pagination_keeps_columns_and_filters(self):
+        for flag in (None, True, False):
+            for page, country in (("most_medals_page", False), ("country_most_medals_page", True)):
+                with self.subTest(flag=flag, page=page):
+                    response = self.get_page(flag, **{page: 2, "querystring_key": page})
+                    assert response.context["page_template"] == (
+                        "resource_country_most_medals.html" if country else "resource_most_medals_paging.html"
+                    )
+                    soup = BeautifulSoup(response.content, "html.parser")
+                    rows = [row for row in soup.find_all("tr") if len(row.find_all("td", recursive=False)) > 2]
+                    assert len(rows) == 1
+                    self.assert_medal_row(rows[0], flag, country=country)
+
+    def create_primary_medal_entries(self):
+        account = Account.objects.filter(resource=self.resource).order_by("id").first()
+        country = CountryAccount.objects.get(resource=self.resource, country="PL")
+        user = User.objects.create_user(username="medal-display-user")
+        coder = Coder.objects.create(user=user, country="PL")
+        coder.account_set.add(account)
+        self.client.force_login(user)
+        return account, country
+
+    def assert_primary_medal_positions(self, account, country):
+        for flag in (None, True, False):
+            for page in (None, "most_medals_page", "country_most_medals_page"):
+                with self.subTest(flag=flag, page=page):
+                    params = {page: 2, "querystring_key": page} if page else {}
+                    response = self.get_page(flag, **params)
+                    soup = BeautifulSoup(response.content, "html.parser")
+                    for name, context_key, primary in (
+                        ("most_medals", "most_medals", account),
+                        ("country_most_medals", "country_medals", country),
+                    ):
+                        if page and page != f"{name}_page":
+                            continue
+                        ordered_ids = list(response.context[context_key].values_list("pk", flat=True))
+                        position = ordered_ids.index(primary.pk) + 1
+                        assert position == 11
+                        rows = soup.find_all(
+                            "tr", attrs={"data-delete-on-duplicate": f"delete-on-duplicate-{name}-{primary.pk}"}
+                        )
+                        pinned_rows = [row for row in rows if not row.has_attr("data-delete-on-duplicate-stop")]
+                        assert len(pinned_rows) == 1
+                        cells = pinned_rows[0].find_all("td", recursive=False)
+                        assert int(cells[0].get_text(strip=True)) == position
+                        assert len(cells) == (7 if flag is False else 6)
+
+    def test_primary_medal_positions_include_hidden_gold(self):
+        account, country = self.create_primary_medal_entries()
+        Account.objects.filter(pk=account.pk).update(n_gold=4, n_silver=8)
+        CountryAccount.objects.filter(pk=country.pk).update(n_gold=16, n_silver=20)
+
+        self.assert_primary_medal_positions(account, country)
+
+    def test_primary_medal_positions_follow_other_medals_order(self):
+        account, country = self.create_primary_medal_entries()
+        Account.objects.filter(resource=self.resource).update(n_other_medals=1)
+        CountryAccount.objects.filter(resource=self.resource).update(n_other_medals=1)
+        Account.objects.filter(pk=account.pk).update(n_other_medals=None)
+        CountryAccount.objects.filter(pk=country.pk).update(n_other_medals=None)
+
+        self.assert_primary_medal_positions(account, country)
 
 
 class LoggingSettingsTest(SimpleTestCase):

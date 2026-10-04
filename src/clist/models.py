@@ -140,6 +140,16 @@ class Resource(BaseModel):
     has_statistic_n_total_solved = models.BooleanField(null=True, blank=True)
     has_statistic_n_first_ac = models.BooleanField(null=True, blank=True)
     has_statistic_medal = models.BooleanField(null=True, blank=True)
+    medal_win_equals_gold = models.BooleanField(
+        default=None,
+        null=True,
+        blank=True,
+        help_text=(
+            "Unknown: assume wins equal gold medals until a difference is found, then keep No. "
+            "Yes: always hide gold medals. No: show wins and gold separately. "
+            "Choose Unknown again to resume automatic detection."
+        ),
+    )
     has_statistic_place = models.BooleanField(null=True, blank=True)
     has_account_last_submission = models.BooleanField(null=True, blank=True)
     has_account_n_writers = models.BooleanField(null=True, blank=True)

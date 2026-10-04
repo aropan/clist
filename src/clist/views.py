@@ -795,7 +795,17 @@ def resource(request, resource, template="resource.html", extra_context=None):
     else:
         primary_country = None
 
-    medals_order = [F(f).desc(nulls_last=True) for f in ("n_win", "n_gold", "n_silver", "n_bronze", "n_other_medals")]
+    medal_order_fields = ("n_win", "n_gold", "n_silver", "n_bronze", "n_other_medals")
+    medals_order = [F(field).desc(nulls_last=True) for field in medal_order_fields]
+    medal_columns = [
+        {"field": "n_win", "header": "n_win", "filter_field": "place", "filter_value": "1"},
+        {"field": "n_gold", "header": "n_gold", "filter_field": "medal", "filter_value": "gold"},
+        {"field": "n_silver", "header": "n_silver", "filter_field": "medal", "filter_value": "silver"},
+        {"field": "n_bronze", "header": "n_bronze", "filter_field": "medal", "filter_value": "bronze"},
+        {"field": "n_medals", "header": "sum", "filter_field": "medal", "filter_value": ""},
+    ]
+    if resource.medal_win_equals_gold is not False:
+        medal_columns = [column for column in medal_columns if column["field"] != "n_gold"]
     places_order = [
         F(f).desc(nulls_last=True) for f in ("n_first_places", "n_second_places", "n_third_places", "n_top_ten_places")
     ]
@@ -808,6 +818,11 @@ def resource(request, resource, template="resource.html", extra_context=None):
 
     context = {
         "resource": resource,
+        "medal_fields": ",".join(column["field"] for column in medal_columns),
+        "medal_row_number_fields": ",".join(medal_order_fields),
+        "medal_headers": ",".join(column["header"] for column in medal_columns),
+        "medal_statistics_filter_fields": ",".join(column["filter_field"] for column in medal_columns),
+        "medal_statistics_filter_values": ",".join(column["filter_value"] for column in medal_columns),
         "period_select": period_select,
         "verification_fields_select": verification_fields_select,
         "coder": coder,

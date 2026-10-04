@@ -1,4 +1,4 @@
-{% coder_account_filter accounts primary_account row_number_field=field operator="__gt" as coder_accounts %}
+{% coder_account_filter accounts primary_account row_number_field=row_number_field|default:field operator="__gt" as coder_accounts %}
 {% define name|add:"_page" as name_page %}
 {% lazy_paginate first_per_page,per_page accounts using name_page %}
 {% get_pages %}

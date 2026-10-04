@@ -1,4 +1,4 @@
-{% coder_account_filter countries primary_country row_number_field=field operator="__gt" as primary_countries %}
+{% coder_account_filter countries primary_country row_number_field=row_number_field|default:field operator="__gt" as primary_countries %}
 {% define name|add:"_page" as name_page %}
 {% define name as duplicate_name %}
 {% lazy_paginate first_per_page,per_page countries using name_page %}
