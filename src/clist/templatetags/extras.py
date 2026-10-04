@@ -623,9 +623,10 @@ def get_country_name(code):
 
 @register.filter
 def get_country_code(name):
-    if not name or is_country_code(name):
+    if name is None:
         return name
-    return countries.by_name(name) or countries.alpha2(name)
+    name = str(name)
+    return countries.alpha2(name) or countries.by_name(name)
 
 
 @register.filter

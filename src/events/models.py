@@ -260,8 +260,8 @@ class Team(BaseModel):
 
     @property
     def country(self):
-        country, _repeat = Counter(p.country.name for p in self.participants.all()).most_common(1)[0]
-        return country
+        countries = Counter(p.country.name for p in self.participants.all() if p.country and p.country.name)
+        return countries.most_common(1)[0][0] if countries else ""
 
     @property
     def status_label(self):

@@ -19,6 +19,7 @@ from django.test import RequestFactory, SimpleTestCase, TestCase, override_setti
 from django.test.utils import CaptureQueriesContext
 from django.urls import resolve, reverse
 from django.utils import timezone
+from django_countries.fields import Country
 from geoip2.errors import AddressNotFoundError
 from oauth2_provider.checks import validate_bcp_configuration
 from oauth2_provider.models import Application
@@ -53,6 +54,16 @@ class CountryTemplateTagsTest(SimpleTestCase):
         assert get_country_from({"request": self.request}, None, {"BY": "BPR"}) is None
         assert get_country_code(None) is None
         assert get_country_code("") == ""
+
+    def test_country_objects_and_alternative_codes_are_normalized(self):
+        for value in (Country("BY"), "BY", "by", "BLR", "112", "Belarus"):
+            with self.subTest(value=value):
+                assert get_country_code(value) == "BY"
+
+    def test_unknown_and_empty_country_objects_are_supported(self):
+        for value in (Country("XX"), Country("ZZ"), Country(None), Country(""), "unknown country"):
+            with self.subTest(value=value):
+                assert get_country_code(value) == ""
 
     def test_non_routable_ip_skips_geoip_lookup(self):
         geoip = mock.Mock()
