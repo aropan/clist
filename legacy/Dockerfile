@@ -1,4 +1,4 @@
-FROM php:8-fpm@sha256:66fa07efea21b7060323c8850e116c9f83b143e5928470d522e7e3f9d3dd6cb0
+FROM php:8-fpm@sha256:584e584083bada479f0ee733a3025722a68e366eb721e618d1b6a252e4ff45c5
 
 # Use the default production configuration
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
