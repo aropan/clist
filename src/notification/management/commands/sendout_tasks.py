@@ -32,7 +32,6 @@ from tg.models import Chat
 from utils.traceback_with_vars import colored_format_exc
 
 logger = getLogger("notification.sendout.tasks")
-lock = FileLock("sharedfiles/lock/sendout_tasks.lock")
 
 
 class Command(BaseCommand):
@@ -185,8 +184,11 @@ class Command(BaseCommand):
             yaml.dump(self.config, fo, indent=2)
 
     @print_sql_decorator()
-    @lock
     def handle(self, *args, **options):
+        with FileLock("sharedfiles/lock/sendout_tasks.lock"):
+            return self._handle(*args, **options)
+
+    def _handle(self, *args, **options):
         self.load_config()
         dryrun = options.get("dryrun")
         coders = options.get("coders")

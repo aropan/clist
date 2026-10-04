@@ -4,6 +4,7 @@ from contextlib import redirect_stdout
 from datetime import UTC, datetime, timedelta
 from importlib import import_module
 from io import StringIO
+from multiprocessing import get_context
 from tempfile import TemporaryDirectory
 from unittest.mock import Mock, call, patch
 
@@ -11,6 +12,7 @@ from django.conf import settings
 from django.core.management import call_command
 from django.test import SimpleTestCase, TestCase
 from django.utils.timezone import now
+from filelock import FileLock, Timeout
 from telegram.error import BadRequest, ChatMigrated, Forbidden
 
 from clist.models import Contest, Resource
@@ -240,6 +242,63 @@ Warning: json = false in /usr/src/legacy/module/my.newtonschool.co/index.php on 
         second_error = "[2026-08-16 12:01:00] ERROR [worker.run:10] failed"
 
         assert self.command._error_signature(first_error) == self.command._error_signature(second_error)
+
+
+class SendoutTasksLockTest(SimpleTestCase):
+    def run_in_child(self, command):
+        context = get_context("fork")
+        reader, writer = context.Pipe(duplex=False)
+
+        def run():
+            try:
+                command.handle()
+                writer.send("processed")
+            except Timeout:
+                writer.send("locked")
+            except Exception as error:
+                writer.send(repr(error))
+            finally:
+                writer.close()
+
+        process = context.Process(target=run)
+        try:
+            process.start()
+            writer.close()
+            assert reader.poll(10), "Sendout child did not finish"
+            result = reader.recv()
+            process.join(10)
+            assert process.exitcode == 0
+            return result
+        finally:
+            if process.is_alive():
+                process.terminate()
+                process.join(10)
+            reader.close()
+
+    def test_imported_command_can_run_after_fork(self):
+        with (
+            TemporaryDirectory() as directory,
+            patch(
+                "notification.management.commands.sendout_tasks.FileLock",
+                side_effect=lambda _: FileLock(f"{directory}/sendout.lock", timeout=0),
+            ),
+            patch.object(Command, "_handle"),
+        ):
+            command = Command()
+            command.handle()
+            assert self.run_in_child(command) == "processed"
+
+    def test_forked_command_still_respects_another_process_lock(self):
+        with (
+            TemporaryDirectory() as directory,
+            patch(
+                "notification.management.commands.sendout_tasks.FileLock",
+                side_effect=lambda _: FileLock(f"{directory}/sendout.lock", timeout=0),
+            ),
+            patch.object(Command, "_handle"),
+            FileLock(f"{directory}/sendout.lock"),
+        ):
+            assert self.run_in_child(Command()) == "locked"
 
 
 class SendoutTasksCleanupTest(TestCase):
