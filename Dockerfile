@@ -100,7 +100,7 @@ RUN chmod 0644 /etc/logrotate.d/clist
 CMD ["scripts/start-production.bash"]
 
 
-FROM nginx:stable-alpine@sha256:985220252f3863977e468f611ef118ebd01421289dd86ee1ae99cb068c3bce2b AS nginx
+FROM nginx:stable-alpine@sha256:0985e772fb9f729e6fa0980da05fca5d9c468e870eed43071545afa9d2e27d94 AS nginx
 # logrotate
 RUN apk add --no-cache logrotate
 COPY config/nginx/logrotate.d/nginx /etc/logrotate.d/nginx
