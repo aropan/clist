@@ -245,13 +245,8 @@ def signup(request, action=None):
         user = None
         if token.coder:
             user = token.coder.user
-        elif token.email and (
-            t := Token.objects.filter(email=token.email, coder__isnull=False).filter(~Q(id=token_id)).first()
-        ):
-            user = t.coder.user
-            token.coder = user.coder
-            token.save()
         elif request.user.is_authenticated:
+            # Matching email addresses are only hints; linking requires an authenticated owner.
             token.coder = request.user.coder
             token.save()
             return signup(request)
