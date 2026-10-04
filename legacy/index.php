@@ -24,6 +24,7 @@ if (!isset($_SERVER['DOCUMENT_ROOT'])) {
 }
 
 require_once 'config.php';
+require_once __DIR__ . '/resource_filter.php';
 
 if (isset($_GET['timezone']) && !isset($atimezone[$_GET['timezone']])) {
     $timezone = $_GET['timezone'];
@@ -95,9 +96,7 @@ if (isset($tz_return) && $tz_return) {
 if (isset($_GET['action'])) {
     switch ($_GET['action']) {
         case 'resources':
-            if (!isset($_GET['arid'])) {
-                $_GET['arid'] = [-1];
-            }
+            $_GET['arid'] = normalize_resource_ids($_GET['arid'] ?? []);
             setcookie('arid', serialize($_GET['arid']), time() + 365 * 24 * 60 * 60);
             break;
     }
@@ -119,23 +118,17 @@ $durationlimit = isset($_GET['durationlimit']) && array_search($_GET['durationli
 
 $view = isset($_GET['view']) ? $_GET['view'] : (isset($_COOKIE['view']) ? $_COOKIE['view'] : 'list');
 $mode = isset($_GET['mode']) ? $_GET['mode'] : (isset($_COOKIE['mode']) ? $_COOKIE['mode'] : 'normal');
-$arid = isset($_GET['arid']) ? $_GET['arid'] : (isset($_COOKIE['arid']) ? unserialize(stripslashes($_COOKIE['arid'])) : []);
+$arid = isset($_GET['arid']) ? normalize_resource_ids($_GET['arid']) : resource_ids_from_cookie($_COOKIE['arid'] ?? '');
 $tabs = isset($_GET['tabs']) ? $_GET['tabs'] : (isset($_COOKIE['tabs']) ? $_COOKIE['tabs'] : 'current');
 
 //    echo strlen(stripslashes($_COOKIE['arid']));
 //    die(strlen($_COOKIE['arid']));
 
-if (isset($_GET['byhosts'])) {
+if (isset($_GET['byhosts']) && is_string($_GET['byhosts'])) {
     $hosts = explode(',', $_GET['byhosts']);
-    //$hosts = array_map('mysql_real_escape_string', $hosts);
-    $hosts = $db->escapeArray($hosts);
-    $hosts = "'" . implode("', '", $hosts) . "'";
-    $arid = $db->select('clist_resource', 'id', "host not in ($hosts)");
-    $arid = array_map(create_function('$r', 'return $r["id"];'), $arid);
-}
-
-if ($arid === false || count($arid) == 0) {
-    $arid = [-1];
+    $placeholders = implode(', ', array_map(fn($index) => '$' . $index, range(1, count($hosts))));
+    $resources = $db->getArray("SELECT id FROM clist_resource WHERE host NOT IN ($placeholders)", $hosts);
+    $arid = normalize_resource_ids(array_column($resources, 'id'));
 }
 
 $dtimezone = $atimezone[$timezone]['value'];
@@ -206,9 +199,10 @@ switch ($_GET['type']) {
         }
         break;
 }
-$where = 'not clist_contest.resource_id in (' . implode(',', $arid) . ')';
+$resource_ids = '{' . implode(',', $arid) . '}';
+$where = 'NOT (clist_contest.resource_id = ANY($1::integer[]))';
 
-$resources = $db->getArray('SELECT host FROM clist_resource WHERE  NOT id IN (' . implode(',', $arid) . ') ORDER BY host');
+$resources = $db->getArray('SELECT host FROM clist_resource WHERE NOT (id = ANY($1::integer[])) ORDER BY host', [$resource_ids]);
 $desc_header = '';
 //    $desc_header = " " . $atimezone[$timezone]['text'] . ".";
 $a = [];
@@ -232,7 +226,7 @@ switch ($view) {
     case 'calendar':
         $src = 'https://www.google.com/calendar/embed?title=+&amp;wkst=2&amp;hl=en&amp;bgcolor=%23FFFFFF';
 
-        $resources = $db->getArray("SELECT * FROM clist_resource WHERE uid <> '' AND NOT id IN (" . implode(',', $arid) . ') ORDER BY host');
+        $resources = $db->getArray("SELECT * FROM clist_resource WHERE uid <> '' AND NOT (id = ANY($1::integer[])) ORDER BY host", [$resource_ids]);
 
         //if (count($resources) > 50)
         //{
@@ -258,16 +252,16 @@ switch ($view) {
 
         if ($view == 'rss') {
             $time_week_before = date('Y-m-d H:i:s', time() - 7 * 24 * 60 * 60);
-            $contests = $db->getArray("select * from clist_contest where $where and (end_time > '$time') and (created > '$time_week_before') order by created desc, title");
+            $contests = $db->getArray("select * from clist_contest where $where and (end_time > $2) and (created > $3) order by created desc, title", [$resource_ids, $time, $time_week_before]);
         } else {
             switch ($mode) {
                 case 'latestadded':
-                    $contests = $db->getArray("select * from clist_contest where $where and (end_time > '$time') order by created desc, title");
+                    $contests = $db->getArray("select * from clist_contest where $where and (end_time > $2) order by created desc, title", [$resource_ids, $time]);
                     break;
 
                 default:
-                    $coming_contests = $db->getArray("select * from clist_contest where $where and (start_time > '$time') order by start_time, title");
-                    $past_running_contests = $db->getArray("select * from clist_contest where $where and (end_time > '$time_day_before' and start_time <= '$time') order by end_time, title");
+                    $coming_contests = $db->getArray("select * from clist_contest where $where and (start_time > $2) order by start_time, title", [$resource_ids, $time]);
+                    $past_running_contests = $db->getArray("select * from clist_contest where $where and (end_time > $2 and start_time <= $3) order by end_time, title", [$resource_ids, $time_day_before, $time]);
                     if (count($coming_contests)) {
                         $contests = array_merge($past_running_contests, array_combine(range(count($past_running_contests), count($past_running_contests) + count($coming_contests) - 1), $coming_contests));
                     } else {

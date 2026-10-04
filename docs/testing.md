@@ -153,6 +153,13 @@ Python and JavaScript.
 
 ## Legacy schedule parser tests
 
+The legacy resource filter also has offline tests covering request/cookie input,
+bound SQL parameters, and the database wrapper without network or database access:
+
+```bash
+docker compose exec -T legacy php tests/test_resource_filter.php
+```
+
 Contest schedule parsing lives in legacy PHP (`legacy/module/<host>/index.php`,
 driven by `legacy/update.php`). Offline regression fixtures replay recorded HTTP
 responses against a single module and diff its normalized raw `$contests[]` output

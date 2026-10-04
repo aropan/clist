@@ -35,12 +35,13 @@ class db
     /**
      * @param string $sql
      * @param bool $ignore_error
+     * @param array|null $params
      * @return resource|bool
      */
-    public function query($sql, $ignore_error = false): mixed
+    public function query($sql, $ignore_error = false, ?array $params = null): mixed
     {
         global $is_debug;
-        $this->result = pg_query($this->link, $sql);
+        $this->result = $params === null ? pg_query($this->link, $sql) : pg_query_params($this->link, $sql, $params);
         if (!$this->result && $is_debug && !$ignore_error) {
             print "
                     <span style=\"color:#555555;font-size:12pt;font-family:'Arial';font-weight:bold;\">SQL query error:<br>&nbsp;&nbsp;&nbsp;Query: </span>
@@ -74,12 +75,13 @@ class db
 
     /**
      * @param string $sql
+     * @param array|null $params
      * @return array
      */
-    public function getArray($sql): array
+    public function getArray($sql, ?array $params = null): array
     {
         $arr = [];
-        $this->result = $this->query($sql);
+        $this->result = $this->query($sql, false, $params);
         while ($this->result && ($x = pg_fetch_assoc($this->result))) {
             $arr[] = $x;
         }
