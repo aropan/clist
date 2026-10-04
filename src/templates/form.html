@@ -28,9 +28,11 @@
     {% else %}
       {% if token %}
       <div class="action-button">
-        <a class="btn btn-default" href="?action=logout">{% icon_to 'logout' '' %} Log out {{ token.email|default:token.data.login }}</a>
+        <a class="btn btn-default" href="?action=logout">{% icon_to 'logout' '' %} Log out {% firstof token.email token.data.login token.user_id %}</a>
       </div>
-        {% if credential and credential.is_approved %}
+        {% if error %}
+          <div class="alert alert-warning">{{ error }}</div>
+        {% elif credential and credential.is_approved %}
           <div class="credentials">
             <table class="table table-credentials">
               <tr>

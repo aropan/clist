@@ -34,12 +34,27 @@ def generate_state(size=20, chars=string.ascii_uppercase + string.digits):
     return "".join(random.choice(chars) for _ in range(size))
 
 
+def _clear_token_context(request):
+    for field in (
+        "token_url",
+        "token_id_field",
+        "token_timestamp_field",
+        "token_code_args",
+        "token_service_id",
+        "state",
+    ):
+        request.session.pop(field, None)
+
+
 def query(request, name):
+    service = get_object_or_404(Service.objects, name=name)
     redirect_url = request.GET.get("next")
     if redirect_url:
+        _clear_token_context(request)
         request.session["next"] = redirect_url
+    if request.session.get("token_service_id", service.pk) != service.pk:
+        return HttpResponseBadRequest("Unexpected OAuth service")
 
-    service = get_object_or_404(Service.objects, name=name)
     args = model_to_dict(service)
     args["redirect_uri"] = settings.HTTPS_HOST_URL_ + reverse("auth:response", args=(name,))
     args["state"] = generate_state()
@@ -69,6 +84,7 @@ def refresh(request, name):
         service__name=name,
         service__refresh_token_uri__isnull=False,
     )
+    _clear_token_context(request)
     access_token = refresh_acccess_token(token)
     request.session["token_url"] = reverse("coder:settings", kwargs={"tab": "social"})
     ret = process_access_token(request, token.service, access_token)
@@ -77,6 +93,9 @@ def refresh(request, name):
 
 
 def process_data(request, service, access_token, data):
+    if request.session.get("token_service_id", service.pk) != service.pk:
+        return HttpResponseBadRequest("Unexpected OAuth service")
+
     d = deepcopy(data)
     d.update(access_token)
     d = flatten(d, reducer="underscore")
@@ -97,6 +116,7 @@ def process_data(request, service, access_token, data):
     token.save()
 
     if redirect_url:
+        request.session.pop("token_service_id", None)
         if token_id_field := request.session.pop("token_id_field", None):
             request.session[token_id_field] = token.id
         if token_timestamp_field := request.session.pop("token_timestamp_field", None):
@@ -147,6 +167,8 @@ def process_access_token(request, service, access_token):
 
 def response(request, name):
     service = get_object_or_404(Service.objects, name=name)
+    if request.session.get("token_service_id", service.pk) != service.pk:
+        return HttpResponseBadRequest("Unexpected OAuth service")
     state = request.session.get(service.state_field, None)
     try:
         if state is None:
@@ -176,7 +198,7 @@ def response(request, name):
 
 
 def login(request):
-    request.session.pop("token_url", None)
+    _clear_token_context(request)
 
     redirect_url = request.GET.get("next")
     if request.user.is_authenticated:
@@ -327,27 +349,9 @@ def form(request, uuid):
     if not timestamp or timezone.now().timestamp() - timestamp > logout_delay.total_seconds():
         request.session.pop("form_token_id", None)
     token_id = request.session.get("form_token_id")
-    token = Token.objects.filter(pk=token_id).first() if token_id else None
-
-    credential = None
-
-    if form.is_closed():
-        token = None
-        code = None
-    elif token:
-        data = {k: quote(str(v)) for k, v in flatten(token.data, reducer="underscore").items()}
-        if form.grant_credentials:
-            with transaction.atomic():
-                credential = Credential.objects.filter(form=form, token=token).first()
-                if not credential:
-                    credential = Credential.objects.filter(form=form, token__isnull=True).order_by("?").first()
-                    credential.token = token
-                    credential.state = Credential.State.ASSIGNED
-                    credential.save(update_fields=["token", "state"])
-            data["credential_login"] = credential.login
-        code = form.code.format(**data)
-    else:
-        code = None
+    token = None
+    if token_id and request.session.get("form_id") == str(form.pk):
+        token = Token.objects.filter(pk=token_id, service_id=form.service_id).first()
 
     action = request.GET.get("action")
     if action:
@@ -355,12 +359,17 @@ def form(request, uuid):
             return HttpResponseBadRequest("Form is closed")
         form_url = reverse("auth:form", args=(uuid,))
         if action == "login":
+            _clear_token_context(request)
+            request.session.pop("form_token_id", None)
+            request.session["form_id"] = str(form.pk)
+            request.session["token_service_id"] = form.service_id
             request.session["token_id_field"] = "form_token_id"
             request.session["token_timestamp_field"] = "form_token_timestamp"
             request.session["token_url"] = form_url
             request.session["token_code_args"] = form.service_code_args
             return redirect(reverse("auth:query", args=(form.service.name,)))
         if action == "logout":
+            _clear_token_context(request)
             request.session.pop("form_token_id", None)
         elif action == "register":
             if request.headers.get("X-Secret") != form.secret:
@@ -390,6 +399,37 @@ def form(request, uuid):
             return HttpResponseBadRequest("Unknown action")
         return allowed_redirect(form_url)
 
+    credential = None
+    code = None
+    error = None
+    if form.is_closed():
+        token = None
+    elif token:
+        data = {k: quote(str(v)) for k, v in flatten(token.data, reducer="underscore").items()}
+        if form.grant_credentials:
+            with transaction.atomic():
+                # Serialize requests for the same identity before checking its existing assignment.
+                Token.objects.select_for_update().get(pk=token.pk)
+                credential = Credential.objects.filter(form=form, token=token).first()
+                if not credential:
+                    credential = (
+                        Credential.objects
+                        .select_for_update(skip_locked=True)
+                        .filter(form=form, token__isnull=True, state=Credential.State.UNASSIGNED)
+                        .order_by("?")
+                        .first()
+                    )
+                    if credential:
+                        credential.token = token
+                        credential.state = Credential.State.ASSIGNED
+                        credential.save(update_fields=["token", "state"])
+            if credential:
+                data["credential_login"] = credential.login
+            else:
+                error = "No accounts are currently available. Please try again later."
+        if not error:
+            code = form.code.format(**data)
+
     return render(
         request,
         "form.html",
@@ -398,6 +438,7 @@ def form(request, uuid):
             "code": code,
             "token": token,
             "credential": credential,
+            "error": error,
             "nofavicon": True,
             "nocounter": True,
         },
