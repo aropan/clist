@@ -10,6 +10,7 @@ from unittest.mock import Mock, call, patch
 
 from django.conf import settings
 from django.core.management import call_command
+from django.db import transaction
 from django.test import SimpleTestCase, TestCase
 from django.utils.timezone import now
 from filelock import FileLock, Timeout
@@ -19,7 +20,7 @@ from clist.models import Contest, Resource
 from clist.templatetags.extras import md_url
 from notification.management.commands.check_logs import Command as CheckLogsCommand
 from notification.management.commands.sendout_tasks import Command
-from notification.models import Subscription, Task
+from notification.models import Notification, Subscription, Task
 from notification.utils import (
     CUSTOM_MESSAGE_PLACEHOLDERS,
     compose_message_by_custom_messages,
@@ -299,6 +300,45 @@ class SendoutTasksLockTest(SimpleTestCase):
             FileLock(f"{directory}/sendout.lock"),
         ):
             assert self.run_in_child(Command()) == "locked"
+
+
+class TaskDeletionTest(TestCase):
+    def setUp(self):
+        self.notification = Notification.objects.create(
+            method=settings.NOTIFICATION_CONF.TELEGRAM, before=0, period=Notification.EVENT, clear_on_delete=True
+        )
+        self.task = Task.objects.create(
+            notification=self.notification, response={"chat": {"id": 12345}, "message_id": 67890}
+        )
+
+    def test_telegram_message_is_deleted_only_after_commit(self):
+        with patch("tg.bot.Bot") as bot:
+            with self.captureOnCommitCallbacks(execute=True) as callbacks:
+                self.notification.delete()
+                bot.assert_not_called()
+            assert len(callbacks) == 1
+            bot.return_value.delete_message.assert_called_once_with(12345, 67890)
+
+    def test_rollback_does_not_delete_telegram_message(self):
+        task_id = self.task.pk
+        with (
+            patch("tg.bot.Bot") as bot,
+            self.captureOnCommitCallbacks(execute=True) as callbacks,
+            transaction.atomic(),
+        ):
+            self.task.delete()
+            transaction.set_rollback(True)
+        assert not callbacks
+        bot.assert_not_called()
+        assert Task.objects.filter(pk=task_id).exists()
+
+    def test_disabled_message_cleanup_does_not_schedule_callback(self):
+        self.notification.clear_on_delete = False
+        self.notification.save(update_fields=["clear_on_delete"])
+        with patch("tg.bot.Bot") as bot, self.captureOnCommitCallbacks(execute=True) as callbacks:
+            self.task.delete()
+        assert not callbacks
+        bot.assert_not_called()
 
 
 class SendoutTasksCleanupTest(TestCase):

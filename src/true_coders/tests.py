@@ -7,7 +7,8 @@ from unittest import mock
 from django.conf import settings as django_settings
 from django.contrib.auth.models import AnonymousUser, User
 from django.core.cache import cache
-from django.db import connection
+from django.db import connection, transaction
+from django.db.models.signals import pre_delete
 from django.test import RequestFactory, SimpleTestCase, TestCase, override_settings
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
@@ -16,6 +17,7 @@ from django_ratelimit.core import get_usage
 
 from clist.models import Contest, Resource
 from clist.templatetags.extras import profile_url
+from notification.models import Notification, Task
 from pyclist.middleware import CustomRequest
 from ranking.enums import AccountType
 from ranking.management.modules import algoleague, atcoder, codechef, cpython, hackerrank, lightoj
@@ -44,6 +46,74 @@ PROFILE_LINKS_MIDDLEWARE = [
         "silk.middleware.SilkyMiddleware",
     }
 ]
+
+
+@override_settings(CACHES={"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}})
+class ProfileDeletionPreviewTest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="deletion-preview")
+        self.coder = Coder.objects.create(user=self.user)
+        with mock.patch.object(Resource, "update_icon"):
+            resource = Resource.objects.create(
+                host="deletion-preview.example", url="https://deletion-preview.example", enable=True
+            )
+        self.account = Account.objects.create(resource=resource, key="owner")
+        self.account.coders.add(self.coder)
+        coder_list = CoderList.objects.create(name="Owned and shared list", owner=self.coder)
+        coder_list.shared_with_coders.add(self.coder)
+        notification = Notification.objects.create(
+            coder=self.coder,
+            method=django_settings.NOTIFICATION_CONF.TELEGRAM,
+            before=0,
+            period=Notification.EVENT,
+            clear_on_delete=True,
+        )
+        self.task = Task.objects.create(
+            notification=notification, response={"chat": {"id": 12345}, "message_id": 67890}
+        )
+
+    def preview(self):
+        request = RequestFactory().post("/change/", {"name": "pre-delete-user", "pk": self.coder.pk})
+        request.user = self.user
+        return change(request)
+
+    def test_preview_only_reads_dependencies(self):
+        receiver = mock.Mock()
+        pre_delete.connect(receiver, sender=Task)
+        try:
+            with (
+                mock.patch("tg.bot.Bot") as bot,
+                self.captureOnCommitCallbacks(execute=True) as callbacks,
+                CaptureQueriesContext(connection) as queries,
+            ):
+                response = self.preview()
+            assert response.status_code == 200
+            assert all(query["sql"].lstrip().upper().startswith("SELECT") for query in queries)
+            assert not callbacks
+            receiver.assert_not_called()
+            bot.assert_not_called()
+            assert User.objects.filter(pk=self.user.pk).exists()
+            assert Task.objects.filter(pk=self.task.pk).exists()
+            assert self.account.coders.filter(pk=self.coder.pk).exists()
+        finally:
+            pre_delete.disconnect(receiver, sender=Task)
+
+    def test_preview_counts_match_actual_cascade_including_account_links(self):
+        response = self.preview()
+        counts = {
+            name: int(count)
+            for name, count in (row.rsplit(": ", 1) for row in json.loads(response.content)["data"].splitlines())
+        }
+        with mock.patch("tg.bot.Bot") as bot, self.captureOnCommitCallbacks(execute=True), transaction.atomic():
+            links_before = self.coder.account_set.count()
+            _, deleted = User.objects.get(pk=self.user.pk).delete()
+            # The Coder pre_delete receiver removes these links before Django counts its cascade.
+            deleted["ranking.Account_coders"] = links_before - self.coder.account_set.count()
+            transaction.set_rollback(True)
+        assert counts == {name: count for name, count in deleted.items() if count}, (counts, deleted)
+        assert counts["ranking.Account_coders"] == 1
+        assert "ranking.Account" not in counts
+        bot.assert_not_called()
 
 
 class SettingsViewTest(TestCase):

@@ -17,7 +17,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from django.core.management import call_command
-from django.db import transaction
+from django.db import router, transaction
 from django.db.models import (
     BigIntegerField,
     BooleanField,
@@ -33,6 +33,7 @@ from django.db.models import (
     Value,
     When,
 )
+from django.db.models.deletion import Collector
 from django.db.models.fields.json import KeyTextTransform
 from django.db.models.functions import Cast
 from django.http import (
@@ -1897,22 +1898,20 @@ def change(request):
             "live_logs_data_url": reverse("ranking:live_logs_data"),
         })
     elif name == "pre-delete-user":
-
-        class RollbackException(Exception):
-            pass
-
-        try:
-            with transaction.atomic():
-                n_accounts = user.coder.account_set.count()
-                user.coder.account_set.clear()
-                _, delete_info = user.delete()
-                if n_accounts:
-                    delete_info.setdefault("ranking.Account_coders", n_accounts)
-                delete_info = [(k, v) for k, v in delete_info.items() if v]
-                delete_info.sort(key=lambda d: d[1], reverse=True)
-                raise RollbackException()
-        except RollbackException:
-            pass
+        collector = Collector(using=router.db_for_write(type(user), instance=user))
+        collector.collect([user])
+        delete_counts = Counter({model._meta.label: len(objects) for model, objects in collector.data.items()})
+        fast_delete_pks = {}
+        for queryset in collector.fast_deletes:
+            model = queryset.model
+            if collected := collector.data.get(model):
+                queryset = queryset.exclude(pk__in=[obj.pk for obj in collected])
+            pks = queryset.order_by().values_list("pk", flat=True)
+            # A relation can be reached through multiple cascade paths; count each row once.
+            fast_delete_pks[model] = fast_delete_pks[model].union(pks) if model in fast_delete_pks else pks
+        for model, pks in fast_delete_pks.items():
+            delete_counts[model._meta.label] += pks.count()
+        delete_info = sorted(((k, v) for k, v in delete_counts.items() if v), key=lambda d: d[1], reverse=True)
         delete_info = "\n".join(f"{k}: {v}" for k, v in delete_info)
         return JsonResponse({"status": "ok", "data": delete_info})
     elif name == "delete-user":

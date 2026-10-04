@@ -10,7 +10,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
-from django.db import models
+from django.db import models, transaction
 from django.db.models import F, Q
 from django.db.models.signals import m2m_changed, pre_delete
 from django.dispatch import receiver
@@ -276,7 +276,7 @@ class Task(BaseModel):
 
 
 @receiver(pre_delete, sender=Task)
-def delete_task(sender, instance, **kwargs):
+def delete_task(sender, instance, using, **kwargs):
     notification = instance.periodical_notification.first()
     if (
         notification is not None
@@ -286,11 +286,15 @@ def delete_task(sender, instance, **kwargs):
     ):
         from tg.bot import Bot
 
-        bot = Bot()
-        try:
-            bot.delete_message(instance.response["chat"]["id"], instance.response["message_id"])
-        except Exception:
-            traceback.print_exc()
+        response = instance.response
+
+        def delete_message():
+            try:
+                Bot().delete_message(response["chat"]["id"], response["message_id"])
+            except Exception:
+                traceback.print_exc()
+
+        transaction.on_commit(delete_message, using=using)
 
 
 class Calendar(BaseModel):
