@@ -136,8 +136,13 @@ class Statistic(BaseModule):
                     return None
                 return False
 
-            info = {}
             data = data["profile"]
+            if not isinstance(data, dict) or not data:
+                return False
+            info = {"profile_url": {"type": "profile"}}
+            username = data.get("userName")
+            if isinstance(username, str) and username.lower() == user.lower():
+                info["username"] = username
             avatar_url = data.pop("image", None)
             if avatar_url:
                 info["avatar_url"] = avatar_url
@@ -150,7 +155,7 @@ class Statistic(BaseModule):
             return info
 
         with PoolExecutor(max_workers=1) as executor:
-            for info in executor.map(fetch_profile, users, accounts):
+            for user, info in zip(users, executor.map(fetch_profile, users, accounts)):
                 if pbar:
                     pbar.update()
                 if not info:
@@ -159,5 +164,9 @@ class Statistic(BaseModule):
                     else:
                         yield {"skip": True}
                     continue
-                info = {"info": info}
-                yield info
+                ret = {"info": info}
+                if username := info.get("username"):
+                    ret["canonical_key"] = username
+                    if user != username:
+                        ret["rename"] = username
+                yield ret

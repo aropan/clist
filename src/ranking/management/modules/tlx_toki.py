@@ -214,9 +214,11 @@ class Statistic(BaseModule):
                     else:
                         yield {"skip": True}
                     continue
-                assert user == data["username"]
+                assert user.lower() == data["username"].lower()
 
-                ret = {"info": data}
+                ret = {"info": data, "canonical_key": data["username"]}
+                if user != data["username"]:
+                    ret["rename"] = data["username"]
 
                 if history:
                     contests = history["data"]

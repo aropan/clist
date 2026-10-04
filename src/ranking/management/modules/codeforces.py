@@ -1007,6 +1007,8 @@ class Statistic(BaseModule):
                     data.pop("titlePhoto")
                 data["name"] = " ".join([data[f] for f in ["firstName", "lastName"] if data.get(f)])
             info = {"info": data}
+            if data:
+                info["canonical_key"] = data["handle"]
 
             if parse_russian_name:
                 page = _get(f"https://{SUBDOMAIN}codeforces.com/profile/{user}", lang="ru")

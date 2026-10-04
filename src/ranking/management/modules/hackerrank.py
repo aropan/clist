@@ -406,6 +406,7 @@ class Statistic(BaseModule):
 
                 ret = {
                     "info": info,
+                    "canonical_key": data["username"],
                     "contest_addition_update_params": {
                         "update": contest_addition_update,
                         "by": "title",
@@ -413,7 +414,7 @@ class Statistic(BaseModule):
                     },
                 }
 
-                if user.lower() != data["username"].lower():
+                if user != data["username"]:
                     ret["rename"] = data["username"]
 
                 yield ret

@@ -674,6 +674,9 @@ class Statistic(BaseModule):
             re.VERBOSE,
         )
         avatar_re = re.compile(r"""<img[^>]*class=["']avatar["'][^>]*src=["'](?P<url>[^"']*/icons/[^"']*)["'][^>]*>""")
+        username_re = re.compile(
+            r"""<a(?=[^>]*\bclass=["'](?:[^"']*\s)?username(?:\s[^"']*)?["'])[^>]*\bhref=["']/users/(?P<username>[^/"'?#]+)["']"""
+        )
 
         @rate_limiter
         def fetch_profile(user):
@@ -688,7 +691,12 @@ class Statistic(BaseModule):
                     return None
                 return {}
             ret = {}
-            matches = key_value_re.finditer(page, re.VERBOSE)
+            for match in username_re.finditer(page):
+                username = html.unescape(match.group("username"))
+                if username.lower() == user.lower():
+                    ret["username"] = username
+                    break
+            matches = key_value_re.finditer(page)
             for match in matches:
                 key = match.group("key").strip()
                 value = match.group("value").strip()
@@ -727,7 +735,7 @@ class Statistic(BaseModule):
 
         with PoolExecutor(max_workers=8) as executor:
             profiles = executor.map(fetch_profile, users)
-            for data in profiles:
+            for user, data in zip(users, profiles):
                 if not data:
                     if data is None:
                         yield {"delete": True}
@@ -735,11 +743,16 @@ class Statistic(BaseModule):
                         yield {"skip": True}
                 else:
                     ret = {"info": data}
+                    if username := data.get("username"):
+                        ret["canonical_key"] = username
+                        if user != username:
+                            ret["rename"] = username
                     contest_addition_update_params = data.pop("_contest_addition_update_params", None)
                     if contest_addition_update_params:
                         ret["contest_addition_update_params"] = contest_addition_update_params
                     yield ret
-                pbar.update()
+                if pbar:
+                    pbar.update()
 
     @staticmethod
     def get_source_code(contest, problem):

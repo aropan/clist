@@ -223,7 +223,9 @@ class Statistic(BaseModule):
                     if data["rating"].get(field) is not None:
                         info[field] = data["rating"][field]
 
-            ret = {"info": info}
+            ret = {"info": info, "canonical_key": data["username"]}
+            if member != data["username"]:
+                ret["rename"] = data["username"]
             if info.get("rating") is not None:
                 history_url = f"https://samcoding.uz/profile/{quote(member, safe='')}/rating-history"
                 try:

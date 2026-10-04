@@ -632,12 +632,14 @@ class Statistic(BaseModule):
                         return None
                     return False
                 ret = json.loads(page)
-                if "error" in ret and isinstance(ret["error"], dict) and ret["error"].get("value") == 404:
-                    ret = {"handle": user, "action": "remove"}
-                if "handle" not in ret:
-                    if not ret or "error" in ret:
-                        ret["delta"] = timedelta(days=7)
-                    ret["handle"] = user
+                if not isinstance(ret, dict):
+                    return {"skip": True}
+                if "error" in ret:
+                    if isinstance(ret["error"], dict) and ret["error"].get("value") == 404:
+                        return None
+                    return {"skip": True}
+                if not ret.get("handle"):
+                    return {"skip": True}
 
                 for src, dst in (
                     ("homeCountryCode", "country"),
@@ -689,6 +691,10 @@ class Statistic(BaseModule):
                             raise ExceptionParseAccounts("Unknown error")
                         continue
 
+                    if data.get("skip"):
+                        yield {"skip": True, "delta": timedelta(days=7)}
+                        continue
+
                     proxy_address = req.proxer.proxy_address
                     if proxy_address and last_proxy != proxy_address:
                         last_proxy = proxy_address
@@ -698,4 +704,7 @@ class Statistic(BaseModule):
                     assert user.lower() == data["handle"].lower()
                     if pbar:
                         pbar.update()
-                    yield {"info": data}
+                    info = {"info": data, "canonical_key": data["handle"]}
+                    if user != data["handle"]:
+                        info["rename"] = data["handle"]
+                    yield info

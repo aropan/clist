@@ -1735,6 +1735,49 @@ def change(request):
                 if resource is None:
                     return HttpResponseBadRequest("Resource not found")
                 account = Account.objects.filter(resource=resource, key=value).first()
+                if (
+                    account is None
+                    and value
+                    and resource.has_accounts_infos_update
+                    and resource.has_account_verification
+                    and getattr(resource, "module", None)
+                    and not resource.account_set.filter(key__iexact=value).exists()
+                ):
+                    if resource.with_single_account() and coder.account_set.filter(resource=resource).exists():
+                        return HttpResponseBadRequest(f"Allow only one account for {resource.host}")
+                    usage = get_usage(request, group="discover-account", key="user", rate="10/h", increment=True)
+                    if usage["should_limit"]:
+                        delta = timedelta(seconds=usage["time_left"])
+                        return HttpResponseBadRequest(f"Try again in {humanize.naturaldelta(delta)}", status=429)
+                    try:
+                        infos = resource.plugin.Statistic.get_users_infos(
+                            users=[value], resource=resource, accounts=[Account(resource=resource, key=value)]
+                        )
+                        data = next(iter(infos), {})
+                    except Exception as e:
+                        logger.warning(f"Error while discovering account: {e}")
+                        data = {}
+                    if (
+                        isinstance(data, dict)
+                        and isinstance(data.get("info"), dict)
+                        and data["info"]
+                        and not data.get("skip")
+                        and not data.get("delete")
+                    ):
+                        key = data.get("rename", data.get("canonical_key"))
+                        if isinstance(key, str) and key and len(key) <= Account._meta.get_field("key").max_length:
+                            account, _created = Account.objects.get_or_create(
+                                resource=resource,
+                                key=key,
+                                defaults={
+                                    "need_verification": True,
+                                    "info": {
+                                        field: data["info"][field]
+                                        for field in Account.INITIAL_INFO_FIELDS
+                                        if field in data["info"]
+                                    },
+                                },
+                            )
                 if account is None:
                     accounts = resource.account_set.filter(
                         Q(key__istartswith=value)
@@ -1762,11 +1805,9 @@ def change(request):
             if account.coders.filter(pk=coder.id).first():
                 return HttpResponseBadRequest("Account is already connect to you")
 
-            need_verification = account.need_verification or (
-                resource.has_account_verification
-                and account.coders.exists()
-                and not VerifiedAccount.objects.filter(coder=coder, account=account).exists()
-            )
+            need_verification = (
+                account.need_verification or (resource.has_account_verification and account.coders.exists())
+            ) and not VerifiedAccount.objects.filter(coder=coder, account=account).exists()
 
             if resource.with_single_account():
                 if coder.account_set.filter(resource=resource).exists():

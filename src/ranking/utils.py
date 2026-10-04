@@ -83,6 +83,7 @@ def rename_account(old_account, new_account):
 
     last_activity = max_with_none(old_account.last_activity, new_account.last_activity)
     last_submission = max_with_none(old_account.last_submission, new_account.last_submission)
+    need_verification = old_account.need_verification or new_account.need_verification
 
     new_account = MergedModelInstance.create(new_account, [old_account])
     old_account.delete()
@@ -110,6 +111,7 @@ def rename_account(old_account, new_account):
     new_account.n_places = n_places
     new_account.last_activity = last_activity
     new_account.last_submission = last_submission
+    new_account.need_verification = need_verification
     new_account.save()
 
     return new_account

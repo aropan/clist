@@ -186,7 +186,7 @@ query GetScoreboard($id: ID!, $first: Int, $offset: Int) {
             profile_query = """
 query Profile($id: ID!) {
   member(id: $id) {
-    picture displayName createdAt inactive unofficial rank rating level
+    id picture displayName createdAt inactive unofficial rank rating level
     stats {
       streak problemsSolved submissionsTotal submissionsAccepted
     }
@@ -204,6 +204,10 @@ query Profile($id: ID!) {
                 if error.get("extensions", {}).get("code") == "NOT_FOUND":
                     return None
             data = data["data"]["member"]
+            if canonical_key := data.pop("id", None):
+                return_data["canonical_key"] = canonical_key
+                if canonical_key != account.key:
+                    return_data["rename"] = canonical_key
             account_data = data.pop("account")
             country = account_data.pop("country")
             if country:

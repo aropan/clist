@@ -111,6 +111,7 @@ class CodeforcesUsersInfoTest(SimpleTestCase):
             {"delete": True},
             {
                 "info": {"handle": "tourist", "name": ""},
+                "canonical_key": "tourist",
                 "special_info_fields": {"name_ru"},
             },
         ]

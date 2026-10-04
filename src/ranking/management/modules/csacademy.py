@@ -147,17 +147,24 @@ class Statistic(BaseModule):
             except FailOnGetResponse:
                 return False
 
-            for publicuser in data["state"]["publicuser"]:
-                if publicuser["username"] == user:
-                    break
-            else:
+            publicusers = data["state"]["publicuser"]
+            publicuser = next((item for item in publicusers if item.get("username") == user), None)
+            if publicuser is None:
+                matches = [
+                    item
+                    for item in publicusers
+                    if isinstance(item.get("username"), str) and item["username"].lower() == user.lower()
+                ]
+                if len(matches) == 1:
+                    publicuser = matches[0]
+            if publicuser is None:
                 return False
 
             info = {k: v for k, v in publicuser.items() if not k.endswith("Rating") and not k.endswith("History")}
             return info
 
         with PoolExecutor(max_workers=8) as executor:
-            for info in executor.map(fetch_profile, users):
+            for user, info in zip(users, executor.map(fetch_profile, users)):
                 if pbar:
                     pbar.update()
                 if not info:
@@ -166,5 +173,7 @@ class Statistic(BaseModule):
                     else:
                         yield {"skip": True, "delta": timedelta(days=365)}
                     continue
-                info = {"info": info}
-                yield info
+                ret = {"info": info, "canonical_key": info["username"]}
+                if user != info["username"]:
+                    ret["rename"] = info["username"]
+                yield ret

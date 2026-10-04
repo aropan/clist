@@ -604,7 +604,7 @@ class Statistic(BaseModule):
             return user, info, ratings
 
         with PoolExecutor(max_workers=8) as executor:
-            for _user, info, ratings in executor.map(fetch_ratings, users, accounts):
+            for user, info, ratings in executor.map(fetch_ratings, users, accounts):
                 if pbar:
                     pbar.update()
                 if not info:
@@ -613,7 +613,7 @@ class Statistic(BaseModule):
                     else:
                         yield {"skip": True}
                     continue
-                info = {
+                ret = {
                     "info": info,
                     "contest_addition_update_params": {
                         "update": ratings,
@@ -621,7 +621,11 @@ class Statistic(BaseModule):
                         "clear_rating_change": True,
                     },
                 }
-                yield info
+                if info.get("userId") is not None:
+                    ret["canonical_key"] = str(info["userId"])
+                    if user != ret["canonical_key"]:
+                        ret["rename"] = ret["canonical_key"]
+                yield ret
 
     def get_versus(self, statistic, use_cache=True):
         agent_id = statistic.addition.get("agent_id")

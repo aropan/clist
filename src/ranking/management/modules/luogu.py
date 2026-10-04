@@ -182,6 +182,8 @@ class Statistic(BaseModule):
             data = json.loads(match.group("data"))
             ret["ratings"] = get_item(data, "data.elo") or []
             user_data = get_item(data, "data.user") or {}
+            if user_data.get("uid") is not None:
+                ret["_canonical_key"] = str(user_data["uid"])
 
             for k, v in user_data.items():
                 if isinstance(v, (dict, list)):
@@ -209,6 +211,10 @@ class Statistic(BaseModule):
                 assert user == data.pop("username")
 
                 ret = {"info": data}
+                if canonical_key := data.pop("_canonical_key", None):
+                    ret["canonical_key"] = canonical_key
+                    if user != canonical_key:
+                        ret["rename"] = canonical_key
 
                 contest_addition_update = {}
                 for rating in data.pop("ratings"):

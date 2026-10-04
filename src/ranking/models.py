@@ -91,6 +91,17 @@ class Account(BaseModel):
     n_places = models.IntegerField(default=None, null=True, blank=True)
     account_type = models.PositiveSmallIntegerField(choices=AccountType.choices, default=AccountType.USER)
 
+    # Profile data needed before the first full account update.
+    INITIAL_INFO_FIELDS = (
+        "profile_url",
+        "rating",
+        "is_team",
+        "is_member",
+        "is_university",
+        "is_virtual",
+        "_no_profile_url",
+    )
+
     objects = BaseManager()
     priority_objects = PriorityAccountManager()
 

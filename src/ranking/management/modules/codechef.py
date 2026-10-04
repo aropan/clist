@@ -350,7 +350,7 @@ class Statistic(BaseModule):
             inplace=False,
         ) as req:
             fetch_profle_page_func = partial(Statistic.fetch_profle_page, req=req)
-            for _user, (page, url) in zip(users, map(fetch_profle_page_func, users)):
+            for user, (page, url) in zip(users, map(fetch_profle_page_func, users)):
                 if pbar:
                     pbar.update()
 
@@ -389,6 +389,7 @@ class Statistic(BaseModule):
 
                     ret = {"info": info, "coders": coders}
                 else:
+                    username = data.get("currentUser")
                     data = data["date_versus_rating"]["all"]
 
                     matches = re.finditer(
@@ -476,6 +477,11 @@ class Statistic(BaseModule):
                         "info": info,
                         "contest_addition_update_params": contest_addition_update_params,
                     }
+                    if isinstance(username, str) and username.lower() == user.lower():
+                        info["username"] = username
+                        ret["canonical_key"] = username
+                        if user != username:
+                            ret["rename"] = username
 
                 yield ret
 

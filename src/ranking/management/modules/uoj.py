@@ -160,6 +160,11 @@ class Statistic(BaseModule):
             profile_url = resource.profile_url.format(account=handle)
             profile_page = req_get(profile_url, n_attempts=2)
             data = {}
+            match = re.search(r'<h2>\s*<span[^>]*class="uoj-honor"[^>]*>(?P<username>[^<]+)</span>', profile_page)
+            if match:
+                username = html.unescape(match.group("username")).strip()
+                if username.lower() == handle.lower():
+                    data["username"] = username
 
             matches = re.finditer(
                 r"""
@@ -186,7 +191,7 @@ class Statistic(BaseModule):
 
         with PoolExecutor(max_workers=8) as executor:
             profiles = executor.map(fetch_profile, users)
-            for _user, account, (data, history) in zip(users, accounts, profiles):
+            for user, account, (data, history) in zip(users, accounts, profiles):
                 if pbar:
                     pbar.update()
 
@@ -216,7 +221,7 @@ class Statistic(BaseModule):
                         update.pop("new_rating", None)
                         update.pop("rating_change", None)
 
-                yield {
+                ret = {
                     "info": data,
                     "contest_addition_update_params": {
                         "update": contest_addition_update,
@@ -226,3 +231,8 @@ class Statistic(BaseModule):
                         "try_fill_missed_ranks": True,
                     },
                 }
+                if username := data.get("username"):
+                    ret["canonical_key"] = username
+                    if user != username:
+                        ret["rename"] = username
+                yield ret

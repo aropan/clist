@@ -8,6 +8,7 @@ from copy import deepcopy
 from datetime import timedelta
 
 import yaml
+from lxml import etree
 
 from clist.templatetags.extras import as_number, slug
 from logify import live as tqdm
@@ -327,6 +328,12 @@ class Statistic(BaseModule):
             t = parsed_table.ParsedTable(html=tables[-1])
             ratings = {}
             info = {}
+            for url in etree.HTML(page).xpath("//link[@rel='canonical']/@href"):
+                path = urllib.parse.urlparse(url).path
+                match = re.fullmatch(r"/u/(?P<username>[^/]+)/ratings/?", path)
+                if match and match.group("username").lower() == user.lower():
+                    info["_canonical_key"] = match.group("username")
+                    break
             for row in t:
                 href = row["Contest"].column.node.xpath(".//a/@href")[0]
                 key = href.rstrip("/").split("/")[-1]
@@ -358,7 +365,7 @@ class Statistic(BaseModule):
             return user, info, ratings
 
         with PoolExecutor(max_workers=8) as executor:
-            for _user, info, ratings in executor.map(fetch_ratings, users, accounts):
+            for user, info, ratings in executor.map(fetch_ratings, users, accounts):
                 if pbar:
                     pbar.update()
                 if not info:
@@ -367,11 +374,15 @@ class Statistic(BaseModule):
                     else:
                         yield {"skip": True, "delta": timedelta(days=365)}
                     continue
-                info = {
+                ret = {
                     "info": info,
                     "contest_addition_update_params": {
                         "update": ratings,
                         "by": "key",
                     },
                 }
-                yield info
+                if canonical_key := info.pop("_canonical_key", None):
+                    ret["canonical_key"] = canonical_key
+                    if user != canonical_key:
+                        ret["rename"] = canonical_key
+                yield ret

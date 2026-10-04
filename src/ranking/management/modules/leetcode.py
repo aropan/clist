@@ -491,7 +491,7 @@ class Statistic(BaseModule):
 
     @staticmethod
     def is_china(account):
-        return account.key.endswith(".cn")
+        return account.key.lower().endswith(".cn")
 
     @staticmethod
     def get_users_infos(users, resource, accounts, pbar=None):
@@ -518,6 +518,9 @@ class Statistic(BaseModule):
                 profile_url["_domain"] = domain
                 profile_url["_handle"] = handle
                 LOG.warning(f"No domain for account {account.key}, set profile_url to {profile_url}")
+            profile_url["_domain"] = profile_url["_domain"].lower()
+            if profile_url["_domain"] not in Statistic.DOMAINS.values():
+                return account, False
             key = (profile_url["_domain"], profile_url["_handle"])
             if key in global_ranking_users:
                 return account, global_ranking_users[key]
@@ -959,9 +962,13 @@ class Statistic(BaseModule):
                 profile_url = account.info.setdefault("profile_url", {})
                 handle = profile_url["_handle"]
                 assert info
-                assert info["slug"].lower() == handle, (
+                assert info["slug"].lower() == handle.lower(), (
                     f"Account handle {handle} should be equal username {info['slug']}"
                 )
+                profile_url["_handle"] = info["slug"].lower()
+                ret["canonical_key"] = f"{profile_url['_handle']}@{profile_url['_domain']}"
+                if account.key != ret["canonical_key"]:
+                    ret["rename"] = ret["canonical_key"]
 
                 yield ret
 

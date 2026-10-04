@@ -1,25 +1,33 @@
 import inspect
+import json
 from datetime import timedelta
 from types import SimpleNamespace
 from unittest import mock
 
 from django.conf import settings as django_settings
 from django.contrib.auth.models import AnonymousUser, User
+from django.core.cache import cache
 from django.db import connection
 from django.test import RequestFactory, SimpleTestCase, TestCase, override_settings
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils import timezone
+from django_ratelimit.core import get_usage
 
 from clist.models import Contest, Resource
+from clist.templatetags.extras import profile_url
 from pyclist.middleware import CustomRequest
 from ranking.enums import AccountType
-from ranking.models import Account, Statistics
+from ranking.management.modules import algoleague, atcoder, codechef, cpython, hackerrank, lightoj
+from ranking.management.modules.common import BaseModule
+from ranking.models import Account, AccountVerification, Module, Statistics, VerifiedAccount
+from ranking.utils import rename_account
 from true_coders.models import Coder, CoderList
 from true_coders.views import (
     PROFILE_CONTESTS_PAGING_TEMPLATE,
     PROFILE_WRITERS_PAGING_TEMPLATE,
     _get_data_mixed_profile,
+    account_verification,
     change,
     get_profile_context,
     get_ratings_data,
@@ -453,6 +461,615 @@ class ChangeIntegerValidationTest(SimpleTestCase):
     def test_invalid_add_account_resource_is_rejected(self):
         response = self.post({"pk": "1", "name": "add-account", "resource": "", "value": "handle"})
         assert response.status_code == 400
+
+
+class AccountBindingTest(TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.user = User.objects.create_user(username="account-binding-test")
+        self.coder = Coder.objects.create(user=self.user, username=self.user.username, country=None)
+        icon_patcher = mock.patch.object(Resource, "update_icon")
+        icon_patcher.start()
+        self.addCleanup(icon_patcher.stop)
+        self.resource = Resource.objects.create(
+            host="account-binding.example",
+            url="https://account-binding.example/",
+            enable=True,
+            has_accounts_infos_update=True,
+            has_account_verification=True,
+        )
+        self.module = Module.objects.create(
+            resource=self.resource,
+            path="ranking/management/modules/codeforces",
+            max_delay_after_end=timedelta(days=1),
+            delay_on_error=timedelta(minutes=1),
+        )
+        self.lookup = mock.Mock(return_value=[{"info": {"handle": "missing"}, "canonical_key": "missing"}])
+        plugin = SimpleNamespace(
+            Statistic=SimpleNamespace(get_users_infos=self.lookup, get_account_fields=BaseModule.get_account_fields)
+        )
+        plugin_patcher = mock.patch.object(Resource, "plugin", new_callable=mock.PropertyMock, return_value=plugin)
+        plugin_patcher.start()
+        self.addCleanup(plugin_patcher.stop)
+        self.usage_patcher = mock.patch("true_coders.views.get_usage", return_value={"should_limit": False})
+        self.usage = self.usage_patcher.start()
+        self.addCleanup(self.usage_patcher.stop)
+
+    def add_account(self, value="missing", account=None):
+        data = {"pk": self.coder.pk, "name": "add-account", "value": value}
+        if account is None:
+            data["resource"] = self.resource.pk
+        else:
+            data["id"] = account.pk
+        request = self.factory.post("/settings/change/", data)
+        request.user = self.user
+        return change(request)
+
+    def assert_verification_redirect(self, response, account):
+        assert response.status_code == 302
+        assert json.loads(response.content) == {
+            "message": "redirect",
+            "url": reverse("coder:account_verification", kwargs={"key": account.key, "host": self.resource.host}),
+        }
+        assert not account.coders.filter(pk=self.coder.pk).exists()
+
+    def verify_account(self, account):
+        verification = AccountVerification.objects.create(coder=self.coder, account=account)
+        self.lookup.return_value = [{"info": {"firstName": verification.text()}}]
+        request = self.factory.post("/verification/", {"action": "verify"})
+        request.user = self.user
+        with mock.patch("true_coders.views.get_usage", return_value={"should_limit": False}):
+            return account_verification(request, key=account.key, host=self.resource.host)
+
+    def test_exact_local_account_does_not_use_discovery(self):
+        account = Account.objects.create(resource=self.resource, key="missing")
+
+        response = self.add_account()
+
+        assert response.status_code == 200
+        assert json.loads(response.content)["message"] == "add"
+        assert account.coders.filter(pk=self.coder.pk).exists()
+        self.lookup.assert_not_called()
+        self.usage.assert_not_called()
+
+    def test_case_insensitive_local_key_returns_suggestions_without_discovery(self):
+        for index, (key, value) in enumerate((
+            ("tourist", "TOURIST"),
+            ("gennady.korotkevich", "GENNADY.KOROTKEVICH"),
+            ("CaseSensitive", "casesensitive"),
+        )):
+            with self.subTest(key=key, value=value):
+                account = Account.objects.create(resource=self.resource, key=key)
+                self.lookup.return_value = [{"info": {"rating": 1500}}]
+
+                response = self.add_account(value=value)
+
+                assert response.status_code == 200
+                assert json.loads(response.content) == {"message": "suggest", "accounts": [account.dict()]}
+                assert Account.objects.count() == index + 1
+                assert not account.coders.exists()
+                self.lookup.assert_not_called()
+                self.usage.assert_not_called()
+
+    def test_account_id_does_not_use_discovery(self):
+        account = Account.objects.create(resource=self.resource, key="missing")
+
+        response = self.add_account(account=account)
+
+        assert response.status_code == 200
+        assert account.coders.filter(pk=self.coder.pk).exists()
+        self.lookup.assert_not_called()
+        self.usage.assert_not_called()
+
+    def test_missing_module_does_not_use_discovery(self):
+        self.module.delete()
+
+        response = self.add_account()
+
+        assert response.status_code == 400
+        assert response.content == b"Account not found"
+        assert not Account.objects.exists()
+        self.lookup.assert_not_called()
+
+    def test_required_resource_features_gate_discovery(self):
+        for field in ("has_accounts_infos_update", "has_account_verification"):
+            with self.subTest(field=field):
+                setattr(self.resource, field, False)
+                self.resource.save(update_fields=[field])
+
+                response = self.add_account()
+
+                assert response.status_code == 400
+                assert response.content == b"Account not found"
+                assert not Account.objects.exists()
+                self.lookup.assert_not_called()
+                setattr(self.resource, field, True)
+                self.resource.save(update_fields=[field])
+
+    def test_empty_handle_does_not_use_discovery(self):
+        response = self.add_account(value="")
+
+        assert response.status_code == 400
+        assert not Account.objects.exists()
+        self.lookup.assert_not_called()
+
+    def test_discovery_creates_account_requiring_verification(self):
+        response = self.add_account()
+
+        account = Account.objects.get(resource=self.resource, key="missing")
+        assert account.need_verification
+        assert account.info == {}
+        self.assert_verification_redirect(response, account)
+        self.lookup.assert_called_once()
+        kwargs = self.lookup.call_args.kwargs
+        assert kwargs["users"] == ["missing"]
+        assert kwargs["resource"] == self.resource
+        (candidate,) = kwargs["accounts"]
+        assert candidate.pk is None
+        assert candidate.key == "missing"
+        assert candidate.resource == self.resource
+        self.usage.assert_called_once_with(mock.ANY, group="discover-account", key="user", rate="10/h", increment=True)
+
+    def test_discovery_rate_limit_prevents_module_call_and_account_creation(self):
+        self.usage.return_value = {"should_limit": True, "time_left": 60}
+
+        response = self.add_account()
+
+        assert response.status_code == 429
+        assert response.content.startswith(b"Try again in ")
+        assert not Account.objects.exists()
+        self.lookup.assert_not_called()
+
+    @override_settings(
+        CACHES={
+            "default": {
+                "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+                "LOCATION": "account-binding-discovery-limit",
+            }
+        }
+    )
+    def test_discovery_budget_bounds_requests_and_is_scoped_to_user(self):
+        cache.clear()
+        self.lookup.side_effect = lambda users, **kwargs: [{"info": {"handle": users[0]}, "canonical_key": users[0]}]
+        with (
+            mock.patch("true_coders.views.get_usage", wraps=get_usage),
+            mock.patch("django_ratelimit.core.time.time", return_value=1_700_000_000),
+        ):
+            for index in range(10):
+                response = self.add_account(value=f"missing-{index}")
+                assert response.status_code == 302
+
+            response = self.add_account(value="missing-over-limit")
+
+            assert response.status_code == 429
+            assert self.lookup.call_count == 10
+            assert Account.objects.count() == 10
+            assert not Account.objects.filter(key="missing-over-limit").exists()
+
+            local = Account.objects.get(key="missing-0")
+            self.assert_verification_redirect(self.add_account(value=local.key), local)
+            self.assert_verification_redirect(self.add_account(account=local), local)
+            response = self.add_account(value=local.key.upper())
+            assert response.status_code == 200
+            assert json.loads(response.content) == {"message": "suggest", "accounts": [local.dict()]}
+            assert self.lookup.call_count == 10
+
+            self.user = User.objects.create_user(username="another-discovery-user")
+            self.coder = Coder.objects.create(user=self.user, username=self.user.username, country=None)
+            response = self.add_account(value="another-missing")
+
+        assert response.status_code == 302
+        assert self.lookup.call_count == 11
+        assert Account.objects.count() == 11
+
+    @override_settings(
+        CACHES={
+            "default": {
+                "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+                "LOCATION": "account-binding-failed-discovery-limit",
+            }
+        }
+    )
+    def test_failed_discoveries_consume_the_budget(self):
+        cache.clear()
+        self.lookup.return_value = []
+        with (
+            mock.patch("true_coders.views.get_usage", wraps=get_usage),
+            mock.patch("django_ratelimit.core.time.time", return_value=1_700_000_000),
+        ):
+            for index in range(10):
+                response = self.add_account(value=f"missing-{index}")
+                assert response.status_code == 400
+                assert response.content == b"Account not found"
+
+            response = self.add_account(value="missing-over-limit")
+
+        assert response.status_code == 429
+        assert self.lookup.call_count == 10
+        assert not Account.objects.exists()
+
+    def test_discovery_precedes_local_suggestions(self):
+        Account.objects.create(resource=self.resource, key="missing-other")
+
+        response = self.add_account()
+
+        account = Account.objects.get(resource=self.resource, key="missing")
+        self.assert_verification_redirect(response, account)
+        self.lookup.assert_called_once()
+
+    def test_unsuccessful_discovery_preserves_local_suggestions(self):
+        account = Account.objects.create(resource=self.resource, key="missing-other")
+        self.lookup.return_value = []
+
+        response = self.add_account()
+
+        assert response.status_code == 200
+        assert json.loads(response.content) == {"message": "suggest", "accounts": [account.dict()]}
+        assert Account.objects.count() == 1
+        self.lookup.assert_called_once()
+
+    def test_unsuccessful_discovery_preserves_suggestion_limit(self):
+        for index in range(6):
+            Account.objects.create(resource=self.resource, key=f"missing-{index}")
+        self.lookup.return_value = []
+
+        response = self.add_account()
+
+        assert response.status_code == 400
+        assert response.content == b"Too many accounts"
+        assert Account.objects.count() == 6
+
+    def test_unconfirmed_profiles_do_not_create_accounts(self):
+        results = [
+            [],
+            [None],
+            [{}],
+            [{"info": {}}],
+            [{"info": ["missing"]}],
+            [{"skip": True, "info": {"handle": "missing"}}],
+            [{"delete": True, "info": {"handle": "missing"}}],
+            [{"rename": "canonical"}],
+            [{"info": {"handle": "missing"}}],
+        ]
+        for key in (None, "", 123, "x" * 401):
+            results.append([{"info": {"handle": "missing"}, "rename": key}])
+            results.append([{"info": {"handle": "missing"}, "canonical_key": key}])
+        for result in results:
+            with self.subTest(result=result):
+                self.lookup.return_value = result
+
+                response = self.add_account()
+
+                assert response.status_code == 400
+                assert response.content == b"Account not found"
+                assert not Account.objects.exists()
+
+    def test_profile_without_canonical_key_preserves_local_suggestions(self):
+        account = Account.objects.create(resource=self.resource, key="missing-suggestion")
+        self.lookup.return_value = [{"info": {"rating": 1500}}]
+
+        response = self.add_account()
+
+        assert response.status_code == 200
+        assert json.loads(response.content) == {"message": "suggest", "accounts": [account.dict()]}
+        assert Account.objects.count() == 1
+        assert not account.coders.exists()
+
+    def test_atcoder_discovery_restores_new_handle_case(self):
+        self.resource.profile_url = "https://atcoder.jp/users/{account}"
+        self.resource.save(update_fields=["profile_url"])
+        self.lookup.side_effect = atcoder.Statistic.get_users_infos
+        page = '<a href="/users/tourist" class="username"><span>tourist</span></a>'
+
+        with mock.patch.object(atcoder.Statistic, "_get", return_value=page):
+            response = self.add_account(value="TOURIST")
+
+        account = Account.objects.get(resource=self.resource, key="tourist")
+        self.assert_verification_redirect(response, account)
+        assert account.need_verification
+        assert Account.objects.count() == 1
+
+    def test_codechef_discovery_restores_new_handle_case(self):
+        self.lookup.side_effect = codechef.Statistic.get_users_infos
+        page = 'jQuery.extend(Drupal.settings,{"currentUser":"gennady.korotkevich","date_versus_rating":{"all":[]}});'
+
+        with (
+            mock.patch.object(codechef.REQ, "with_proxy", return_value=mock.MagicMock()),
+            mock.patch.object(
+                codechef.Statistic,
+                "fetch_profle_page",
+                return_value=(page, "https://www.codechef.com/users/GENNADY.KOROTKEVICH"),
+            ),
+        ):
+            response = self.add_account(value="GENNADY.KOROTKEVICH")
+
+        account = Account.objects.get(resource=self.resource, key="gennady.korotkevich")
+        self.assert_verification_redirect(response, account)
+        assert account.need_verification
+        assert Account.objects.count() == 1
+
+    def test_module_exception_uses_local_not_found(self):
+        self.lookup.side_effect = RuntimeError("upstream details")
+
+        with mock.patch("true_coders.views.logger"):
+            response = self.add_account()
+
+        assert response.status_code == 400
+        assert response.content == b"Account not found"
+        assert not Account.objects.exists()
+
+    def test_generator_exception_preserves_local_suggestions(self):
+        account = Account.objects.create(resource=self.resource, key="missing-other")
+
+        def infos(**kwargs):
+            raise KeyError("missing profile field")
+            yield
+
+        self.lookup.side_effect = infos
+        with mock.patch("true_coders.views.logger"):
+            response = self.add_account()
+
+        assert response.status_code == 200
+        assert json.loads(response.content) == {"message": "suggest", "accounts": [account.dict()]}
+        assert Account.objects.count() == 1
+
+    def test_lightoj_missing_profile_fields_preserve_name_suggestions(self):
+        self.resource.profile_url = "https://lightoj.com/{kind}/{slug}"
+        self.resource.save(update_fields=["profile_url"])
+        account = Account.objects.create(
+            resource=self.resource,
+            key="123",
+            name="Missing Person",
+            info={"profile_url": {"kind": "user", "slug": "missing-person"}},
+        )
+        self.lookup.side_effect = lightoj.Statistic.get_users_infos
+
+        with mock.patch.object(lightoj.REQ, "get") as request_get, mock.patch("true_coders.views.logger"):
+            response = self.add_account()
+
+        assert response.status_code == 200
+        assert json.loads(response.content) == {"message": "suggest", "accounts": [account.dict()]}
+        assert Account.objects.count() == 1
+        request_get.assert_not_called()
+
+    def test_discovery_preserves_profile_url_rating_and_account_type(self):
+        self.resource.profile_url = "https://leetcode{_domain}/u/{_handle}/"
+        self.resource.save(update_fields=["profile_url"])
+        info = {"profile_url": {"_domain": ".com", "_handle": "missing"}, "rating": 1500, "is_team": True}
+        self.lookup.return_value = [
+            {
+                "info": dict(info, delta=timedelta(days=7), download_avatar_url_="https://example.com/avatar"),
+                "canonical_key": "missing@.com",
+                "special_info_fields": {"name_ru"},
+            }
+        ]
+
+        response = self.add_account(value="missing@.com")
+
+        account = Account.objects.get(resource=self.resource, key="missing@.com")
+        self.assert_verification_redirect(response, account)
+        assert account.info == info
+        assert account.rating == 1500
+        assert account.rating50 == 30
+        assert account.account_type == AccountType.TEAM
+        assert 'href="https://leetcode.com/u/missing/"' in profile_url(account, inner="your profile")
+
+    def test_discovered_rated_account_keeps_verification_single_account_limit(self):
+        self.resource.has_multi_account = True
+        self.resource.save(update_fields=["has_multi_account"])
+        existing = Account.objects.create(resource=self.resource, key="existing", info={"rating": 1800})
+        existing.coders.add(self.coder)
+        self.lookup.return_value = [{"info": {"rating": 1500}, "canonical_key": "missing"}]
+        response = self.add_account()
+        account = Account.objects.get(resource=self.resource, key="missing")
+        self.assert_verification_redirect(response, account)
+        assert account.rating == 1500
+        request = self.factory.post("/verification/", {"action": "verify"})
+        request.user = self.user
+
+        response = account_verification(request, key=account.key, host=self.resource.host)
+
+        assert response.status_code == 400
+        assert response.content.decode() == f"Allow only one account for {self.resource.host} resource"
+        assert list(self.coder.account_set.values_list("pk", flat=True)) == [existing.pk]
+        assert not AccountVerification.objects.exists()
+        self.lookup.assert_called_once()
+
+    def test_kep_canonical_case_returns_local_suggestion(self):
+        account = Account.objects.create(resource=self.resource, key="Missing")
+        self.lookup.side_effect = cpython.Statistic.get_users_infos
+
+        def query(url):
+            return {"username": "Missing"} if url.endswith("/info") else {}
+
+        with mock.patch.object(cpython, "query", side_effect=query) as request_query:
+            response = self.add_account()
+
+        assert response.status_code == 200
+        assert json.loads(response.content) == {"message": "suggest", "accounts": [account.dict()]}
+        assert not account.coders.exists()
+        assert Account.objects.count() == 1
+        self.lookup.assert_not_called()
+        request_query.assert_not_called()
+
+    def test_hackerrank_canonical_case_returns_local_suggestion(self):
+        account = Account.objects.create(resource=self.resource, key="Canonical")
+        self.lookup.side_effect = hackerrank.Statistic.get_users_infos
+
+        def get(url):
+            if url.endswith("/profile"):
+                return json.dumps({"model": {"username": "Canonical"}})
+            if url.endswith("/rating_histories_elo"):
+                return json.dumps({"models": []})
+            raise AssertionError(url)
+
+        with mock.patch.object(hackerrank.Statistic, "get", side_effect=get) as request_get:
+            response = self.add_account(value="canonical")
+
+        assert response.status_code == 200
+        assert json.loads(response.content) == {"message": "suggest", "accounts": [account.dict()]}
+        assert not account.coders.exists()
+        assert Account.objects.count() == 1
+        self.lookup.assert_not_called()
+        request_get.assert_not_called()
+
+    def test_algoleague_discovery_preserves_working_profile_link(self):
+        self.resource.profile_url = "https://algoleague.com/{type}/{account}/"
+        self.resource.save(update_fields=["profile_url"])
+        self.lookup.side_effect = algoleague.Statistic.get_users_infos
+
+        with mock.patch.object(
+            algoleague.REQ, "get", return_value={"profile": {"userName": "missing", "name": "Missing"}}
+        ):
+            response = self.add_account()
+
+        account = Account.objects.get(resource=self.resource, key="missing")
+        self.assert_verification_redirect(response, account)
+        assert 'href="https://algoleague.com/profile/missing/"' in profile_url(account, inner="your profile")
+
+    def test_discovered_account_requires_verification_after_rename(self):
+        self.add_account()
+        old_account = Account.objects.get(resource=self.resource, key="missing")
+        canonical_account = Account.objects.create(resource=self.resource, key="canonical")
+
+        account = rename_account(old_account, canonical_account)
+        response = self.add_account(value="canonical")
+
+        account.refresh_from_db()
+        assert account.need_verification
+        self.assert_verification_redirect(response, account)
+        assert not VerifiedAccount.objects.exists()
+        assert Account.objects.count() == 1
+        self.lookup.assert_called_once()
+
+    def test_verified_owner_can_rebind_discovered_account(self):
+        self.add_account()
+        account = Account.objects.get(resource=self.resource, key="missing")
+        assert self.verify_account(account).status_code == 200
+
+        for request_account in (None, account):
+            with self.subTest(account=request_account):
+                request = self.factory.post(
+                    "/settings/change/", {"pk": self.coder.pk, "name": "delete-account", "id": account.pk}
+                )
+                request.user = self.user
+                assert change(request).status_code == 200
+
+                response = self.add_account(account=request_account)
+
+                assert response.status_code == 200
+                assert json.loads(response.content)["message"] == "add"
+                assert account.coders.filter(pk=self.coder.pk).exists()
+                assert VerifiedAccount.objects.filter(coder=self.coder, account=account).exists()
+                account.refresh_from_db()
+                assert account.need_verification
+        assert self.lookup.call_count == 2
+
+    def test_another_user_cannot_reuse_discovered_account_verification(self):
+        self.add_account()
+        account = Account.objects.get(resource=self.resource, key="missing")
+        assert self.verify_account(account).status_code == 200
+        account.coders.remove(self.coder)
+        self.user = User.objects.create_user(username="another-account-binding-user")
+        self.coder = Coder.objects.create(user=self.user, username=self.user.username, country=None)
+
+        response = self.add_account()
+
+        self.assert_verification_redirect(response, account)
+        assert not account.coders.exists()
+        assert not VerifiedAccount.objects.filter(coder=self.coder, account=account).exists()
+        assert self.lookup.call_count == 2
+
+    def test_verified_owner_can_rebind_after_rename(self):
+        self.add_account()
+        account = Account.objects.get(resource=self.resource, key="missing")
+        assert self.verify_account(account).status_code == 200
+        canonical = Account.objects.create(resource=self.resource, key="canonical")
+
+        account = rename_account(account, canonical)
+        assert VerifiedAccount.objects.filter(coder=self.coder, account=account).exists()
+        account.coders.remove(self.coder)
+        response = self.add_account(value="canonical")
+
+        assert response.status_code == 200
+        assert account.coders.filter(pk=self.coder.pk).exists()
+        account.refresh_from_db()
+        assert account.need_verification
+        assert self.lookup.call_count == 2
+
+    def test_canonical_key_is_used_for_creation_and_redirect(self):
+        self.lookup.return_value = [{"info": {"handle": "canonical"}, "rename": "canonical"}]
+
+        response = self.add_account()
+
+        account = Account.objects.get(resource=self.resource, key="canonical")
+        self.assert_verification_redirect(response, account)
+        assert account.need_verification
+        assert Account.objects.count() == 1
+
+    def test_existing_canonical_account_is_not_overwritten(self):
+        account = Account.objects.create(resource=self.resource, key="canonical", info={"name": "Stored name"})
+        self.lookup.return_value = [{"info": {"name": "New name"}, "rename": "canonical"}]
+
+        response = self.add_account()
+
+        account.refresh_from_db()
+        assert response.status_code == 200
+        assert json.loads(response.content)["account"]["pk"] == account.pk
+        assert account.info == {"name": "Stored name"}
+        assert not account.need_verification
+        assert account.coders.filter(pk=self.coder.pk).exists()
+        assert Account.objects.count() == 1
+
+    def test_existing_canonical_ownership_requires_verification(self):
+        other_user = User.objects.create_user(username="other-account-owner")
+        other_coder = Coder.objects.create(user=other_user, username=other_user.username, country=None)
+        account = Account.objects.create(resource=self.resource, key="canonical")
+        account.coders.add(other_coder)
+        self.lookup.return_value = [{"info": {"handle": "canonical"}, "rename": "canonical"}]
+
+        response = self.add_account()
+
+        self.assert_verification_redirect(response, account)
+        assert list(account.coders.values_list("pk", flat=True)) == [other_coder.pk]
+        assert Account.objects.count() == 1
+
+    def test_retries_by_handle_and_id_still_require_verification(self):
+        self.add_account()
+        account = Account.objects.get(resource=self.resource, key="missing")
+
+        for request_account in (None, account):
+            with self.subTest(account=request_account):
+                response = self.add_account(account=request_account)
+
+                self.assert_verification_redirect(response, account)
+                assert Account.objects.count() == 1
+        self.lookup.assert_called_once()
+
+    def test_single_account_restriction_applies_to_discovery(self):
+        existing = Account.objects.create(resource=self.resource, key="existing")
+        existing.coders.add(self.coder)
+
+        response = self.add_account()
+
+        assert response.status_code == 400
+        assert response.content.decode() == f"Allow only one account for {self.resource.host}"
+        assert list(self.coder.account_set.values_list("pk", flat=True)) == [existing.pk]
+        assert Account.objects.count() == 1
+        self.lookup.assert_not_called()
+        self.usage.assert_not_called()
+
+    def test_discovered_account_can_complete_existing_verification(self):
+        self.add_account()
+        account = Account.objects.get(resource=self.resource, key="missing")
+
+        response = self.verify_account(account)
+
+        assert response.status_code == 200
+        assert response.content == b"ok"
+        assert account.coders.filter(pk=self.coder.pk).exists()
+        assert VerifiedAccount.objects.filter(coder=self.coder, account=account).exists()
+        assert self.lookup.call_count == 2
 
 
 class RatingsDataTest(TestCase):

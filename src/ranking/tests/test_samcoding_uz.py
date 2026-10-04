@@ -236,6 +236,7 @@ class SamcodingParserTest(SimpleTestCase):
         ]
         assert infos == [
             {
+                "canonical_key": "coder",
                 "info": {
                     "name": "Code Writer",
                     "avatar": "https://samcoding.uz/avatar.jpg",

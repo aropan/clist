@@ -206,7 +206,7 @@ class Statistic(BaseModule):
             return data
 
         with PoolExecutor(max_workers=8) as executor:
-            for info in executor.map(fetch_profile, users, accounts):
+            for user, info in zip(users, executor.map(fetch_profile, users, accounts)):
                 if pbar:
                     pbar.update()
                 if not info:
@@ -215,5 +215,10 @@ class Statistic(BaseModule):
                     else:
                         yield {"skip": True, "delta": timedelta(days=365)}
                     continue
-                info = {"info": info}
-                yield info
+                ret = {"info": info}
+                username = info.get("username")
+                if isinstance(username, str) and username.lower() == user.lower():
+                    ret["canonical_key"] = username
+                    if user != username:
+                        ret["rename"] = username
+                yield ret

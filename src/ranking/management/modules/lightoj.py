@@ -155,7 +155,7 @@ class Statistic(BaseModule):
             return data, kind
 
         with PoolExecutor(max_workers=8) as executor:
-            for data_kind in executor.map(fetch_profile_data, accounts):
+            for account, data_kind in zip(accounts, executor.map(fetch_profile_data, accounts)):
                 if pbar:
                     pbar.update()
 
@@ -181,6 +181,10 @@ class Statistic(BaseModule):
                     if value and len(value) > 1 and value != "null":
                         info[field] = value
                 ret = {"info": info}
+                if member_id := data.get(f"{kind}Id"):
+                    ret["canonical_key"] = f"team-{member_id}" if kind == "team" else str(member_id)
+                    if account.key != ret["canonical_key"]:
+                        ret["rename"] = ret["canonical_key"]
                 members = data.pop("members", None)
                 if members:
                     info["members"] = [

@@ -203,4 +203,7 @@ class Statistic(BaseModule):
 
             assert user.lower() == data["username"].lower()
 
-            yield {"info": data}
+            info = {"info": data, "canonical_key": data["username"]}
+            if user != data["username"]:
+                info["rename"] = data["username"]
+            yield info

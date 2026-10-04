@@ -370,7 +370,7 @@ class Statistic(BaseModule):
             if profile["username"].lower() != handle.lower():
                 raise ExceptionParseAccounts(f"Profile handle mismatch for {handle}: {profile['username']}")
 
-            ret = {"name": profile.get("name")}
+            ret = {"name": profile.get("name"), "username": profile["username"]}
             if avatar := get_item(profile, "cosmetics.pic"):
                 ret["avatar"] = urljoin(url, avatar)
             if title := get_item(props, "title.name"):
@@ -425,7 +425,7 @@ class Statistic(BaseModule):
             return ret
 
         with PoolExecutor(max_workers=8) as executor:
-            for data in executor.map(fetch_profile, users):
+            for user, data in zip(users, executor.map(fetch_profile, users)):
                 if pbar:
                     pbar.update()
                 if not data:
@@ -435,7 +435,9 @@ class Statistic(BaseModule):
                         yield {"skip": True}
                     continue
 
-                ret = {"info": data}
+                ret = {"info": data, "canonical_key": data["username"]}
+                if user != data["username"]:
+                    ret["rename"] = data["username"]
                 contest_addition_update_params = data.pop("_contest_addition_update_params", None)
                 if contest_addition_update_params:
                     ret["contest_addition_update_params"] = contest_addition_update_params

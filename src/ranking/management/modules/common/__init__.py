@@ -115,6 +115,10 @@ class BaseModule(metaclass=ABCMeta):
 
     @staticmethod
     def get_users_infos(users, resource=None, accounts=None, pbar=None):
+        """Yield profile envelopes; account discovery requires canonical_key or rename.
+
+        Confirm canonical keys from the profile, and emit rename only when the key changes.
+        """
         raise NotImplementedError()
 
     @staticmethod
