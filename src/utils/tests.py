@@ -1,15 +1,23 @@
 import http.client
 import io
+import json
 import logging
+import re
+import socket
+import subprocess
 import sys
+import textwrap
 import unittest
 import urllib.error
 from datetime import UTC, datetime
+from types import SimpleNamespace
 from unittest import mock
 
 import pytest
+from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sessions.models import Session
+from django.core.management import CommandError
 from django.core.management.commands.test import Command as TestCommand
 from django.db import connection
 from django.db.models import F
@@ -25,7 +33,16 @@ from utils.db import get_order_by
 from utils.requester import requester
 from utils.rq import get_resource_job_id, is_job_active, is_job_id_active
 from utils.strings import split_team_name_and_members
-from utils.test_runner import CompactTestResult, CompactTextTestRunner
+from utils.test_runner import (
+    CompactTestResult,
+    CompactTestRunner,
+    CompactTextTestRunner,
+    NetworkAccessDenied,
+    NetworkGuard,
+    network_allowlist,
+    network_hosts_from_settings,
+    network_violation,
+)
 
 
 class IsInteractiveTest(SimpleTestCase):
@@ -258,6 +275,218 @@ class CompactTestRunnerTest(SimpleTestCase):
         assert "https://example.com" not in runner_output
         assert len(runner_output) < 25000
         assert not handler_output
+
+    def test_require_tests_and_deny_network_are_opt_in(self):
+        parser = TestCommand().create_parser("manage.py", "test")
+
+        options = parser.parse_args([])
+        assert options.require_tests is False
+        assert options.deny_network is False
+        options = parser.parse_args(["--require-tests", "--deny-network"])
+        assert options.require_tests is True
+        assert options.deny_network is True
+
+    def test_label_without_tests_is_accepted_by_default(self):
+        runner = CompactTestRunner(verbosity=0)
+
+        assert runner.build_suite(["utils.test_runner"]).countTestCases() == 0
+
+    def test_require_tests_rejects_label_without_tests(self):
+        runner = CompactTestRunner(verbosity=0, require_tests=True)
+
+        with pytest.raises(CommandError, match=re.escape("'utils.test_runner' selected no tests")):
+            runner.build_suite(["utils.tests.IsInteractiveTest", "utils.test_runner"])
+
+    def test_require_tests_rejects_empty_filtered_selection(self):
+        runner = CompactTestRunner(verbosity=0, require_tests=True, tags=["no-such-tag"])
+
+        with pytest.raises(CommandError, match="contain no tests"):
+            runner.build_suite(["utils.tests.IsInteractiveTest"])
+
+    def test_require_tests_accepts_labels_with_tests(self):
+        runner = CompactTestRunner(verbosity=0, require_tests=True)
+
+        assert runner.build_suite(["utils.tests.IsInteractiveTest"]).countTestCases() == 1
+
+    def test_network_violations_fail_the_run_and_are_reported_once(self):
+        runner = CompactTestRunner(verbosity=0, deny_network=True)
+        runner.network_guard = NetworkGuard(set())
+        violation = ("app.tests.ExampleTest.test_request", "socket.connect", "192.0.2.1:443")
+        runner.network_guard.violations = [violation, violation]
+        stderr = io.StringIO()
+
+        with mock.patch("sys.stderr", stderr):
+            failures = runner.suite_result(unittest.TestSuite(), unittest.TestResult())
+
+        assert failures == 2
+        output = stderr.getvalue()
+        assert "Network access denied 2 time(s) during tests:" in output
+        assert output.count("app.tests.ExampleTest.test_request: socket.connect 192.0.2.1:443") == 1
+
+    def test_deny_network_rejects_parallel_tests(self):
+        with pytest.raises(CommandError, match="--deny-network with parallel tests"):
+            CompactTestRunner(verbosity=0, deny_network=True, parallel=2)
+
+        assert CompactTestRunner(verbosity=0, deny_network=True, parallel=1).deny_network
+        assert CompactTestRunner(verbosity=0, parallel=2).parallel == 2
+
+
+class NetworkGuardTest(SimpleTestCase):
+    allowed_hosts = frozenset({"db", "redis", "test-host", "10.42.0.5"})
+    inet = SimpleNamespace(family=socket.AF_INET)
+    inet6 = SimpleNamespace(family=socket.AF_INET6)
+
+    def violation(self, event, *args):
+        return network_violation(event, args, self.allowed_hosts)
+
+    def test_loopback_and_configured_hosts_are_allowed(self):
+        assert self.violation("socket.connect", self.inet, ("127.0.0.1", 5432)) is None
+        assert self.violation("socket.connect", self.inet6, ("::1", 6379, 0, 0)) is None
+        assert self.violation("socket.connect", self.inet6, ("::ffff:127.0.0.1", 6379, 0, 0)) is None
+        assert self.violation("socket.connect", self.inet, ("10.42.0.5", 5432)) is None
+        for host in ("localhost", "LOCALHOST.", "db", b"redis", "test-host", "127.0.0.1", "::1", "", None):
+            assert self.violation("socket.getaddrinfo", host, 5432, 0, 0, 0) is None
+
+    def test_unix_socket_is_allowed(self):
+        unix = SimpleNamespace(family=socket.AF_UNIX)
+
+        assert self.violation("socket.connect", unix, "/var/run/postgresql/.s.PGSQL.5432") is None
+
+    def test_external_hosts_are_denied(self):
+        assert self.violation("socket.getaddrinfo", "codeforces.com", 443, 0, 0, 0) == "codeforces.com"
+        assert self.violation("socket.gethostbyname", "api.telegram.org") == "api.telegram.org"
+        assert self.violation("socket.gethostbyname_ex", "smtp.gmail.com") == "smtp.gmail.com"
+        assert self.violation("socket.gethostbyaddr", "192.0.2.1") == "192.0.2.1"
+        assert self.violation("socket.connect", self.inet, ("192.0.2.1", 443)) == "192.0.2.1:443"
+        assert self.violation("socket.connect", self.inet6, ("2001:db8::1", 443, 0, 0)) == "2001:db8::1:443"
+
+    def test_network_client_subprocesses_are_denied(self):
+        curl_args = ["curl", "-s", "https://example.com"]
+        assert self.violation("subprocess.Popen", "/usr/local/bin/curl", curl_args, None, None) == "curl"
+        assert self.violation("subprocess.Popen", None, ["wget", "https://example.com"], None, None) == "wget"
+        assert self.violation("subprocess.Popen", b"/usr/bin/python3", [b"python3", b"-V"], None, None) is None
+
+    def test_unrelated_events_are_ignored(self):
+        assert self.violation("open", "/etc/hosts", "r", 0) is None
+
+    def test_hosts_from_settings(self):
+        hosts = network_hosts_from_settings(
+            {"default": {"HOST": "db"}, "socket": {"HOST": "/var/run/postgresql"}, "local": {"HOST": ""}},
+            {
+                "default": {"LOCATION": "redis://redis:6379/1"},
+                "replicas": {"LOCATION": ["redis://Cache-A:6379", "redis://cache-b:6379"]},
+            },
+            {"default": {"HOST": "localhost"}, "url": {"URL": "redis://rq-host:6379/0"}},
+            {
+                "default": {
+                    "CONFIG": {
+                        "hosts": [
+                            {"host": "channels-host", "port": 6379},
+                            ("tuple-host", 6379),
+                            "redis://url-host:6379",
+                        ],
+                    },
+                },
+            },
+        )
+
+        assert hosts == {
+            "db",
+            "redis",
+            "cache-a",
+            "cache-b",
+            "localhost",
+            "rq-host",
+            "channels-host",
+            "tuple-host",
+            "url-host",
+        }
+
+    def test_allowlist_includes_own_hostname_and_resolved_addresses(self):
+        def getaddrinfo(host, port):
+            if host == "missing":
+                raise socket.gaierror("not found")
+            return [(socket.AF_INET, socket.SOCK_STREAM, 6, "", (f"10.0.0.{len(host)}", 0))]
+
+        with (
+            mock.patch("utils.test_runner.socket.gethostname", return_value="Test-Host"),
+            mock.patch("utils.test_runner.socket.getfqdn", return_value="test-host.example"),
+            mock.patch("utils.test_runner.socket.getaddrinfo", side_effect=getaddrinfo),
+        ):
+            allowed = network_allowlist({"db", "missing"})
+
+        assert {"test-host", "test-host.example", "db", "missing", "10.0.0.2", "10.0.0.9"} <= allowed
+
+    def test_inactive_guard_is_inert(self):
+        guard = NetworkGuard(set())
+
+        assert guard.audit("socket.getaddrinfo", ("codeforces.com", 443, 0, 0, 0)) is None
+        assert guard.violations == []
+
+    def test_active_guard_records_test_and_raises(self):
+        guard = NetworkGuard(set())
+        guard.active = True
+
+        with pytest.raises(NetworkAccessDenied, match=re.escape("socket.getaddrinfo codeforces.com")):
+            guard.audit("socket.getaddrinfo", ("codeforces.com", 443, 0, 0, 0))
+        guard.audit("socket.getaddrinfo", ("localhost", 443, 0, 0, 0))
+
+        assert guard.violations == [(self.id(), "socket.getaddrinfo", "codeforces.com")]
+
+    def test_installed_guard_blocks_requests_before_they_are_sent(self):
+        # Audit hooks cannot be removed, so the installed guard runs in a separate interpreter.
+        code = textwrap.dedent("""
+            import json
+            import socket
+            import subprocess
+
+            from utils.test_runner import NetworkAccessDenied, NetworkGuard
+
+
+            def connect(address):
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                    sock.settimeout(1)
+                    sock.connect(address)
+
+
+            listener = socket.create_server(("127.0.0.1", 0))
+            guard = NetworkGuard(set())
+            guard.install()
+            guard.active = True
+            calls = {
+                "lookup": lambda: socket.getaddrinfo("codeforces.com", 443),
+                "connect": lambda: connect(("192.0.2.1", 443)),
+                "curl": lambda: subprocess.run(["curl", "--version"], capture_output=True),
+                "loopback": lambda: connect(listener.getsockname()),
+            }
+            outcomes = {}
+            for name, call in calls.items():
+                try:
+                    call()
+                except NetworkAccessDenied:
+                    outcomes[name] = "denied"
+                else:
+                    outcomes[name] = "allowed"
+            guard.active = False
+            print(json.dumps({"outcomes": outcomes, "violations": guard.violations}))
+        """)
+
+        process = subprocess.run(
+            [sys.executable, "-c", code],
+            capture_output=True,
+            check=True,
+            cwd=settings.BASE_DIR,
+            text=True,
+            timeout=60,
+        )
+
+        output = json.loads(process.stdout)
+        assert output["outcomes"] == {"lookup": "denied", "connect": "denied", "curl": "denied", "loopback": "allowed"}
+        assert output["violations"] == [
+            [None, "socket.getaddrinfo", "codeforces.com"],
+            [None, "socket.connect", "192.0.2.1:443"],
+            [None, "subprocess.Popen", "curl"],
+        ]
 
 
 class GetResourceJobIdTest(SimpleTestCase):

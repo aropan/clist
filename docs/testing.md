@@ -24,6 +24,27 @@ When you change code: run the most specific test for the touched module first; i
 passes, widen to the app; run the full suite only for broad changes. If tests can't
 run, say exactly why and give the command a human should run.
 
+The project test runner has two opt-in guards. The CI command below enables both:
+
+```bash
+docker compose exec dev ./manage.py test --keepdb --require-tests utils.tests  # fail on empty labels
+docker compose exec dev ./manage.py test --keepdb --deny-network                # fail on outbound access
+```
+
+- `--require-tests` fails before running anything when any label, or the whole
+  selection after `--tag`/`-k` filtering, contains no tests. A typo in a label or
+  an emptied module therefore cannot pass as "0 tests".
+- `--deny-network` installs a Python audit hook. Host lookups and TCP connections to
+  anything except loopback, the container's own hostname, and the hosts configured in
+  `DATABASES`, `CACHES`, `RQ_QUEUES`, and `CHANNEL_LAYERS` raise
+  `NetworkAccessDenied`, as do `curl`/`wget` subprocesses. Every attempt is listed
+  after the run with the test that made it and fails the run, even when application
+  code swallows the exception. Mock the code that makes the request; for example,
+  patch `Resource.update_icon` when a test creates a `Resource` without `icon_file`.
+  The hook sees Python code only (libpq connections never reach it). It cannot be
+  combined with `--parallel`: workers start without the hook, so the runner rejects
+  that combination before running anything.
+
 ## Standalone Python tests
 
 The tests under `src/scripts/tests/` run directly with pytest, without Django

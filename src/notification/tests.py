@@ -429,6 +429,9 @@ class TelegramSendoutTest(SimpleTestCase):
 
 class CustomSubscriptionMessagesTest(TestCase):
     def setUp(self):
+        icon_patcher = patch.object(Resource, "update_icon")
+        icon_patcher.start()
+        self.addCleanup(icon_patcher.stop)
         self.resource = Resource.objects.create(
             host="custom-messages.example",
             enable=True,

@@ -1,3 +1,5 @@
+from unittest import mock
+
 from django.db import connection
 from django.test import TestCase
 from django.test.utils import CaptureQueriesContext
@@ -85,11 +87,12 @@ class AccountTypeCounterTest(TestCase):
         assert resource.n_member_accounts == 0
 
     def test_counter_follows_account_type_changes(self):
-        resource = Resource.objects.create(
-            host="account-type.example.com",
-            enable=True,
-            url="https://account-type.example.com/",
-        )
+        with mock.patch.object(Resource, "update_icon"):
+            resource = Resource.objects.create(
+                host="account-type.example.com",
+                enable=True,
+                url="https://account-type.example.com/",
+            )
         account = Account.objects.create(resource=resource, key="member")
 
         account.account_type = AccountType.MEMBER
