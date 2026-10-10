@@ -114,7 +114,10 @@ RUN crontab /etc/cron.d/nginx
 CMD ["sh", "-c", "crond && exec nginx -g 'daemon off;'"]
 
 
-FROM postgres:18-alpine3.24@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873 AS postgres
+FROM postgres:18-alpine3.24@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873 AS postgres-base
+
+
+FROM postgres-base AS postgres
 # pg_repack
 RUN apk add --no-cache --virtual .build-deps \
     gcc \

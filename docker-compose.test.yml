@@ -1,0 +1,96 @@
+# Isolated stack for the Django checks and tests run by CI.
+# Run it with `mise run test-django`; see docs/testing.md.
+name: clist-test
+
+services:
+  db:
+    build:
+      context: .
+      target: postgres-base
+      provenance: disabled=true
+    command:
+      - postgres
+      - -c
+      - fsync=off
+      - -c
+      - synchronous_commit=off
+      - -c
+      - full_page_writes=off
+    env_file:
+      - ./config/test/db.env
+    tmpfs:
+      - /var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready --quiet --host 127.0.0.1 --port 5432 --username \"$$POSTGRES_USER\" --dbname \"$$POSTGRES_DB\""]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    shm_size: 256mb
+  redis:
+    image: redis:8-trixie
+    command:
+      - redis-server
+      - --save
+      - ""
+      - --appendonly
+      - "no"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  tests:
+    build:
+      context: .
+      target: dev
+      provenance: disabled=true
+    command:
+      - bash
+      - -euo
+      - pipefail
+      - -c
+      - |
+        redis-server --daemonize yes --save '' --dir /tmp
+        echo "==> Django system checks"
+        python manage.py check --fail-level WARNING
+        echo "==> Model and migration drift"
+        python manage.py makemigrations --check --dry-run
+        echo "==> Django tests on a database built from migrations"
+        python manage.py test --noinput --timing --require-tests --deny-network \
+          . \
+          my_oauth.tests \
+          my_oauth.test_forms \
+          my_oauth.test_security \
+          true_coders.tests \
+          ranking.tests.test_account_canonical_keys \
+          notification.tests \
+          tg.tests \
+          ranking.tests.test_parsers \
+          ranking.tests.test_parser_regression \
+          ranking.tests.test_dump_parser_fixture
+    environment:
+      - DJANGO_ENV_FILE=/run/clist-test/django.env
+      - DJANGO_DB_CONF=/run/clist-test/db.env
+      - DJANGO_MONITORING_CONF=/run/clist-test/monitoring.env
+    volumes:
+      - ./src/:/usr/src/clist/
+      - ./src/static:/usr/src/clist/staticfiles/:ro
+      - ./legacy/api/:/usr/src/clist/legacy/api/:ro
+      - ./config/test/:/run/clist-test/:ro
+      - ./config/test/conf.py:/usr/src/clist/pyclist/conf.py:ro
+      - ./config/test/parser_conf.py:/usr/src/clist/ranking/management/modules/conf.py:ro
+      # Synthetic stand-in for a runtime file the facebook parser reads on construction.
+      - ./config/test/sharedfiles/resource/facebook/headers.json:/usr/src/clist/sharedfiles/resource/facebook/headers.json:ro
+    tmpfs:
+      - /usr/src/clist/logs
+      - /usr/src/clist/mediafiles
+      - /usr/src/clist/sharedfiles
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+networks:
+  default:
+    internal: true

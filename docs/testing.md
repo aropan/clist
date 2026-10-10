@@ -54,6 +54,63 @@ or the application database. This is the command used by the CI workflow:
 uv run --no-project --python 3.14 --with pytest==9.1.1 --with rich==15.0.0 --with google-auth-oauthlib==1.4.0 pytest -q src/scripts/tests
 ```
 
+## CI application tests
+
+The `Django tests` job in `.github/workflows/ci.yml` runs the Django checks and the
+full Django suite in an isolated stack. Reproduce it locally with the same command:
+
+```bash
+mise run test-django
+```
+
+The parser fixture archives must be fetched from Git LFS first
+(`git lfs pull --include="src/ranking/tests/fixtures/parsers/**"`). The command checks
+this before building anything and lists any missing or pointer files together with
+the fetch command.
+
+`src/scripts/test-django.bash` builds and runs `docker-compose.test.yml` as the
+separate Compose project `clist-test`, passed as `--project-name` so that a
+`COMPOSE_PROJECT_NAME` in the environment cannot redirect it to another stack:
+
+- `db` is a disposable PostgreSQL built from the `postgres-base` stage of `Dockerfile`,
+  the same pinned image as the project database, with data on tmpfs and no published
+  ports;
+- `redis` is a disposable cache; the `tests` container also starts its own local
+  `redis-server`, as the `dev` image does;
+- `tests` is the `dev` image built from `uv.lock`. Like `dev`, it mounts `src/` and
+  `legacy/api/`, the latter read-only for the Google Calendar ACL code. It reads only
+  the synthetic configuration in `config/test/`: `conf.py` is mounted over
+  `pyclist/conf.py`, `parser_conf.py` over the parser credentials in
+  `ranking/management/modules/conf.py`, and `DJANGO_ENV_FILE`, `DJANGO_DB_CONF`, and
+  `DJANGO_MONITORING_CONF` point to the `config/test/*.env` files. `logs/`,
+  `mediafiles/`, and `sharedfiles/` are empty tmpfs mounts. Runtime files that a
+  parser needs on construction get synthetic stand-ins from `config/test/sharedfiles/`.
+  Local `.env.*` files, `/run/secrets`, the real `pyclist/conf.py` and parser
+  `conf.py`, and the shared files of the `clist` stack are not read.
+
+All three services share an internal network with no internet access. Inside the
+container the command runs, in order:
+
+1. `manage.py check --fail-level WARNING`;
+2. `manage.py makemigrations --check --dry-run`;
+3. `manage.py test --noinput --timing --require-tests --deny-network` with the label
+   `.` (the full suite) plus explicit labels for the critical suites: OAuth,
+   account binding, notifications, Telegram, and the parser replay with its harness.
+   The explicit labels make a removed or emptied critical module fail the run; tests
+   selected twice run once. There is no `--keepdb`, so the test database is created by
+   applying every migration to an empty database.
+
+The command removes the stack (`down --volumes --remove-orphans`) before and after
+every run, including failed runs, and exits with the job's status. Before each removal
+it lists the containers labelled with the `clist-test` project. If any of them was not
+created from this checkout's `docker-compose.test.yml`, it names them and stops without
+removing anything. If the stack cannot be removed after the run, the command fails even
+when the tests passed. It never touches the `clist` stack, its database, cache, or volumes;
+only the built images stay cached.
+In a checkout without `src/pyclist/conf.py` or `src/ranking/management/modules/conf.py`,
+such as a CI runner, Docker creates an empty, root-owned placeholder at that path for
+the bind mount; both paths are gitignored.
+
 ## Parser regression tests
 
 Parser regression fixtures replay recorded HTTP responses without network access and
@@ -178,11 +235,21 @@ docker compose exec dev ./manage.py dump_parser_fixture --suggest -r nerc.itmo.r
 `--verbosity 2` prints the main recording phases for each fixture; `--verbosity 3`
 also prints temporary paths, standings keys, and cache-file counts.
 
-The same offline test command is suitable for application CI. The GitHub CI workflow
-runs the full Ruff lint check, Python/frontend/PHP formatting checks, and all standalone
-script tests on Python 3.14. It does not provision the Django/PostgreSQL environment,
-so parser tests are not attached to that workflow. A separate CodeQL workflow analyzes
-Python and JavaScript.
+The GitHub CI workflow has two jobs. `Checks` runs the full Ruff lint check, the
+Python/frontend/PHP formatting checks, and all standalone script tests on Python 3.14.
+Once `Checks` passes, `Django tests` runs `mise run test-django` (see
+[CI application tests](#ci-application-tests)), which replays every parser fixture
+together with the rest of the Django suite. A separate CodeQL workflow analyzes Python
+and JavaScript.
+
+CI does not cover:
+
+- the legacy PHP offline harness (`legacy/tests/`);
+- the `prod` image and the production settings branch (`DEBUG=False`, Sentry);
+- RQ workers, a real Channels Redis layer, and GeoIP-dependent code (no GeoLite
+  database);
+- frontend JavaScript;
+- live fixture recording, which needs network access by design.
 
 ## Legacy schedule parser tests
 
