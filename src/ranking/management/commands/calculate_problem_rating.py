@@ -273,21 +273,6 @@ class Command(BaseCommand):
                 contest.problem_rating_update_done()
                 continue
 
-            rows_values = tuple(sorted(rows_values))
-            problem_rating_value = (self.VERSION, rows_values)
-            problem_rating_hash = hashlib.sha256(str(problem_rating_value).encode("utf8")).hexdigest()
-            empty_problem_rating = False
-            for problem in contest.problem_set.all():
-                if problem.rating is None:
-                    empty_problem_rating = True
-                    break
-            if not empty_problem_rating and not args.force and contest.problem_rating_hash == problem_rating_hash:
-                n_skip_hash += 1
-                self.logger.warning(f"skip unchanged hash contest = {contest}")
-                event_log.update_status(EventStatus.SKIPPED, message="unchanged hash")
-                contest.problem_rating_update_done()
-                continue
-
             contests_divisions_data = {}
             stats = {}
             team_ids = set()
@@ -332,6 +317,10 @@ class Command(BaseCommand):
                             else:
                                 old_rating = account_get_old_rating(account, current_contest)
                                 n_contests = account_get_n_contests(account, current_contest)
+                            if old_rating is None:
+                                ratings = []
+                                break
+                            if account is not None:
                                 old_rating = adjust_rating(rating_adjustment, account, old_rating, n_contests)
                             ratings.append((1, old_rating))
                             n_contests_values.append(n_contests)
@@ -345,6 +334,8 @@ class Command(BaseCommand):
                         old_rating = stat.get_old_rating()
                         if old_rating is None:
                             old_rating = account_get_old_rating(stat.account, current_contest)
+                        if old_rating is None:
+                            continue
                         if stat.pk in n_contests_for_accounts:
                             n_contests = n_contests_for_accounts[stat.pk]
                         else:
@@ -353,7 +344,12 @@ class Command(BaseCommand):
 
                     weight = 1 - 0.9 ** (n_contests + 1)
 
-                    stats[stat.pk] = {"old_rating": old_rating, "weight": weight}
+                    stats[stat.pk] = {
+                        "old_rating": old_rating,
+                        "weight": weight,
+                        "has_rating": "new_rating" in stat.addition or "rating_change" in stat.addition,
+                        "place": stat.place_as_int,
+                    }
 
                     info = contests_divisions_data.setdefault(
                         get_info_key(stat),
@@ -373,6 +369,28 @@ class Command(BaseCommand):
                 contest.problem_rating_update_done()
                 continue
 
+            if not stats:
+                n_empty += 1
+                self.logger.warning(f"skip contest without ratings = {contest}")
+                event_log.update_status(EventStatus.SKIPPED, message="no participant ratings")
+                contest.problem_rating_update_done()
+                continue
+
+            rows_values = tuple(sorted(rows_values))
+            rating_values = tuple(
+                (pk, data["old_rating"], data["weight"], data["has_rating"], data["place"])
+                for pk, data in sorted(stats.items())
+            )
+            problem_rating_value = (self.VERSION, rows_values, rating_values)
+            problem_rating_hash = hashlib.sha256(str(problem_rating_value).encode("utf8")).hexdigest()
+            empty_problem_rating = any(problem.rating is None for problem in contest.problem_set.all())
+            if not empty_problem_rating and not args.force and contest.problem_rating_hash == problem_rating_hash:
+                n_skip_hash += 1
+                self.logger.warning(f"skip unchanged hash contest = {contest}")
+                event_log.update_status(EventStatus.SKIPPED, message="unchanged hash")
+                contest.problem_rating_update_done()
+                continue
+
             for info in contests_divisions_data.values():
                 rank = 0
                 for place, size in sorted(info["places"].items()):
@@ -384,7 +402,7 @@ class Command(BaseCommand):
             skip_problems = set()
             for current_contest, current_statistics in problems_contests.items():
                 for stat in tqdm.tqdm(current_statistics, total=current_statistics.count(), desc="performances"):
-                    if is_skip(current_contest, stat):
+                    if stat.pk not in stats:
                         continue
 
                     team_id, _ = get_team(stat)
@@ -402,9 +420,8 @@ class Command(BaseCommand):
                     if "division" in problems:
                         problems = problems["division"][stat.addition.get("division")]
 
-                    has_rating = "new_rating" in stat.addition or "rating_change" in stat.addition
                     weight = stats[stat.pk]["weight"]
-                    if not has_rating:
+                    if not stats[stat.pk]["has_rating"]:
                         weight *= 0.5
 
                     for problem in problems:
