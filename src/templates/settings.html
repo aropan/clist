@@ -41,7 +41,7 @@
     SUBSCRIPTIONS_METHODS = [ {% for k, v in notifications %}{% if forloop.counter0 %}, {% endif %}{'id': '{{ k }}', 'text': '{{ v }}'}{% endfor %} ]
     SHARE_TO_CATEGORY = { 'disable': 'Disable' {% for k, v in notifications %}, '{{ k }}': '{{ v }}'{% endfor %} }
 
-    SELECTED_RESOURCE = {% if selected_resource %}[{'id': {{ selected_resource.pk }}, 'text': '{{ selected_resource.host }}'}]{% else %}[]{% endif %}
+    SELECTED_RESOURCE = {% if selected_resource %}[{'id': {{ selected_resource.pk }}, 'text': '{{ selected_resource.host }}', 'icon': '{{ selected_resource.icon_file.name|escapejs }}'}]{% else %}[]{% endif %}
 
     ACCOUNTS_ADVANCED_SEARCH_URL = "{% url 'coder:accounts' %}?add_account=on"
 
@@ -338,18 +338,19 @@
             </div>
         </div>
         <div id="accounts-tab" class="tab-pane{% if tab == 'accounts' %} active{% endif %}">
-            <div class="alert alert-warning text-center">You can add your account after participating in a contest and after parsing statistics</div>
             <div class="key">Resource</div>
             <div class="value"><select class="form-control" id="add-account-resource"></select></div>
             <div class="key">Handle</div>
             <div class="value"><input type="text" class="form-control" id="add-account-search"{% if selected_account %} value="{{ selected_account }}"{% endif %}></div>
             <div id="account-suggests"></div>
-            <div class="text-left">
+            <div id="add-account-actions" class="text-left">
                 <button class="btn btn-primary" id="add-account">Add</button>
                 <a class="btn btn-default" id="add-account-advanced-search" target="_blank" rel="noopener">Advanced Search</a>
-                <i id="add-account-loading" class="hidden fas fa-spinner fa-spin"></i>
+                <div id="add-account-status" role="status" aria-live="polite" aria-atomic="true">
+                    <i id="add-account-loading" class="hidden fas fa-spinner fa-spin" aria-label="Adding account"></i>
+                    <div id="error-account-tab" class="alert"></div>
+                </div>
             </div>
-            <div id="error-account-tab" class="alert alert-danger"></div>
             <div id="list-accounts">
                 <div class="panel panel-default panel-container">
                     <table class="table table-hover">

@@ -1720,6 +1720,10 @@ def change(request):
         coder.last_name_native = value
         coder.save(update_fields=["last_name_native"])
     elif name == "add-account":
+
+        def account_message(message, level="warning", status=400):
+            return HttpResponseBadRequest(message, status=status, headers={"X-Message-Level": level})
+
         resource_id = None
         account_id = None
         try:
@@ -1728,28 +1732,31 @@ def change(request):
             else:
                 account_id = int(request.POST.get("id"))
         except TypeError, ValueError:
-            return HttpResponseBadRequest("invalid account or resource id")
+            return account_message("Select a resource and enter an account handle.")
 
         try:
             if resource_id is not None:
                 resource = Resource.objects.filter(pk=resource_id).first()
                 if resource is None:
-                    return HttpResponseBadRequest("Resource not found")
+                    return account_message("Resource not found. Please select another.")
+                if not value:
+                    return account_message("Enter an account handle.")
                 account = Account.objects.filter(resource=resource, key=value).first()
-                if (
-                    account is None
-                    and value
-                    and resource.has_accounts_infos_update
+                can_discover = (
+                    resource.has_accounts_infos_update
                     and resource.has_account_verification
                     and getattr(resource, "module", None)
-                    and not resource.account_set.filter(key__iexact=value).exists()
-                ):
+                )
+                discovery_failed = False
+                if account is None and can_discover and not resource.account_set.filter(key__iexact=value).exists():
                     if resource.with_single_account() and coder.account_set.filter(resource=resource).exists():
-                        return HttpResponseBadRequest(f"Allow only one account for {resource.host}")
+                        return account_message(f"Only one account on {resource.host} is allowed.")
                     usage = get_usage(request, group="discover-account", key="user", rate="10/h", increment=True)
                     if usage["should_limit"]:
                         delta = timedelta(seconds=usage["time_left"])
-                        return HttpResponseBadRequest(f"Try again in {humanize.naturaldelta(delta)}", status=429)
+                        return account_message(
+                            f"Too many attempts. Try again in {humanize.naturaldelta(delta)}.", status=429
+                        )
                     try:
                         infos = resource.plugin.Statistic.get_users_infos(
                             users=[value], resource=resource, accounts=[Account(resource=resource, key=value)]
@@ -1757,7 +1764,10 @@ def change(request):
                         data = next(iter(infos), {})
                     except Exception as e:
                         logger.warning(f"Error while discovering account: {e}")
+                        discovery_failed = True
                         data = {}
+                    if isinstance(data, dict) and data.get("skip"):
+                        discovery_failed = True
                     if (
                         isinstance(data, dict)
                         and isinstance(data.get("info"), dict)
@@ -1789,9 +1799,13 @@ def change(request):
                     n_limit = 5
                     accounts = list(accounts[: n_limit + 1])
                     if len(accounts) == 0:
-                        return HttpResponseBadRequest("Account not found")
+                        if discovery_failed:
+                            return account_message("Could not check account. Please try again later.", level="danger")
+                        if can_discover:
+                            return account_message("Account not found. Check the handle.")
+                        return account_message("Account not found. Try again after your contest results are processed.")
                     if len(accounts) > n_limit:
-                        return HttpResponseBadRequest("Too many accounts")
+                        return account_message("Too many matches. Enter the full handle.")
                     response = {
                         "message": "suggest",
                         "accounts": [a.dict() for a in accounts],
@@ -1800,11 +1814,11 @@ def change(request):
             else:
                 account = Account.objects.filter(pk=account_id).first()
                 if account is None:
-                    return HttpResponseBadRequest("Account not found")
+                    return account_message("Account not found. Search for it again.")
                 resource = account.resource
 
             if account.coders.filter(pk=coder.id).first():
-                return HttpResponseBadRequest("Account is already connect to you")
+                return account_message("This account is already linked to your profile.")
 
             need_verification = (
                 account.need_verification or (resource.has_account_verification and account.coders.exists())
@@ -1812,9 +1826,9 @@ def change(request):
 
             if resource.with_single_account():
                 if coder.account_set.filter(resource=resource).exists():
-                    return HttpResponseBadRequest(f"Allow only one account for {resource.host}")
+                    return account_message(f"Only one account on {resource.host} is allowed.")
                 if account.coders.filter(is_virtual=False).exists() and not need_verification:
-                    return HttpResponseBadRequest("Account is already connect")
+                    return account_message("This account is already linked to another profile.")
 
             if need_verification:
                 url = reverse("coder:account_verification", kwargs={"key": account.key, "host": resource.host})
@@ -1825,7 +1839,7 @@ def change(request):
             return JsonResponse(response)
         except Exception as e:
             logger.error(f"Error while adding account: {e}")
-            return HttpResponseBadRequest("Something went wrong")
+            return account_message("Could not add account. Please try again later.", level="danger")
     elif name == "delete-account":
         try:
             pk = request.POST.get("id")
@@ -2251,6 +2265,7 @@ def search(request, **kwargs):
                 "id": r.id,
                 "text": r.host,
                 "disabled": r.disabled,
+                "icon": r.icon_file.name,
             }
             for r in qs
         ]

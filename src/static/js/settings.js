@@ -1425,12 +1425,23 @@ $(() => {
   $("#first-name-native").editable({ type: "text" });
   $("#last-name-native").editable({ type: "text" });
 
+  function formatAccountResource(data) {
+    if (!data.icon) {
+      return data.text;
+    }
+    var $result = $("<span>").text(`\u00a0${data.text}`);
+    $('<img width="16" height="16" alt="">').attr("src", `/media/sizes/32x32/${data.icon}`).prependTo($result);
+    return $result;
+  }
+
   var $search_resource = $("select#add-account-resource");
   $search_resource.select2({
     width: "40%",
     allowClear: true,
     placeholder: "Search resource by regex",
     data: SELECTED_RESOURCE,
+    templateResult: formatAccountResource,
+    templateSelection: formatAccountResource,
     ajax: {
       url: "/settings/search/",
       dataType: "json",
@@ -1450,7 +1461,28 @@ $(() => {
     minimumInputLength: 0,
   });
 
-  $errorAccountTab = $("#error-account-tab");
+  var $errorAccountTab = $("#error-account-tab");
+
+  function clearAccountMessage() {
+    $errorAccountTab.hide().empty();
+  }
+
+  function showAccountMessage(message, level = "warning") {
+    $errorAccountTab
+      .removeClass("alert-warning alert-danger alert-info")
+      .addClass(`alert-${level}`)
+      .text(message)
+      .show();
+  }
+
+  function showAccountError(response, fallback) {
+    var level = response.getResponseHeader("X-Message-Level");
+    var message = level ? response.responseText : fallback;
+    if (response.status === 0) {
+      message = "Connection lost. Please try again.";
+    }
+    showAccountMessage(message, level === "warning" ? "warning" : "danger");
+  }
 
   function deleteAccount() {
     var $this = $(this);
@@ -1460,6 +1492,7 @@ $(() => {
       message: `${$account.text()}<br/><br/><b>Delete Account?</b>`,
       callback: (result) => {
         if (result) {
+          clearAccountMessage();
           $.ajax({
             type: "POST",
             url: $.fn.editable.defaults.url,
@@ -1472,10 +1505,7 @@ $(() => {
               $account.remove();
             },
             error: (data) => {
-              $errorAccountTab.show().html(data.responseText);
-              setTimeout(() => {
-                $errorAccountTab.hide(500);
-              }, 3000);
+              showAccountError(data, "Could not remove account. Please try again.");
             },
           });
         }
@@ -1488,7 +1518,7 @@ $(() => {
   var $account_suggests = $("#account-suggests");
 
   function selectAccountSuggest() {
-    $search_account.val($(this).data("handle")).trigger("change");
+    $search_account.val($(this).data("handle")).trigger("input");
     $account_suggests.children().remove();
   }
 
@@ -1523,7 +1553,9 @@ $(() => {
   }
 
   $search_resource.on("change", update_advanced_search);
-  $search_account.on("keyup", update_advanced_search);
+  $search_resource.on("change", clearAccountMessage);
+  $search_account.on("input", update_advanced_search);
+  $search_account.on("input", clearAccountMessage);
   update_advanced_search();
 
   function filter_account_table() {
@@ -1539,6 +1571,11 @@ $(() => {
   filter_account_table();
 
   $add_account_button.click(() => {
+    if ($add_account_button.prop("disabled")) {
+      return;
+    }
+    clearAccountMessage();
+    $account_suggests.empty();
     $add_account_loading.removeClass("hidden");
     $add_account_button.prop("disabled", true);
     $.ajax({
@@ -1557,9 +1594,9 @@ $(() => {
         }
 
         $add_account_loading.addClass("hidden");
-        $add_account_button.prop("disabled", false);
+        update_advanced_search();
         if (data.message === "suggest") {
-          $account_suggests.children().remove();
+          showAccountMessage("Select a matching account, then click Add.", "info");
           for (let i = 0; i < data.accounts.length; i++) {
             addAccountSuggest(data.accounts[i]);
           }
@@ -1571,11 +1608,8 @@ $(() => {
           return;
         }
         $add_account_loading.addClass("hidden");
-        $add_account_button.prop("disabled", false);
-        $errorAccountTab.show().html(data.responseText);
-        setTimeout(() => {
-          $errorAccountTab.hide(500);
-        }, 3000);
+        update_advanced_search();
+        showAccountError(data, "Could not add account. Please try again.");
       },
     });
   });

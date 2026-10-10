@@ -92,8 +92,50 @@ form.editableform .has-error .editable-input .form-control:focus {
   padding: 10px;
 }
 
+#add-account-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#add-account-actions > .btn {
+  flex-shrink: 0;
+}
+
+#add-account-status {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 54px;
+  display: flex;
+  align-items: center;
+}
+
 #error-account-tab {
   display: none;
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  transform: translateY(-50%);
+  max-height: 100%;
+  overflow: auto;
+  overflow-wrap: anywhere;
+  margin: 0;
+  padding: 6px 10px;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+@media (max-width: 767px) {
+  #add-account-actions {
+    flex-wrap: wrap;
+  }
+
+  #add-account-status {
+    flex-basis: 100%;
+    height: 72px;
+  }
 }
 
 .tab-content {

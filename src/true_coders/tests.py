@@ -637,7 +637,8 @@ class AccountBindingTest(TestCase):
         response = self.add_account()
 
         assert response.status_code == 400
-        assert response.content == b"Account not found"
+        assert response.content == b"Account not found. Try again after your contest results are processed."
+        assert response["X-Message-Level"] == "warning"
         assert not Account.objects.exists()
         self.lookup.assert_not_called()
 
@@ -650,7 +651,8 @@ class AccountBindingTest(TestCase):
                 response = self.add_account()
 
                 assert response.status_code == 400
-                assert response.content == b"Account not found"
+                assert response.content == b"Account not found. Try again after your contest results are processed."
+                assert response["X-Message-Level"] == "warning"
                 assert not Account.objects.exists()
                 self.lookup.assert_not_called()
                 setattr(self.resource, field, True)
@@ -660,6 +662,8 @@ class AccountBindingTest(TestCase):
         response = self.add_account(value="")
 
         assert response.status_code == 400
+        assert response.content == b"Enter an account handle."
+        assert response["X-Message-Level"] == "warning"
         assert not Account.objects.exists()
         self.lookup.assert_not_called()
 
@@ -686,7 +690,8 @@ class AccountBindingTest(TestCase):
         response = self.add_account()
 
         assert response.status_code == 429
-        assert response.content.startswith(b"Try again in ")
+        assert response.content.startswith(b"Too many attempts. Try again in ")
+        assert response["X-Message-Level"] == "warning"
         assert not Account.objects.exists()
         self.lookup.assert_not_called()
 
@@ -750,7 +755,7 @@ class AccountBindingTest(TestCase):
             for index in range(10):
                 response = self.add_account(value=f"missing-{index}")
                 assert response.status_code == 400
-                assert response.content == b"Account not found"
+                assert response.content == b"Account not found. Check the handle."
 
             response = self.add_account(value="missing-over-limit")
 
@@ -786,7 +791,8 @@ class AccountBindingTest(TestCase):
         response = self.add_account()
 
         assert response.status_code == 400
-        assert response.content == b"Too many accounts"
+        assert response.content == b"Too many matches. Enter the full handle."
+        assert response["X-Message-Level"] == "warning"
         assert Account.objects.count() == 6
 
     def test_unconfirmed_profiles_do_not_create_accounts(self):
@@ -796,7 +802,6 @@ class AccountBindingTest(TestCase):
             [{}],
             [{"info": {}}],
             [{"info": ["missing"]}],
-            [{"skip": True, "info": {"handle": "missing"}}],
             [{"delete": True, "info": {"handle": "missing"}}],
             [{"rename": "canonical"}],
             [{"info": {"handle": "missing"}}],
@@ -811,7 +816,8 @@ class AccountBindingTest(TestCase):
                 response = self.add_account()
 
                 assert response.status_code == 400
-                assert response.content == b"Account not found"
+                assert response.content == b"Account not found. Check the handle."
+                assert response["X-Message-Level"] == "warning"
                 assert not Account.objects.exists()
 
     def test_profile_without_canonical_key_preserves_local_suggestions(self):
@@ -858,15 +864,43 @@ class AccountBindingTest(TestCase):
         assert account.need_verification
         assert Account.objects.count() == 1
 
-    def test_module_exception_uses_local_not_found(self):
+    def test_module_exception_returns_retry_error(self):
         self.lookup.side_effect = RuntimeError("upstream details")
 
         with mock.patch("true_coders.views.logger"):
             response = self.add_account()
 
         assert response.status_code == 400
-        assert response.content == b"Account not found"
+        assert response.content == b"Could not check account. Please try again later."
+        assert response["X-Message-Level"] == "danger"
         assert not Account.objects.exists()
+
+    def test_skipped_discovery_returns_retry_error(self):
+        results = [
+            {"skip": True},
+            {"skip": True, "info": {"handle": "missing"}, "canonical_key": "missing"},
+        ]
+        for result in results:
+            with self.subTest(result=result):
+                self.lookup.return_value = [result]
+
+                response = self.add_account()
+
+                assert response.status_code == 400
+                assert response.content == b"Could not check account. Please try again later."
+                assert response["X-Message-Level"] == "danger"
+                assert not Account.objects.exists()
+
+    def test_skipped_discovery_preserves_local_suggestions(self):
+        account = Account.objects.create(resource=self.resource, key="missing-other")
+        self.lookup.return_value = [{"skip": True}]
+
+        response = self.add_account()
+
+        assert response.status_code == 200
+        assert json.loads(response.content) == {"message": "suggest", "accounts": [account.dict()]}
+        assert Account.objects.count() == 1
+        assert not account.coders.exists()
 
     def test_generator_exception_preserves_local_suggestions(self):
         account = Account.objects.create(resource=self.resource, key="missing-other")
@@ -1123,11 +1157,37 @@ class AccountBindingTest(TestCase):
         response = self.add_account()
 
         assert response.status_code == 400
-        assert response.content.decode() == f"Allow only one account for {self.resource.host}"
+        assert response.content.decode() == f"Only one account on {self.resource.host} is allowed."
+        assert response["X-Message-Level"] == "warning"
         assert list(self.coder.account_set.values_list("pk", flat=True)) == [existing.pk]
         assert Account.objects.count() == 1
         self.lookup.assert_not_called()
         self.usage.assert_not_called()
+
+    def test_already_linked_account_returns_warning(self):
+        account = Account.objects.create(resource=self.resource, key="missing")
+        account.coders.add(self.coder)
+
+        response = self.add_account()
+
+        assert response.status_code == 400
+        assert response.content == b"This account is already linked to your profile."
+        assert response["X-Message-Level"] == "warning"
+        self.lookup.assert_not_called()
+
+    def test_add_failure_returns_retry_error(self):
+        Account.objects.create(resource=self.resource, key="missing")
+
+        with (
+            mock.patch.object(Coder, "add_account", side_effect=RuntimeError("internal details")),
+            mock.patch("true_coders.views.logger"),
+        ):
+            response = self.add_account()
+
+        assert response.status_code == 400
+        assert response.content == b"Could not add account. Please try again later."
+        assert response["X-Message-Level"] == "danger"
+        assert not self.coder.account_set.exists()
 
     def test_discovered_account_can_complete_existing_verification(self):
         self.add_account()
