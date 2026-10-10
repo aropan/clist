@@ -28,6 +28,7 @@ from ranking.tests.parser_regression import (
     materialized_http_cache,
     normalize_standings,
     pack_http_cache,
+    parser_fixture_inventory_problems,
     read_http_cache_archive,
     use_parser_cache,
     write_json,
@@ -237,6 +238,34 @@ class ParserRegressionHelpersTest(SimpleTestCase):
             with use_parser_cache(common, temporary_directory, allow_network=False):
                 assert common.REQ.get(url, post=post, return_json=True, with_curl=True) == {"data": {"rows": []}}
 
+    def test_parser_cache_key_ignores_api_key(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            url = "https://example.com/api/contest.status?contestId=1&apiKey=recorded&apiSig=abc"
+            response = Response(b'{"result": []}', url)
+
+            with (
+                patch("utils.requester.curl_response", return_value=response) as curl_response,
+                use_parser_cache(common, temporary_directory, allow_network=True),
+            ):
+                md5_file_cache = "https://example.com/api/contest.status?contestId=1&apiKey=recorded&"
+                assert common.REQ.get(url, md5_file_cache=md5_file_cache, return_json=True, with_curl=True) == {
+                    "result": []
+                }
+
+            curl_response.assert_called_once()
+
+            with use_parser_cache(common, temporary_directory, allow_network=False):
+                md5_file_cache = "https://example.com/api/contest.status?contestId=1&apiKey=replayed&"
+                assert common.REQ.get(url, md5_file_cache=md5_file_cache, return_json=True, with_curl=True) == {
+                    "result": []
+                }
+                with pytest.raises(AssertionError, match="unexpected network access"):
+                    common.REQ.get(
+                        url,
+                        md5_file_cache="https://example.com/api/contest.status?contestId=2&apiKey=replayed&",
+                        with_curl=True,
+                    )
+
     def test_requester_replays_gzipped_cache_file(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
             req = requester(proxy=False, cookie_filename=None, caching=True)
@@ -277,6 +306,67 @@ class ParserRegressionHelpersTest(SimpleTestCase):
             assert fixture_file_path(fixture_path, "expected_standings.json") == (
                 fixture_path / "expected_standings.json.gz"
             )
+
+    @staticmethod
+    def write_inventory_fixture(root, name="example.com/1"):
+        fixture_path = root / name
+        fixture_path.mkdir(parents=True)
+        cache_path = root / "recording-cache" / name
+        cache_path.mkdir(parents=True)
+        (cache_path / "page.html").write_text("cached response")
+        pack_http_cache(cache_path, fixture_path / "httpcache.json.gz")
+        (fixture_path / "db.json").write_text("[]")
+        write_json(fixture_path / "expected_standings.json.gz", {})
+        return fixture_path
+
+    def test_inventory_accepts_complete_fixtures(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            self.write_inventory_fixture(root, "example.com/1")
+            fixture_path = self.write_inventory_fixture(root, "example.com/2")
+            (fixture_path / "expected_standings.json.gz").unlink()
+            write_json(fixture_path / "expected_standings.json", {})
+
+            assert parser_fixture_inventory_problems(root) == []
+
+    def test_inventory_rejects_missing_or_empty_root(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+
+            assert parser_fixture_inventory_problems(root / "missing") == [
+                f"no parser fixtures found under {root / 'missing'}"
+            ]
+            assert parser_fixture_inventory_problems(root) == [f"no parser fixtures found under {root}"]
+
+    def test_inventory_reports_incomplete_fixtures(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            self.write_inventory_fixture(root, "example.com/no-cache")
+            self.write_inventory_fixture(root, "example.com/no-snapshot")
+            (root / "example.com/no-cache/httpcache.json.gz").unlink()
+            (root / "example.com/no-snapshot/expected_standings.json.gz").unlink()
+
+            assert parser_fixture_inventory_problems(root) == [
+                "example.com/no-cache: missing httpcache.json.gz",
+                "example.com/no-snapshot: missing expected_standings.json or expected_standings.json.gz",
+            ]
+
+    def test_inventory_reports_lfs_pointers_and_non_gzip_archives(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            pointer_fixture = self.write_inventory_fixture(root, "example.com/pointer")
+            corrupt_fixture = self.write_inventory_fixture(root, "example.com/corrupt")
+            (pointer_fixture / "httpcache.json.gz").write_text(
+                "version https://git-lfs.github.com/spec/v1\n"
+                "oid sha256:0000000000000000000000000000000000000000000000000000000000000000\n"
+                "size 123\n"
+            )
+            (corrupt_fixture / "expected_standings.json.gz").write_text("{}")
+
+            assert parser_fixture_inventory_problems(root) == [
+                "example.com/corrupt/expected_standings.json.gz: not gzip data",
+                "example.com/pointer/httpcache.json.gz: Git LFS pointer instead of archive data",
+            ]
 
     def test_requester_replays_non_utf8_binary_cache(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
@@ -451,6 +541,19 @@ class ParserRegressionHelpersTest(SimpleTestCase):
 
         sleep.assert_not_called()
         assert plugin_module.sleep is direct_sleep
+
+    def test_offline_parser_cache_skips_proxy_setup(self):
+        with (
+            tempfile.TemporaryDirectory() as temporary_directory,
+            patch("utils.requester.Proxer", side_effect=AssertionError("proxy setup should be skipped")) as proxer,
+        ):
+            with use_parser_cache(SimpleNamespace(), temporary_directory, allow_network=False):
+                req = common.REQ.duplicate()
+                req.set_proxy(proxy=True, filepath_proxies=os.path.join(temporary_directory, "proxies"))
+
+            assert req.proxer is None
+            assert req.proxy is None
+            proxer.assert_not_called()
 
 
 class ParserRegressionIsolationTest(TestCase):

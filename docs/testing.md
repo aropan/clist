@@ -39,7 +39,18 @@ Parser regression fixtures replay recorded HTTP responses without network access
 compare normalized `get_standings()` output with a golden snapshot:
 
 The compressed fixtures use Git LFS. If the checkout contains pointer files,
-fetch their contents with `git lfs pull` before running these tests.
+fetch their contents before running these tests:
+
+```bash
+git lfs pull --include="src/ranking/tests/fixtures/parsers/**"
+```
+
+`ParserFixtureInventoryTests` guards the fixture set itself. It fails, listing each
+problem with the fetch command above, when the fixture root has no `db.json`, a
+fixture lacks `httpcache.json.gz` or `expected_standings.json[.gz]`, a `.gz` file
+is still a Git LFS pointer (`... Git LFS pointer instead of archive data`), or a
+`.gz` file is not gzip data. An incomplete or unfetched fixture therefore fails
+instead of being silently skipped by discovery.
 
 ```bash
 docker compose exec dev ./manage.py test --keepdb ranking.tests.test_parsers
@@ -59,7 +70,8 @@ one directory (`nerc.itmo.ru/school` becomes `nerc.itmo.ru__school`). Each fixtu
   `result`, `problems`, and `options.medals` for the selected users.
 
 A cache miss raises `AssertionError: unexpected network access`, so a passing test is
-strictly offline.
+strictly offline. Offline replay also skips requester proxy setup, so a parser that
+enables proxies never loads or fetches a proxy list.
 
 The fixture intentionally does not replay every participant. `dump_parser_fixture`
 selects saved `Statistics` rows whose `addition` field introduces a new nested key

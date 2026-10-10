@@ -1,6 +1,7 @@
 import gzip
 import json
 import os
+import re
 import time
 import urllib.request
 from base64 import b64decode, b64encode
@@ -32,6 +33,11 @@ PARSER_FIXTURES_ROOT = Path(__file__).parent / "fixtures" / "parsers"
 FIXTURE_FILENAMES = ("db.json", "expected_standings.json", "httpcache.json")
 HTTP_CACHE_ARCHIVE_VERSION = 1
 HTTP_CACHE_FILENAME = "httpcache.json.gz"
+GIT_LFS_POINTER_PREFIX = b"version https://git-lfs.github.com/spec/v1"
+GZIP_MAGIC = b"\x1f\x8b"
+PARSER_FIXTURES_LFS_PULL = 'git lfs pull --include="src/ranking/tests/fixtures/parsers/**"'
+# Credential query parameters dropped from explicit cache keys, so fixtures replay with any configured credentials.
+CACHE_KEY_CREDENTIAL_PARAMS = ("apiKey",)
 
 SNAPSHOT_FIELDS = ("result", "problems")
 IGNORED_FIELDS = {
@@ -100,6 +106,32 @@ def fixture_file_path(fixture_path, filename):
     if path.is_file():
         return path
     return path.with_suffix(f"{path.suffix}.gz")
+
+
+def parser_fixture_inventory_problems(root=PARSER_FIXTURES_ROOT):
+    """List fixture directories that would be skipped or fail to replay, including unfetched Git LFS data."""
+    root = Path(root)
+    fixture_paths = sorted({db_path.parent for db_path in root.rglob("db.json")}) if root.is_dir() else []
+    if not fixture_paths:
+        return [f"no parser fixtures found under {root}"]
+
+    problems = []
+    for fixture_path in fixture_paths:
+        relative_path = fixture_path.relative_to(root).as_posix()
+        if not (fixture_path / HTTP_CACHE_FILENAME).is_file():
+            problems.append(f"{relative_path}: missing {HTTP_CACHE_FILENAME}")
+        if not fixture_file_path(fixture_path, "expected_standings.json").is_file():
+            problems.append(f"{relative_path}: missing expected_standings.json or expected_standings.json.gz")
+
+    for archive_path in sorted(root.rglob("*.gz")):
+        with open(archive_path, "rb") as archive:
+            header = archive.read(len(GIT_LFS_POINTER_PREFIX))
+        relative_path = archive_path.relative_to(root).as_posix()
+        if header.startswith(GIT_LFS_POINTER_PREFIX):
+            problems.append(f"{relative_path}: Git LFS pointer instead of archive data")
+        elif not header.startswith(GZIP_MAGIC):
+            problems.append(f"{relative_path}: not gzip data")
+    return problems
 
 
 def read_json(path):
@@ -353,6 +385,10 @@ def _sleep_without_wait(*_args, **_kwargs):
     return None
 
 
+def _set_proxy_without_network(_req, *_args, **_kwargs):
+    return None
+
+
 def _module_requesters(plugin_module):
     requesters = [REQ.__wrapped__ if isinstance(REQ, LazyProxy) else REQ]
     for value in vars(plugin_module).values():
@@ -378,6 +414,12 @@ def _request_cache_url(url):
     if cache_query == query:
         return str(url)
     return urlunsplit((parsed.scheme, parsed.netloc, parsed.path, urlencode(cache_query), parsed.fragment))
+
+
+def _credential_free_cache_key(md5_file_cache):
+    for name in CACHE_KEY_CREDENTIAL_PARAMS:
+        md5_file_cache = re.sub(rf"(?<=[?&]){name}=[^&#]*", "", md5_file_cache)
+    return md5_file_cache
 
 
 def _post_cache_key(url, post):
@@ -416,7 +458,9 @@ def use_parser_cache(plugin_module, cache_path, allow_network):
 
             def cached_get(req, url, *args, **kwargs):
                 post = args[0] if args else kwargs.get("post")
-                if "md5_file_cache" not in kwargs:
+                if kwargs.get("md5_file_cache"):
+                    kwargs["md5_file_cache"] = _credential_free_cache_key(kwargs["md5_file_cache"])
+                elif "md5_file_cache" not in kwargs:
                     if post is not None:
                         kwargs["md5_file_cache"] = _post_cache_key(url, post)
                     else:
@@ -467,6 +511,8 @@ def use_parser_cache(plugin_module, cache_path, allow_network):
                 if callable(getattr(plugin_module, "sleep", None)):
                     stack.enter_context(patch.object(plugin_module, "sleep", _sleep_without_wait))
                 stack.enter_context(patch.object(time, "sleep", _sleep_without_wait))
+                # Replayed responses never use a proxy, and proxy setup may fetch free proxy lists.
+                stack.enter_context(patch.object(requester, "set_proxy", _set_proxy_without_network))
                 stack.enter_context(patch.object(urllib.request.OpenerDirector, "open", _unexpected_opener_access))
                 stack.enter_context(patch("utils.requester.curl_response", side_effect=_unexpected_network_access))
                 stack.enter_context(patch.object(requests.sessions.Session, "request", _unexpected_requests_access))
