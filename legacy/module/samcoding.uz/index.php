@@ -6,7 +6,10 @@ require_once dirname(__FILE__) . '/../../config.php';
 
 for ($page = 1; ; ++$page) {
     $page_url = "$URL?page=$page";
-    $response = curlexec($page_url, null, ['json_output' => true]);
+    $response = curlexec($page_url, null, [
+        'json_output' => true,
+        'http_header' => ['Accept: application/json', 'Accept-Language: en'],
+    ]);
     if (
         !is_array($response)
         || !isset($response['data'], $response['page'], $response['pagesCount'])

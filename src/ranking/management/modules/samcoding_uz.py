@@ -3,12 +3,15 @@ from copy import deepcopy
 from datetime import timedelta
 from urllib.parse import quote
 
+from clist.templatetags.extras import is_improved_solution
 from ranking.management.modules.common import REQ, BaseModule
 from ranking.management.modules.excepts import ExceptionParseAccounts, ExceptionParseStandings, FailOnGetResponse
 
 API_URL = "https://samcoding.uz/api/"
-JSON_HEADERS = {"Accept": "application/json"}
+JSON_HEADERS = {"Accept": "application/json", "Accept-Language": "en"}
 SUBMISSIONS_PAGE_SIZE = 100
+UPSOLVING_VERSION = 1
+PENDING_VERDICTS = {"Waiting", "Pending", "In Queue", "Queued", "Running", "Compiling"}
 
 
 def parse_verdict(value):
@@ -43,6 +46,16 @@ def get_page(url, page, *, page_size=None):
     return data
 
 
+def parse_submission(item):
+    return {
+        "submission_id": item["id"],
+        "language": item["language"],
+        "exec_time": f"{item['time_used']} ms",
+        "memory_usage": f"{item['memory_used']} KB",
+        **parse_verdict(item["verdict"]),
+    }
+
+
 class Statistic(BaseModule):
     def get_standings(self, users=None, statistics=None, **kwargs):
         contest_url = f"{API_URL}contests/{quote(str(self.key), safe='')}/"
@@ -55,6 +68,18 @@ class Statistic(BaseModule):
         if format_type not in {"icpc", "ioi"}:
             raise ExceptionParseStandings(f"Unexpected contest format: {format_type}")
 
+        clist_url = contest_url + "clist-standings/"
+        clist_data = REQ.get(clist_url, headers=JSON_HEADERS, return_json=True)
+        if (
+            not isinstance(clist_data, dict)
+            or clist_data.get("status") != "ok"
+            or not isinstance(clist_data.get("problems"), list)
+            or not isinstance(clist_data.get("standings"), list)
+        ):
+            raise ExceptionParseStandings(f"Unexpected standings response: {clist_url}")
+        clist_problems = {item["short"]: item for item in clist_data["problems"]}
+        clist_rows = {item["member"]: item for item in clist_data["standings"]}
+
         problems = []
         full_scores = {}
         for item in contest_data["problems"]:
@@ -65,6 +90,9 @@ class Statistic(BaseModule):
                 "url": item["url"],
                 "full_score": item["score"],
             })
+            for field in ("archive_url", "tags"):
+                if value := clist_problems.get(short, {}).get(field):
+                    problems[-1][field] = value
             full_scores[short] = item["score"]
 
         standings_url = contest_url + "standings/"
@@ -76,8 +104,12 @@ class Statistic(BaseModule):
                 member = item.get("username")
                 if not member:
                     raise ExceptionParseStandings(f"Missing username on {standings_url}?page={page}")
+                if member not in clist_rows:
+                    raise ExceptionParseStandings(f"Missing member {member} on {clist_url}")
                 row = result.setdefault(member, {"member": member})
-                row["place"] = item["rank"]
+                row["place"] = clist_rows[member]["place"]
+                if row["place"] is None:
+                    row["_no_update_n_contests"] = True
                 if format_type == "icpc":
                     row["solving"] = item["solved_count"]
                     row["penalty"] = item["penalty"]
@@ -126,8 +158,20 @@ class Statistic(BaseModule):
                 break
             page += 1
 
+        for member, old_row in (statistics or {}).items():
+            for short, old_problem in old_row.get("problems", {}).items():
+                if short not in full_scores or "upsolving" not in old_problem:
+                    continue
+                row = result.setdefault(member, {"member": member, "place": None, "_no_update_n_contests": True})
+                problem = row.setdefault("problems", {}).setdefault(short, {})
+                problem["upsolving"] = deepcopy(old_problem["upsolving"])
+
         submissions_info = deepcopy(getattr(self.contest, "submissions_info", {}) or {})
+        if submissions_info.get("upsolving_version") != UPSOLVING_VERSION:
+            submissions_info = {"upsolving_version": UPSOLVING_VERSION}
         last_submission_id = submissions_info.get("last_submission_id", -1)
+        pending_submission_ids = set(submissions_info.get("pending_submission_ids", []))
+        stop_id = min(last_submission_id, min(pending_submission_ids, default=last_submission_id))
         submissions_url = contest_url + "submissions/"
         metadata = get_page(submissions_url, 1, page_size=1)
         total = metadata.get("total")
@@ -138,7 +182,7 @@ class Statistic(BaseModule):
             latest = get_page(submissions_url, total, page_size=1)["data"]
             if len(latest) != 1 or not isinstance(latest[0].get("id"), int):
                 raise ExceptionParseStandings(f"Unexpected latest submission: {submissions_url}")
-            if latest[0]["id"] <= last_submission_id:
+            if latest[0]["id"] <= last_submission_id and not pending_submission_ids:
                 last_page = 0
         newest_id = last_submission_id
         new_count = 0
@@ -156,14 +200,48 @@ class Statistic(BaseModule):
             previous_min_id = ids[0]
             newest_id = max(newest_id, ids[-1])
             for item in submissions:
-                if item["id"] <= last_submission_id:
+                if item["id"] <= last_submission_id and item["id"] not in pending_submission_ids:
                     continue
-                new_count += 1
-                row = result.get(item.get("username"))
+                if item["id"] > last_submission_id:
+                    new_count += 1
+                if item.get("verdict") in PENDING_VERDICTS:
+                    pending_submission_ids.add(item["id"])
+                    continue
+                pending_submission_ids.discard(item["id"])
+                member = item.get("username")
+                short = item.get("problem")
+                if not member or short not in full_scores:
+                    continue
+                is_upsolve = item.get("is_upsolve")
+                if is_upsolve is None:
+                    is_upsolve = item.get("relative_time_seconds", 0) > self.contest.duration.total_seconds()
+                if is_upsolve:
+                    row = result.setdefault(member, {"member": member, "place": None, "_no_update_n_contests": True})
+                    problem = row.setdefault("problems", {}).setdefault(short, {})
+                    upsolving = parse_submission(item)
+                    if format_type == "icpc":
+                        upsolving["result"] = "+" if item.get("verdict") == "Accepted" else "-"
+                    else:
+                        upsolving["result"] = item["score"]
+                        if item["score"] < full_scores[short]:
+                            upsolving["partial"] = True
+                    previous = problem.get("upsolving", {})
+                    if (
+                        not previous
+                        or is_improved_solution(upsolving, previous)
+                        or (
+                            upsolving["result"] == previous.get("result")
+                            and upsolving.get("partial") == previous.get("partial")
+                            and item["id"] > previous.get("submission_id", -1)
+                        )
+                    ):
+                        problem["upsolving"] = upsolving
+                    continue
+                row = result.get(member)
                 if row is None:
                     continue
-                problem = row.get("problems", {}).get(item.get("problem"))
-                if problem is None:
+                problem = row.get("problems", {}).get(short)
+                if problem is None or "result" not in problem:
                     continue
                 if format_type == "icpc":
                     solved = problem["result"].startswith("+")
@@ -172,26 +250,22 @@ class Statistic(BaseModule):
                         continue
                 elif problem["result"] != item.get("score"):
                     continue
-                if item.get("relative_time_seconds", 0) > self.contest.duration.total_seconds():
-                    continue
                 if item["id"] <= problem.get("submission_id", -1):
                     continue
                 problem.pop("test", None)
-                problem.update({
-                    "submission_id": item["id"],
-                    "language": item["language"],
-                    "exec_time": f"{item['time_used']} ms",
-                    "memory_usage": f"{item['memory_used']} KB",
-                })
-                problem.update(parse_verdict(item["verdict"]))
-            if ids[0] <= last_submission_id:
+                problem.update(parse_submission(item))
+            if ids[0] <= stop_id:
                 break
         if newest_id > last_submission_id:
             submissions_info["last_submission_id"] = newest_id
             submissions_info["count"] = submissions_info.get("count", 0) + new_count
+        if pending_submission_ids:
+            submissions_info["pending_submission_ids"] = sorted(pending_submission_ids)
+        else:
+            submissions_info.pop("pending_submission_ids", None)
 
         return {
-            "url": standings_url,
+            "url": clist_data["url"],
             "problems": problems,
             "result": result,
             "submissions_info": submissions_info,
