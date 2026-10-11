@@ -13,7 +13,7 @@ from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.db import models
+from django.db import connections, models
 from django.db.models import Avg, Case, Count, Exists, F, OuterRef, Prefetch, Q, Subquery, Value, When
 from django.db.models.expressions import RawSQL
 from django.db.models.functions import Cast, window
@@ -459,12 +459,41 @@ def _get_order_by(fields):
 
 
 def _get_standings_row(statistics, order, statistic_id):
-    # The id predicate must remain outside the window query, otherwise its row number is always one. Keep the inner
-    # projection narrow because Statistics, Account, and Resource contain large JSON fields that can spill the sort.
-    ranked_statistics = statistics.values("pk", "place_as_int").annotate(
-        row_number=models.Window(expression=window.RowNumber(), order_by=_get_order_by(order))
-    )
-    sql_query, sql_params = ranked_statistics.query.get_compiler(using=statistics.db).as_sql()
+    # Rank only scalar columns; large Statistics and Account JSON fields must stay outside the sort.
+    if distinct_fields := statistics.query.distinct_fields:
+        fields = list(dict.fromkeys(["pk", "place_as_int", *distinct_fields, *[f.lstrip("-") for f in order]]))
+        grouped_query, sql_params = statistics.values(*fields).query.get_compiler(using=statistics.db).as_sql()
+        quote_name = connections[statistics.db].ops.quote_name
+        ordering = ", ".join(
+            f"grouped_statistics.{quote_name(f.lstrip('-'))} {'DESC' if f.startswith('-') else 'ASC'}" for f in order
+        )
+        # DISTINCT ON must run before ROW_NUMBER, so each team occupies exactly one numbered row.
+        sql_query = f"""
+            SELECT grouped_statistics.*, ROW_NUMBER() OVER (ORDER BY {ordering}) AS row_number
+            FROM ({grouped_query}) grouped_statistics
+        """
+        member_query, filter_params = (
+            statistics
+            .filter(pk=statistic_id)
+            .order_by()
+            .distinct()
+            .values(*distinct_fields)
+            .query.get_compiler(using=statistics.db)
+            .as_sql()
+        )
+        matching = " AND ".join(
+            f"ranked_statistics.{quote_name(f)} IS NOT DISTINCT FROM member_statistics.{quote_name(f)}"
+            for f in distinct_fields
+        )
+        filter_sql = f"JOIN ({member_query}) member_statistics ON {matching}"
+    else:
+        ranked_statistics = statistics.values("pk", "place_as_int").annotate(
+            row_number=models.Window(expression=window.RowNumber(), order_by=_get_order_by(order))
+        )
+        sql_query, sql_params = ranked_statistics.query.get_compiler(using=statistics.db).as_sql()
+        # Keep the id predicate outside the window query, otherwise its row number is always one.
+        filter_sql = 'WHERE ranked_statistics."pk" = %s'
+        filter_params = [statistic_id]
     rows = Statistics.objects.raw(
         raw_query=f"""
         SELECT selected_statistics."id",
@@ -474,15 +503,15 @@ def _get_standings_row(statistics, order, statistic_id):
                ranked_statistics."row_number"
         FROM ({sql_query}) ranked_statistics
         JOIN "ranking_statistics" selected_statistics ON selected_statistics."id" = ranked_statistics."pk"
-        WHERE ranked_statistics."pk" = %s
+        {filter_sql}
         """,
-        params=[*sql_params, statistic_id],
+        params=[*sql_params, *filter_params],
         using=statistics.db,
     )
     row = next(iter(rows), None)
     if row is None:
         return None
-    return {"place_as_int": row.place_as_int, "row_number": row.row_number}
+    return {"pk": row.pk, "place_as_int": row.place_as_int, "row_number": row.row_number}
 
 
 def standings_charts(request, context):
@@ -498,8 +527,7 @@ def standings_charts(request, context):
     statistics = statistics.select_related(None)
     statistics = statistics.select_related("account")
 
-    find_me = request.GET.get("find_me")
-    my_stat_pk = toint(find_me) if find_me else params.get("find_me")
+    my_stat_pk = context.get("find_me") or params.get("find_me")
 
     charts = []
 
@@ -901,7 +929,7 @@ def get_standings_mod_penalty(contest, division, problems, statistics):
     if contest.duration_in_secs and all("time" not in k for k in contest_fields):
         if division and division != "any":
             statistics = statistics.filter(addition__division=division)
-        first = statistics.values("addition", "solving").first()
+        first = statistics.values("addition", "solving", *statistics.query.distinct_fields).first()
         if first:
             addition = first["addition"]
             penalty = addition.get("penalty")
@@ -1218,7 +1246,10 @@ def standings(request, contest, other_contests=None, template="standings.html", 
         and not groupby
     ):
         if "team_id" in contest_fields:
-            order.append("addition__team_id")
+            order.extend(["addition__team_id", "individual_account_id"])
+            statistics = statistics.annotate(
+                individual_account_id=Case(When(addition__team_id__isnull=True, then=F("account_id")))
+            )
         else:
             order.append("addition__name")
         statistics = statistics.distinct(*[f.lstrip("-") for f in order])
@@ -1394,9 +1425,9 @@ def standings(request, contest, other_contests=None, template="standings.html", 
     enable_timeline = False
     timeline = None
     if contest.duration_in_secs:
-        first_addition = statistics.values_list("addition", flat=True).first()
-        if first_addition is not None:
-            first_problems = list(first_addition.get("problems", {}).values())
+        first_statistic = statistics.values("addition", *statistics.query.distinct_fields).first()
+        if first_statistic is not None:
+            first_problems = list(first_statistic["addition"].get("problems", {}).values())
             enable_timeline = all(not is_reject(p) for p in first_problems) or any("time" in p for p in first_problems)
     if enable_timeline and "timeline" in request.GET:
         timeline = request.GET.get("timeline") or "show"
@@ -1767,6 +1798,7 @@ def standings(request, contest, other_contests=None, template="standings.html", 
     if find_me and groupby == "none":
         find_me_stat = _get_standings_row(statistics, order, find_me)
         if find_me_stat is not None:
+            find_me = find_me_stat["pk"]
             row_number = find_me_stat["row_number"]
             paging_free = "querystring_key" not in request.GET and "standings_paging" not in request.GET
             if paging_free and row_number > per_page:

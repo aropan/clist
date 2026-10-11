@@ -1,3 +1,4 @@
+import re
 from datetime import timedelta
 from unittest import mock
 
@@ -180,6 +181,155 @@ class StandingsFieldsTest(SimpleTestCase):
         assert "predicted_rating_perf" not in user_fields
 
 
+@override_settings(MIDDLEWARE=MIDDLEWARE_WITHOUT_DEBUG_TOOLING)
+class MixedTeamStandingsTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        now = timezone.now()
+        cls.resource = Resource.objects.create(
+            host="mixed-teams.example.com",
+            enable=True,
+            url="https://mixed-teams.example.com/",
+            color="#336699",
+            icon_file="resources/test.png",
+            icon_updated_at=now,
+        )
+        cls.contest = Contest.objects.create(
+            resource=cls.resource,
+            title="Mixed team standings",
+            key="mixed-teams",
+            url="https://mixed-teams.example.com/contest",
+            host=cls.resource.host,
+            start_time=now - timedelta(hours=2),
+            end_time=now - timedelta(hours=1),
+            duration_in_secs=3600,
+            parsed_time=now,
+            n_statistics=4,
+            info={"fields": ["team_id", "name", "penalty"], "grouped_team": True},
+        )
+        cls.statistics = {}
+        for handle, team_id in (
+            ("alice", None),
+            ("bob", None),
+            ("carol", "first"),
+            ("dave", "first"),
+            ("eve", "second"),
+        ):
+            account = Account.objects.create(resource=cls.resource, key=handle)
+            addition = {"team_id": team_id, "name": team_id} if team_id else {}
+            statistic = Statistics.objects.create(
+                contest=cls.contest,
+                resource=cls.resource,
+                account=account,
+                place="1",
+                place_as_int=1,
+                solving=100,
+                penalty=0,
+                addition=addition,
+            )
+            cls.statistics[handle] = statistic
+            if handle == "bob":
+                cls.bob = statistic
+
+    def assert_rendered_rows(self, **params):
+        response = self.client.get(reverse("ranking:standings_by_id", args=[self.contest.pk]), params)
+        assert response.status_code == 200
+        statistic_ids = re.findall(rb'data-statistic-id="([0-9]+)"', response.content)
+        assert len(statistic_ids) == 4
+        statistics = Statistics.objects.filter(pk__in=[int(pk) for pk in statistic_ids])
+        assert set(statistics.filter(addition__team_id__isnull=True).values_list("account__key", flat=True)) == {
+            "alice",
+            "bob",
+        }
+        assert statistics.filter(addition__team_id="first").count() == 1
+        assert statistics.filter(addition__team_id="second").count() == 1
+
+    def test_small_mixed_standings_keep_tied_individuals_and_group_team_members(self):
+        self.contest.info["grouped_team"] = False
+        self.contest.save(update_fields=["info"])
+        self.assert_rendered_rows()
+
+    @override_settings(STANDINGS_SMALL_N_STATISTICS=0)
+    def test_forced_grouping_keeps_tied_individuals_and_supports_find_me(self):
+        self.assert_rendered_rows(find_me=self.bob.pk)
+
+    def test_search_finds_any_team_member(self):
+        for handle in ("carol", "dave"):
+            with self.subTest(handle=handle):
+                response = self.client.get(
+                    reverse("ranking:standings_by_id", args=[self.contest.pk]), {"search": handle}
+                )
+                assert response.status_code == 200
+                statistic_ids = re.findall(rb'data-statistic-id="([0-9]+)"', response.content)
+                assert len(statistic_ids) == 1
+                assert Statistics.objects.get(pk=int(statistic_ids[0])).account.key == handle
+
+    def test_find_me_paginates_by_grouped_rows(self):
+        with mock.patch.object(Contest, "standings_per_page", new_callable=mock.PropertyMock, return_value=2):
+            response = self.client.get(
+                reverse("ranking:standings_by_id", args=[self.contest.pk]), {"find_me": self.bob.pk}
+            )
+
+        assert response.status_code == 200
+        assert int(response.wsgi_request.GET["standings_paging"]) == 2
+        assert re.findall(rb'data-statistic-id="([0-9]+)"', response.content) == [
+            str(self.statistics["alice"].pk).encode(),
+            str(self.bob.pk).encode(),
+        ]
+        assert re.findall(rb'<tr\b[^>]*\bfind-me-row\b[^>]*data-statistic-id="([0-9]+)"', response.content) == [
+            str(self.bob.pk).encode()
+        ]
+
+    def test_find_me_highlights_team_for_nonrepresentative_member(self):
+        Statistics.objects.filter(contest=self.contest, addition__team_id="first").update(place="2", place_as_int=2)
+        with mock.patch.object(Contest, "standings_per_page", new_callable=mock.PropertyMock, return_value=2):
+            response = self.client.get(
+                reverse("ranking:standings_by_id", args=[self.contest.pk]),
+                {"find_me": self.statistics["dave"].pk},
+            )
+
+        assert response.status_code == 200
+        assert int(response.wsgi_request.GET["standings_paging"]) == 2
+        assert response.context["find_me"] == self.statistics["carol"].pk
+        assert re.findall(rb'<tr\b[^>]*\bfind-me-row\b[^>]*data-statistic-id="([0-9]+)"', response.content) == [
+            str(self.statistics["carol"].pk).encode()
+        ]
+
+    def test_charts_find_me_highlights_any_team_member_and_individual(self):
+        Statistics.objects.filter(contest=self.contest, addition__team_id="first").update(solving=200)
+        for handle, representative, score in (("carol", "carol", 200), ("dave", "carol", 200), ("alice", "alice", 100)):
+            with self.subTest(handle=handle):
+                response = self.client.get(
+                    reverse("ranking:standings_by_id", args=[self.contest.pk]),
+                    {"charts": "yes", "find_me": self.statistics[handle].pk},
+                )
+
+                assert response.status_code == 200
+                assert response.context["find_me"] == self.statistics[representative].pk
+                scores_chart = next(chart for chart in response.context["charts"] if chart["field"] == "scores")
+                assert scores_chart["my_value"] == score
+
+    def test_grouped_find_me_uses_one_query_without_loading_account_payloads(self):
+        response = self.client.get(reverse("ranking:standings_by_id", args=[self.contest.pk]))
+        statistics = response.context["groupby_data"]
+
+        with CaptureQueriesContext(connection) as queries:
+            row = _get_standings_row(statistics, list(statistics.query.order_by), self.statistics["dave"].pk)
+
+        assert row == {"pk": self.statistics["carol"].pk, "place_as_int": 1, "row_number": 1}
+        assert len(queries) == 1
+        sql = queries[0]["sql"]
+        assert 'JOIN "ranking_account"' not in sql
+        assert 'JOIN "clist_resource"' not in sql
+        assert '"ranking_statistics"."addition" AS "addition"' not in sql
+
+    def test_grouped_find_me_respects_search_filter(self):
+        response = self.client.get(reverse("ranking:standings_by_id", args=[self.contest.pk]), {"search": "alice"})
+        statistics = response.context["groupby_data"]
+
+        assert _get_standings_row(statistics, list(statistics.query.order_by), self.statistics["dave"].pk) is None
+
+
 class StandingsRowTest(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -240,7 +390,7 @@ class StandingsRowTest(TestCase):
         with CaptureQueriesContext(connection) as queries:
             row = _get_standings_row(statistics, order, self.alice.pk)
 
-        assert row == {"place_as_int": 1, "row_number": 2}
+        assert row == {"pk": self.alice.pk, "place_as_int": 1, "row_number": 2}
         assert len(queries) == 1
         sql = queries[0]["sql"]
         assert '"ranking_statistics"."addition"' not in sql
@@ -257,12 +407,12 @@ class StandingsRowTest(TestCase):
         order = ["place_as_int", "-solving", "penalty", "pk"]
         statistics = Statistics.objects.filter(contest=self.contest).order_by(*order)
 
-        raw_row = mock.Mock(place_as_int=1, row_number=1)
+        raw_row = mock.Mock(pk=self.alice.pk, place_as_int=1, row_number=1)
         with mock.patch.object(Statistics.objects, "raw", return_value=[raw_row]) as raw:
             row = _get_standings_row(statistics, order, self.alice.pk)
 
         assert raw.call_args.kwargs["using"] == statistics.db
-        assert row == {"place_as_int": 1, "row_number": 1}
+        assert row == {"pk": self.alice.pk, "place_as_int": 1, "row_number": 1}
 
     @mock.patch("ranking.views.get_template")
     def test_live_render_uses_full_small_contest_page_size(self, get_template):

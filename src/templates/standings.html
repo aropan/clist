@@ -266,7 +266,7 @@
 
   {% if charts %}
     {% include "standings_charts.html" with charts=charts %}
-  {% elif statistics.exists %}
+  {% elif statistics.distinct.exists %}
     {% if not groupby or groupby == 'none' %}
 
     {% if contest.resource.info.standings.style %}
