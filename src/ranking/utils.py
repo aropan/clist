@@ -284,6 +284,7 @@ def account_update_contest_additions(
     clear_rating_change=None,
     try_renaming_check=None,
     try_fill_missed_ranks=None,
+    hidden_fields=None,
 ):
     contest_keys = set(contest_addition_update.keys())
 
@@ -364,12 +365,12 @@ def account_update_contest_additions(
             for k, v in ordered_dict.items():
                 if v is None:
                     addition.pop(k)
-            if to_canonize_str(stat.addition) == to_canonize_str(addition):
+            if to_canonize_str(stat.addition) != to_canonize_str(addition):
+                stat.addition = addition
+                stat.save(update_fields=["addition"])
+                account.update_last_rating_activity(statistic=stat, contest=contest, resource=account.resource)
+            elif not hidden_fields:
                 continue
-            stat.addition = addition
-            stat.save(update_fields=["addition"])
-
-            account.update_last_rating_activity(statistic=stat, contest=contest, resource=account.resource)
 
             to_save = False
             contest_fields = contest.info.setdefault("fields", [])
@@ -382,6 +383,12 @@ def account_update_contest_additions(
                     if k not in external_fields:
                         external_fields.append(k)
                         updated_external_fields = True
+            if hidden_fields:
+                contest_hidden_fields = contest.info.setdefault("hidden_fields", [])
+                for field in hidden_fields:
+                    if field not in contest_hidden_fields:
+                        contest_hidden_fields.append(field)
+                        to_save = True
             if to_save:
                 if updated_external_fields and contest.end_time + timedelta(days=31) > timezone.now():
                     contest.wait_for_successful_update_timing = timezone.now() + timedelta(days=1)

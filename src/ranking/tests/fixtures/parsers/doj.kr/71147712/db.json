@@ -1,0 +1,1341 @@
+[
+  {
+    "fields": {
+      "accounts_fields": {},
+      "activity_score": null,
+      "activity_updated_at": null,
+      "allow_delete_archived_statistics": false,
+      "api_url": "https://doj.kr/api/v1/",
+      "auto_remove_started": false,
+      "avatar_url": null,
+      "avg_rating": null,
+      "color": "#CCA865",
+      "contest_update_time": "2026-10-10T17:38:55.910Z",
+      "country_rank_update_time": null,
+      "created": "2026-10-10T17:34:04.223Z",
+      "default_account_type": 1,
+      "enable": true,
+      "has_account_last_submission": null,
+      "has_account_n_writers": null,
+      "has_account_verification": false,
+      "has_accounts_infos_update": true,
+      "has_country_medal": null,
+      "has_country_place": null,
+      "has_country_rating": false,
+      "has_inherit_medals_to_related": false,
+      "has_multi_account": false,
+      "has_problem_archive": false,
+      "has_problem_rating": true,
+      "has_problem_statistic": false,
+      "has_problem_update": false,
+      "has_rating_history": true,
+      "has_standings_renamed_account": false,
+      "has_statistic_medal": null,
+      "has_statistic_n_first_ac": null,
+      "has_statistic_n_total_solved": null,
+      "has_statistic_place": null,
+      "has_statistic_total_solving": null,
+      "has_submissions_statistics_log": false,
+      "has_upsolving": false,
+      "host": "doj.kr",
+      "icon_file": "resources/doj_kr.png",
+      "icon_updated_at": "2026-10-10T17:34:04.235Z",
+      "icon_url": null,
+      "info": {
+        "get_events": {
+          "colors": {
+            "darken": "#443416",
+            "lighten": "#EFE4D0"
+          }
+        },
+        "standings": {
+          "timeline": {
+            "time_factor": {
+              "1": [
+                1
+              ],
+              "2": [
+                60,
+                1
+              ],
+              "3": [
+                3600,
+                60,
+                1
+              ]
+            }
+          }
+        }
+      },
+      "medal_win_equals_gold": null,
+      "modified": "2026-10-10T17:39:50.052Z",
+      "n_accounts": 75,
+      "n_accounts_to_update": null,
+      "n_contests": 52,
+      "n_member_accounts": null,
+      "n_rating_accounts": null,
+      "n_statistics": 0,
+      "n_team_accounts": null,
+      "n_university_accounts": null,
+      "parse_url": "https://doj.kr/api/v1/contests",
+      "path": "./module/doj.kr/index.php",
+      "problem_archive_update_time": null,
+      "problem_rating_predictor": {},
+      "problem_url": "https://doj.kr/en/problems/{key}",
+      "problems_fields": {},
+      "profile_url": "https://doj.kr/en/user/{account}",
+      "rank_update_time": null,
+      "rating_prediction": null,
+      "rating_update_time": "2026-10-10T17:39:50.001Z",
+      "ratings": [
+        {
+          "color": "silver",
+          "hex_rgb": "#627984",
+          "high": 1200,
+          "hsl": [
+            0.55,
+            0.15,
+            0.45
+          ],
+          "low": 0,
+          "name": "Newbie",
+          "next": 1200,
+          "prev": 0
+        },
+        {
+          "color": "tc-green",
+          "hex_rgb": "#00a900",
+          "high": 1400,
+          "hsl": [
+            0.33,
+            1,
+            0.33
+          ],
+          "low": 1200,
+          "name": "Pupil",
+          "next": 1400,
+          "prev": 1200
+        },
+        {
+          "color": "cyan",
+          "hex_rgb": "#03a89e",
+          "high": 1600,
+          "hsl": [
+            0.49,
+            0.96,
+            0.34
+          ],
+          "low": 1400,
+          "name": "Specialist",
+          "next": 1600,
+          "prev": 1400
+        },
+        {
+          "color": "samcoding-blue",
+          "hex_rgb": "#236dc9",
+          "high": 1800,
+          "hsl": [
+            0.59,
+            0.7,
+            0.46
+          ],
+          "low": 1600,
+          "name": "Expert",
+          "next": 1800,
+          "prev": 1600
+        },
+        {
+          "color": "tc-blue",
+          "hex_rgb": "#6666ff",
+          "high": 2000,
+          "hsl": [
+            0.67,
+            1,
+            0.7
+          ],
+          "low": 1800,
+          "name": "Candidate Master",
+          "next": 2000,
+          "prev": 1800
+        },
+        {
+          "color": "orange",
+          "hex_rgb": "#ff8c00",
+          "high": 2200,
+          "hsl": [
+            0.09,
+            1,
+            0.5
+          ],
+          "low": 2000,
+          "name": "Master",
+          "next": 2200,
+          "prev": 2000
+        },
+        {
+          "color": "red",
+          "hex_rgb": "#ff0000",
+          "high": 2400,
+          "hsl": [
+            0,
+            1,
+            0.5
+          ],
+          "low": 2200,
+          "name": "International Master",
+          "next": 2400,
+          "prev": 2200
+        },
+        {
+          "color": "tc-red",
+          "hex_rgb": "#ee0000",
+          "high": 100500,
+          "hsl": [
+            0,
+            1,
+            0.47
+          ],
+          "low": 2400,
+          "name": "Grandmaster",
+          "prev": 2400
+        }
+      ],
+      "regexp": null,
+      "short_host": null,
+      "skip_for_contests_chart": false,
+      "statistics_fields": {},
+      "timezone": "UTC",
+      "uid": "506888f52ee91ba49092797a20e7b91edf5bc644d56f691f1056b3cd413f0ff7@group.calendar.google.com",
+      "url": "https://doj.kr/en/contests"
+    },
+    "model": "clist.resource",
+    "pk": 194
+  },
+  {
+    "fields": {
+      "created": "2026-10-10T17:34:04.261Z",
+      "delay_on_error": "01:00:00",
+      "delay_on_success": "06:00:00",
+      "delay_shortly_after": "00:05:00",
+      "enable": true,
+      "long_contest_divider": 15,
+      "long_contest_idle": "06:00:00",
+      "max_delay_after_end": "7 00:00:00",
+      "min_delay_after_end": null,
+      "modified": "2026-10-10T17:38:49.289Z",
+      "path": "ranking.management.modules.doj",
+      "resource": 194,
+      "shortly_after": "00:30:00"
+    },
+    "model": "ranking.module",
+    "pk": 98
+  },
+  {
+    "fields": {
+      "allow_updating_statistics_for_participants": null,
+      "auto_updated": "2026-10-10T17:35:27.299Z",
+      "calculate_time": false,
+      "created": "2026-10-10T17:35:27.297Z",
+      "duration_in_secs": 12600,
+      "edit": null,
+      "elimination_tournament_info": {},
+      "end_time": "2026-10-05T01:00:00Z",
+      "finalists_info": {},
+      "has_fixed_rating_prediction_field": false,
+      "has_hidden_results": false,
+      "has_submissions": null,
+      "has_submissions_tests": null,
+      "has_unlimited_statistics": null,
+      "hide_unsolved_standings_problems": null,
+      "host": "",
+      "info": {
+        "fields": [
+          "penalty",
+          "problems",
+          "performance",
+          "old_rating",
+          "rating_change",
+          "new_rating",
+          "solved",
+          "is_rated",
+          "unofficial"
+        ],
+        "fields_types": {
+          "is_rated": [
+            "bool"
+          ],
+          "new_rating": [
+            "int"
+          ],
+          "old_rating": [
+            "int"
+          ],
+          "penalty": [
+            "str"
+          ],
+          "performance": [
+            "int"
+          ],
+          "problems": [
+            "dict"
+          ],
+          "rating_change": [
+            "int"
+          ],
+          "solved": [
+            "dict"
+          ],
+          "unofficial": [
+            "bool"
+          ]
+        },
+        "hidden_fields": [
+          "unofficial",
+          "old_rating",
+          "rating_change"
+        ],
+        "parse": {
+          "endAt": "2026-10-05T01:00:00.000Z",
+          "problemCount": 9,
+          "ratingEligible": true,
+          "slug": "doj-contest-7",
+          "startAt": "2026-09-28T01:00:00.000Z",
+          "status": "ENDED",
+          "title": "DOJ Contest 7",
+          "visibility": "PUBLIC",
+          "windowDurationMinutes": 210,
+          "windowDurationSeconds": 12600,
+          "windowed": true
+        },
+        "problems": [
+          {
+            "authors": [
+              "woohyunjng"
+            ],
+            "code": "627",
+            "difficulty": 4,
+            "full_score": 100,
+            "n_accepted": 46,
+            "n_failed": 3,
+            "n_teams": 49,
+            "n_total": 49,
+            "name": "BCD Operation",
+            "rating": 802,
+            "short": "A",
+            "tags": [
+              "math"
+            ],
+            "url": "https://doj.kr/en/problems/627"
+          },
+          {
+            "authors": [
+              "a"
+            ],
+            "code": "628",
+            "difficulty": 7,
+            "full_score": 100,
+            "n_accepted": 46,
+            "n_failed": 3,
+            "n_teams": 49,
+            "n_total": 49,
+            "name": "Replacement",
+            "rating": 802,
+            "short": "B",
+            "tags": [
+              "greedy",
+              "invariant"
+            ],
+            "url": "https://doj.kr/en/problems/628"
+          },
+          {
+            "authors": [
+              "woohyunjng"
+            ],
+            "code": "629",
+            "difficulty": 12,
+            "full_score": 100,
+            "n_accepted": 45,
+            "n_failed": 4,
+            "n_teams": 49,
+            "n_total": 49,
+            "name": "Keeping Multiple Positions",
+            "rating": 949,
+            "short": "C",
+            "tags": [
+              "invariant",
+              "ad_hoc"
+            ],
+            "url": "https://doj.kr/en/problems/629"
+          },
+          {
+            "authors": [
+              "a"
+            ],
+            "code": "631",
+            "difficulty": 16,
+            "full_score": 100,
+            "n_accepted": 40,
+            "n_failed": 8,
+            "n_partial": 1,
+            "n_teams": 49,
+            "n_total": 49,
+            "name": "Dismantling",
+            "rating": 1371,
+            "short": "D",
+            "tags": [
+              "mst",
+              "greedy"
+            ],
+            "url": "https://doj.kr/en/problems/631"
+          },
+          {
+            "authors": [
+              "dyppp"
+            ],
+            "code": "632",
+            "difficulty": 19,
+            "full_score": 100,
+            "n_accepted": 35,
+            "n_failed": 12,
+            "n_partial": 2,
+            "n_teams": 49,
+            "n_total": 49,
+            "name": "Mountain Climbing Game",
+            "rating": 1550,
+            "short": "E",
+            "tags": [
+              "segtree",
+              "game_theory",
+              "stack",
+              "sweeping",
+              "greedy",
+              "binary_search"
+            ],
+            "url": "https://doj.kr/en/problems/632"
+          },
+          {
+            "authors": [
+              "dyppp"
+            ],
+            "code": "634",
+            "difficulty": 20,
+            "full_score": 100,
+            "n_accepted": 13,
+            "n_failed": 21,
+            "n_partial": 15,
+            "n_teams": 49,
+            "n_total": 49,
+            "name": "Building Bracket Strings",
+            "rating": 2152,
+            "short": "F",
+            "tags": [
+              "greedy",
+              "hashing",
+              "priority_queue"
+            ],
+            "url": "https://doj.kr/en/problems/634"
+          },
+          {
+            "authors": [
+              "octane"
+            ],
+            "code": "633",
+            "difficulty": 22,
+            "full_score": 100,
+            "n_accepted": 1,
+            "n_failed": 26,
+            "n_partial": 22,
+            "n_teams": 49,
+            "n_total": 49,
+            "name": "Don't Mess with the Moles",
+            "rating": 2967,
+            "short": "G",
+            "tags": [
+              "dp",
+              "dp_tree",
+              "rerooting",
+              "trees"
+            ],
+            "url": "https://doj.kr/en/problems/633"
+          },
+          {
+            "authors": [
+              "woohyunjng"
+            ],
+            "code": "461",
+            "difficulty": 0,
+            "full_score": 100,
+            "n_accepted": 1,
+            "n_failed": 32,
+            "n_partial": 16,
+            "n_teams": 49,
+            "n_total": 49,
+            "name": "Exploration Records",
+            "rating": 2969,
+            "short": "H",
+            "tags": [],
+            "url": "https://doj.kr/en/problems/461"
+          },
+          {
+            "authors": [
+              "dyppp"
+            ],
+            "code": "630",
+            "difficulty": 26,
+            "full_score": 100,
+            "n_accepted": 1,
+            "n_failed": 30,
+            "n_partial": 18,
+            "n_teams": 49,
+            "n_total": 49,
+            "name": "Writing with a Stamp",
+            "rating": 2837,
+            "short": "I",
+            "tags": [
+              "splay_tree",
+              "suffix_array",
+              "suffix_tree"
+            ],
+            "url": "https://doj.kr/en/problems/630"
+          }
+        ]
+      },
+      "invisible": false,
+      "is_auto_added": true,
+      "is_promoted": null,
+      "is_rated": true,
+      "key": "doj-contest-7",
+      "kind": null,
+      "link_statistic_timing": null,
+      "merging_contests": [],
+      "modified": "2026-10-10T17:35:27.297Z",
+      "n_problems": 9,
+      "n_statistics": 49,
+      "notification_timing": "2026-10-10T17:35:27.299Z",
+      "parsed_percentage": null,
+      "parsed_time": "2026-10-10T17:38:55.910Z",
+      "problem_rating_hash": "db13db9c9fe50913733599b52670d38d0947bb8e5e993f0a357e02aaffb594aa",
+      "problem_rating_update_required": false,
+      "rating_prediction_fields": {},
+      "rating_prediction_hash": null,
+      "rating_prediction_timing": null,
+      "raw_info": {},
+      "registration_url": null,
+      "related": null,
+      "resource": 194,
+      "series": null,
+      "set_matched_coders_to_members": null,
+      "slug": "doj-contest-7",
+      "standings_kind": "scoring",
+      "standings_url": "https://doj.kr/en/contests/doj-contest-7/standings",
+      "start_time": "2026-09-28T01:00:00Z",
+      "statistic_timing": "2026-10-10T23:38:55.910Z",
+      "statistics_update_required": false,
+      "submissions_info": {},
+      "title": "DOJ Contest 7",
+      "title_path": "doj.contest.7",
+      "trial_standings_url": null,
+      "uid": "74ee22ipa709ph839f3jvatf38",
+      "updated": "2026-10-10T17:39:50.584Z",
+      "upload_solved_problems_solutions": null,
+      "upsolving_key": null,
+      "upsolving_url": null,
+      "url": "https://doj.kr/en/contests/doj-contest-7",
+      "variables": {},
+      "wait_for_successful_update_timing": null,
+      "with_advance": false,
+      "with_medals": false
+    },
+    "model": "clist.contest",
+    "pk": 71147712
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2026-10-10T17:39:49.016Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "rating": 2377
+      },
+      "key": "leinad2",
+      "last_activity": "2026-09-28T01:00:00Z",
+      "last_rating_activity": "2026-09-28T01:00:00Z",
+      "last_submission": null,
+      "modified": "2026-10-10T17:39:49.088Z",
+      "n_bronze": null,
+      "n_contests": 1,
+      "n_first_ac": 3,
+      "n_first_places": 1,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 8,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 8,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": null,
+      "need_verification": false,
+      "rating": 2377,
+      "rating50": 47,
+      "rating_prediction": null,
+      "rating_update_time": "2026-10-05T01:00:00Z",
+      "related": null,
+      "resource": 194,
+      "resource_rank": null,
+      "solving": 853.0,
+      "submissions_info": {},
+      "total_solving": 853.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-10-10T17:39:49.016Z",
+      "upsolving": null,
+      "url": "/account/leinad2/resource/doj.kr/"
+    },
+    "model": "ranking.account",
+    "pk": 11807682
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2026-10-10T17:38:12.998Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "rating": 2724
+      },
+      "key": "paracompact",
+      "last_activity": "2026-09-28T01:00:00Z",
+      "last_rating_activity": "2026-09-28T01:00:00Z",
+      "last_submission": null,
+      "modified": "2026-10-10T17:39:49.110Z",
+      "n_bronze": null,
+      "n_contests": 2,
+      "n_first_ac": 2,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": 1,
+      "n_silver": null,
+      "n_solved": 7,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 7,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": null,
+      "need_verification": false,
+      "rating": 2724,
+      "rating50": 54,
+      "rating_prediction": null,
+      "rating_update_time": "2026-10-05T01:00:00Z",
+      "related": null,
+      "resource": 194,
+      "resource_rank": null,
+      "solving": 801.0,
+      "submissions_info": {},
+      "total_solving": 801.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-10-10T17:38:12.998Z",
+      "upsolving": null,
+      "url": "/account/paracompact/resource/doj.kr/"
+    },
+    "model": "ranking.account",
+    "pk": 11807668
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2026-10-10T17:39:49.137Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "rating": 2448
+      },
+      "key": "potato167",
+      "last_activity": "2026-09-28T01:00:00Z",
+      "last_rating_activity": "2026-09-28T01:00:00Z",
+      "last_submission": null,
+      "modified": "2026-10-10T17:39:49.160Z",
+      "n_bronze": null,
+      "n_contests": 1,
+      "n_first_ac": 1,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 6,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 1,
+      "n_total_solved": 6,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": null,
+      "need_verification": false,
+      "rating": 2448,
+      "rating50": 48,
+      "rating_prediction": null,
+      "rating_update_time": "2026-10-05T01:00:00Z",
+      "related": null,
+      "resource": 194,
+      "resource_rank": null,
+      "solving": 735.0,
+      "submissions_info": {},
+      "total_solving": 735.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-10-10T17:39:49.137Z",
+      "upsolving": null,
+      "url": "/account/potato167/resource/doj.kr/"
+    },
+    "model": "ranking.account",
+    "pk": 11807683
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2026-10-10T17:39:49.271Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "rating": 2171
+      },
+      "key": "ComPhyPark",
+      "last_activity": "2026-09-28T01:00:00Z",
+      "last_rating_activity": "2026-09-28T01:00:00Z",
+      "last_submission": null,
+      "modified": "2026-10-10T17:39:49.293Z",
+      "n_bronze": null,
+      "n_contests": 1,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 5,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 1,
+      "n_total_solved": 5,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": null,
+      "need_verification": false,
+      "rating": 2171,
+      "rating50": 43,
+      "rating_prediction": null,
+      "rating_update_time": "2026-10-05T01:00:00Z",
+      "related": null,
+      "resource": 194,
+      "resource_rank": null,
+      "solving": 673.0,
+      "submissions_info": {},
+      "total_solving": 673.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-10-10T17:39:49.271Z",
+      "upsolving": null,
+      "url": "/account/ComPhyPark/resource/doj.kr/"
+    },
+    "model": "ranking.account",
+    "pk": 11807686
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2026-10-10T17:38:12.557Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "organization": "쓰레기촌",
+        "rating": 2240
+      },
+      "key": "2",
+      "last_activity": "2026-09-28T01:00:00Z",
+      "last_rating_activity": "2026-09-28T01:00:00Z",
+      "last_submission": null,
+      "modified": "2026-10-10T17:39:49.422Z",
+      "n_bronze": null,
+      "n_contests": 2,
+      "n_first_ac": 3,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": 1,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 12,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": 1,
+      "n_total_solved": 12,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": null,
+      "need_verification": false,
+      "rating": 2240,
+      "rating50": 44,
+      "rating_prediction": null,
+      "rating_update_time": "2026-10-05T01:00:00Z",
+      "related": null,
+      "resource": 194,
+      "resource_rank": null,
+      "solving": 625.0,
+      "submissions_info": {},
+      "total_solving": 625.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-10-10T17:38:12.557Z",
+      "upsolving": null,
+      "url": "/account/2/resource/doj.kr/"
+    },
+    "model": "ranking.account",
+    "pk": 11807640
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2026-10-10T17:38:12.769Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "organization": "고려대학교 세종캠퍼스",
+        "rating": 1360
+      },
+      "key": "jtw7913",
+      "last_activity": "2026-09-28T01:00:00Z",
+      "last_rating_activity": "2026-09-28T01:00:00Z",
+      "last_submission": null,
+      "modified": "2026-10-10T17:39:49.907Z",
+      "n_bronze": null,
+      "n_contests": 2,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 7,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 7,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": null,
+      "need_verification": false,
+      "rating": 1360,
+      "rating50": 27,
+      "rating_prediction": null,
+      "rating_update_time": "2026-10-05T01:00:00Z",
+      "related": null,
+      "resource": 194,
+      "resource_rank": null,
+      "solving": 339.0,
+      "submissions_info": {},
+      "total_solving": 339.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-10-10T17:38:12.769Z",
+      "upsolving": null,
+      "url": "/account/jtw7913/resource/doj.kr/"
+    },
+    "model": "ranking.account",
+    "pk": 11807653
+  },
+  {
+    "fields": {
+      "account": 11807682,
+      "addition": {
+        "is_rated": true,
+        "new_rating": 2377,
+        "old_rating": 2225,
+        "penalty": "2:53:49",
+        "performance": 2834,
+        "problems": {
+          "A": {
+            "result": 100
+          },
+          "B": {
+            "result": 100
+          },
+          "C": {
+            "result": 100
+          },
+          "D": {
+            "result": 100
+          },
+          "E": {
+            "first_ac": true,
+            "result": 100
+          },
+          "F": {
+            "result": 100
+          },
+          "G": {
+            "first_ac": true,
+            "result": 100
+          },
+          "H": {
+            "first_ac": true,
+            "result": 100
+          },
+          "I": {
+            "partial": true,
+            "result": 53
+          }
+        },
+        "rating_change": 152,
+        "solved": {
+          "solving": 8
+        },
+        "unofficial": false
+      },
+      "advanced": false,
+      "contest": 71147712,
+      "created": "2026-10-10T17:39:49.073Z",
+      "global_rating_change": null,
+      "last_activity": "2026-09-28T01:00:00Z",
+      "medal": null,
+      "modified": "2026-10-10T17:39:49.073Z",
+      "n_first_ac": 3,
+      "n_solved": 8,
+      "n_total_solved": 8,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "1",
+      "place_as_int": 1,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 194,
+      "skip_in_stats": false,
+      "solving": 853.0,
+      "total_solving": 853.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 92896071
+  },
+  {
+    "fields": {
+      "account": 11807668,
+      "addition": {
+        "is_rated": true,
+        "new_rating": 2724,
+        "old_rating": 2735,
+        "penalty": "3:21:58",
+        "performance": 2692,
+        "problems": {
+          "A": {
+            "result": 100
+          },
+          "B": {
+            "result": 100
+          },
+          "C": {
+            "result": 100
+          },
+          "D": {
+            "first_ac": true,
+            "result": 100
+          },
+          "E": {
+            "result": 100
+          },
+          "F": {
+            "result": 100
+          },
+          "G": {
+            "partial": true,
+            "result": 63
+          },
+          "H": {
+            "partial": true,
+            "result": 38
+          },
+          "I": {
+            "first_ac": true,
+            "result": 100
+          }
+        },
+        "rating_change": -11,
+        "solved": {
+          "solving": 7
+        },
+        "unofficial": false
+      },
+      "advanced": false,
+      "contest": 71147712,
+      "created": "2026-10-10T17:39:49.102Z",
+      "global_rating_change": null,
+      "last_activity": "2026-09-28T01:00:00Z",
+      "medal": null,
+      "modified": "2026-10-10T17:39:49.102Z",
+      "n_first_ac": 2,
+      "n_solved": 7,
+      "n_total_solved": 7,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "2",
+      "place_as_int": 2,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 194,
+      "skip_in_stats": false,
+      "solving": 801.0,
+      "total_solving": 801.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 92896072
+  },
+  {
+    "fields": {
+      "account": 11807683,
+      "addition": {
+        "is_rated": true,
+        "new_rating": 2448,
+        "old_rating": 2417,
+        "penalty": "2:41:48",
+        "performance": 2542,
+        "problems": {
+          "A": {
+            "result": 100
+          },
+          "B": {
+            "result": 100
+          },
+          "C": {
+            "result": 100
+          },
+          "D": {
+            "result": 100
+          },
+          "E": {
+            "result": 100
+          },
+          "F": {
+            "first_ac": true,
+            "result": 100
+          },
+          "G": {
+            "partial": true,
+            "result": 63
+          },
+          "H": {
+            "partial": true,
+            "result": 19
+          },
+          "I": {
+            "partial": true,
+            "result": 53
+          }
+        },
+        "rating_change": 31,
+        "solved": {
+          "solving": 6
+        },
+        "unofficial": false
+      },
+      "advanced": false,
+      "contest": 71147712,
+      "created": "2026-10-10T17:39:49.149Z",
+      "global_rating_change": null,
+      "last_activity": "2026-09-28T01:00:00Z",
+      "medal": null,
+      "modified": "2026-10-10T17:39:49.149Z",
+      "n_first_ac": 1,
+      "n_solved": 6,
+      "n_total_solved": 6,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "4",
+      "place_as_int": 4,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 194,
+      "skip_in_stats": false,
+      "solving": 735.0,
+      "total_solving": 735.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 92896074
+  },
+  {
+    "fields": {
+      "account": 11807686,
+      "addition": {
+        "is_rated": true,
+        "new_rating": 2171,
+        "old_rating": 2127,
+        "penalty": "3:20:05",
+        "performance": 2303,
+        "problems": {
+          "A": {
+            "result": 100
+          },
+          "B": {
+            "result": 100
+          },
+          "C": {
+            "result": 100
+          },
+          "D": {
+            "result": 100
+          },
+          "E": {
+            "result": 100
+          },
+          "F": {
+            "partial": true,
+            "result": 74
+          },
+          "G": {
+            "partial": true,
+            "result": 63
+          },
+          "H": {
+            "partial": true,
+            "result": 19
+          },
+          "I": {
+            "partial": true,
+            "result": 17
+          }
+        },
+        "rating_change": 44,
+        "solved": {
+          "solving": 5
+        },
+        "unofficial": false
+      },
+      "advanced": false,
+      "contest": 71147712,
+      "created": "2026-10-10T17:39:49.283Z",
+      "global_rating_change": null,
+      "last_activity": "2026-09-28T01:00:00Z",
+      "medal": null,
+      "modified": "2026-10-10T17:39:49.283Z",
+      "n_first_ac": 0,
+      "n_solved": 5,
+      "n_total_solved": 5,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "9",
+      "place_as_int": 9,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 194,
+      "skip_in_stats": false,
+      "solving": 673.0,
+      "total_solving": 673.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 92896079
+  },
+  {
+    "fields": {
+      "account": 11807640,
+      "addition": {
+        "is_rated": true,
+        "new_rating": 2240,
+        "old_rating": 2281,
+        "penalty": "2:39:25",
+        "performance": 2119,
+        "problems": {
+          "A": {
+            "first_ac": true,
+            "result": 100
+          },
+          "B": {
+            "first_ac": true,
+            "result": 100
+          },
+          "C": {
+            "first_ac": true,
+            "result": 100
+          },
+          "D": {
+            "result": 100
+          },
+          "E": {
+            "partial": true,
+            "result": 61
+          },
+          "F": {
+            "partial": true,
+            "result": 55
+          },
+          "G": {
+            "partial": true,
+            "result": 29
+          },
+          "H": {
+            "partial": true,
+            "result": 19
+          },
+          "I": {
+            "partial": true,
+            "result": 53
+          }
+        },
+        "rating_change": -41,
+        "solved": {
+          "solving": 4
+        },
+        "unofficial": false
+      },
+      "advanced": false,
+      "contest": 71147712,
+      "created": "2026-10-10T17:39:49.417Z",
+      "global_rating_change": null,
+      "last_activity": "2026-09-28T01:00:00Z",
+      "medal": null,
+      "modified": "2026-10-10T17:39:49.417Z",
+      "n_first_ac": 3,
+      "n_solved": 4,
+      "n_total_solved": 4,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "15",
+      "place_as_int": 15,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 194,
+      "skip_in_stats": false,
+      "solving": 617.0,
+      "total_solving": 617.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 92896085
+  },
+  {
+    "fields": {
+      "account": 11807653,
+      "addition": {
+        "is_rated": true,
+        "new_rating": 1360,
+        "old_rating": 1385,
+        "penalty": "1:02:31",
+        "performance": 1283,
+        "problems": {
+          "A": {
+            "result": 100
+          },
+          "B": {
+            "result": 100
+          },
+          "C": {
+            "result": 100
+          },
+          "D": {
+            "partial": true,
+            "result": 35
+          },
+          "E": {
+            "result": 0
+          },
+          "F": {
+            "result": 0
+          },
+          "G": {
+            "result": 0
+          },
+          "H": {
+            "result": 0
+          },
+          "I": {
+            "result": 0
+          }
+        },
+        "rating_change": -25,
+        "solved": {
+          "solving": 3
+        },
+        "unofficial": false
+      },
+      "advanced": false,
+      "contest": 71147712,
+      "created": "2026-10-10T17:39:49.901Z",
+      "global_rating_change": null,
+      "last_activity": "2026-09-28T01:00:00Z",
+      "medal": null,
+      "modified": "2026-10-10T17:39:49.901Z",
+      "n_first_ac": 0,
+      "n_solved": 3,
+      "n_total_solved": 3,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "41",
+      "place_as_int": 41,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 194,
+      "skip_in_stats": false,
+      "solving": 335.0,
+      "total_solving": 335.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 92896111
+  }
+]

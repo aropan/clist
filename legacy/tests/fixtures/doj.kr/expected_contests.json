@@ -1,0 +1,1354 @@
+[
+    {
+        "duration_in_secs": 10800,
+        "end_time": "2026-05-10T14:00:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-05-10T14:00:00.000Z",
+                "problemCount": 6,
+                "ratingEligible": true,
+                "slug": "doj-contest-2",
+                "startAt": "2026-05-10T11:00:00.000Z",
+                "status": "ENDED",
+                "title": "DOJ Contest 2",
+                "visibility": "INVITE_ONLY",
+                "windowDurationMinutes": null,
+                "windowDurationSeconds": null,
+                "windowed": false
+            }
+        },
+        "key": "doj-contest-2",
+        "rid": 194,
+        "start_time": "2026-05-10T11:00:00.000Z",
+        "timezone": "UTC",
+        "title": "DOJ Contest 2",
+        "url": "https://doj.kr/en/contests/doj-contest-2"
+    },
+    {
+        "duration_in_secs": 10800,
+        "end_time": "2026-06-14T15:00:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-06-14T15:00:00.000Z",
+                "problemCount": 8,
+                "ratingEligible": true,
+                "slug": "doj-contest-3",
+                "startAt": "2026-06-14T05:00:00.000Z",
+                "status": "ENDED",
+                "title": "DOJ Contest 3",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": 180,
+                "windowDurationSeconds": 10800,
+                "windowed": true
+            }
+        },
+        "key": "doj-contest-3",
+        "rid": 194,
+        "start_time": "2026-06-14T05:00:00.000Z",
+        "timezone": "UTC",
+        "title": "DOJ Contest 3",
+        "url": "https://doj.kr/en/contests/doj-contest-3"
+    },
+    {
+        "duration_in_secs": 10800,
+        "end_time": "2026-07-20T14:00:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-07-20T14:00:00.000Z",
+                "problemCount": 9,
+                "ratingEligible": true,
+                "slug": "doj-contest-4",
+                "startAt": "2026-07-19T11:00:00.000Z",
+                "status": "ENDED",
+                "title": "DOJ Contest 4",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": 180,
+                "windowDurationSeconds": 10800,
+                "windowed": true
+            }
+        },
+        "key": "doj-contest-4",
+        "rid": 194,
+        "start_time": "2026-07-19T11:00:00.000Z",
+        "timezone": "UTC",
+        "title": "DOJ Contest 4",
+        "url": "https://doj.kr/en/contests/doj-contest-4"
+    },
+    {
+        "duration_in_secs": 10800,
+        "end_time": "2026-08-04T14:00:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-08-04T14:00:00.000Z",
+                "problemCount": 9,
+                "ratingEligible": true,
+                "slug": "doj-contest-5",
+                "startAt": "2026-08-01T05:00:00.000Z",
+                "status": "ENDED",
+                "title": "DOJ Contest 5",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": 180,
+                "windowDurationSeconds": 10800,
+                "windowed": true
+            }
+        },
+        "key": "doj-contest-5",
+        "rid": 194,
+        "start_time": "2026-08-01T05:00:00.000Z",
+        "timezone": "UTC",
+        "title": "DOJ Contest 5",
+        "url": "https://doj.kr/en/contests/doj-contest-5"
+    },
+    {
+        "duration_in_secs": 10800,
+        "end_time": "2026-09-11T15:00:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-09-11T15:00:00.000Z",
+                "problemCount": 6,
+                "ratingEligible": true,
+                "slug": "doj-contest-6",
+                "startAt": "2026-09-04T09:00:00.000Z",
+                "status": "ENDED",
+                "title": "DOJ Contest 6",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": 180,
+                "windowDurationSeconds": 10800,
+                "windowed": true
+            }
+        },
+        "key": "doj-contest-6",
+        "rid": 194,
+        "start_time": "2026-09-04T09:00:00.000Z",
+        "timezone": "UTC",
+        "title": "DOJ Contest 6",
+        "url": "https://doj.kr/en/contests/doj-contest-6"
+    },
+    {
+        "duration_in_secs": 10800,
+        "end_time": "2026-09-26T08:00:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-09-26T08:00:00.000Z",
+                "problemCount": 12,
+                "ratingEligible": true,
+                "slug": "sjupc2026",
+                "startAt": "2026-09-26T05:00:00.000Z",
+                "status": "ENDED",
+                "title": "SJUPC 2026",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": null,
+                "windowDurationSeconds": null,
+                "windowed": false
+            }
+        },
+        "key": "sjupc2026",
+        "rid": 194,
+        "start_time": "2026-09-26T05:00:00.000Z",
+        "timezone": "UTC",
+        "title": "SJUPC 2026",
+        "url": "https://doj.kr/en/contests/sjupc2026"
+    },
+    {
+        "duration_in_secs": 10800,
+        "end_time": "2026-10-10T14:59:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-10-10T14:59:00.000Z",
+                "problemCount": 4,
+                "ratingEligible": false,
+                "slug": "scsc26mini1",
+                "startAt": "2026-10-08T15:00:00.000Z",
+                "status": "ENDED",
+                "title": "SCSC 2026 mini contest #1",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": 180,
+                "windowDurationSeconds": 10800,
+                "windowed": true
+            }
+        },
+        "key": "scsc26mini1",
+        "rid": 194,
+        "start_time": "2026-10-08T15:00:00.000Z",
+        "timezone": "UTC",
+        "title": "SCSC 2026 mini contest #1",
+        "url": "https://doj.kr/en/contests/scsc26mini1"
+    },
+    {
+        "duration_in_secs": 10800,
+        "end_time": "2026-10-25T01:00:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-10-25T01:00:00.000Z",
+                "problemCount": 0,
+                "ratingEligible": true,
+                "slug": "dc8",
+                "startAt": "2026-10-18T01:00:00.000Z",
+                "status": "UPCOMING",
+                "title": "DOJ Contest 8 (2026 GSHS CS Seminar)",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": 180,
+                "windowDurationSeconds": 10800,
+                "windowed": true
+            }
+        },
+        "key": "dc8",
+        "rid": 194,
+        "start_time": "2026-10-18T01:00:00.000Z",
+        "timezone": "UTC",
+        "title": "DOJ Contest 8 (2026 GSHS CS Seminar)",
+        "url": "https://doj.kr/en/contests/dc8"
+    },
+    {
+        "duration_in_secs": 10800,
+        "end_time": "2026-11-01T01:00:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-11-01T01:00:00.000Z",
+                "problemCount": 0,
+                "ratingEligible": true,
+                "slug": "dc9",
+                "startAt": "2026-10-25T01:00:00.000Z",
+                "status": "UPCOMING",
+                "title": "DOJ Contest 9",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": 180,
+                "windowDurationSeconds": 10800,
+                "windowed": true
+            }
+        },
+        "key": "dc9",
+        "rid": 194,
+        "start_time": "2026-10-25T01:00:00.000Z",
+        "timezone": "UTC",
+        "title": "DOJ Contest 9",
+        "url": "https://doj.kr/en/contests/dc9"
+    },
+    {
+        "duration_in_secs": 12600,
+        "end_time": "2026-10-04T08:30:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-10-04T08:30:00.000Z",
+                "problemCount": 10,
+                "ratingEligible": true,
+                "slug": "orchard2",
+                "startAt": "2026-10-04T05:00:00.000Z",
+                "status": "ENDED",
+                "title": "제 1회 과수원컵 Div 2",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": null,
+                "windowDurationSeconds": null,
+                "windowed": false
+            }
+        },
+        "key": "orchard2",
+        "rid": 194,
+        "start_time": "2026-10-04T05:00:00.000Z",
+        "timezone": "UTC",
+        "title": "제 1회 과수원컵 Div 2",
+        "url": "https://doj.kr/en/contests/orchard2"
+    },
+    {
+        "duration_in_secs": 12600,
+        "end_time": "2026-10-05T01:00:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-10-05T01:00:00.000Z",
+                "problemCount": 9,
+                "ratingEligible": true,
+                "slug": "doj-contest-7",
+                "startAt": "2026-09-28T01:00:00.000Z",
+                "status": "ENDED",
+                "title": "DOJ Contest 7",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": 210,
+                "windowDurationSeconds": 12600,
+                "windowed": true
+            }
+        },
+        "key": "doj-contest-7",
+        "rid": 194,
+        "start_time": "2026-09-28T01:00:00.000Z",
+        "timezone": "UTC",
+        "title": "DOJ Contest 7",
+        "url": "https://doj.kr/en/contests/doj-contest-7"
+    },
+    {
+        "duration_in_secs": 14400,
+        "end_time": "2026-09-12T09:10:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-09-12T09:10:00.000Z",
+                "problemCount": 10,
+                "ratingEligible": true,
+                "slug": "goricon2026",
+                "startAt": "2026-09-12T05:10:00.000Z",
+                "status": "ENDED",
+                "title": "Goricon 2026 Open Contest",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": null,
+                "windowDurationSeconds": null,
+                "windowed": false
+            }
+        },
+        "key": "goricon2026",
+        "rid": 194,
+        "start_time": "2026-09-12T05:10:00.000Z",
+        "timezone": "UTC",
+        "title": "Goricon 2026 Open Contest",
+        "url": "https://doj.kr/en/contests/goricon2026"
+    },
+    {
+        "duration_in_secs": 14400,
+        "end_time": "2026-09-12T13:30:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-09-12T13:30:00.000Z",
+                "problemCount": 15,
+                "ratingEligible": false,
+                "slug": "centroid2026",
+                "startAt": "2026-09-12T09:30:00.000Z",
+                "status": "ENDED",
+                "title": "2026 Centroid Cup Open Contest",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": null,
+                "windowDurationSeconds": null,
+                "windowed": false
+            }
+        },
+        "key": "centroid2026",
+        "rid": 194,
+        "start_time": "2026-09-12T09:30:00.000Z",
+        "timezone": "UTC",
+        "title": "2026 Centroid Cup Open Contest",
+        "url": "https://doj.kr/en/contests/centroid2026"
+    },
+    {
+        "duration_in_secs": 14400,
+        "end_time": "2026-11-09T15:00:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-11-09T15:00:00.000Z",
+                "problemCount": 0,
+                "ratingEligible": true,
+                "slug": "molu-cup-1",
+                "startAt": "2026-11-09T11:00:00.000Z",
+                "status": "UPCOMING",
+                "title": "몰루컵 ~Unwelcome School~",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": null,
+                "windowDurationSeconds": null,
+                "windowed": false
+            }
+        },
+        "key": "molu-cup-1",
+        "rid": 194,
+        "start_time": "2026-11-09T11:00:00.000Z",
+        "timezone": "UTC",
+        "title": "몰루컵 ~Unwelcome School~",
+        "url": "https://doj.kr/en/contests/molu-cup-1"
+    },
+    {
+        "duration_in_secs": 151200,
+        "end_time": "2026-06-28T03:00:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-06-28T03:00:00.000Z",
+                "problemCount": 9,
+                "ratingEligible": false,
+                "slug": "mathdoj",
+                "startAt": "2026-06-26T09:00:00.000Z",
+                "status": "ENDED",
+                "title": "MathDOJ",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": null,
+                "windowDurationSeconds": null,
+                "windowed": false
+            }
+        },
+        "key": "mathdoj",
+        "rid": 194,
+        "start_time": "2026-06-26T09:00:00.000Z",
+        "timezone": "UTC",
+        "title": "MathDOJ",
+        "url": "https://doj.kr/en/contests/mathdoj"
+    },
+    {
+        "duration_in_secs": 16200,
+        "end_time": "2026-05-29T09:00:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-05-29T09:00:00.000Z",
+                "problemCount": 4,
+                "ratingEligible": true,
+                "slug": "koi-2nd-round-mock-1-elementary",
+                "startAt": "2026-05-22T09:00:00.000Z",
+                "status": "ENDED",
+                "title": "KOI 2nd Round Mock 1 [Elementary]",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": 270,
+                "windowDurationSeconds": 16200,
+                "windowed": true
+            }
+        },
+        "key": "koi-2nd-round-mock-1-elementary",
+        "rid": 194,
+        "start_time": "2026-05-22T09:00:00.000Z",
+        "timezone": "UTC",
+        "title": "KOI 2nd Round Mock 1 [Elementary]",
+        "url": "https://doj.kr/en/contests/koi-2nd-round-mock-1-elementary"
+    },
+    {
+        "duration_in_secs": 16200,
+        "end_time": "2026-05-29T09:00:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-05-29T09:00:00.000Z",
+                "problemCount": 4,
+                "ratingEligible": true,
+                "slug": "koi-2nd-round-mock-1-high",
+                "startAt": "2026-05-22T09:00:00.000Z",
+                "status": "ENDED",
+                "title": "KOI 2nd Round Mock 1 [High]",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": 270,
+                "windowDurationSeconds": 16200,
+                "windowed": true
+            }
+        },
+        "key": "koi-2nd-round-mock-1-high",
+        "rid": 194,
+        "start_time": "2026-05-22T09:00:00.000Z",
+        "timezone": "UTC",
+        "title": "KOI 2nd Round Mock 1 [High]",
+        "url": "https://doj.kr/en/contests/koi-2nd-round-mock-1-high"
+    },
+    {
+        "duration_in_secs": 16200,
+        "end_time": "2026-05-29T09:00:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-05-29T09:00:00.000Z",
+                "problemCount": 4,
+                "ratingEligible": true,
+                "slug": "koi-2nd-round-mock-1-middle",
+                "startAt": "2026-05-22T09:00:00.000Z",
+                "status": "ENDED",
+                "title": "KOI 2nd Round Mock 1 [Middle]",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": 270,
+                "windowDurationSeconds": 16200,
+                "windowed": true
+            }
+        },
+        "key": "koi-2nd-round-mock-1-middle",
+        "rid": 194,
+        "start_time": "2026-05-22T09:00:00.000Z",
+        "timezone": "UTC",
+        "title": "KOI 2nd Round Mock 1 [Middle]",
+        "url": "https://doj.kr/en/contests/koi-2nd-round-mock-1-middle"
+    },
+    {
+        "duration_in_secs": 16200,
+        "end_time": "2026-07-18T00:00:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-07-18T00:00:00.000Z",
+                "problemCount": 4,
+                "ratingEligible": true,
+                "slug": "koi-2nd-round-mock-2-high",
+                "startAt": "2026-07-17T00:00:00.000Z",
+                "status": "ENDED",
+                "title": "KOI 2nd Round Mock 2 [High]",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": 270,
+                "windowDurationSeconds": 16200,
+                "windowed": true
+            }
+        },
+        "key": "koi-2nd-round-mock-2-high",
+        "rid": 194,
+        "start_time": "2026-07-17T00:00:00.000Z",
+        "timezone": "UTC",
+        "title": "KOI 2nd Round Mock 2 [High]",
+        "url": "https://doj.kr/en/contests/koi-2nd-round-mock-2-high"
+    },
+    {
+        "duration_in_secs": 172800,
+        "end_time": "2026-10-10T15:00:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-10-10T15:00:00.000Z",
+                "problemCount": 1,
+                "ratingEligible": false,
+                "slug": "chromate",
+                "startAt": "2026-10-08T15:00:00.000Z",
+                "status": "ENDED",
+                "title": "제3회 흐즈로컵 (The 3rd Chromate Cup) Heuristic Division",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": null,
+                "windowDurationSeconds": null,
+                "windowed": false
+            }
+        },
+        "key": "chromate",
+        "rid": 194,
+        "start_time": "2026-10-08T15:00:00.000Z",
+        "timezone": "UTC",
+        "title": "제3회 흐즈로컵 (The 3rd Chromate Cup) Heuristic Division",
+        "url": "https://doj.kr/en/contests/chromate"
+    },
+    {
+        "duration_in_secs": 18000,
+        "end_time": "2026-07-12T15:00:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-07-12T15:00:00.000Z",
+                "problemCount": 9,
+                "ratingEligible": true,
+                "slug": "sshs-mini-contest-1",
+                "startAt": "2026-07-10T09:00:00.000Z",
+                "status": "ENDED",
+                "title": "SSHS Mini Contest 1",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": 300,
+                "windowDurationSeconds": 18000,
+                "windowed": true
+            }
+        },
+        "key": "sshs-mini-contest-1",
+        "rid": 194,
+        "start_time": "2026-07-10T09:00:00.000Z",
+        "timezone": "UTC",
+        "title": "SSHS Mini Contest 1",
+        "url": "https://doj.kr/en/contests/sshs-mini-contest-1"
+    },
+    {
+        "duration_in_secs": 18000,
+        "end_time": "2026-07-26T14:00:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-07-26T14:00:00.000Z",
+                "problemCount": 8,
+                "ratingEligible": true,
+                "slug": "pyb1",
+                "startAt": "2026-07-25T00:00:00.000Z",
+                "status": "ENDED",
+                "title": "EZ Contest Day 1",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": 300,
+                "windowDurationSeconds": 18000,
+                "windowed": true
+            }
+        },
+        "key": "pyb1",
+        "rid": 194,
+        "start_time": "2026-07-25T00:00:00.000Z",
+        "timezone": "UTC",
+        "title": "EZ Contest Day 1",
+        "url": "https://doj.kr/en/contests/pyb1"
+    },
+    {
+        "duration_in_secs": 18000,
+        "end_time": "2026-08-09T15:00:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-08-09T15:00:00.000Z",
+                "problemCount": 4,
+                "ratingEligible": true,
+                "slug": "ssal1",
+                "startAt": "2026-08-03T03:00:00.000Z",
+                "status": "ENDED",
+                "title": "1st SSAL Olympiad in Informatics",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": 300,
+                "windowDurationSeconds": 18000,
+                "windowed": true
+            }
+        },
+        "key": "ssal1",
+        "rid": 194,
+        "start_time": "2026-08-03T03:00:00.000Z",
+        "timezone": "UTC",
+        "title": "1st SSAL Olympiad in Informatics",
+        "url": "https://doj.kr/en/contests/ssal1"
+    },
+    {
+        "duration_in_secs": 18000,
+        "end_time": "2026-08-29T15:00:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-08-29T15:00:00.000Z",
+                "problemCount": 13,
+                "ratingEligible": false,
+                "slug": "ichy2026-open",
+                "startAt": "2026-08-29T10:00:00.000Z",
+                "status": "ENDED",
+                "title": "나는코더다 2026 반년대회 Open Contest",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": null,
+                "windowDurationSeconds": null,
+                "windowed": false
+            }
+        },
+        "key": "ichy2026-open",
+        "rid": 194,
+        "start_time": "2026-08-29T10:00:00.000Z",
+        "timezone": "UTC",
+        "title": "나는코더다 2026 반년대회 Open Contest",
+        "url": "https://doj.kr/en/contests/ichy2026-open"
+    },
+    {
+        "duration_in_secs": 18000,
+        "end_time": "2026-10-01T01:00:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-10-01T01:00:00.000Z",
+                "problemCount": 4,
+                "ratingEligible": true,
+                "slug": "dgc1-1",
+                "startAt": "2026-09-24T01:00:00.000Z",
+                "status": "ENDED",
+                "title": "DOJ Grand Contest 1 (Div 1)",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": 300,
+                "windowDurationSeconds": 18000,
+                "windowed": true
+            }
+        },
+        "key": "dgc1-1",
+        "rid": 194,
+        "start_time": "2026-09-24T01:00:00.000Z",
+        "timezone": "UTC",
+        "title": "DOJ Grand Contest 1 (Div 1)",
+        "url": "https://doj.kr/en/contests/dgc1-1"
+    },
+    {
+        "duration_in_secs": 18000,
+        "end_time": "2026-10-01T01:00:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-10-01T01:00:00.000Z",
+                "problemCount": 5,
+                "ratingEligible": true,
+                "slug": "dgc1-2",
+                "startAt": "2026-09-24T01:00:00.000Z",
+                "status": "ENDED",
+                "title": "DOJ Grand Contest 1 (Div 2)",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": 300,
+                "windowDurationSeconds": 18000,
+                "windowed": true
+            }
+        },
+        "key": "dgc1-2",
+        "rid": 194,
+        "start_time": "2026-09-24T01:00:00.000Z",
+        "timezone": "UTC",
+        "title": "DOJ Grand Contest 1 (Div 2)",
+        "url": "https://doj.kr/en/contests/dgc1-2"
+    },
+    {
+        "duration_in_secs": 18000,
+        "end_time": "2026-10-04T10:00:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-10-04T10:00:00.000Z",
+                "problemCount": 10,
+                "ratingEligible": true,
+                "slug": "orchard1",
+                "startAt": "2026-10-04T05:00:00.000Z",
+                "status": "ENDED",
+                "title": "제 1회 과수원컵 Div 1",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": null,
+                "windowDurationSeconds": null,
+                "windowed": false
+            }
+        },
+        "key": "orchard1",
+        "rid": 194,
+        "start_time": "2026-10-04T05:00:00.000Z",
+        "timezone": "UTC",
+        "title": "제 1회 과수원컵 Div 1",
+        "url": "https://doj.kr/en/contests/orchard1"
+    },
+    {
+        "duration_in_secs": 18000,
+        "end_time": "2026-10-17T09:00:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-10-17T09:00:00.000Z",
+                "problemCount": 0,
+                "ratingEligible": false,
+                "slug": "dmg",
+                "startAt": "2026-10-17T04:00:00.000Z",
+                "status": "UPCOMING",
+                "title": "제5회 디미고 프로그래밍 챌린지 Open Contest",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": null,
+                "windowDurationSeconds": null,
+                "windowed": false
+            }
+        },
+        "key": "dmg",
+        "rid": 194,
+        "start_time": "2026-10-17T04:00:00.000Z",
+        "timezone": "UTC",
+        "title": "제5회 디미고 프로그래밍 챌린지 Open Contest",
+        "url": "https://doj.kr/en/contests/dmg"
+    },
+    {
+        "duration_in_secs": 18000,
+        "end_time": "2026-10-20T14:00:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-10-20T14:00:00.000Z",
+                "problemCount": 0,
+                "ratingEligible": false,
+                "slug": "icpc1",
+                "startAt": "2026-10-10T04:00:00.000Z",
+                "status": "RUNNING",
+                "title": "EZ contest 3 (DOJ ICPC Contest 1)",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": 300,
+                "windowDurationSeconds": 18000,
+                "windowed": true
+            }
+        },
+        "key": "icpc1",
+        "rid": 194,
+        "start_time": "2026-10-10T04:00:00.000Z",
+        "timezone": "UTC",
+        "title": "EZ contest 3 (DOJ ICPC Contest 1)",
+        "url": "https://doj.kr/en/contests/icpc1"
+    },
+    {
+        "duration_in_secs": 19800,
+        "end_time": "2026-07-04T10:30:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-07-04T10:30:00.000Z",
+                "problemCount": 15,
+                "ratingEligible": true,
+                "slug": "3-2",
+                "startAt": "2026-07-04T05:00:00.000Z",
+                "status": "ENDED",
+                "title": "아니메컵 3기 ~2시에 코딩을 하는 건 이상해!~",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": null,
+                "windowDurationSeconds": null,
+                "windowed": false
+            }
+        },
+        "key": "3-2",
+        "rid": 194,
+        "start_time": "2026-07-04T05:00:00.000Z",
+        "timezone": "UTC",
+        "title": "아니메컵 3기 ~2시에 코딩을 하는 건 이상해!~",
+        "url": "https://doj.kr/en/contests/3-2"
+    },
+    {
+        "duration_in_secs": 36000,
+        "end_time": "2026-08-23T14:00:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-08-23T14:00:00.000Z",
+                "problemCount": 7,
+                "ratingEligible": true,
+                "slug": "pyb2",
+                "startAt": "2026-08-22T00:00:00.000Z",
+                "status": "ENDED",
+                "title": "EZ Contest Day 2",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": 600,
+                "windowDurationSeconds": 36000,
+                "windowed": true
+            }
+        },
+        "key": "pyb2",
+        "rid": 194,
+        "start_time": "2026-08-22T00:00:00.000Z",
+        "timezone": "UTC",
+        "title": "EZ Contest Day 2",
+        "url": "https://doj.kr/en/contests/pyb2"
+    },
+    {
+        "duration_in_secs": 4020,
+        "end_time": "2026-06-07T14:57:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-06-07T14:57:00.000Z",
+                "problemCount": 6,
+                "ratingEligible": false,
+                "slug": "67-contest",
+                "startAt": "2026-06-07T13:50:00.000Z",
+                "status": "ENDED",
+                "title": "67 Contest",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": null,
+                "windowDurationSeconds": null,
+                "windowed": false
+            }
+        },
+        "key": "67-contest",
+        "rid": 194,
+        "start_time": "2026-06-07T13:50:00.000Z",
+        "timezone": "UTC",
+        "title": "67 Contest",
+        "url": "https://doj.kr/en/contests/67-contest"
+    },
+    {
+        "duration_in_secs": 518400,
+        "end_time": "2026-09-30T17:40:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-09-30T17:40:00.000Z",
+                "problemCount": 1,
+                "ratingEligible": false,
+                "slug": "slop2",
+                "startAt": "2026-09-24T17:40:00.000Z",
+                "status": "ENDED",
+                "title": "AI slop 2",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": null,
+                "windowDurationSeconds": null,
+                "windowed": false
+            }
+        },
+        "key": "slop2",
+        "rid": 194,
+        "start_time": "2026-09-24T17:40:00.000Z",
+        "timezone": "UTC",
+        "title": "AI slop 2",
+        "url": "https://doj.kr/en/contests/slop2"
+    },
+    {
+        "duration_in_secs": 5400,
+        "end_time": "2026-07-07T11:45:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-07-07T11:45:00.000Z",
+                "problemCount": 4,
+                "ratingEligible": false,
+                "slug": "2026-gshs-2-1-1-ps",
+                "startAt": "2026-07-07T10:15:00.000Z",
+                "status": "ENDED",
+                "title": "2026 GSHS 2-1 1학기 PS 대회",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": null,
+                "windowDurationSeconds": null,
+                "windowed": false
+            }
+        },
+        "key": "2026-gshs-2-1-1-ps",
+        "rid": 194,
+        "start_time": "2026-07-07T10:15:00.000Z",
+        "timezone": "UTC",
+        "title": "2026 GSHS 2-1 1학기 PS 대회",
+        "url": "https://doj.kr/en/contests/2026-gshs-2-1-1-ps"
+    },
+    {
+        "duration_in_secs": 5400,
+        "end_time": "2026-07-14T11:30:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-07-14T11:30:00.000Z",
+                "problemCount": 4,
+                "ratingEligible": false,
+                "slug": "2026-gshs-2-1-1-ps-open-contest",
+                "startAt": "2026-07-14T10:00:00.000Z",
+                "status": "ENDED",
+                "title": "2026 GSHS 2-1 1학기 PS 대회 Open Contest",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": null,
+                "windowDurationSeconds": null,
+                "windowed": false
+            }
+        },
+        "key": "2026-gshs-2-1-1-ps-open-contest",
+        "rid": 194,
+        "start_time": "2026-07-14T10:00:00.000Z",
+        "timezone": "UTC",
+        "title": "2026 GSHS 2-1 1학기 PS 대회 Open Contest",
+        "url": "https://doj.kr/en/contests/2026-gshs-2-1-1-ps-open-contest"
+    },
+    {
+        "duration_in_secs": 5999,
+        "end_time": "2026-10-18T13:00:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-10-18T13:00:00.000Z",
+                "problemCount": 0,
+                "ratingEligible": false,
+                "slug": "manosaba",
+                "startAt": "2026-10-15T21:00:00.000Z",
+                "status": "UPCOMING",
+                "title": "Manosaba Beginner Contest",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": 100,
+                "windowDurationSeconds": 5999,
+                "windowed": true
+            }
+        },
+        "key": "manosaba",
+        "rid": 194,
+        "start_time": "2026-10-15T21:00:00.000Z",
+        "timezone": "UTC",
+        "title": "Manosaba Beginner Contest",
+        "url": "https://doj.kr/en/contests/manosaba"
+    },
+    {
+        "duration_in_secs": 6000,
+        "end_time": "2026-05-17T14:00:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-05-17T14:00:00.000Z",
+                "problemCount": 9,
+                "ratingEligible": true,
+                "slug": "doj-beginner-contest-1",
+                "startAt": "2026-05-16T20:00:00.000Z",
+                "status": "ENDED",
+                "title": "DOJ Beginner Contest 1",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": 100,
+                "windowDurationSeconds": 6000,
+                "windowed": true
+            }
+        },
+        "key": "doj-beginner-contest-1",
+        "rid": 194,
+        "start_time": "2026-05-16T20:00:00.000Z",
+        "timezone": "UTC",
+        "title": "DOJ Beginner Contest 1",
+        "url": "https://doj.kr/en/contests/doj-beginner-contest-1"
+    },
+    {
+        "duration_in_secs": 6000,
+        "end_time": "2026-05-31T15:00:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-05-31T15:00:00.000Z",
+                "problemCount": 9,
+                "ratingEligible": true,
+                "slug": "doj-beginner-contest-2",
+                "startAt": "2026-05-30T04:00:00.000Z",
+                "status": "ENDED",
+                "title": "DOJ Beginner Contest 2",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": 100,
+                "windowDurationSeconds": 6000,
+                "windowed": true
+            }
+        },
+        "key": "doj-beginner-contest-2",
+        "rid": 194,
+        "start_time": "2026-05-30T04:00:00.000Z",
+        "timezone": "UTC",
+        "title": "DOJ Beginner Contest 2",
+        "url": "https://doj.kr/en/contests/doj-beginner-contest-2"
+    },
+    {
+        "duration_in_secs": 6000,
+        "end_time": "2026-06-21T10:00:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-06-21T10:00:00.000Z",
+                "problemCount": 9,
+                "ratingEligible": true,
+                "slug": "doj-beginner-contest-3",
+                "startAt": "2026-06-14T10:00:00.000Z",
+                "status": "ENDED",
+                "title": "DOJ Beginner Contest 3",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": 100,
+                "windowDurationSeconds": 6000,
+                "windowed": true
+            }
+        },
+        "key": "doj-beginner-contest-3",
+        "rid": 194,
+        "start_time": "2026-06-14T10:00:00.000Z",
+        "timezone": "UTC",
+        "title": "DOJ Beginner Contest 3",
+        "url": "https://doj.kr/en/contests/doj-beginner-contest-3"
+    },
+    {
+        "duration_in_secs": 6000,
+        "end_time": "2026-07-08T13:40:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-07-08T13:40:00.000Z",
+                "problemCount": 9,
+                "ratingEligible": true,
+                "slug": "doj-beginner-contest-4",
+                "startAt": "2026-07-08T12:00:00.000Z",
+                "status": "ENDED",
+                "title": "DOJ Beginner Contest 4",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": null,
+                "windowDurationSeconds": null,
+                "windowed": false
+            }
+        },
+        "key": "doj-beginner-contest-4",
+        "rid": 194,
+        "start_time": "2026-07-08T12:00:00.000Z",
+        "timezone": "UTC",
+        "title": "DOJ Beginner Contest 4",
+        "url": "https://doj.kr/en/contests/doj-beginner-contest-4"
+    },
+    {
+        "duration_in_secs": 6000,
+        "end_time": "2026-08-13T14:00:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-08-13T14:00:00.000Z",
+                "problemCount": 7,
+                "ratingEligible": true,
+                "slug": "bcd5",
+                "startAt": "2026-08-08T01:00:00.000Z",
+                "status": "ENDED",
+                "title": "DOJ Beginner Contest 5",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": 100,
+                "windowDurationSeconds": 6000,
+                "windowed": true
+            }
+        },
+        "key": "bcd5",
+        "rid": 194,
+        "start_time": "2026-08-08T01:00:00.000Z",
+        "timezone": "UTC",
+        "title": "DOJ Beginner Contest 5",
+        "url": "https://doj.kr/en/contests/bcd5"
+    },
+    {
+        "duration_in_secs": 6000,
+        "end_time": "2026-09-06T00:59:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-09-06T00:59:00.000Z",
+                "problemCount": 9,
+                "ratingEligible": true,
+                "slug": "bcd6",
+                "startAt": "2026-08-30T01:00:00.000Z",
+                "status": "ENDED",
+                "title": "DOJ Beginner Contest 6",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": 100,
+                "windowDurationSeconds": 6000,
+                "windowed": true
+            }
+        },
+        "key": "bcd6",
+        "rid": 194,
+        "start_time": "2026-08-30T01:00:00.000Z",
+        "timezone": "UTC",
+        "title": "DOJ Beginner Contest 6",
+        "url": "https://doj.kr/en/contests/bcd6"
+    },
+    {
+        "duration_in_secs": 6000,
+        "end_time": "2026-09-12T14:00:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-09-12T14:00:00.000Z",
+                "problemCount": 9,
+                "ratingEligible": true,
+                "slug": "bcd7",
+                "startAt": "2026-09-06T01:00:00.000Z",
+                "status": "ENDED",
+                "title": "DOJ Beginner Contest 7",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": 100,
+                "windowDurationSeconds": 6000,
+                "windowed": true
+            }
+        },
+        "key": "bcd7",
+        "rid": 194,
+        "start_time": "2026-09-06T01:00:00.000Z",
+        "timezone": "UTC",
+        "title": "DOJ Beginner Contest 7",
+        "url": "https://doj.kr/en/contests/bcd7"
+    },
+    {
+        "duration_in_secs": 6000,
+        "end_time": "2026-09-20T01:00:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-09-20T01:00:00.000Z",
+                "problemCount": 9,
+                "ratingEligible": true,
+                "slug": "bcd8",
+                "startAt": "2026-09-13T01:00:00.000Z",
+                "status": "ENDED",
+                "title": "DOJ Beginner Contest 8",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": 100,
+                "windowDurationSeconds": 6000,
+                "windowed": true
+            }
+        },
+        "key": "bcd8",
+        "rid": 194,
+        "start_time": "2026-09-13T01:00:00.000Z",
+        "timezone": "UTC",
+        "title": "DOJ Beginner Contest 8",
+        "url": "https://doj.kr/en/contests/bcd8"
+    },
+    {
+        "duration_in_secs": 6000,
+        "end_time": "2026-09-27T01:00:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-09-27T01:00:00.000Z",
+                "problemCount": 9,
+                "ratingEligible": true,
+                "slug": "bcd9",
+                "startAt": "2026-09-20T01:00:00.000Z",
+                "status": "ENDED",
+                "title": "DOJ Beginner Contest 9",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": 100,
+                "windowDurationSeconds": 6000,
+                "windowed": true
+            }
+        },
+        "key": "bcd9",
+        "rid": 194,
+        "start_time": "2026-09-20T01:00:00.000Z",
+        "timezone": "UTC",
+        "title": "DOJ Beginner Contest 9",
+        "url": "https://doj.kr/en/contests/bcd9"
+    },
+    {
+        "duration_in_secs": 6000,
+        "end_time": "2026-10-04T01:00:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-10-04T01:00:00.000Z",
+                "problemCount": 7,
+                "ratingEligible": true,
+                "slug": "bcd10",
+                "startAt": "2026-09-27T01:00:00.000Z",
+                "status": "ENDED",
+                "title": "DOJ Beginner Contest 10",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": 100,
+                "windowDurationSeconds": 6000,
+                "windowed": true
+            }
+        },
+        "key": "bcd10",
+        "rid": 194,
+        "start_time": "2026-09-27T01:00:00.000Z",
+        "timezone": "UTC",
+        "title": "DOJ Beginner Contest 10",
+        "url": "https://doj.kr/en/contests/bcd10"
+    },
+    {
+        "duration_in_secs": 6000,
+        "end_time": "2026-10-11T01:00:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-10-11T01:00:00.000Z",
+                "problemCount": 0,
+                "ratingEligible": true,
+                "slug": "bcd11",
+                "startAt": "2026-10-04T01:00:00.000Z",
+                "status": "RUNNING",
+                "title": "DOJ Beginner Contest 11",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": 100,
+                "windowDurationSeconds": 6000,
+                "windowed": true
+            }
+        },
+        "key": "bcd11",
+        "rid": 194,
+        "start_time": "2026-10-04T01:00:00.000Z",
+        "timezone": "UTC",
+        "title": "DOJ Beginner Contest 11",
+        "url": "https://doj.kr/en/contests/bcd11"
+    },
+    {
+        "duration_in_secs": 6000,
+        "end_time": "2026-10-18T01:00:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-10-18T01:00:00.000Z",
+                "problemCount": 0,
+                "ratingEligible": true,
+                "slug": "bcd12",
+                "startAt": "2026-10-11T01:00:00.000Z",
+                "status": "UPCOMING",
+                "title": "DOJ Beginner Contest 12",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": 100,
+                "windowDurationSeconds": 6000,
+                "windowed": true
+            }
+        },
+        "key": "bcd12",
+        "rid": 194,
+        "start_time": "2026-10-11T01:00:00.000Z",
+        "timezone": "UTC",
+        "title": "DOJ Beginner Contest 12",
+        "url": "https://doj.kr/en/contests/bcd12"
+    },
+    {
+        "duration_in_secs": 604800,
+        "end_time": "2026-10-25T01:00:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-10-25T01:00:00.000Z",
+                "problemCount": 0,
+                "ratingEligible": true,
+                "slug": "bcd13",
+                "startAt": "2026-10-18T01:00:00.000Z",
+                "status": "UPCOMING",
+                "title": "DOJ Beginner Contest 13",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": null,
+                "windowDurationSeconds": null,
+                "windowed": false
+            }
+        },
+        "key": "bcd13",
+        "rid": 194,
+        "start_time": "2026-10-18T01:00:00.000Z",
+        "timezone": "UTC",
+        "title": "DOJ Beginner Contest 13",
+        "url": "https://doj.kr/en/contests/bcd13"
+    },
+    {
+        "duration_in_secs": 7200,
+        "end_time": "2026-08-02T13:00:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-08-02T13:00:00.000Z",
+                "problemCount": 5,
+                "ratingEligible": false,
+                "slug": "buc1",
+                "startAt": "2026-07-31T23:00:00.000Z",
+                "status": "ENDED",
+                "title": "BUC 001",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": 120,
+                "windowDurationSeconds": 7200,
+                "windowed": true
+            }
+        },
+        "key": "buc1",
+        "rid": 194,
+        "start_time": "2026-07-31T23:00:00.000Z",
+        "timezone": "UTC",
+        "title": "BUC 001",
+        "url": "https://doj.kr/en/contests/buc1"
+    },
+    {
+        "duration_in_secs": 775800,
+        "end_time": "2026-09-02T14:00:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-09-02T14:00:00.000Z",
+                "problemCount": 5,
+                "ratingEligible": false,
+                "slug": "aislop",
+                "startAt": "2026-08-24T14:30:00.000Z",
+                "status": "ENDED",
+                "title": "AI slop",
+                "visibility": "PUBLIC",
+                "windowDurationMinutes": null,
+                "windowDurationSeconds": null,
+                "windowed": false
+            }
+        },
+        "key": "aislop",
+        "rid": 194,
+        "start_time": "2026-08-24T14:30:00.000Z",
+        "timezone": "UTC",
+        "title": "AI slop",
+        "url": "https://doj.kr/en/contests/aislop"
+    },
+    {
+        "duration_in_secs": 9000,
+        "end_time": "2026-05-05T05:30:00.000Z",
+        "host": "doj.kr",
+        "info": {
+            "parse": {
+                "endAt": "2026-05-05T05:30:00.000Z",
+                "problemCount": 6,
+                "ratingEligible": true,
+                "slug": "doj-contest-1",
+                "startAt": "2026-05-05T03:00:00.000Z",
+                "status": "ENDED",
+                "title": "DOJ Contest 1",
+                "visibility": "INVITE_ONLY",
+                "windowDurationMinutes": null,
+                "windowDurationSeconds": null,
+                "windowed": false
+            }
+        },
+        "key": "doj-contest-1",
+        "rid": 194,
+        "start_time": "2026-05-05T03:00:00.000Z",
+        "timezone": "UTC",
+        "title": "DOJ Contest 1",
+        "url": "https://doj.kr/en/contests/doj-contest-1"
+    }
+]

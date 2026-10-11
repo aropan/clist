@@ -1,0 +1,37 @@
+{
+    "host": "doj.kr",
+    "rid": 194,
+    "path": "./module/doj.kr/index.php",
+    "url": "https://doj.kr/en/contests",
+    "parse_url": "https://doj.kr/api/v1/contests",
+    "timezone": "UTC",
+    "api_url": "https://doj.kr/api/v1/",
+    "info": {
+        "standings": {
+            "timeline": {
+                "time_factor": {
+                    "1": [
+                        1
+                    ],
+                    "2": [
+                        60,
+                        1
+                    ],
+                    "3": [
+                        3600,
+                        60,
+                        1
+                    ]
+                }
+            }
+        },
+        "get_events": {
+            "colors": {
+                "darken": "#443416",
+                "lighten": "#EFE4D0"
+            }
+        }
+    },
+    "parse_full_list": true,
+    "recorded_at": "2026-10-10 17:34:31"
+}
