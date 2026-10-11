@@ -203,7 +203,7 @@ class Resource(BaseModel):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.__original_host = self.fetched_field("host")
-        self.__original_icon_file = self.fetched_field("icon_file")
+        self.__original_icon_file = self.__dict__.get("icon_file")
 
     def label_name(self):
         return self.short_host or self.host
@@ -287,19 +287,29 @@ class Resource(BaseModel):
             self.color = rgb_to_color(*hls_to_rgb(opt[1] % 1, 0.6, 0.5))
             self.update_get_events_colors()
 
-        if not self.icon_file:
+        update_fields = kwargs.get("update_fields")
+        save_icon_file = "icon_file" not in self.get_deferred_fields() and (
+            update_fields is None or "icon_file" in update_fields
+        )
+        if save_icon_file and not self.icon_file:
             self.update_icon()
 
+        icon_file_changed = (
+            save_icon_file
+            and self.icon_file
+            and (
+                not self.icon_file._committed
+                or (self.__original_icon_file is not None and self.__original_icon_file != self.icon_file.name)
+            )
+        )
         super().save(*args, **kwargs)
 
         if self.__original_host and self.__original_host != self.host:
             self.__original_host = self.host
             self.update_account_urls()
 
-        if self.__original_icon_file and self.__original_icon_file != self.icon_file:
-            self.__original_icon_file = self.icon_file
-            self.update_icon_sizes()
-        if self.icon_file and self.icon_updated_at is None:
+        if save_icon_file and self.icon_file and (icon_file_changed or self.icon_updated_at is None):
+            self.__original_icon_file = self.icon_file.name
             self.update_icon_sizes()
 
     def update_account_urls(self):

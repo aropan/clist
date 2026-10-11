@@ -1,3 +1,4 @@
+import io
 import json
 import os
 import tempfile
@@ -12,6 +13,7 @@ from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth.models import AnonymousUser, User
 from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.db import connection
@@ -23,6 +25,7 @@ from django_countries.fields import Country
 from geoip2.errors import AddressNotFoundError
 from oauth2_provider.checks import validate_bcp_configuration
 from oauth2_provider.models import Application
+from PIL import Image
 
 from clist.api.paginator import EstimatedCountPaginator
 from clist.models import Contest, Problem, Resource
@@ -103,6 +106,116 @@ class ResourceRatingColorTest(SimpleTestCase):
         )
 
         assert resource.get_rating_color(792, value_name="rating") == (None, None)
+
+
+class ResourceIconTest(TestCase):
+    def setUp(self):
+        media_root = tempfile.TemporaryDirectory()
+        self.addCleanup(media_root.cleanup)
+        self.settings_override = override_settings(MEDIA_ROOT=media_root.name, RESOURCES_ICONS_SIZES=[32, 64])
+        self.settings_override.enable()
+        self.addCleanup(self.settings_override.disable)
+
+    def make_icon(self, name, color):
+        content = io.BytesIO()
+        Image.new("RGB", (16, 16), color).save(content, format="PNG")
+        return SimpleUploadedFile(name, content.getvalue(), content_type="image/png")
+
+    def create_resource(self):
+        return Resource.objects.create(
+            host="icon.example.com",
+            url="https://icon.example.com/",
+            enable=True,
+            color="#123456",
+            icon_file=self.make_icon("original.png", "red"),
+            icon_updated_at=timezone.now(),
+        )
+
+    def assert_icon_sizes(self, resource, color):
+        for size in settings.RESOURCES_ICONS_SIZES:
+            path = os.path.join(
+                settings.MEDIA_ROOT, settings.MEDIA_SIZES_PATHDIR, f"{size}x{size}", resource.icon_file.name
+            )
+            assert os.path.exists(path), f"Missing {size}x{size} icon"
+            with Image.open(path) as image:
+                assert image.size == (size, size)
+                assert image.getpixel((0, 0)) == color
+
+    def test_initial_upload_generates_sizes_with_existing_timestamp(self):
+        resource = self.create_resource()
+
+        self.assert_icon_sizes(resource, (255, 0, 0))
+
+    def test_replacing_uploaded_icon_generates_sizes(self):
+        resource = self.create_resource()
+        resource = Resource.objects.get(pk=resource.pk)
+        resource.icon_file = self.make_icon("replacement.png", "blue")
+        resource.save()
+
+        self.assert_icon_sizes(resource, (0, 0, 255))
+
+    def test_uploading_same_filename_regenerates_sizes(self):
+        resource = self.create_resource()
+        resource.update_icon_sizes()
+        resource = Resource.objects.get(pk=resource.pk)
+        resource.icon_file = self.make_icon("original.png", "blue")
+        resource.save()
+
+        self.assert_icon_sizes(resource, (0, 0, 255))
+
+    def test_saving_unchanged_icon_does_not_regenerate_sizes(self):
+        resource = self.create_resource()
+        resource = Resource.objects.get(pk=resource.pk)
+
+        with mock.patch.object(resource, "update_icon_sizes") as update_icon_sizes:
+            resource.save()
+
+        update_icon_sizes.assert_not_called()
+
+    def test_partial_save_keeps_pending_icon_until_explicitly_saved(self):
+        resource = self.create_resource()
+        resource = Resource.objects.get(pk=resource.pk)
+        original_name = resource.icon_file.name
+        resource.icon_file = self.make_icon("replacement.png", "blue")
+        resource.color = "#abcdef"
+
+        resource.save(update_fields=["color"])
+
+        saved = Resource.objects.get(pk=resource.pk)
+        assert saved.color == "#abcdef"
+        assert saved.icon_file.name == original_name
+        assert not resource.icon_file._committed
+        assert not os.path.exists(resource.icon_file.path)
+        self.assert_icon_sizes(saved, (255, 0, 0))
+
+        resource.save(update_fields=["icon_file"])
+
+        saved = Resource.objects.get(pk=resource.pk)
+        assert saved.icon_file.name == resource.icon_file.name
+        self.assert_icon_sizes(saved, (0, 0, 255))
+
+    def test_partial_save_does_not_resize_unsaved_icon_without_timestamp(self):
+        resource = self.create_resource()
+        resource.icon_file = self.make_icon("replacement.png", "blue")
+        resource.icon_updated_at = None
+
+        with mock.patch.object(resource, "update_icon_sizes") as update_icon_sizes:
+            resource.save(update_fields=["color"])
+
+        update_icon_sizes.assert_not_called()
+        assert not resource.icon_file._committed
+
+    def test_saving_deferred_unchanged_icon_does_not_regenerate_sizes(self):
+        original = self.create_resource()
+        for update_fields in (None, ["color"]):
+            with self.subTest(update_fields=update_fields):
+                resource = Resource.objects.only("id", "host", "color", "icon_updated_at").get(pk=original.pk)
+                resource.color = "#abcdef"
+
+                with mock.patch.object(resource, "update_icon_sizes") as update_icon_sizes:
+                    resource.save(update_fields=update_fields)
+
+                update_icon_sizes.assert_not_called()
 
 
 class ResourceRatingValueTest(SimpleTestCase):
