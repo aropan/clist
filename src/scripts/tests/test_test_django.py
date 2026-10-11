@@ -15,6 +15,9 @@ LFS_POINTER = "version https://git-lfs.github.com/spec/v1\noid sha256:{}\nsize 1
 # exits with DOCKER_RUN_STATUS.
 FAKE_DOCKER = """#!/usr/bin/env bash
 echo "$*" >> "$DOCKER_LOG"
+if [[ " $* " == *" build "* ]]; then
+    echo "${BUILDX_NO_DEFAULT_ATTESTATIONS:-}" > "$DOCKER_LOG.attestations"
+fi
 if [ "$1" = ps ]; then
     output=${DOCKER_PS_OUTPUT:-}
     if grep -q " run " "$DOCKER_LOG"; then
@@ -90,12 +93,21 @@ def compose_calls(repo: Path, *commands: str) -> list[str]:
     return [f"compose --project-name clist-test -f {repo}/docker-compose.test.yml {command}" for command in commands]
 
 
-def test_materialized_fixtures_run_the_stack(checkout: Path) -> None:
+@pytest.mark.parametrize("attestations", [None, "0"])
+def test_materialized_fixtures_run_the_stack(
+    checkout: Path, monkeypatch: pytest.MonkeyPatch, attestations: str | None
+) -> None:
+    if attestations is None:
+        monkeypatch.delenv("BUILDX_NO_DEFAULT_ATTESTATIONS", raising=False)
+    else:
+        monkeypatch.setenv("BUILDX_NO_DEFAULT_ATTESTATIONS", attestations)
+
     result = run_script(checkout)
 
     assert result.returncode == 0, result.stderr
     down, build, run = compose_calls(checkout, "down --volumes --remove-orphans", "build", "run --rm tests")
     assert docker_calls(checkout) == [PROJECT_CONTAINERS, down, build, run, PROJECT_CONTAINERS, down]
+    assert (checkout.parent / "docker.log.attestations").read_text(encoding="utf-8").strip() == "1"
 
 
 def test_containers_from_the_test_file_are_removed(checkout: Path, monkeypatch: pytest.MonkeyPatch) -> None:

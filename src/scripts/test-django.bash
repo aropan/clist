@@ -62,5 +62,6 @@ cleanup() {
 
 teardown
 trap cleanup EXIT
-"${compose[@]}" build
+# Disable default attestations without build.provenance, which requires Compose 2.39 or later.
+BUILDX_NO_DEFAULT_ATTESTATIONS=1 "${compose[@]}" build
 "${compose[@]}" run --rm tests

@@ -7,7 +7,6 @@ services:
     build:
       context: .
       target: postgres-base
-      provenance: disabled=true
     command:
       - postgres
       - -c
@@ -43,7 +42,6 @@ services:
     build:
       context: .
       target: dev
-      provenance: disabled=true
     command:
       - bash
       - -euo
