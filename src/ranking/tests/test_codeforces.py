@@ -85,6 +85,85 @@ class CodeforcesStandingsTest(SimpleTestCase):
         assert standings["result"]["bob"]["new_rating"] == 250
         assert "old_rating" not in standings["result"]["unselected"]
 
+    def test_finished_contest_retrieves_user_rating_when_stored_statistics_miss_it(self):
+        # Aropan/clist#500: when an earlier full parse of a finished Codeforces
+        # contest has stored statistics without rating data (e.g. the
+        # contest.ratingChanges request failed and was skipped), a per-user
+        # refresh should restore the missing ratings from the user's rating
+        # history on Codeforces — otherwise the coder's rating graph and
+        # contest count stay out of sync with Codeforces' own profile.
+        current_time = now()
+        contest = SimpleNamespace(
+            pk=1,
+            title="Codeforces test",
+            url="https://codeforces.com/contests/2264",
+            key="2264",
+            standings_url=None,
+            start_time=current_time - timedelta(days=12),
+            end_time=current_time - timedelta(days=11),
+            info={},
+            resource=SimpleNamespace(),
+            invisible=False,
+            elimination_tournament_info=None,
+        )
+        rows = [
+            {
+                "party": {"participantType": "CONTESTANT", "members": [{"handle": handle}]},
+                "rank": rank,
+                "points": 0,
+                "successfulHackCount": 0,
+                "unsuccessfulHackCount": 0,
+                "problemResults": [],
+            }
+            for rank, handle in enumerate(("alice", "bob"), start=1)
+        ]
+
+        def api_query(method, **kwargs):
+            if method == "contest.standings":
+                return {
+                    "status": "OK",
+                    "result": {
+                        "contest": {"phase": "FINISHED", "type": "CF", "durationSeconds": 7200},
+                        "problems": [],
+                        "rows": rows,
+                    },
+                }
+            if method == "user.rating":
+                if kwargs.get("params", {}).get("handle") == "bob":
+                    return {
+                        "status": "OK",
+                        "result": [
+                            {"contestId": 1863, "oldRating": 0, "newRating": 356},
+                            {"contestId": 2264, "oldRating": 356, "newRating": 612},
+                        ],
+                    }
+                return {"status": "OK", "result": []}
+            if method == "contest.status":
+                return {"status": "OK", "result": []}
+            raise AssertionError(f"unexpected API method: {method}")
+
+        # Statistics stored by an earlier parse: alice has the missing rating
+        # data, bob's stored row was saved without it.
+        statistics = {
+            "alice": {"old_rating": 100, "new_rating": 150},
+            "bob": {},
+        }
+        with mock.patch("ranking.management.modules.codeforces.api_query", side_effect=api_query) as api_query_mock:
+            standings = Statistic(contest=contest).get_standings(
+                users=["alice", "bob"],
+                statistics=statistics,
+            )
+
+        result = standings["result"]
+        assert result["alice"]["old_rating"] == 100
+        assert result["alice"]["new_rating"] == 150
+        assert result["bob"]["old_rating"] == 356
+        assert result["bob"]["new_rating"] == 612
+        user_rating_calls = [
+            call for call in api_query_mock.call_args_list if call.kwargs.get("method") == "user.rating"
+        ]
+        assert [call.kwargs["params"] for call in user_rating_calls] == [{"handle": "bob"}]
+
 
 class CodeforcesUsersInfoTest(SimpleTestCase):
     def test_retries_after_missing_handle_response_without_result(self):
