@@ -84,7 +84,7 @@ dependencies = [
     "protobuf==7.35.1",
     "traceback-with-variables==2.2.1",
     "flatten-dict==0.5.0",
-    "filelock==3.32.3",
+    "filelock==4.2.1",
     "tailslide==0.2.0",
     "feedgen==1.0.0",
     "pycountry==26.2.16",
