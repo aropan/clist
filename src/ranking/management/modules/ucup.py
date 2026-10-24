@@ -137,21 +137,27 @@ class Statistic(BaseModule):
 
     def _get_season_ratings(self):
         ret = {}
+        self._season_rating_ranking = None
+        self._season_rating_writers = []
         season = get_item(self.info, "parse.season")
         if not season:
             return ret
         stage = get_item(self.info, "parse.stage")
         rating_page = self._get_rating_page(season)
         table = parsed_table.ParsedTable(rating_page)
+        ranking_scores = {}
+        has_rating_column = False
         for row in table:
             rating_idx = None
             season_rating = None
             handle = None
+            member = None
             found = False
             for k, v in row.items():
                 k = k.lower()
                 if rating_idx is not None:
-                    season_rating = as_number(v.value, force=True)
+                    value = v.value.strip()
+                    season_rating = value if value in {"A", "W"} else as_number(value, force=True)
                     rating_idx += 1
                     href = v.header.node.xpath(".//a/@href")
                     if not href and str(rating_idx) == stage:
@@ -162,17 +168,41 @@ class Statistic(BaseModule):
                         break
                 elif "team" in k:
                     handle = v.value
+                    for href in v.column.node.xpath(".//a/@href"):
+                        match = re.search(r"/user/profile/([^/?#]+)", href)
+                        if match:
+                            member = urllib.parse.unquote(match.group(1))
+                            if match := re.fullmatch(r"ucup-team0*([0-9]+)", member):
+                                member = f"team-{match.group(1)}"
+                            break
                 elif "rating" in k:
                     rating_idx = 0
-            if found and handle and season_rating:
-                rating_data = {"season_rating": season_rating}
+            has_rating_column |= found
+            if found and handle and season_rating is not None:
                 handle = handle.strip()
+                member = member or handle
+                if season_rating in {"A", "W"}:
+                    self._season_rating_writers.append(member)
+                elif season_rating > 0:
+                    ranking_scores[member] = season_rating
+                rating_data = {"season_rating": season_rating}
+                ret[member] = rating_data
                 ret[handle] = rating_data
                 team_name = extract_team_name(handle)
                 if team_name in ret:
                     ret[team_name] = None
                 elif team_name:
                     ret[team_name] = rating_data
+        if has_rating_column:
+            self._season_rating_ranking = {}
+            last_score = None
+            for index, (member, score) in enumerate(
+                sorted(ranking_scores.items(), key=lambda item: item[1], reverse=True), start=1
+            ):
+                if score != last_score:
+                    rank = index
+                    last_score = score
+                self._season_rating_ranking[member] = rank
         return ret
 
     def get_standings(self, users=None, statistics=None, **kwargs):
@@ -184,6 +214,9 @@ class Statistic(BaseModule):
         except FailOnGetResponse as e:
             LOG.warn(f"Fail to get season ratings: {e}")
             season_ratings = {}
+
+        has_season_ratings = bool(season_ratings)
+        rating_writers = self._season_rating_writers
 
         standings_url = get_item(self.info, "standings.alternative_url", self.standings_url)
 
@@ -275,7 +308,7 @@ class Statistic(BaseModule):
             name = re.sub(r"\(<([a-z]+)[^>]*>.*</\1>\)$", "", name)
             name = name.strip()
 
-            season_ratings_keys = [orig_handle, name, extract_team_name(name)]
+            season_ratings_keys = [handle, orig_handle, name, extract_team_name(name)]
             for val in season_ratings_keys:
                 rating_data = season_ratings.pop(val, {})
                 if rating_data:
@@ -407,6 +440,11 @@ class Statistic(BaseModule):
             "info_fields": ["_submissions_info"],
             "options": {"data": variables},
         }
+        if has_season_ratings:
+            standings["writers"] = rating_writers
+        if self._season_rating_ranking is not None:
+            standings["_season_rating_ranking"] = self._season_rating_ranking
+            standings["info_fields"].append("_season_rating_ranking")
         return standings
 
     @staticmethod

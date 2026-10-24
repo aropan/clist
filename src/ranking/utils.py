@@ -476,7 +476,6 @@ def update_stage(self):
         contests = contests.filter(Q(**spec_filter_params) | Q(end_time__gt=timezone_now))
 
     contests = contests.order_by("start_time")
-    contests = contests.prefetch_related("writers")
     self.contests.set(contests)
 
     parsed_statistic = self.score_params.get("parse_statistic")
@@ -489,6 +488,9 @@ def update_stage(self):
     n_best = self.score_params.get("n_best")
     fields = self.score_params.get("fields", [])
     scoring = self.score_params.get("scoring", {})
+    writers_score = self.score_params.get("writers_score")
+    if writers_score not in {None, "avg", "max"}:
+        raise ValueError(f"Unknown writers score = {writers_score}")
     detail_problems = self.score_params.get("detail_problems")
     order_by = self.score_params["order_by"]
     advances = self.score_params.get("advances", {})
@@ -588,9 +590,18 @@ def update_stage(self):
     if exclude_statistics:
         statistics = statistics.exclude(**exclude_statistics)
     re_ranking = self.score_params.get("re_ranking")
+    ranking_field = self.score_params.get("ranking_field")
     update_statistics_fields = self.score_params.get("update_statistics_fields", [])
 
-    account_keys = {}
+    account_keys = set()
+    for contest in contests:
+        account_keys.update(contest.info.get("writers", []))
+        if ranking_field and not contest.info.get("unrated"):
+            account_keys.update(get_item(contest.info, ranking_field) or {})
+    accounts = {
+        key: account.get_current()
+        for key, account in Account.get_many(resource, account_keys, ignore_case=True).items()
+    }
     problem_values = defaultdict(set)
     total = statistics.filter(contest__in=contests).count()
     with tqdm.tqdm(total=total, desc=f"getting statistics for stage {stage}") as pbar, print_sql(count_only=True):
@@ -603,6 +614,22 @@ def update_stage(self):
                 problem_short = get_problem_short(problems_infos[problem_info_key])
             pbar.set_postfix(contest=contest)
             stats = statistics.filter(contest_id=contest.pk)
+            ranking = get_item(contest.info, ranking_field) if ranking_field and not contest_unrated else None
+            if ranking_field and not contest_unrated and ranking is None and stats.exists():
+                raise ValueError(f"Missing {ranking_field} for {contest}")
+            if ranking is not None:
+                account_ranking = {}
+                for key, rank in ranking.items():
+                    if account := accounts.get(key):
+                        account_ranking[account.pk] = min(rank, account_ranking.get(account.pk, rank))
+                ranked_stats = []
+                for stat in stats:
+                    account = stat.account.get_current()
+                    if account.pk not in account_ranking:
+                        continue
+                    stat.place_as_int = account_ranking[account.pk]
+                    ranked_stats.append(stat)
+                stats = ranked_stats
             stage_values = {}
 
             max_solving = 0
@@ -611,7 +638,9 @@ def update_stage(self):
                 max_solving = max(max_solving, stat.solving)
                 n_effective += stat.solving > eps
 
-            if re_ranking:
+            if ranking is not None:
+                n_effective = len(ranking)
+            elif re_ranking:
                 order = contest.get_statistics_order()
                 stats = stats.order_by(*order)
                 stat_last = None
@@ -625,6 +654,7 @@ def update_stage(self):
 
             if stage_placing:
                 placing = deepcopy(stage_placing)
+            if stage_placing and ranking is None:
                 for placing_value in _get_placing_values(placing):
                     placing_value.setdefault("_scores", {})
                     placing_value.setdefault("_n_stats", 0)
@@ -668,7 +698,7 @@ def update_stage(self):
                     if scoring["name"] == "general":
                         if rank is None:
                             continue
-                        score_factor = stat.solving / max_solving
+                        score_factor = stat.solving / max_solving if scoring.get("use_score_factor", True) else 1
                         rank_factor = (n_effective - rank + 1) / n_effective
                         norm_score = scoring["factor"] * score_factor * rank_factor
                         score += norm_score
@@ -715,9 +745,7 @@ def update_stage(self):
                         problems_infos[problem_info_key].setdefault("n_accepted", 0)
                         problems_infos[problem_info_key]["n_accepted"] += 1
 
-                account = stat.account
-                if account.duplicate is not None:
-                    account = account.duplicate
+                account = stat.account.get_current()
 
                 coders = account.coders.all()
                 has_mapping_account_by_coder = False
@@ -731,7 +759,6 @@ def update_stage(self):
 
                 row = results[account]
                 row["member"] = account
-                account_keys[account.key] = account
 
                 problems = row.setdefault("problems", {})
                 if detail_problems:
@@ -819,30 +846,25 @@ def update_stage(self):
                         break
                 pbar.update()
 
-            for writer in contest.writers.all():
-                account_keys[writer.key] = writer
-
     total = sum(len(contest.info.get("writers", [])) for contest in contests)
     with tqdm.tqdm(total=total, desc=f"getting writers for stage {stage}") as pbar, print_sql(count_only=True):
         writers = set()
         for contest in contests:
             contest_writers = contest.info.get("writers", [])
-            if not contest_writers or detail_problems:
+            if not contest_writers or detail_problems or (writers_score and contest.info.get("unrated")):
                 continue
             problem_info_key = str(contest.pk)
             problem_short = get_problem_short(problems_infos[problem_info_key])
+            contest_writer_accounts = set()
             for writer in contest_writers:
-                if writer in account_keys:
-                    account = account_keys[writer]
-                else:
-                    try:
-                        account = Account.objects.get(resource_id=contest.resource_id, key__iexact=writer)
-                    except Account.DoesNotExist:
-                        account = None
+                account = accounts.get(writer)
 
                 pbar.update()
                 if not account:
                     continue
+                if account in contest_writer_accounts:
+                    continue
+                contest_writer_accounts.add(account)
                 writers.add(account)
 
                 row = results[account]
@@ -856,7 +878,11 @@ def update_stage(self):
 
                 problems = row.setdefault("problems", {})
                 problem = problems.setdefault(problem_short, {})
-                problem["status"] = "W"
+                if writers_score:
+                    problem.pop("result", None)
+                    problem["status"] = "A" if writers_score == "avg" else "W"
+                else:
+                    problem["status"] = "W"
 
     if self.score_params.get("writers_proportionally_score"):
         n_contests = sum(contest.start_time < timezone_now for contest in contests)
@@ -865,6 +891,20 @@ def update_stage(self):
             if n_contests == row["writer"] or "score" not in row:
                 continue
             row["score"] = row["score"] / (n_contests - row["writer"]) * n_contests
+    if writers_score:
+        for row in results.values():
+            problems = row.get("problems", {}).values()
+            scores = [problem["result"] for problem in problems if "result" in problem]
+            if not scores:
+                continue
+            writer_score = sum(scores) / len(scores) if writers_score == "avg" else max(scores)
+            for problem in problems:
+                if problem.get("status") in {"A", "W"} and "upsolving" not in problem:
+                    problem["result"] = writer_score
+            if n_best:
+                row["scores"] = [(problem["result"], problem) for problem in problems if "result" in problem]
+            else:
+                row["score"] = sum(problem.get("result", 0) for problem in problems)
     if self.score_params.get("exponential_score_decay"):
         for r in results.values():
             scores = [problem.get("result", 0) for problem in r.get("problems", {}).values()]

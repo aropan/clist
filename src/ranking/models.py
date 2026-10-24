@@ -270,10 +270,61 @@ class Account(BaseModel):
         super().save(*args, **kwargs)
 
     @staticmethod
-    def get(resource, key) -> Account | None:
-        account = resource.account_set.filter(key=key).first()
-        if account is None and (renaming := resource.accountrenaming_set.filter(old_key=key).first()):
-            account = resource.account_set.get(key=renaming.new_key)
+    def get(resource, key, *, ignore_case=False) -> Account | None:
+        return Account.get_many(resource, [key], ignore_case=ignore_case).get(key)
+
+    @staticmethod
+    def get_many(resource, keys, *, ignore_case=False) -> dict[str, Account]:
+        """Find accounts by original keys, preferring exact matches over unique case-insensitive matches."""
+        keys = set(keys)
+        if not keys:
+            return {}
+
+        renamings = resource.accountrenaming_set.all()
+        if ignore_case:
+            renamings = renamings.annotate(_lookup_key=Upper("old_key")).filter(
+                _lookup_key__in=[Upper(models.Value(key)) for key in keys]
+            )
+        else:
+            renamings = renamings.filter(old_key__in=keys)
+        renamings = dict(renamings.values_list("old_key", "new_key"))
+        lookup_keys = keys | {key for key in renamings.values() if key}
+
+        accounts = resource.account_set.select_related("duplicate")
+        if ignore_case:
+            accounts = accounts.annotate(_lookup_key=Upper("key")).filter(
+                _lookup_key__in=[Upper(models.Value(key)) for key in lookup_keys]
+            )
+        else:
+            accounts = accounts.filter(key__in=lookup_keys)
+        accounts = {account.key: account for account in accounts}
+
+        if ignore_case:
+            for mapping in (accounts, renamings):
+                case_keys = {}
+                for key in mapping:
+                    case_key = key.upper()
+                    case_keys[case_key] = key if case_key not in case_keys else None
+                for key in lookup_keys:
+                    if key not in mapping and (original_key := case_keys.get(key.upper())) is not None:
+                        mapping[key] = mapping[original_key]
+
+        result = {}
+        for key in keys:
+            account = accounts.get(key) or accounts.get(renamings.get(key))
+            if account is not None:
+                result[key] = account
+        return result
+
+    def get_current(self) -> Account:
+        """Follow duplicate links to the current account without rewriting historical keys."""
+        account = self
+        visited = set()
+        while account.duplicate_id is not None:
+            if account.pk in visited:
+                raise ValueError(f"Cyclic account duplicates for account {self.pk}")
+            visited.add(account.pk)
+            account = account.duplicate
         return account
 
     @staticmethod

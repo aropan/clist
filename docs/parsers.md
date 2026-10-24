@@ -36,3 +36,7 @@ docker compose exec dev ./manage.py test --keepdb ranking.tests.test_parsers
 To select or record a fixture, see [testing.md](testing.md#parser-regression-tests).
 `parse_statistic --no-update-results` is a live command and can still write
 contest problems and event logs; use it only when those effects are acceptable.
+
+## Resource-specific notes
+
+- [Universal Cup](parsers/ucup.md) — season ratings and special participation.

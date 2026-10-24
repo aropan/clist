@@ -117,3 +117,104 @@ class UcupRequestTest(SimpleTestCase):
             additional_attempts={429: {"count": 1}},
             additional_delay=60,
         )
+
+
+class UcupSeasonRatingTest(SimpleTestCase):
+    rating_page = """
+        <table>
+          <tr><th>#</th><th>Team name</th><th>Rating</th>
+            <th><a href="https://contest.ucup.ac/contest/1">First</a></th>
+            <th><a href="https://contest.ucup.ac/contest/2">Second</a></th></tr>
+          <tr><td>1</td><td><a href="/user/profile/ucup-team00087">Renamed team (Member)</a></td>
+            <td>200</td><td>A</td><td>200</td></tr>
+          <tr><td>2</td><td><a href="/user/profile/ucup-team1878">Another team (Member)</a></td>
+            <td>100</td><td>0</td><td>100</td></tr>
+        </table>
+    """
+
+    def module(self, contest_id=1):
+        return Statistic(
+            key="ucup-4-stage-1",
+            standings_url=f"https://contest.ucup.ac/contest/{contest_id}/standings/",
+            info={"parse": {"season": "4", "stage": "stage-1"}, "standings": {"parse_submissions": False}},
+        )
+
+    def test_author_and_zero_scores_are_matched_by_profile_id(self):
+        with mock.patch.object(Statistic, "_get_rating_page", return_value=self.rating_page):
+            ratings = self.module()._get_season_ratings()
+
+        assert ratings["team-87"] == {"season_rating": "A"}
+        assert ratings["Renamed team"] == {"season_rating": "A"}
+        assert ratings["team-1878"] == {"season_rating": 0}
+
+    def test_rating_column_is_selected_by_contest_url(self):
+        module = self.module(2)
+        missing_module = self.module(3)
+        with mock.patch.object(Statistic, "_get_rating_page", return_value=self.rating_page):
+            ratings = module._get_season_ratings()
+            missing = missing_module._get_season_ratings()
+
+        assert ratings["team-87"] == {"season_rating": 200}
+        assert module._season_rating_ranking == {"team-87": 1, "team-1878": 2}
+        assert not missing
+        assert missing_module._season_rating_ranking is None
+
+    def test_participants_exclude_authors_zero_and_empty_scores(self):
+        module = self.module()
+        with mock.patch.object(Statistic, "_get_rating_page", return_value=self.rating_page):
+            module._get_season_ratings()
+
+        assert module._season_rating_ranking == {}
+        assert module._season_rating_writers == ["team-87"]
+
+    def test_unpublished_rating_table_does_not_mean_no_participants(self):
+        module = self.module()
+        with mock.patch.object(Statistic, "_get_rating_page", return_value="<h1>Ratings will be published later</h1>"):
+            ratings = module._get_season_ratings()
+
+        assert not ratings
+        assert module._season_rating_ranking is None
+
+    def test_ranking_includes_custom_handles_and_shared_places(self):
+        extra_rows = """
+          <tr><td>3</td><td><a href="/user/profile/MIT1">Monkey is Typing</a></td>
+            <td>100</td><td>150</td><td></td></tr>
+          <tr><td>4</td><td>123</td><td>100</td><td>150</td><td></td></tr>
+          <tr><td>5</td><td><a href="/user/profile/custom-team">Another</a></td>
+            <td>100</td><td>100</td><td></td></tr>
+        """
+        module = self.module()
+        page = self.rating_page.replace("</table>", extra_rows + "</table>")
+        with mock.patch.object(Statistic, "_get_rating_page", return_value=page):
+            ratings = module._get_season_ratings()
+
+        assert ratings["MIT1"] == {"season_rating": 150}
+        assert module._season_rating_ranking == {"MIT1": 1, "123": 1, "custom-team": 3}
+
+    def test_fifth_season_writer_marker_is_preserved(self):
+        with mock.patch.object(Statistic, "_get_rating_page", return_value=self.rating_page.replace(">A<", ">W<")):
+            ratings = self.module()._get_season_ratings()
+
+        assert ratings["team-87"] == {"season_rating": "W"}
+
+    def test_author_without_a_standings_row_is_returned_as_writer(self):
+        standings_page = """
+contest_type = "ICPC";
+standings = [[100, 120, ["ucup-team1878", 1000, 0, "Old team name (Member)"], 1, 100]];
+score = {"ucup-team1878": {"0": [100, 120, 1, 0, 100]}};
+problems = [1];
+problems_id = ["A"];
+        """
+        with (
+            mock.patch.object(Statistic, "_get_rating_page", return_value=self.rating_page),
+            mock.patch("ranking.management.modules.ucup.REQ.get", return_value=standings_page),
+            mock.patch("ranking.management.modules.ucup.REQ.add_cookie"),
+            mock.patch.object(Statistic, "_get_problem_page", return_value=("<h1>A. Task</h1>", 200)),
+        ):
+            standings = self.module().get_standings()
+
+        assert standings["writers"] == ["team-87"]
+        assert standings["_season_rating_ranking"] == {}
+        assert "_season_rating_ranking" in standings["info_fields"]
+        assert "team-87" not in standings["result"]
+        assert standings["result"]["team-1878"]["season_rating"] == 0
