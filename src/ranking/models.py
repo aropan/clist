@@ -28,7 +28,6 @@ from pyclist.indexes import DescNullsLastIndex, ExpressionIndex, GinIndexTrgrmOp
 from pyclist.models import BaseManager, BaseModel
 from ranking.enums import AccountType
 from true_coders.models import Coder, Party
-from utils.mathutils import sum_with_none
 from utils.signals import update_n_field_on_change
 
 AVATAR_RELPATH_FIELD = "avatar_relpath_"
@@ -792,7 +791,8 @@ def update_account_from_statistic(signal, instance, **kwargs):
         if signal is post_delete:
             diff = {field: -value for field, value in instance._stats.items() if value}
         elif signal is post_save:
-            diff = _get_statistic_stats(instance)
+            stats = _get_statistic_stats(instance)
+            diff = stats.copy()
             if not kwargs["created"]:
                 for field, value in instance._stats.items():
                     diff[field] = (diff.get(field) or 0) - (value or 0)
@@ -803,10 +803,13 @@ def update_account_from_statistic(signal, instance, **kwargs):
             if not value:
                 continue
             account = instance.account
-            setattr(account, field, sum_with_none(getattr(account, field), value))
+            setattr(account, field, Coalesce(F(field), 0) + value)
             updated_fields.append(field)
         if updated_fields:
             instance.account.save(update_fields=updated_fields)
+            instance.account.refresh_from_db(fields=updated_fields)
+        if signal is post_save:
+            instance._stats = stats
 
     if instance.skip_in_stats or kwargs.get("update_fields"):
         return

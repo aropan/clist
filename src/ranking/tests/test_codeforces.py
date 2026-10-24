@@ -3,11 +3,53 @@ from datetime import timedelta
 from types import SimpleNamespace
 from unittest import mock
 
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 from django.utils.timezone import now
 
+from clist.models import Contest, Resource
 from ranking.management.modules import codeforces
 from ranking.management.modules.codeforces import REQ, Statistic
+from ranking.models import Account, Statistics
+
+
+class CodeforcesAccountSubmissionsTest(TestCase):
+    def test_interleaved_contests_keep_account_totals(self):
+        with mock.patch.object(Resource, "update_icon"):
+            resource = Resource.objects.create(host="codeforces.com", url="https://codeforces.com/", enable=True)
+        account = Account.objects.create(resource=resource, key="coder")
+        for contest_id in (16, 17):
+            Contest.objects.create(
+                resource=resource,
+                key=str(contest_id),
+                title=f"Round {contest_id}",
+                url=f"https://codeforces.com/contest/{contest_id}",
+                start_time=now() - timedelta(days=2),
+                end_time=now() - timedelta(days=1),
+            )
+        submissions = [
+            {
+                "id": submission_id,
+                "contestId": contest_id,
+                "verdict": verdict,
+                "author": {"participantType": "PRACTICE", "members": [{"handle": account.key}]},
+                "problem": {"index": "A"},
+            }
+            for submission_id, contest_id, verdict in (
+                (153, 16, "WRONG_ANSWER"),
+                (152, 17, "OK"),
+                (151, 16, "OK"),
+            )
+        ]
+
+        with mock.patch.object(codeforces, "api_query", return_value={"result": submissions}):
+            Statistic.update_submissions(account, resource, with_submissions=False, pagination_size=None)
+
+        statistics = Statistics.objects.filter(account=account)
+        assert statistics.count() == 2
+        assert all(stat.addition["problems"]["A"]["upsolving"]["result"] == "+" for stat in statistics)
+        account.refresh_from_db()
+        assert account.n_upsolved == 2
+        assert account.total_solving == 2
 
 
 class CodeforcesApiQueryTest(SimpleTestCase):
