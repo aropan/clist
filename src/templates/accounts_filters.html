@@ -64,6 +64,36 @@
   </div>
   {% endif %}
 
+  {% if can_rename_accounts %}
+  <div class="input-group input-group-sm" id="account-renaming-toggle-group">
+    <button type="button" id="account-renaming-toggle" class="btn btn-default btn-sm"
+            title="Merge accounts" data-toggle="tooltip" aria-label="Merge accounts"
+            aria-expanded="false" aria-controls="account-renaming">
+      <i class="fas fa-code-merge" aria-hidden="true"></i>
+    </button>
+  </div>
+  <div id="account-renaming" class="input-group input-group-sm hidden"
+       data-url="{% url 'coder:rename_accounts' %}"
+       data-storage-key="account-renaming-{{ request.user.pk }}"
+       data-limit="{{ max_accounts_to_rename }}">
+    <span class="input-group-addon" data-toggle="tooltip"
+          title="Select accounts from one resource. Selection is kept across searches in this tab.">
+      <span id="account-renaming-count" aria-live="polite">Merge: 0</span>
+    </span>
+    <span class="input-group-btn">
+      <button type="button" id="account-renaming-review" class="btn btn-default" disabled
+              title="Choose account to keep" data-toggle="tooltip" aria-label="Choose account to keep">
+        <i class="fas fa-user-check" aria-hidden="true"></i>
+      </button>
+      <button type="button" id="account-renaming-clear" class="btn btn-default"
+              title="Clear selection and close" data-toggle="tooltip" aria-label="Clear selection and close">
+        <i class="fas fa-times" aria-hidden="true"></i>
+      </button>
+    </span>
+  </div>
+  <div id="account-renaming-error" class="text-danger" role="alert"></div>
+  {% endif %}
+
   {% if perms.ranking.link_account %}
   {% include "coder_filter.html" with nomultiply=True coder_urls=True submit="link" coders=params.link_coders %}
   {% endif %}

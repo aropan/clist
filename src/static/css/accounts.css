@@ -24,8 +24,20 @@
   cursor: pointer;
 }
 
-#accounts input.scale15 {
+#accounts input.scale15,
+#accounts .account-renaming-select {
+  margin: 0;
+  vertical-align: middle;
   transform: scale(1.5);
+}
+
+#accounts .account-selection-invert {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  font: inherit;
 }
 
 #accounts .buttons {
@@ -57,4 +69,72 @@
 
 #accounts .honorable-medal {
   background: #d0e3f7 !important;
+}
+
+#accounts:not(.account-renaming-active) .account-renaming-column,
+#account-renaming-error:empty {
+  display: none;
+}
+
+#accounts tr.account-merge-selected > td:first-child {
+  box-shadow: inset 3px 0 #f0ad4e;
+}
+
+#accounts .account-renaming-select {
+  cursor: pointer;
+}
+
+#accounts .account-renaming-select:disabled {
+  cursor: not-allowed;
+}
+
+.account-renaming-choices {
+  max-height: 45vh;
+  overflow-y: auto;
+  margin-bottom: 15px;
+}
+
+.account-renaming-choice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-bottom: 6px;
+}
+
+.account-renaming-choice label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.account-renaming-choice label span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.account-renaming-choice input {
+  flex-shrink: 0;
+  margin: 0;
+}
+
+.account-renaming-choice small {
+  display: block;
+  font-weight: normal;
+}
+
+.account-renaming-target {
+  border-color: #f0ad4e;
+  box-shadow: inset 3px 0 #f0ad4e;
+}
+
+.account-renaming-summary {
+  font-weight: bold;
+  overflow-wrap: anywhere;
 }

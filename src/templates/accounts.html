@@ -23,6 +23,14 @@
       <thead>
         <tr>
           <th class="no-stretch">#</th>
+          {% if can_rename_accounts %}
+          <th class="no-stretch account-renaming-column">
+            <button type="button" id="account-renaming-invert" class="btn btn-link account-selection-invert"
+                    title="Invert loaded account selection" data-toggle="tooltip" aria-label="Invert loaded account selection">
+              {% icon_to 'invert' False %}
+            </button>
+          </th>
+          {% endif %}
           <th class="account">
             <div class="resource-width-fixed"></div>
             <div class="avatar-width-fixed"></div>
@@ -36,7 +44,14 @@
           </th>
           {% endif %}
           <th>
-            <div>Linked<br/>coder{% if perms.ranking.link_account %} <a href="#" onclick="invert_accounts(event, 'accounts')">{% icon_to 'invert' %}</a>{% endif %}</div>
+            {% if perms.ranking.link_account %}
+            <button type="button" class="btn btn-link account-selection-invert" onclick="invert_accounts(event, 'accounts')"
+                    title="Invert linked coder selection" data-toggle="tooltip" aria-label="Invert linked coder selection">
+              <span>Linked<br/>coder</span>
+            </button>
+            {% else %}
+            <div>Linked<br/>coder</div>
+            {% endif %}
           </th>
           {% if params.to_list %}
           <th>

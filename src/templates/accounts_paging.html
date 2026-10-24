@@ -9,6 +9,14 @@
   {% include "delete_on_duplicate_attrs.html" with name="account" entry=account primary=primary_account %}
 >
   <td class="no-stretch">{% if account.row_number %}{{ account.row_number }}{% else %}{{ forloop.counter0|add:pages.current_start_index }}{% endif %}</td>
+  {% if can_rename_accounts %}
+  <td class="no-stretch account-renaming-column">
+    <input type="checkbox" class="account-renaming-select" value="{{ account.pk }}"
+           data-resource="{{ account.resource_id }}" data-host="{{ account.resource.host }}"
+           data-key="{{ account.key }}" data-name="{{ account.name|default:'' }}"
+           aria-label="Select {{ account.key }} for merging">
+  </td>
+  {% endif %}
   <td class="account">
     {% include "account_table_cell.html" with resource=account.resource account=account with_resource=True with_fixed_width=True without_inline_url=True %}
 
@@ -147,3 +155,4 @@
 <script>init_account_buttons()</script>
 <script>init_clickable_has_coders()</script>
 <script>delete_on_duplicate(true)</script>
+{% if can_rename_accounts %}<script>$(function() { init_account_renaming_rows() })</script>{% endif %}

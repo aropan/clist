@@ -26,6 +26,7 @@ urlpatterns = [
     ),
     re_path(r"^account/(?P<key>.*)/resource/(?P<host>.*)/$", views.account, name="account"),
     re_path(r"^accounts/$", views.accounts, name="accounts"),
+    re_path(r"^accounts/rename/$", views.rename_accounts, name="rename_accounts"),
     re_path(r"^profile/(?P<query>.*)/ratings/$", views.ratings),
     re_path(r"^profile/(?P<query>.*)/$", views.profiles, name="mixed_profile"),
     re_path(r"^team/(?P<query>.*)/$", views.team, name="coders_team"),

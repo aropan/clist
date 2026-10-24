@@ -14,6 +14,7 @@ import pytz
 from django.apps import apps
 from django.conf import settings as django_settings
 from django.contrib import messages
+from django.contrib.admin.models import CHANGE, LogEntry
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from django.core.management import call_command
@@ -99,6 +100,7 @@ from ranking.models import (
     VerifiedAccount,
     VirtualStart,
 )
+from ranking.utils import rename_account
 from tg.bot import Bot
 from tg.models import Chat
 from true_coders.models import AccessLevel, Coder, CoderList, Filter, ListGroup, ListValue, Organization, Party
@@ -113,6 +115,7 @@ logger = logging.getLogger(__name__)
 PROFILE_CONTESTS_PAGING_TEMPLATE = "profile_contests_paging.html"
 PROFILE_WRITERS_PAGING_TEMPLATE = "profile_writers_paging.html"
 PROFILE_PAGING_TEMPLATES = frozenset({PROFILE_CONTESTS_PAGING_TEMPLATE, PROFILE_WRITERS_PAGING_TEMPLATE})
+MAX_ACCOUNTS_TO_RENAME = 100
 
 
 def get_medals_for_profile_context(statistics):
@@ -2989,6 +2992,64 @@ def filter_contests_with_advanced_to_stats(request, params):
     }
 
 
+def can_rename_accounts(user):
+    return (
+        user.is_authenticated and user.is_active and (user.is_staff or user.has_perm("ranking.change_accountrenaming"))
+    )
+
+
+@require_http_methods(["POST"])
+def rename_accounts(request):
+    if not can_rename_accounts(request.user):
+        return JsonResponse({"message": "You do not have permission to rename accounts."}, status=403)
+
+    selected_ids = request.POST.getlist("accounts")
+    if not 2 <= len(selected_ids) <= MAX_ACCOUNTS_TO_RENAME:
+        return JsonResponse({"message": f"Select between 2 and {MAX_ACCOUNTS_TO_RENAME} accounts."}, status=400)
+    try:
+        account_ids = {int(pk) for pk in selected_ids}
+        target_id = int(request.POST.get("target", ""))
+    except ValueError:
+        return JsonResponse({"message": "Invalid account selection."}, status=400)
+    if len(account_ids) < 2 or any(pk <= 0 or pk > 2**63 - 1 for pk in account_ids):
+        return JsonResponse({"message": "Select at least two different accounts."}, status=400)
+    if target_id not in account_ids:
+        return JsonResponse({"message": "Choose an account to keep from the selected accounts."}, status=400)
+
+    with transaction.atomic():
+        accounts = list(
+            Account.objects
+            .select_related("resource")
+            .select_for_update(of=("self",))
+            .filter(pk__in=account_ids)
+            .order_by("pk")
+        )
+        if len(accounts) != len(account_ids):
+            return JsonResponse(
+                {"message": "Some selected accounts no longer exist. Refresh your selection."}, status=400
+            )
+        if len({account.resource_id for account in accounts}) != 1:
+            return JsonResponse({"message": "Selected accounts must belong to the same resource."}, status=400)
+        target = next(account for account in accounts if account.pk == target_id)
+        if target.deleted:
+            return JsonResponse(
+                {"message": "Choose an account that is not deleted as the account to keep."}, status=400
+            )
+
+        sources = [account for account in accounts if account.pk != target_id]
+        source_keys = [account.key for account in sources]
+        for account in sources:
+            target = rename_account(account, target)
+        LogEntry.objects.log_actions(
+            user_id=request.user.pk,
+            queryset=[target],
+            action_flag=CHANGE,
+            change_message=f"Merged accounts into {target.key} on {target.resource.host}: {', '.join(source_keys)}",
+        )
+
+    return JsonResponse({"message": f"Renamed {len(sources)} account(s) into {target.key}.", "target": target.pk})
+
+
 @page_template("accounts_paging.html")
 @context_pagination()
 def accounts(request, template="accounts.html"):
@@ -3111,7 +3172,12 @@ def accounts(request, template="accounts.html"):
         accounts = accounts.annotate(to_list=Exists(to_list_accounts.filter(pk=OuterRef("pk"))))
         params["to_list"] = to_list
 
-    context = {"navbar_admin_model": Account, "params": params}
+    context = {
+        "navbar_admin_model": Account,
+        "params": params,
+        "can_rename_accounts": can_rename_accounts(request.user),
+        "max_accounts_to_rename": MAX_ACCOUNTS_TO_RENAME,
+    }
     addition_table_fields = [
         "n_writers",
         "modified",

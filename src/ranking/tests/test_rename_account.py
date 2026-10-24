@@ -29,6 +29,83 @@ class RenameAccountVerificationTest(TestCase):
                 assert resource.accountrenaming_set.get(old_key=f"old-{index}").new_key == account.key
 
 
+class RenameAccountStateTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.resource = Resource(host="rename-state.example", enable=True)
+        Resource.objects.bulk_create([cls.resource])
+
+    def test_deleted_source_does_not_change_target_state_or_rating(self):
+        for index, deleted in enumerate((None, False)):
+            with self.subTest(deleted=deleted):
+                old = Account.objects.create(resource=self.resource, key=f"old-{index}", deleted=True)
+                new = Account.objects.create(
+                    resource=self.resource,
+                    key=f"new-{index}",
+                    deleted=deleted,
+                    rating=1900,
+                    rating50=38,
+                    resource_rank=7,
+                )
+
+                account = rename_account(old, new)
+
+                account.refresh_from_db()
+                assert account.deleted is deleted
+                assert (account.rating, account.rating50, account.resource_rank) == (1900, 38, 7)
+
+    def test_source_duplicate_is_not_inherited_but_profile_fields_are(self):
+        other = Account.objects.create(resource=self.resource, key="other")
+        for index, duplicate_is_target in enumerate((True, False)):
+            with self.subTest(duplicate_is_target=duplicate_is_target):
+                new = Account.objects.create(resource=self.resource, key=f"new-{index}")
+                old = Account.objects.create(
+                    resource=self.resource,
+                    key=f"old-{index}",
+                    name="Original name",
+                    duplicate=new if duplicate_is_target else other,
+                )
+
+                account = rename_account(old, new)
+
+                account.refresh_from_db()
+                assert account.duplicate_id is None
+                assert account.get_current() == account
+                assert account.name == "Original name"
+                assert Account.objects.filter(pk=other.pk).exists()
+
+    def test_existing_target_duplicate_is_preserved(self):
+        canonical = Account.objects.create(resource=self.resource, key="canonical")
+        old = Account.objects.create(resource=self.resource, key="old")
+        new = Account.objects.create(resource=self.resource, key="new", duplicate=canonical)
+
+        account = rename_account(old, new)
+
+        account.refresh_from_db()
+        assert account.duplicate_id == canonical.pk
+        assert account.get_current() == canonical
+
+    def test_target_duplicate_chain_through_source_survives_the_merge(self):
+        for index, (indirect, has_canonical) in enumerate(((False, False), (True, False), (False, True), (True, True))):
+            with self.subTest(indirect=indirect, has_canonical=has_canonical):
+                canonical = (
+                    Account.objects.create(resource=self.resource, key=f"canonical-{index}") if has_canonical else None
+                )
+                old = Account.objects.create(resource=self.resource, key=f"old-{index}", duplicate=canonical)
+                alias = Account.objects.create(resource=self.resource, key=f"alias-{index}", duplicate=old)
+                new = Account.objects.create(
+                    resource=self.resource, key=f"new-{index}", duplicate=alias if indirect else old
+                )
+
+                account = rename_account(old, new)
+
+                account.refresh_from_db()
+                alias.refresh_from_db()
+                assert account.get_current() == (canonical or account)
+                assert alias.duplicate_id == account.pk
+                assert alias.get_current() == (canonical or account)
+
+
 class AccountLookupTest(TestCase):
     def setUp(self):
         self.resource = Resource(host="account-lookup.example", url="https://account-lookup.example/", enable=True)

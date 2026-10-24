@@ -57,11 +57,9 @@ def rename_account(old_account, new_account):
     old_account.statistics_set.filter(contest__in=new_contests).delete()
     old_contests = old_account.statistics_set.values("contest")
     new_account.statistics_set.filter(contest__in=old_contests).delete()
+    old_account.listvalue_set.filter(group_id__in=new_account.listvalue_set.values("group_id")).delete()
 
     n_contests = new_account.n_contests + old_account.n_contests
-    n_writers = new_account.n_writers + old_account.n_writers
-    n_subscribers = new_account.n_subscribers + old_account.n_subscribers
-    n_listvalues = new_account.n_listvalues + old_account.n_listvalues
     solving = new_account.solving + old_account.solving
     upsolving = sum_with_none(new_account.upsolving, old_account.upsolving)
     total_solving = new_account.total_solving + old_account.total_solving
@@ -85,12 +83,23 @@ def rename_account(old_account, new_account):
     last_submission = max_with_none(old_account.last_submission, new_account.last_submission)
     need_verification = old_account.need_verification or new_account.need_verification
 
+    # Resolve duplicate chains before the merger redirects references to the source.
+    if new_account.duplicate_id:
+        duplicate = new_account.get_current()
+        duplicate_id = None if duplicate.pk == old_account.pk else duplicate.pk
+        if new_account.duplicate_id != duplicate_id:
+            new_account.duplicate_id = duplicate_id
+            new_account.save(update_fields=["duplicate"])
+
+    # Keep source flags out of the fill-empty-fields merge and its intermediate save.
+    old_account.duplicate = None
+    old_account.deleted = None
     new_account = MergedModelInstance.create(new_account, [old_account])
     old_account.delete()
     new_account.n_contests = n_contests
-    new_account.n_writers = n_writers
-    new_account.n_subscribers = n_subscribers
-    new_account.n_listvalues = n_listvalues
+    new_account.n_writers = new_account.writer_set.count()
+    new_account.n_subscribers = new_account.subscribers.count()
+    new_account.n_listvalues = new_account.listvalue_set.count()
     new_account.solving = solving
     new_account.upsolving = upsolving
     new_account.total_solving = total_solving
