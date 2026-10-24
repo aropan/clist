@@ -1,14 +1,61 @@
-.fc-event .activity.fav:not(.selected-activity) {
+#calendar {
+  --fc-classic-button: #fff;
+  --fc-classic-button-border: #ccc;
+  --fc-classic-button-strong: #e6e6e6;
+  --fc-classic-button-strong-border: #adadad;
+  --fc-classic-button-outline: #8c8c8c80;
+  --fc-classic-button-foreground: #333;
+}
+
+#calendar .clist-calendar-toolbar-section {
+  flex-wrap: wrap;
+  max-width: 100%;
+}
+
+#calendar .clist-calendar-button {
+  border-block-width: 1px;
+  border-block-style: solid;
+  padding: 5px 10px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+#calendar .clist-calendar-button + .clist-calendar-button {
+  margin-inline-start: -1px;
+}
+
+#calendar .clist-calendar-button[aria-pressed="true"] {
+  box-shadow: inset 0 3px 5px #00000020;
+}
+
+#calendar .clist-calendar-button svg {
+  width: 1.5em;
+  height: 1.5em;
+}
+
+.clist-calendar-event .activity.fav:not(.selected-activity) {
   color: #fff;
 }
 
-#calendar .fc-day a {
+.clist-calendar-event {
   font-size: 12px;
-  color: #555;
 }
 
-.fc-event {
-  font-size: 12px;
+#calendar .clist-calendar-column-title {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+#calendar .clist-calendar-all-day-inner {
+  padding-block: 0;
+}
+
+#calendar .clist-calendar-all-day-label {
+  margin-block: 2px;
+}
+
+#calendar .clist-calendar-all-day-bottom {
+  min-height: 2px;
 }
 
 .dropdown-menu .ignore-filter {
@@ -19,7 +66,7 @@
   margin-left: 0 !important;
 }
 
-#calendar .fc-event-time {
+#calendar .clist-calendar-event-time {
   overflow: visible;
 }
 
@@ -27,24 +74,26 @@
   line-height: inherit;
 }
 
-#calendar .fc-dayGrid-view .fc-body .fc-row {
-  min-height: 0em;
+#calendar .clist-calendar-filters {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
-#calendar .fc-toolbar .fc-right .btn-group {
-  margin: 4px;
+#calendar .clist-calendar-filters > .btn-group {
+  margin-bottom: 0;
 }
 
-#calendar .fc-event .data-ace {
+#calendar .clist-calendar-event .data-ace {
   color: #fff;
 }
 
-#calendar .fc-event a.data-ace:hover,
-#calender .fc-event i.hide-contest:hover {
+#calendar .clist-calendar-event a.data-ace:hover,
+#calendar .clist-calendar-event i.hide-contest:hover {
   color: black;
 }
 
-#calendar .fc-day-today {
+#calendar .clist-calendar-today {
   background: #e8f4fa;
   border: 3px solid #8fcae8;
 }

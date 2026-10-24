@@ -201,6 +201,24 @@ $(() => {
       }, 1);
     });
 
+  $("#calendar-days-before, #calendar-days-after")
+    .editable({
+      type: "select",
+      showbuttons: false,
+      source: Array.from({ length: 11 }, (_value, days) => String(days)),
+      onblur: "ignore",
+    })
+    .on("shown", (_e, editable) => {
+      editable.input.$input.select2({
+        width: 250,
+        placeholder: "Select number of days",
+        val: editable.input.$input.val(),
+      });
+      setTimeout(() => {
+        editable.input.$input.select2("open");
+      }, 1);
+    });
+
   $("#view-mode").editable({
     type: "select",
     showbuttons: false,

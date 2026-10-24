@@ -4,54 +4,113 @@ function filterCallbackCalendar() {
 
 $(() => {
   var bottom_pad = 20;
+  var calendar_el = document.getElementById("calendar");
+  var filters = JSON.parse(document.getElementById("calendar-filters").textContent);
+  var ignored_filters = new Set(
+    $(".ignore-filter[data-value='1']")
+      .map(function () {
+        return $(this).attr("data-id");
+      })
+      .toArray(),
+  );
 
   function get_calendar_height() {
     return $(window).height() - ($("#calendar").closest(".tab-content").position().top + bottom_pad);
   }
 
-  $(window).resize(() => {
+  function update_calendar_height() {
+    if (!$(calendar_el).is(":visible")) {
+      return;
+    }
     var calendar_height = get_calendar_height();
-    calendar.setOption("height", calendar_height);
-    calendar.setOption("contentHeight", calendar_height);
-
-    $(".fc-timegrid").each(function () {
-      var el = $(this).find(".fc-scroller:has(.fc-timegrid-body)");
-      var height = el.height();
-      var tr = $(this).find(".fc-timegrid-slots tr");
-      var h = Math.round(height / tr.length);
-      tr.height(h);
-    });
-  });
-
-  function after_render() {
-    Cookies.set("calendar_view", calendar.view.type);
-    stylize_button();
-    $(window).trigger("resize");
+    if (calendar.getOption("height") !== calendar_height) {
+      calendar.setOption("height", calendar_height);
+    }
   }
 
-  function stylize_button() {
-    $(".fc-button").addClass("btn btn-default btn-sm").removeClass("fc-button fc-button-primary");
-    $(".fc-button-group").addClass("btn-group").removeClass("fc-button-group");
-
-    if (customButtonSelector) {
-      $(customButtonSelector).hide();
-      $(".dropdown-menu").find(customButtonSelector).show();
-    }
-
-    if (calendar.view.type === "fiveDayWindow") {
-      calendar_el.querySelector(".fc-prev-button").style.visibility = "hidden";
-      calendar_el.querySelector(".fc-next-button").style.visibility = "hidden";
+  function toggle_filter(id, ignored) {
+    if (ignored) {
+      ignored_filters.add(id);
     } else {
-      calendar_el.querySelector(".fc-prev-button").style.visibility = "visible";
-      calendar_el.querySelector(".fc-next-button").style.visibility = "visible";
+      ignored_filters.delete(id);
     }
+    calendar.refetchEvents();
+  }
+
+  function navigate_days(e, days) {
+    if (calendar.view.type === "timeGridDays") {
+      e.preventDefault();
+      calendar.incrementDate({ days: days });
+    }
+  }
+
+  function get_toolbar_right(today_button) {
+    return (
+      (filters.length ? "contestFilters " : "") +
+      today_button +
+      " dayGridMonth,timeGridWeek,listWeek,multiMonthYear,timeGridDays prev,next"
+    );
+  }
+
+  var today_timeout_id;
+  function update_today_button() {
+    var now = moment.tz($.now(), timezone);
+    var selected_today = moment.tz(calendar.getDate(), timezone).isSame(now, "day");
+    // Native Today is disabled whenever today is visible, even when Days is shifted.
+    var today_button = calendar.view.type === "timeGridDays" && !selected_today ? "daysToday" : "today";
+    var toolbar_right = get_toolbar_right(today_button);
+    if (calendar.getOption("headerToolbar").right !== toolbar_right) {
+      calendar.setOption("headerToolbar", { left: "title", right: toolbar_right });
+    }
+    clearTimeout(today_timeout_id);
+    today_timeout_id = setTimeout(update_today_button, now.clone().endOf("day").diff(now) + 1);
+  }
+
+  var filter_controls = $('<div class="clist-calendar-filters"></div>');
+  var custom_filters = filters.filter((filter) => filter.id > 0);
+  if (custom_filters.length) {
+    var filter_group = $('<div class="btn-group"></div>').appendTo(filter_controls);
+    $(
+      '<button class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown">Custom filters <span class="caret"></span></button>',
+    ).appendTo(filter_group);
+    var filter_menu = $('<div class="dropdown-menu"></div>').appendTo(filter_group);
+    custom_filters.forEach((filter) => {
+      var id = String(filter.id);
+      $('<button type="button" class="btn btn-default btn-sm ignore-filter"></button>')
+        .text(filter.name)
+        .toggleClass("active", ignored_filters.has(id))
+        .appendTo(filter_menu)
+        .click(function (e) {
+          e.preventDefault();
+          var ignored = !ignored_filters.has(id);
+          $(this).toggleClass("active", ignored).blur();
+          toggle_filter(id, ignored);
+        });
+    });
+  }
+
+  if (filters.some((filter) => filter.id == 0)) {
+    var long_filter = $('<input id="spam-filter" type="checkbox">')
+      .prop("checked", !ignored_filters.has("0"))
+      .appendTo(filter_controls);
+    long_filter.bootstrapToggle({
+      on: "Filtered long",
+      off: "Disabled filter",
+      onstyle: "default active",
+      offstyle: "default active",
+      size: "small",
+      width: 106,
+      height: 30,
+    });
+    long_filter.change(function () {
+      toggle_filter("0", !this.checked);
+    });
   }
 
   var hour12 = is_12_hour_clock();
   var time_format = {
     hour: "numeric",
     minute: "2-digit",
-    meridiem: hour12 ? "short" : false,
     hour12: hour12,
   };
 
@@ -60,43 +119,70 @@ $(() => {
     timeGridWeek: {},
     listWeek: {},
     multiMonthYear: {},
-    fiveDayWindow: {
+    timeGridDays: {
       type: "timeGrid",
-      buttonText: "5days",
       visibleRange: (current_date) => {
-        const start_date = new Date(current_date);
-        start_date.setDate(start_date.getDate() - 1);
-        const end_date = new Date(current_date);
-        end_date.setDate(end_date.getDate() + 3);
-        return { start: start_date, end: end_date };
+        const selected_date = moment.tz(current_date, timezone).startOf("day");
+        return {
+          start: selected_date.clone().subtract(calendar_days_before, "days").format("YYYY-MM-DD"),
+          end: selected_date
+            .clone()
+            .add(calendar_days_after + 1, "days")
+            .format("YYYY-MM-DD"),
+        };
       },
     },
   };
   var calendar_view = Cookies.get("calendar_view");
-  if (!(calendar_view in calendar_views)) {
+  if (calendar_view === "fiveDayWindow") {
+    calendar_view = "timeGridDays";
+  }
+  if (!Object.keys(calendar_views).includes(calendar_view)) {
     calendar_view = Object.keys(calendar_views)[0];
   }
 
-  var calendar_el = document.getElementById("calendar");
-  var five_day_window_fix = 0;
   calendar = new FullCalendar.Calendar(calendar_el, {
-    views: calendar_views,
+    views: {
+      ...calendar_views,
+      timeGrid: {
+        allDayHeaderInnerClass: "clist-calendar-all-day-label",
+        dayCellBottomClass: "clist-calendar-all-day-bottom",
+      },
+    },
     initialView: calendar_view,
     nowIndicator: true,
-    customButtons: customButtonDesc,
+    buttons: {
+      timeGridDays: { text: "Days" },
+      daysToday: { text: "Today", hint: "Return to today", click: () => calendar.today() },
+      prev: { click: (e) => navigate_days(e, -1) },
+      next: { click: (e) => navigate_days(e, 1) },
+    },
+    buttonClass: "clist-calendar-button",
+    toolbarSectionClass: "clist-calendar-toolbar-section",
+    toolbarElements: {
+      contestFilters: () => ({ domNodes: [filter_controls[0]] }),
+    },
     eventDisplay: "block",
     headerToolbar: {
       left: "title",
-      right: customButtonGroup + " today,dayGridMonth,timeGridWeek,listWeek,multiMonthYear,fiveDayWindow prev,next",
+      right: get_toolbar_right("today"),
     },
     titleFormat: { year: "numeric", month: "long", day: "numeric" },
     firstDay: 1,
     allDaySlot: true,
     timeZone: timezone,
     eventTimeFormat: time_format,
-    slotLabelFormat: time_format,
+    slotHeaderFormat: time_format,
     slotDuration: "01:00",
-    slotLabelInterval: "01:00",
+    slotHeaderInterval: "01:00",
+    expandRows: true,
+    eventClass: "clist-calendar-event",
+    rowEventInnerClass: (info) => (info.event.allDay ? "clist-calendar-all-day-inner" : ""),
+    eventTitleClass: "clist-calendar-event-title",
+    columnEventTitleClass: (info) => (info.isShort ? "" : "clist-calendar-column-title"),
+    eventTimeClass: "clist-calendar-event-time",
+    dayCellClass: (info) => (info.isToday ? "clist-calendar-today" : ""),
+    dayLaneClass: (info) => (info.isToday ? "clist-calendar-today" : ""),
     events: (fetchInfo, successCallback, failureCallback) => {
       var url = new URL(window.location.href);
       $.ajax({
@@ -112,14 +198,7 @@ $(() => {
           resource: url.searchParams.getAll("resource"),
           status: url.searchParams.get("status"),
           favorite: $('#filter button[name="favorite"].active').data("value"),
-          ignore_filters: $(".ignore-filter")
-            .filter(function () {
-              return $(this).attr("data-value") == "1";
-            })
-            .map(function () {
-              return $(this).attr("data-id");
-            })
-            .toArray(),
+          ignore_filters: Array.from(ignored_filters),
         },
         success: (response) => {
           response.forEach((event) => {
@@ -137,9 +216,9 @@ $(() => {
     eventDidMount: (info) => {
       var event = info.event;
       var element = info.el;
-      var start = FullCalendar.Moment.toMoment(event.extendedProps.original_start, calendar);
-      var end = FullCalendar.Moment.toMoment(event.extendedProps.original_end, calendar);
-      var now = FullCalendar.Moment.toMoment($.now(), calendar);
+      var start = moment.tz(event.extendedProps.original_start, timezone);
+      var end = moment.tz(event.extendedProps.original_end, timezone);
+      var now = moment.tz($.now(), timezone);
       var countdown = event.extendedProps.countdown;
       var start_time = start.format("YYYY-MM-DD HH:mm");
       var end_time = event.end ? end.format("YYYY-MM-DD HH:mm") : null;
@@ -184,18 +263,14 @@ $(() => {
         });
       });
 
-      var event_element;
-      var is_list = false;
-      if (calendar.view.type == "timeGridWeek" || calendar.view.type == "fiveDayWindow") {
-        event_element = $(element).find(".fc-event-title")[0];
-      } else if (calendar.view.type == "listWeek") {
-        event_element = $(element).find(".fc-list-event-title")[0];
-        is_list = true;
-      } else {
-        event_element = $(element).find(".fc-event-main-frame")[0];
-      }
+      var event_element = $(element).find(".clist-calendar-event-title")[0];
+      var is_list = info.view.type == "listWeek";
 
-      var addition_info = $("<span></span>");
+      var addition_info = $('<span class="clist-calendar-actions"></span>');
+      addition_info.click((e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      });
 
       var icon = $('<img src="' + event.extendedProps.icon + '" height="18" width="18">&nbsp;</img>');
       icon.prependTo(addition_info);
@@ -265,23 +340,16 @@ $(() => {
       }
 
       addition_info.prependTo(event_element);
-      five_day_window_fix = 3; // need to click 5days button two times to fix the view (three times for guarantee)
     },
-    viewDidMount: () => {
-      after_render();
+    eventWillUnmount: (info) => {
+      $(info.el).tooltip("destroy");
+      $(info.el)
+        .find(".data-ace")
+        .each((idx, el) => $(el).addcalevent("destroy"));
     },
-    datesSet: () => {
-      after_render();
-    },
-    eventClick: (data, event, view) => true,
-    eventsSet: () => {
-      after_render();
-      if (five_day_window_fix > 0 && calendar.view.type == "fiveDayWindow") {
-        setTimeout(() => {
-          $(".fc-fiveDayWindow-button").click();
-        }, 1);
-        five_day_window_fix--;
-      }
+    datesSet: (info) => {
+      Cookies.set("calendar_view", info.view.type);
+      update_today_button();
     },
     loading: (bool) => {
       $("#loading").toggle(bool);
@@ -291,58 +359,13 @@ $(() => {
   });
 
   calendar.render();
-
-  for (var name in customButtonDesc) {
-    var desc = customButtonDesc[name];
-    $(".fc-" + name + "-button").attr("data-id", desc.data);
-  }
-
-  if (customButtonSelector) {
-    $(customButtonSelector).toggleClass("ignore-filter");
-
-    $btnGroup = $(customButtonSelector).first().parent();
-    $btnGroup.html(
-      '<button class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown">Custom filters <span class="caret"></span></button>' +
-        '<div class="dropdown-menu">' +
-        $btnGroup.clone().html() +
-        "</div>",
-    );
-
-    $(customButtonSelector).click(function (e) {
-      var $btn = $(this);
-      var value = $btn.attr("data-value") || "0";
-      $btn.attr("data-value", 1 - value);
-      $btn.toggleClass("active");
-      $btn.blur();
-      e.preventDefault();
-      calendar.refetchEvents();
-      return false;
-    });
-  }
-
-  $(".fc-cb0-button").attr("id", "spam-filter").addClass("hidden");
-  $spam_filter = $("#spam-filter");
-  $spam_filter.wrap('<div class="btn-group"></div>');
-  $spam_filter.toggleClass("ignore-filter");
-  $spam_filter.prop("checked", true);
-  $spam_filter.bootstrapToggle({
-    on: "Filtered long",
-    off: "Disabled filter",
-    onstyle: "default active",
-    offstyle: "default active",
-    size: "small",
-    width: 106,
-    height: 30,
+  $(window).on("resize", update_calendar_height);
+  $(calendar_el).on("calendar:shown", update_calendar_height);
+  $(document).on("shown.bs.tab", 'a[href="#calendar-tab"]', update_calendar_height);
+  $(document).on("visibilitychange", () => {
+    if (!document.hidden) {
+      update_today_button();
+    }
   });
-
-  $(".toggle:has(#spam-filter) .btn").click((e) => {
-    var value = $spam_filter.attr("data-value") || "0";
-    $spam_filter.attr("data-value", 1 - value);
-    $spam_filter.bootstrapToggle(parseInt(value) ? "on" : "off");
-    e.preventDefault();
-    calendar.refetchEvents();
-    return false;
-  });
-
-  after_render();
+  update_calendar_height();
 });

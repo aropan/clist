@@ -9,6 +9,7 @@ from django.contrib.auth.models import AnonymousUser, User
 from django.core.cache import cache
 from django.db import connection, transaction
 from django.db.models.signals import pre_delete
+from django.template.loader import render_to_string
 from django.test import RequestFactory, SimpleTestCase, TestCase, override_settings
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
@@ -531,6 +532,108 @@ class ChangeIntegerValidationTest(SimpleTestCase):
     def test_invalid_add_account_resource_is_rejected(self):
         response = self.post({"pk": "1", "name": "add-account", "resource": "", "value": "handle"})
         assert response.status_code == 400
+
+
+class CalendarDaysSettingsTest(TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.user = User.objects.create_user(username="calendar-days-test")
+        self.coder = Coder.objects.create(
+            user=self.user,
+            username=self.user.username,
+            settings={"calendar_days_before": 2, "calendar_days_after": 4, "calendar_filter_long": 1},
+        )
+
+    def post(self, name, value=None, *, pk=None, user=None):
+        data = {"name": name, "pk": self.coder.pk if pk is None else pk}
+        if value is not None:
+            data["value"] = value
+        request = self.factory.post("/settings/change/", data)
+        request.user = self.user if user is None else user
+        request.is_ajax = lambda: True
+        return change(request)
+
+    def test_saves_integer_values_and_preserves_other_settings(self):
+        for name in ["calendar-days-before", "calendar-days-after"]:
+            for value in [0, 1, 3, 10]:
+                with self.subTest(name=name, value=value):
+                    expected = {**self.coder.settings, name.replace("-", "_"): value}
+
+                    response = self.post(name, str(value))
+
+                    assert response.status_code == 200
+                    self.coder.refresh_from_db()
+                    assert self.coder.settings == expected
+                    assert isinstance(self.coder.settings[name.replace("-", "_")], int)
+
+    def test_rejects_invalid_values_without_changing_settings(self):
+        expected = dict(self.coder.settings)
+        for name in ["calendar-days-before", "calendar-days-after"]:
+            for value in [None, "", "-1", "11", "30", "1.5", "abc", "true", "false", "²", "9" * 100]:
+                with self.subTest(name=name, value=value):
+                    response = self.post(name, value)
+
+                    assert response.status_code == 400
+                    self.coder.refresh_from_db()
+                    assert self.coder.settings == expected
+
+    def test_rejects_another_coder_id(self):
+        expected = dict(self.coder.settings)
+        for name in ["calendar-days-before", "calendar-days-after"]:
+            with self.subTest(name=name):
+                response = self.post(name, "0", pk=self.coder.pk + 1)
+
+                assert response.status_code == 400
+                self.coder.refresh_from_db()
+                assert self.coder.settings == expected
+
+    def test_requires_authentication(self):
+        expected = dict(self.coder.settings)
+        for name in ["calendar-days-before", "calendar-days-after"]:
+            with self.subTest(name=name):
+                response = self.post(name, "0", user=AnonymousUser())
+
+                assert response.status_code == 403
+                self.coder.refresh_from_db()
+                assert self.coder.settings == expected
+
+    def render_calendar(self, user):
+        return render_to_string(
+            "calendar.html",
+            {"request": SimpleNamespace(user=user), "timezone": "UTC", "ignore_filters": [], "favorite_contests": 1},
+        )
+
+    def test_calendar_template_preserves_zero(self):
+        self.coder.settings.update(calendar_days_before=0, calendar_days_after=0)
+
+        html = self.render_calendar(self.user)
+
+        assert "calendar_days_before = 0" in html
+        assert "calendar_days_after = 0" in html
+
+    def test_calendar_template_defaults_for_missing_settings_and_guests(self):
+        self.coder.settings = {}
+        for user in [self.user, AnonymousUser()]:
+            with self.subTest(user=user):
+                html = self.render_calendar(user)
+
+                assert "calendar_days_before = 1" in html
+                assert "calendar_days_after = 3" in html
+
+    def test_preferences_template_preserves_zero_and_uses_defaults(self):
+        request = self.factory.get("/settings/preferences/")
+        request.user = self.user
+        for values, before, after in [({}, 1, 3), ({"calendar_days_before": 0, "calendar_days_after": 0}, 0, 0)]:
+            with self.subTest(values=values):
+                self.coder.settings = values
+
+                html = render_to_string(
+                    "settings.html",
+                    {"request": request, "coder": self.coder, "tokens": {}, "past_calendar_actions": {}},
+                )
+
+                assert f'id="calendar-days-before" data-value="{before}"' in html
+                assert f'id="calendar-days-after" data-value="{after}"' in html
 
 
 class AccountBindingTest(TestCase):

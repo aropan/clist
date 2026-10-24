@@ -117,6 +117,16 @@
             <div class="key">Day event limit in calendar</div>
             <div class="value"><a href="#" id="event-limit-calendar" data-value="{{ coder.settings.event_limit_calendar }}"></a></div>
 
+            <div class="key">Days before selected date
+                <i rel="tooltip" title="Applies to Days view. The selected day is always shown. Default: 1."></i>
+            </div>
+            <div class="value"><a href="#" id="calendar-days-before" data-value="{{ coder.settings|get_item:"calendar_days_before"|default_if_none:1 }}"></a></div>
+
+            <div class="key">Days after selected date
+                <i rel="tooltip" title="Applies to Days view. The selected day is always shown. Default: 3."></i>
+            </div>
+            <div class="value"><a href="#" id="calendar-days-after" data-value="{{ coder.settings|get_item:"calendar_days_after"|default_if_none:3 }}"></a></div>
+
             <div class="key">Group in list mode view
                 <i rel="tooltip" title="Group contests by resource. Use GET query group=yes or group=no for once."></i>
             </div>

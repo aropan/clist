@@ -16,10 +16,10 @@ function toggle_hide_contest(ev, el) {
       if (icon.hasClass("fa-eye") ^ (data == "deleted")) {
         if (icon.hasClass("fa-eye")) {
           icons.parent().find(".contest_title>a").css({ textDecoration: "line-through" });
-          icons.parent().find(".fc-title").css({ textDecoration: "line-through" });
+          icons.closest(".clist-calendar-event-title").css({ textDecoration: "line-through" });
         } else {
           icons.parent().find(".contest_title>a").css({ textDecoration: "none" });
-          icons.parent().find(".fc-title").css({ textDecoration: "none" });
+          icons.closest(".clist-calendar-event-title").css({ textDecoration: "none" });
         }
         icons.toggleClass("fa-eye");
         icons.toggleClass("fa-eye-slash");

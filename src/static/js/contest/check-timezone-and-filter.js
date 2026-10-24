@@ -35,9 +35,7 @@ $(function () {
     $(".list-calendar-views .active").toggleClass("active");
     $("#" + target_view + "-view").toggleClass("active");
 
-    // to collapse list day events in calendar
-    $(window).resize();
-    calendar.render();
+    $("#calendar").trigger("calendar:shown");
 
     update_urls_params({ view: target_view });
   });

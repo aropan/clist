@@ -114,16 +114,17 @@
             var self = this;
 
             // handle clicking on a calendar link
-            this.el.on('click', '.ace_opt', function(event){self._click(this, event);});
+            this.el.on('click.addcalevent', '.ace_opt', function(event){self._click(this, event);});
 
             // handle opening and closing the dropdown - always available for accessiblity
-            this.el.on('click', function(event){self._clickShow(event);});
-            $(document).on('click', function(){self._hide();});
+            this.el.on('click.addcalevent', function(event){self._clickShow(event);});
+            this.hideOnDocumentClick = function(){self._hide();};
+            $(document).on('click.addcalevent', this.hideOnDocumentClick);
 
             // handle opening and closing the dropdown on mouseover
             if(!this.options.onclick) {
-                this.el.on('mouseover', function(){self._show();});
-                this.el.on('mouseout', function(){self._hide();});
+                this.el.on('mouseover.addcalevent', function(){self._show();});
+                this.el.on('mouseout.addcalevent', function(){self._hide();});
             }
         },
 
@@ -464,6 +465,15 @@
 
         update: function(options){
             this._update(options);
+        },
+
+        destroy: function(){
+            this.el.off('.addcalevent');
+            $(document).off('click.addcalevent', this.hideOnDocumentClick);
+            if(this.dd) {
+                this.dd.remove();
+            }
+            this.el.removeData('addcalevent');
         }
     };
 

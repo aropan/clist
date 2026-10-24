@@ -1,7 +1,5 @@
+{{ ignore_filters|json_script:"calendar-filters" }}
 <script>
-  customButtonDesc = { {% for i in ignore_filters %}cb{{ i.id }}: { text: '{{ i.name|safe }}', data: '{{ i.id }}' }{% if forloop.revcounter0 %}, {% endif %}{% endfor %} }
-  customButtonGroup = '{% for i in ignore_filters %}{% if forloop.counter0 %}{% if i.id == 0 %} {% else %},{% endif %}{% endif %}cb{{ i.id }}{% endfor %}'
-  customButtonSelector = [{% for i in ignore_filters %}{% if i.id > 0 %}'.fc-cb{{ i.id }}-button',{% endif %}{% endfor %}].join(',')
   timezone = '{{ timezone }}'
   timezone_hm = '{{ timezone|get_timezone_offset_hm }}'
   hide_contest = {{ hide_contest|default:0 }}
@@ -11,6 +9,8 @@
   has_permission_toggle_party_contests = {{ party.has_permission_toggle|default:0 }}
   add_to_calendar = {% if add_to_calendar %}"{{ add_to_calendar }}"{% else %}"disable"{% endif %}
   event_limit = {{ request.user.coder.settings.event_limit_calendar|default:"true" }}
+  calendar_days_before = {{ request.user.coder.settings|get_item:"calendar_days_before"|default_if_none:1 }}
+  calendar_days_after = {{ request.user.coder.settings|get_item:"calendar_days_after"|default_if_none:3 }}
 </script>
 
 {% if add_to_calendar and add_to_calendar != "disable" %}
@@ -21,9 +21,11 @@
 </script>
 {% endif %}
 
-<script src="{% static_ts 'fullcalendar/index.global.min.js' %}"></script>
-<script src="{% static_ts 'fullcalendar/moment/index.global.min.js' %}"></script>
-<script src="{% static_ts 'fullcalendar/moment-timezone/index.global.min.js' %}"></script>
+<script src="{% static_ts 'fullcalendar/all/global.min.js' %}"></script>
+<script src="{% static_ts 'fullcalendar/themes/classic/global.min.js' %}"></script>
+<link href="{% static_ts 'fullcalendar/skeleton.min.css' %}" rel="stylesheet">
+<link href="{% static_ts 'fullcalendar/themes/classic/theme.min.css' %}" rel="stylesheet">
+<link href="{% static_ts 'fullcalendar/themes/classic/palette.min.css' %}" rel="stylesheet">
 
 <link href="{% static_ts 'css/contest/calendar.css' %}" rel="stylesheet">
 <script src="{% static_ts 'js/contest/calendar.js' %}"></script>

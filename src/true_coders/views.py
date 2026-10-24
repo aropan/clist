@@ -1255,6 +1255,12 @@ def change(request):
             return HttpResponseBadRequest("invalid event-limit-calendar value")
         coder.settings["event_limit_calendar"] = value
         coder.save()
+    elif name in ["calendar-days-before", "calendar-days-after"]:
+        value = request.POST.get("value", None)
+        if value not in [str(days) for days in range(11)]:
+            return HttpResponseBadRequest(f"invalid {name} value")
+        coder.settings[name.replace("-", "_")] = int(value)
+        coder.save()
     elif name == "share-to-category":
         categories = [k for k, v in coder.get_notifications()]
         if value != "disable" and value not in categories:

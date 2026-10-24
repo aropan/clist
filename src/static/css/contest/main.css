@@ -47,7 +47,7 @@
  */
 
 .hide-contest.fa-eye,
-.fc-event .data-ace {
+.clist-calendar-event .data-ace {
   visibility: hidden;
   margin-right: 2px;
 }
