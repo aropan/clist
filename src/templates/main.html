@@ -42,32 +42,7 @@
     {% include "check_timezone.html" %}
   {% endif %}
   {% endif %}
-  <div id="time-view-search">
-    <div id="time" class="small text-muted" title="{{ timezone }}" data-toggle="tooltip">{{ now|timezone:timezone|format_time:"%A, %H:%M:%S%z" }}</div>
-    <div>
-      <input
-         id="toggle-view"
-         type="checkbox"
-         data-toggle="toggle"
-         data-on="List"
-         data-off="Calendar"
-         data-onstyle="default active"
-         data-offstyle="default active"
-         data-size="mini"
-         {% if viewmode == 'list' %}checked{% endif %}
-       >
-      <script>$('#toggle-view').bootstrapToggle()</script>
-    </div>
-    <div id="filter" class="form-inline">
-      {% if favorite_contests %}{% include "favorite_filter.html" with input_group_size="xs" %}{% endif %}
-      <div class="input-group input-group-xs">
-        <input id="search" class="input-xs form-control" type="text" value="{{ request.GET.q }}"></input>
-        <span class="input-group-addon icon" rel="tooltip" title="regex insensitive search">
-          <i class="fa fa-search"></i>
-        </span>
-      </div>
-    </div>
-  </div>
+  {% include "filter_collapse.html" with include_filter="main_filters.html" show_in_fullscreen=True %}
 </div>
 
 <div class="tab-content list-calendar-views">

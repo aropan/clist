@@ -1,4 +1,4 @@
-<div class="fullscreen-hidden">
+<div{% if not show_in_fullscreen %} class="fullscreen-hidden"{% endif %}>
   <div class="navbar-header">
     <button type="button" class="btn btn-sm btn-default btn-block collapsed" id="filter-toggle" data-toggle="collapse" data-target="#filter-collapse">
       <i class="fas fa-bars"></i>

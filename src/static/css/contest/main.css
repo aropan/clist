@@ -93,6 +93,20 @@
 }
 
 @media (max-width: 767px) {
+  #time-view-search {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  #time-view-search #filter {
+    margin-left: 0;
+  }
+
+  #timezone-and-filter:has(#filter-toggle.collapsed) ~ .list-calendar-views .clist-calendar-header {
+    display: none;
+  }
+
   #contests td {
     border: none;
     display: block;

@@ -158,6 +158,7 @@ $(() => {
       next: { click: (e) => navigate_days(e, 1) },
     },
     buttonClass: "clist-calendar-button",
+    headerToolbarClass: "clist-calendar-header",
     toolbarSectionClass: "clist-calendar-toolbar-section",
     toolbarElements: {
       contestFilters: () => ({ domNodes: [filter_controls[0]] }),
