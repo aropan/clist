@@ -10,16 +10,26 @@ curl_setopt($CID, CURLOPT_USERAGENT, $user_agent);
 
 $proxy_file = dirname(__FILE__) . '/../../logs/projecteuler.proxy';
 $proxy = file_exists($proxy_file) ? json_decode(file_get_contents($proxy_file)) : false;
-if ($proxy) {
-    echo ' (proxy)';
-    curl_setopt($CID, CURLOPT_PROXY, $proxy->addr . ':' . $proxy->port);
-}
+$with_proxy = false;
+
+// The proxy is a free one from the standings parser pool and often resets connections,
+// so it is used only after a direct request fails
+$fetch = function (&$url) use ($CID, $proxy, &$with_proxy) {
+    $page = curlexec($url);
+    if ($proxy && !$with_proxy && (curl_errno($CID) || response_code() != 200)) {
+        echo ' (proxy)';
+        $with_proxy = true;
+        curl_setopt($CID, CURLOPT_PROXY, $proxy->addr . ':' . $proxy->port);
+        $page = curlexec($url);
+    }
+    return $page;
+};
 
 $urls = ['https://projecteuler.net/recent'];
 
 if (isset($_GET['parse_full_list'])) {
     $url = 'https://projecteuler.net/archives';
-    $page = curlexec($url);
+    $page = $fetch($url);
     preg_match_all('#<a[^>]*href="(?P<url>[^"]*)"[^>]*>[0-9]+</a>#', $page, $matches);
     foreach ($matches['url'] as $u) {
         $urls[] = url_merge($url, $u);
@@ -28,7 +38,7 @@ if (isset($_GET['parse_full_list'])) {
 }
 
 foreach ($urls as $url) {
-    $page = curlexec($url);
+    $page = $fetch($url);
     preg_match_all(
         '#
             <tr>\s*
@@ -59,7 +69,7 @@ foreach ($urls as $url) {
 }
 
 $url = 'https://projecteuler.net/news';
-$page = curlexec($url);
+$page = $fetch($url);
 preg_match_all(
     '#<li[^>]*>(?:[^>]*>)?(?P<title>Problem[^0-9]*(?P<key>[0-9 ]+))[^A-Z]*(?P<start_time>[^<[(]*)#',
     $page,
@@ -81,7 +91,7 @@ foreach ($matches as $match) {
 }
 
 $url = 'https://projecteuler.net/minimal=new';
-$page = curlexec($url);
+$page = $fetch($url);
 $lines = explode("\r\n\r\n", $page);
 $lines = end($lines);
 $lines = explode("\n", $lines);
@@ -111,7 +121,7 @@ if ($RID == -1) {
     print_r($contests);
 }
 
-if ($proxy) {
+if ($with_proxy) {
     curl_setopt($CID, CURLOPT_PROXY, null);
 }
 curl_setopt($CID, CURLOPT_USERAGENT, $USER_AGENT);
