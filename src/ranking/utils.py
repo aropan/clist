@@ -417,7 +417,7 @@ def account_update_contest_additions(
         break
 
 
-def create_upsolving_statistic(resource, contest, account):
+def create_upsolving_statistic(resource, contest, account, *, select_for_update=False):
     defaults = {
         "resource": resource,
         "skip_in_stats": True,
@@ -426,6 +426,8 @@ def create_upsolving_statistic(resource, contest, account):
     if account.name:
         defaults["addition"]["name"] = account.name
     statistics_objects = Statistics.saved_objects.select_related("account", "contest", "resource")
+    if select_for_update:
+        statistics_objects = statistics_objects.select_for_update(of=("self",))
     stat, created = statistics_objects.get_or_create(contest=contest, account=account, defaults=defaults)
     if stat.skip_in_stats or stat.is_rated:
         return stat, created

@@ -1,11 +1,16 @@
 import re
+from collections import defaultdict
 from copy import deepcopy
 from datetime import timedelta
-from urllib.parse import quote
+from urllib.parse import quote, urlsplit
 
-from clist.templatetags.extras import is_improved_solution
+import arrow
+from django.db import transaction
+
+from clist.templatetags.extras import get_statistic_stats, is_improved_solution, is_solved
 from ranking.management.modules.common import REQ, BaseModule
 from ranking.management.modules.excepts import ExceptionParseAccounts, ExceptionParseStandings, FailOnGetResponse
+from ranking.utils import create_upsolving_statistic
 
 API_URL = "https://samcoding.uz/api/"
 JSON_HEADERS = {"Accept": "application/json", "Accept-Language": "en"}
@@ -32,7 +37,7 @@ def parse_verdict(value):
 
 
 def get_page(url, page, *, page_size=None):
-    params = f"?page={page}"
+    params = f"{'&' if '?' in url else '?'}page={page}"
     if page_size:
         params += f"&pageSize={page_size}"
     data = REQ.get(url + params, headers=JSON_HEADERS, return_json=True)
@@ -266,10 +271,182 @@ class Statistic(BaseModule):
 
         return {
             "url": clist_data["url"],
+            "standings_kind": "icpc" if format_type == "icpc" else "scoring",
             "problems": problems,
             "result": result,
             "submissions_info": submissions_info,
         }
+
+    @staticmethod
+    @transaction.atomic()
+    def update_submissions(account, resource, with_submissions=False, **kwargs):
+        info = deepcopy(account.submissions_info or {})
+        last_id = info.get("last_submission_id", -1)
+        pending_ids = set(info.get("pending_submission_ids", []))
+        stop_id = min(last_id, min(pending_ids, default=last_id))
+        newest_id = last_id
+        count = info.get("count", 0)
+        contests = {}
+        problems = {}
+        contest_formats = {}
+        candidates = defaultdict(list)
+        ret = defaultdict(int)
+
+        def get_contest(key):
+            key = str(key)
+            if key not in contests:
+                contests[key] = resource.contest_set.filter(key=key).first()
+            return contests[key]
+
+        url = f"{API_URL}submissions/?user={quote(account.key, safe='')}"
+        page = 1
+        previous_min_id = None
+        total = None
+        while True:
+            data = get_page(url, page, page_size=SUBMISSIONS_PAGE_SIZE)
+            if page == 1:
+                total = data.get("total")
+            if not isinstance(total, int) or total < 0 or data.get("total") != total:
+                raise ExceptionParseAccounts(f"Submissions changed during pagination: {url}")
+            submissions = data["data"]
+            if not submissions:
+                if total:
+                    raise ExceptionParseAccounts(f"Empty submissions page: {url}&page={page}")
+                break
+            ids = [item["id"] for item in submissions]
+            if ids != sorted(set(ids), reverse=True) or (previous_min_id is not None and ids[0] >= previous_min_id):
+                raise ExceptionParseAccounts(f"Submissions out of order: {url}&page={page}")
+            previous_min_id = ids[-1]
+            newest_id = max(newest_id, ids[0])
+
+            for item in submissions:
+                submission_id = item["id"]
+                if submission_id <= last_id and submission_id not in pending_ids:
+                    continue
+                if item.get("username", "").lower() != account.key.lower():
+                    raise ExceptionParseAccounts(f"Unexpected submission user: {url}")
+                if submission_id > last_id:
+                    count += 1
+                submission_time = arrow.get(item["created_at"]).datetime
+                if account.last_submission is None or submission_time > account.last_submission:
+                    account.last_submission = submission_time
+                if not item.get("status") or item["status"] in PENDING_VERDICTS:
+                    pending_ids.add(submission_id)
+                    continue
+                pending_ids.discard(submission_id)
+
+                contest = get_contest(item["contest_id"]) if item.get("contest_id") is not None else None
+                if item.get("contest_id") is not None and contest is None:
+                    ret["missing_contests"] += 1
+                    continue
+                if contest is not None and submission_time < contest.end_time:
+                    continue
+
+                uid = item["problem_uid"]
+                if uid not in problems:
+                    problem_url = f"{API_URL}problems/{quote(uid, safe='')}/"
+                    try:
+                        problem_data = REQ.get(problem_url, headers=JSON_HEADERS, return_json=True)
+                    except FailOnGetResponse as e:
+                        if e.code != 404:
+                            raise
+                        problem_data = None
+                    if problem_data is not None and (
+                        not isinstance(problem_data, dict) or problem_data.get("uid") != uid
+                    ):
+                        raise ExceptionParseAccounts(f"Unexpected problem response: {problem_url}")
+                    problems[uid] = problem_data
+                problem_data = problems[uid]
+                problem_path = urlsplit((problem_data or {}).get("url", "")).path
+                match = re.fullmatch(r"/problems/([^/]+)/([^/]+)/?", problem_path)
+                if not match:
+                    ret["missing_problems"] += 1
+                    continue
+                contest_key, short = match.groups()
+                if contest is None:
+                    contest = get_contest(contest_key)
+                if contest is None:
+                    ret["missing_contests"] += 1
+                    continue
+                if submission_time < contest.end_time:
+                    continue
+                problem_info = next((p for p in contest.problems_list if p["short"] == short), None)
+                if contest.key != contest_key or problem_info is None:
+                    ret["missing_problems"] += 1
+                    continue
+
+                if contest.pk not in contest_formats:
+                    format_type = {"icpc": "icpc", "scoring": "ioi"}.get(contest.standings_kind)
+                    if format_type is None:
+                        contest_url = f"{API_URL}contests/{quote(contest.key, safe='')}/"
+                        contest_data = REQ.get(contest_url, headers=JSON_HEADERS, return_json=True)
+                        format_type = contest_data.get("format_type") if isinstance(contest_data, dict) else None
+                        if format_type not in {"icpc", "ioi"}:
+                            raise ExceptionParseAccounts(f"Unexpected contest format: {contest_url}")
+                    contest_formats[contest.pk] = format_type
+
+                upsolving = parse_submission(item | {"language": item["language_name"], "verdict": item["status"]})
+                accepted = item["status"] == "Accepted"
+                if contest_formats[contest.pk] == "ioi":
+                    if accepted:
+                        full_score = problem_info.get("full_score")
+                        if not isinstance(full_score, (int, float)) or full_score <= 0:
+                            raise ExceptionParseAccounts(f"Missing full score: contest={contest.key}, problem={short}")
+                        upsolving["result"] = full_score
+                    else:
+                        upsolving.update(result=0, partial=True)
+                else:
+                    upsolving["result"] = "+" if accepted else "-"
+                upsolving["submission_time"] = submission_time.timestamp()
+                candidates[contest].append((short, upsolving))
+                if with_submissions:
+                    ret.setdefault("submissions", []).append({
+                        "contest": contest,
+                        "problem": problem_info,
+                        "info": upsolving,
+                    })
+
+            if ids[-1] <= stop_id or page >= data["pagesCount"]:
+                break
+            page += 1
+
+        # Fetch and lock fresh statistics only after all HTTP requests have finished.
+        ret["n_contests"] = 0
+        for contest in sorted(candidates, key=lambda c: c.pk):
+            statistic, _ = create_upsolving_statistic(
+                resource=resource, contest=contest, account=account, select_for_update=True
+            )
+            updated = False
+            for short, upsolving in candidates[contest]:
+                problem = statistic.addition.setdefault("problems", {}).setdefault(short, {})
+                if is_solved(problem):
+                    continue
+                previous = problem.get("upsolving", {})
+                # The account API has no scores, so a rejection cannot replace a known partial score.
+                if previous.get("partial") and not is_solved(upsolving):
+                    continue
+                if not is_improved_solution(upsolving, previous):
+                    continue
+                problem["upsolving"] = upsolving
+                updated = True
+                ret["n_updated"] += 1
+
+            if updated:
+                update_fields = ["addition"]
+                for field, value in get_statistic_stats(statistic.addition, solving=statistic.solving).items():
+                    if getattr(statistic, field) != value:
+                        setattr(statistic, field, value)
+                        update_fields.append(field)
+                statistic.save(update_fields=update_fields)
+                ret["n_contests"] += 1
+        info.update(last_submission_id=newest_id, count=count)
+        if pending_ids:
+            info["pending_submission_ids"] = sorted(pending_ids)
+        else:
+            info.pop("pending_submission_ids", None)
+        account.submissions_info = info
+        account.save(update_fields=["submissions_info", "last_submission"])
+        return ret
 
     @staticmethod
     def get_users_infos(users, resource, accounts, pbar=None):
