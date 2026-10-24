@@ -1322,15 +1322,24 @@ def change(request):
 
             filter_.name = request.POST.get("value[name]", "").strip().replace("'", "") or None
 
-            field = "Duration"
-            duration_from = request.POST.get("value[duration][from]", None)
-            filter_.duration_from = int(duration_from) if duration_from and duration_from != "NaN" else None
+            for duration_field, label in (
+                ("duration", "Participation duration"),
+                ("window_duration", "Participation window"),
+            ):
+                field = label
+                duration_from = request.POST.get(f"value[{duration_field}][from]")
+                duration_from = int(duration_from) if duration_from and duration_from != "NaN" else None
+                duration_to = request.POST.get(f"value[{duration_field}][to]")
+                duration_to = int(duration_to) if duration_to and duration_to != "NaN" else None
 
-            duration_to = request.POST.get("value[duration][to]", None)
-            filter_.duration_to = int(duration_to) if duration_to and duration_to != "NaN" else None
+                for bound in (duration_from, duration_to):
+                    if bound is not None and not 0 <= bound <= 2139062143:
+                        raise ValueError("duration should be between 0 and 2139062143 minutes")
+                if duration_from is not None and duration_to is not None and duration_from > duration_to:
+                    raise ValueError("{from} should be less or equal {to}")
 
-            if filter_.duration_from and filter_.duration_to and filter_.duration_from > filter_.duration_to:
-                raise Exception("{from} should be less or equal {to}")
+                setattr(filter_, f"{duration_field}_from", duration_from)
+                setattr(filter_, f"{duration_field}_to", duration_to)
 
             field = "Start time"
             start_time_from = request.POST.get("value[start_time][from]", None)

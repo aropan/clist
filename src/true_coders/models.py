@@ -99,12 +99,16 @@ class Coder(BaseModel):
             query = Q()
             if filter_.resources:
                 query &= Q(resource__id__in=filter_.resources)
-            if filter_.duration_from:
+            if filter_.duration_from is not None:
                 seconds = timedelta(minutes=filter_.duration_from).total_seconds()
                 query &= Q(duration_in_secs__gte=seconds)
-            if filter_.duration_to:
+            if filter_.duration_to is not None:
                 seconds = timedelta(minutes=filter_.duration_to).total_seconds()
                 query &= Q(duration_in_secs__lte=seconds)
+            if filter_.window_duration_from is not None:
+                query &= Q(end_time__gte=F("start_time") + timedelta(minutes=filter_.window_duration_from))
+            if filter_.window_duration_to is not None:
+                query &= Q(end_time__lte=F("start_time") + timedelta(minutes=filter_.window_duration_to))
             if filter_.start_time_from:
                 minutes = filter_.start_time_from * 60
                 hours = minutes // 60
@@ -389,6 +393,8 @@ class Filter(BaseModel):
     name = models.CharField(max_length=60, null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
     duration_from = models.IntegerField(null=True, blank=True)
     duration_to = models.IntegerField(null=True, blank=True)
+    window_duration_from = models.IntegerField(null=True, blank=True)
+    window_duration_to = models.IntegerField(null=True, blank=True)
     start_time_from = models.FloatField(null=True, blank=True)
     start_time_to = models.FloatField(null=True, blank=True)
     regex = models.CharField(max_length=1000, null=True, blank=True)  # ruff: ignore[django-nullable-model-string-field]
@@ -405,11 +411,17 @@ class Filter(BaseModel):
         result = "" if not self.name else f"{self.name}: "
         result += f"{self.coder}, {self.resources} resources, {self.contest} contest"
         if self.duration_from is not None or self.duration_to is not None:
-            result += ", duration"
+            result += ", participation duration (minutes)"
             if self.duration_from is not None:
                 result += f" from {self.duration_from}"
             if self.duration_to is not None:
                 result += f" to {self.duration_to}"
+        if self.window_duration_from is not None or self.window_duration_to is not None:
+            result += ", participation window (minutes)"
+            if self.window_duration_from is not None:
+                result += f" from {self.window_duration_from}"
+            if self.window_duration_to is not None:
+                result += f" to {self.window_duration_to}"
         if self.start_time_from is not None or self.start_time_to is not None:
             result += ", start time"
             if self.start_time_from is not None:
@@ -430,8 +442,12 @@ class Filter(BaseModel):
             "name": self.name,
             "id": self.id,
             "duration": {
-                "from": self.duration_from or "",
-                "to": self.duration_to or "",
+                "from": self.duration_from if self.duration_from is not None else "",
+                "to": self.duration_to if self.duration_to is not None else "",
+            },
+            "window_duration": {
+                "from": self.window_duration_from if self.window_duration_from is not None else "",
+                "to": self.window_duration_to if self.window_duration_to is not None else "",
             },
             "start_time": {
                 "from": self.start_time_from or "",

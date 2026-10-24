@@ -25,7 +25,7 @@ from ranking.management.modules import algoleague, atcoder, codechef, cpython, h
 from ranking.management.modules.common import BaseModule
 from ranking.models import Account, AccountVerification, Module, Statistics, VerifiedAccount
 from ranking.utils import rename_account
-from true_coders.models import Coder, CoderList
+from true_coders.models import Coder, CoderList, Filter
 from true_coders.views import (
     PROFILE_CONTESTS_PAGING_TEMPLATE,
     PROFILE_WRITERS_PAGING_TEMPLATE,
@@ -47,6 +47,183 @@ PROFILE_LINKS_MIDDLEWARE = [
         "silk.middleware.SilkyMiddleware",
     }
 ]
+
+
+class ContestDurationFilterTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user(username="duration-filter")
+        cls.coder = Coder.objects.create(user=cls.user)
+        with mock.patch.object(Resource, "update_icon"):
+            cls.resource = Resource.objects.create(
+                host="duration-filter.example", url="https://duration-filter.example/", enable=True
+            )
+        now = timezone.now()
+        cls.contests = {}
+        for key, duration, window in (
+            ("regular", 120, 120),
+            ("short-attempt", 120, 1440),
+            ("long-attempt", 240, 1440),
+            ("zero", 0, 0),
+        ):
+            cls.contests[key] = Contest.objects.create(
+                resource=cls.resource,
+                title=key,
+                key=key,
+                url=f"https://duration-filter.example/{key}",
+                host=cls.resource.host,
+                start_time=now,
+                end_time=now + timedelta(minutes=window),
+                duration_in_secs=duration * 60,
+            )
+        cls.filter = Filter.objects.create(coder=cls.coder, resources=[cls.resource.pk], categories=["list"])
+
+    def matching_keys(self, **bounds):
+        filter_ = Filter(resources=[self.resource.pk], **bounds)
+        query = self.coder.get_contest_filter(filters=[filter_])
+        return set(Contest.objects.filter(query).values_list("key", flat=True))
+
+    def save_filter(self, **values):
+        data = {
+            "name": "filter",
+            "pk": self.coder.pk,
+            "value[id]": self.filter.pk,
+            "value[to_show]": "true",
+            "value[resources][]": [self.resource.pk],
+            "value[categories][]": ["list"],
+            **values,
+        }
+        request = RequestFactory().post(reverse("coder:change"), data)
+        request.user = self.user
+        return change(request)
+
+    def test_existing_duration_uses_participation_time(self):
+        assert self.matching_keys(duration_from=120, duration_to=120) == {"regular", "short-attempt"}
+
+    def test_window_uses_start_and_end_times(self):
+        assert self.matching_keys(window_duration_from=1440, window_duration_to=1440) == {
+            "short-attempt",
+            "long-attempt",
+        }
+
+    def test_ranges_can_be_combined(self):
+        assert self.matching_keys(duration_to=120, window_duration_from=1440) == {"short-attempt"}
+
+    def test_one_sided_bounds_are_inclusive(self):
+        cases = (
+            ({"duration_from": 240}, {"long-attempt"}),
+            ({"duration_to": 120}, {"regular", "short-attempt", "zero"}),
+            ({"window_duration_from": 1440}, {"short-attempt", "long-attempt"}),
+            ({"window_duration_to": 120}, {"regular", "zero"}),
+        )
+        for bounds, expected in cases:
+            with self.subTest(bounds=bounds):
+                assert self.matching_keys(**bounds) == expected
+
+    def test_window_does_not_round_seconds_to_minutes(self):
+        for offset in (-1, 1):
+            with self.subTest(offset=offset):
+                contest = self.contests["short-attempt"]
+                Contest.objects.filter(pk=contest.pk).update(
+                    end_time=contest.start_time + timedelta(minutes=1440, seconds=offset)
+                )
+                assert self.matching_keys(window_duration_from=1440, window_duration_to=1440) == {"long-attempt"}
+
+    def test_zero_upper_bound_is_not_ignored(self):
+        for field in ("duration_to", "window_duration_to"):
+            with self.subTest(field=field):
+                assert self.matching_keys(**{field: 0}) == {"zero"}
+
+    def test_empty_ranges_do_not_restrict_contests(self):
+        assert self.matching_keys() == set(self.contests)
+        assert self.filter.dict()["window_duration"] == {"from": "", "to": ""}
+
+    def test_show_and_hide_filters_work_together(self):
+        self.filter.duration_to = 120
+        self.filter.save()
+        Filter.objects.create(coder=self.coder, categories=["list"], window_duration_from=1440, to_show=False)
+        query = self.coder.get_contest_filter("list")
+        assert set(Contest.objects.filter(query).values_list("key", flat=True)) == {"regular", "zero"}
+
+    def test_disabled_window_filter_is_ignored(self):
+        self.filter.window_duration_from = 1440
+        self.filter.enabled = False
+        self.filter.save()
+        query = self.coder.get_contest_filter("list")
+        assert set(Contest.objects.filter(query).values_list("key", flat=True)) == set(self.contests)
+
+    def test_save_and_serialize_both_ranges(self):
+        response = self.save_filter(**{
+            "value[duration][from]": "0",
+            "value[duration][to]": "120",
+            "value[window_duration][from]": "0",
+            "value[window_duration][to]": "1440",
+        })
+        assert response.status_code == 200
+        self.filter.refresh_from_db()
+        assert self.filter.dict()["duration"] == {"from": 0, "to": 120}
+        assert self.filter.dict()["window_duration"] == {"from": 0, "to": 1440}
+        assert "participation duration (minutes) from 0 to 120" in str(self.filter)
+        assert "participation window (minutes) from 0 to 1440" in str(self.filter)
+
+    def test_save_and_clear_one_sided_window(self):
+        for value, expected in (("1440", 1440), ("", None), ("NaN", None)):
+            with self.subTest(value=value):
+                self.filter.window_duration_from = 120
+                self.filter.window_duration_to = 2880
+                self.filter.save()
+                response = self.save_filter(**{
+                    "value[window_duration][from]": "",
+                    "value[window_duration][to]": value,
+                })
+                assert response.status_code == 200
+                self.filter.refresh_from_db()
+                assert self.filter.window_duration_from is None
+                assert self.filter.window_duration_to == expected
+
+    def test_old_payload_without_window_remains_valid(self):
+        response = self.save_filter(**{"value[duration][to]": "120"})
+        assert response.status_code == 200
+        self.filter.refresh_from_db()
+        assert self.filter.duration_to == 120
+        assert self.filter.window_duration_from is None
+        assert self.filter.window_duration_to is None
+
+    def test_invalid_ranges_are_rejected_without_saving(self):
+        for field in ("duration", "window_duration"):
+            for lower, upper in (
+                ("120", "60"),
+                ("1", "0"),
+                ("-1", ""),
+                ("", "-1"),
+                ("abc", ""),
+                ("1.5", ""),
+                ("", "2139062144"),
+            ):
+                with self.subTest(field=field, lower=lower, upper=upper):
+                    response = self.save_filter(**{
+                        f"value[{field}][from]": lower,
+                        f"value[{field}][to]": upper,
+                    })
+                    assert response.status_code == 400
+                    self.filter.refresh_from_db()
+                    assert getattr(self.filter, f"{field}_from") is None
+                    assert getattr(self.filter, f"{field}_to") is None
+
+    def test_filter_preview_uses_window_for_show_and_hide(self):
+        for to_show in (True, False):
+            with self.subTest(to_show=to_show):
+                self.filter.window_duration_from = 1440
+                self.filter.to_show = to_show
+                self.filter.save()
+                request = RequestFactory().get(reverse("coder:search"), {"query": "show-filter", "id": self.filter.pk})
+                request.user = self.user
+                response = search(request)
+                assert response.status_code == 200
+                assert {item["text"] for item in json.loads(response.content)["items"]} == {
+                    "short-attempt",
+                    "long-attempt",
+                }
 
 
 @override_settings(CACHES={"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}})

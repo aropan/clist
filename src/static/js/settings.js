@@ -437,11 +437,16 @@ $(() => {
           html += ` party_id ${value.party}`;
         }
       }
-      if (value.duration && (value.duration.from || value.duration.to)) {
-        html +=
-          ", duration" +
-          (value.duration.from ? ` from ${value.duration.from}` : "") +
-          (value.duration.to ? ` to ${value.duration.to}` : "");
+      for (const [field, label] of [
+        ["duration", "duration"],
+        ["window_duration", "window"],
+      ]) {
+        const range = value[field];
+        const hasFrom = range && (range.from || range.from === 0);
+        const hasTo = range && (range.to || range.to === 0);
+        if (hasFrom || hasTo) {
+          html += `, ${label}${hasFrom ? ` from ${range.from}` : ""}${hasTo ? ` to ${range.to}` : ""} minute(s)`;
+        }
       }
       if (value.start_time && (value.start_time.from || value.start_time.to)) {
         html +=
@@ -477,6 +482,8 @@ $(() => {
         this.$input.filter('[name="duration-from"]').val(value.duration.from);
         this.$input.filter('[name="duration-to"]').val(value.duration.to);
       }
+      this.$input.filter('[name="window-duration-from"]').val(value.window_duration?.from ?? "");
+      this.$input.filter('[name="window-duration-to"]').val(value.window_duration?.to ?? "");
       if (value.start_time) {
         this.$input.filter('[name="start-time-from"]').val(value.start_time.from);
         this.$input.filter('[name="start-time-to"]').val(value.start_time.to);
@@ -501,6 +508,10 @@ $(() => {
         duration: {
           from: parseInt(this.$input.filter('[name="duration-from"]').val(), 10),
           to: parseInt(this.$input.filter('[name="duration-to"]').val(), 10),
+        },
+        window_duration: {
+          from: parseInt(this.$input.filter('[name="window-duration-from"]').val(), 10),
+          to: parseInt(this.$input.filter('[name="window-duration-to"]').val(), 10),
         },
         start_time: {
           from: parseFloat(this.$input.filter('[name="start-time-from"]').val()),
@@ -562,6 +573,16 @@ $(() => {
             <input min="0" max="2139062143" type="number" class="form-control" name="duration-from"> \
             <span class="input-group-addon">to</span> \
             <input min="0" max="2139062143" type="number" class="form-control" name="duration-to"> \
+            <span class="input-group-addon">minute(s)</span> \
+        </div> \
+    </div> \
+    <div class="filter-field"> \
+        <div class="input-group input-group-md"> \
+            <span class="input-group-addon">Window</span> \
+            <span class="input-group-addon">from</span> \
+            <input min="0" max="2139062143" type="number" class="form-control" name="window-duration-from"> \
+            <span class="input-group-addon">to</span> \
+            <input min="0" max="2139062143" type="number" class="form-control" name="window-duration-to"> \
             <span class="input-group-addon">minute(s)</span> \
         </div> \
     </div> \
