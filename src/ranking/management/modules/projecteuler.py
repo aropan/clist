@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import io
+import os
 import random
 import re
 from collections import OrderedDict
@@ -15,21 +16,62 @@ from PIL import Image
 from logify.live import tqdm
 from ranking.management.modules import conf
 from ranking.management.modules.common import LOG, REQ, BaseModule, parsed_table
-from ranking.management.modules.excepts import ExceptionParseStandings
+from ranking.management.modules.excepts import ExceptionParseStandings, FailOnGetResponse, ProxyLimitReached
+from utils.requester import NotFoundProxy
+from utils.timetools import datetime_from_timestamp
 
 
 class Statistic(BaseModule):
+    USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36"  # ruff: ignore[line-too-long]
+    PROXIES_FILEPATH = "sharedfiles/resource/projecteuler/proxies"
+    # The legacy schedule parser falls back to this proxy when a direct request fails
+    PROXY_DUMP_FILEPATH = "logs/legacy/projecteuler.proxy"
+    PROXY_REFRESH_INTERVAL = timedelta(hours=1)
+    proxy_refresh_attempted_at = None
+
+    @classmethod
+    def with_proxy(cls, connect):
+        return REQ.with_proxy(
+            time_limit=5,
+            n_limit=25,
+            filepath_proxies=cls.PROXIES_FILEPATH,
+            dump_proxy_filepath=cls.PROXY_DUMP_FILEPATH,
+            connect=connect,
+        )
+
+    @classmethod
+    def refresh_proxy(cls):
+        now = timezone.now()
+        if cls.proxy_refresh_attempted_at and now - cls.proxy_refresh_attempted_at < cls.PROXY_REFRESH_INTERVAL:
+            return
+        if os.path.exists(cls.PROXY_DUMP_FILEPATH):
+            dumped_at = datetime_from_timestamp(os.path.getmtime(cls.PROXY_DUMP_FILEPATH))
+            if now - dumped_at < cls.PROXY_REFRESH_INTERVAL:
+                return
+        cls.proxy_refresh_attempted_at = now
+
+        def check_proxy(req):
+            req.get("https://projecteuler.net/recent", headers={"User-Agent": cls.USER_AGENT})
+
+        LOG.info("Refreshing the proxy for the schedule parser")
+        try:
+            with cls.with_proxy(connect=check_proxy):
+                pass
+        except (Exception, FailOnGetResponse, NotFoundProxy, ProxyLimitReached) as e:
+            LOG.warning(f"Failed to refresh the proxy: {e!r}")
+            REQ.init_opener()
+
     def get_standings(self, **kwargs):
         if re.match(r"^[0-9]+$", self.key) and int(self.key) > 1000:
+            # Standings are not available anymore, but the proxy is still needed for the schedule parser
+            self.refresh_proxy()
             return {}
 
         if not self.standings_url:
             self.standings_url = f"https://projecteuler.net/fastest={self.key}"
 
-        user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36"  # ruff: ignore[line-too-long]
-
         def get_standings_page(req):
-            page = req.get(self.standings_url, headers={"User-Agent": user_agent})
+            page = req.get(self.standings_url, headers={"User-Agent": self.USER_AGENT})
 
             unauthorized = not re.search(r'<form[^>]*action="sign_out"[^>]*>', page)
             if unauthorized:
@@ -74,13 +116,7 @@ class Statistic(BaseModule):
             return page
 
         LOG.info("Fetching standings through the proxy pool")
-        with REQ.with_proxy(
-            time_limit=5,
-            n_limit=25,
-            filepath_proxies="sharedfiles/resource/projecteuler/proxies",
-            dump_proxy_filepath="logs/legacy/projecteuler.proxy",
-            connect=get_standings_page,
-        ) as req:
+        with self.with_proxy(connect=get_standings_page) as req:
             page = req.proxer.get_connect_ret()
 
         result = {}
