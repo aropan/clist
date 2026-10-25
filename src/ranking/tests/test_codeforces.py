@@ -129,6 +129,87 @@ class CodeforcesStandingsTest(SimpleTestCase):
 
 
 class CodeforcesUsersInfoTest(SimpleTestCase):
+    def test_normalizes_photo_urls_before_building_avatar_url(self):
+        resource = Resource(
+            host="codeforces.com",
+            avatar_url="https://codeforces.com/{info[avatar]}",
+        )
+        avatar = "userpic.codeforces.org/1706822/avatar/b7d7c24d111ea1df.jpg"
+        title_photo = "userpic.codeforces.org/1706822/title/b7d7c24d111ea1df.jpg"
+        for prefix in (
+            "https://",
+            "http://",
+            "//",
+            "",
+            "/",
+            "https://codeforces.com/",
+            "//codeforces.com/",
+            "codeforces.com/",
+        ):
+            with (
+                self.subTest(prefix=prefix),
+                mock.patch.dict(os.environ, {}, clear=True),
+                mock.patch.object(
+                    codeforces,
+                    "api_query",
+                    return_value={
+                        "status": "OK",
+                        "result": [{"handle": "coder", "avatar": prefix + avatar, "titlePhoto": prefix + title_photo}],
+                    },
+                ),
+            ):
+                (result,) = Statistic.get_users_infos(["coder"], resource)
+
+            assert result["info"]["avatar"] == avatar
+            assert result["info"]["titlePhoto"] == title_photo
+            account = Account(resource=resource, key="coder", info=result["info"])
+            assert account.avatar_url() == f"https://codeforces.com/{avatar}"
+
+    def test_preserves_other_photo_hosts_and_paths(self):
+        photos = {
+            "avatar": "https://codeforces.com/images/custom-avatar.jpg",
+            "titlePhoto": "https://sta.codeforces.com/images/custom-title.jpg",
+        }
+        with (
+            mock.patch.dict(os.environ, {}, clear=True),
+            mock.patch.object(
+                codeforces,
+                "api_query",
+                return_value={"status": "OK", "result": [{"handle": "coder", **photos}]},
+            ),
+        ):
+            (result,) = Statistic.get_users_infos(["coder"])
+
+        for field, photo in photos.items():
+            assert result["info"][field] == photo
+
+    def test_removes_default_and_empty_photos(self):
+        resource = Resource(host="codeforces.com", avatar_url="https://codeforces.com/{info[avatar]}")
+        for prefix in ("https://", "//", ""):
+            photos = {
+                "avatar": f"{prefix}userpic.codeforces.org/no-avatar.jpg",
+                "titlePhoto": f"{prefix}userpic.codeforces.org/no-title.jpg",
+            }
+            self.assert_photos_removed(resource, photos)
+        for value in ("", None):
+            self.assert_photos_removed(resource, {"avatar": value, "titlePhoto": value})
+
+    def assert_photos_removed(self, resource, photos):
+        with (
+            self.subTest(photos=photos),
+            mock.patch.dict(os.environ, {}, clear=True),
+            mock.patch.object(
+                codeforces,
+                "api_query",
+                return_value={"status": "OK", "result": [{"handle": "coder", **photos}]},
+            ),
+        ):
+            (result,) = Statistic.get_users_infos(["coder"], resource)
+
+        assert "avatar" not in result["info"]
+        assert "titlePhoto" not in result["info"]
+        assert Account(resource=resource, key="coder", info=result["info"]).avatar_url() is None
+
     def test_retries_after_missing_handle_response_without_result(self):
         responses = [
             {

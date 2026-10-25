@@ -1001,10 +1001,15 @@ class Statistic(BaseModule):
             if data:
                 if data["handle"].lower() != user.lower():
                     raise ValueError(f"Do not match handle name for user = {user} and data = {data}")
-                if data.get("avatar", "").endswith("/no-avatar.jpg"):
-                    data.pop("avatar")
-                if data.get("titlePhoto", "").endswith("/no-title.jpg"):
-                    data.pop("titlePhoto")
+                for field, default_photo in (("avatar", "/no-avatar.jpg"), ("titlePhoto", "/no-title.jpg")):
+                    photo = data.get(field)
+                    if not photo or photo.endswith(default_photo):
+                        data.pop(field, None)
+                    else:
+                        # Keep the userpic host in the path; the resource selects the base URL.
+                        data[field] = re.sub(
+                            r"^(?:https?:)?/*(?:codeforces\.com/)?(?=userpic\.codeforces\.)", "", photo
+                        )
                 data["name"] = " ".join([data[f] for f in ["firstName", "lastName"] if data.get(f)])
             info = {"info": data}
             if data:
