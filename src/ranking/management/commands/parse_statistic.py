@@ -774,7 +774,11 @@ class Command(BaseCommand):
                                 contest.info[field] = field_value
                                 contest.save(update_fields=["info"])
 
-                    update_writers(contest, standings.pop("writers", None))
+                    update_writers(
+                        contest,
+                        standings.pop("writers", None),
+                        case_sensitive=standings.pop("writers_case_sensitive", False),
+                    )
 
                     standings_hidden_fields = list(standings.pop("hidden_fields", []))
                     standings_hidden_fields_mapping = {}

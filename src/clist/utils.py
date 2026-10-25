@@ -366,7 +366,7 @@ def update_problems(contest, problems=None, force=False):
     return True
 
 
-def update_writers(contest, writers=None, force=False) -> bool | None:
+def update_writers(contest, writers=None, force=False, *, case_sensitive=False) -> bool | None:
     if writers is not None and not force:
         if canonize(writers) == canonize(contest.info.get("writers")):
             return None
@@ -384,10 +384,11 @@ def update_writers(contest, writers=None, force=False) -> bool | None:
 
     def get_account(writer):
         account = resource.account_set.filter(key=writer).first()
-        if account:
+        if account or case_sensitive:
             return account
         return resource.account_set.filter(key__iexact=writer).order_by("-n_contests").first()
 
+    renaming_field = "old_key" if case_sensitive else "old_key__iexact"
     modified_writers = []
     for writer in writers:
         if writer in already_writers:
@@ -395,7 +396,7 @@ def update_writers(contest, writers=None, force=False) -> bool | None:
             continue
 
         account = get_account(writer)
-        if account is None and (renaming := resource.accountrenaming_set.filter(old_key__iexact=writer).first()):
+        if account is None and (renaming := resource.accountrenaming_set.filter(**{renaming_field: writer}).first()):
             writer = renaming.new_key
             account = get_account(writer)
         if account is None:

@@ -1,0 +1,19 @@
+{
+    "host": "codearena.uz",
+    "rid": 196,
+    "path": "./module/codearena.uz/index.php",
+    "url": "https://codearena.uz/contests/",
+    "parse_url": "https://codearena.uz/api/v1/contests/",
+    "timezone": "UTC",
+    "api_url": "https://codearena.uz/api/v1/",
+    "info": {
+        "get_events": {
+            "colors": {
+                "darken": "#442916",
+                "lighten": "#EFDDD0"
+            }
+        }
+    },
+    "parse_full_list": true,
+    "recorded_at": "2026-10-25 18:19:40"
+}

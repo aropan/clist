@@ -1,0 +1,887 @@
+[
+  {
+    "fields": {
+      "accounts_fields": {},
+      "activity_score": null,
+      "activity_updated_at": null,
+      "allow_delete_archived_statistics": false,
+      "api_url": "https://codearena.uz/api/v1/",
+      "auto_remove_started": false,
+      "avatar_url": null,
+      "avg_rating": null,
+      "color": "#CC8F65",
+      "contest_update_time": "2026-10-25T18:20:43.308Z",
+      "country_rank_update_time": "2026-10-25T18:20:06.590Z",
+      "created": "2026-10-25T18:19:15.576Z",
+      "default_account_type": 1,
+      "enable": false,
+      "has_account_last_submission": null,
+      "has_account_n_writers": null,
+      "has_account_verification": false,
+      "has_accounts_infos_update": true,
+      "has_country_medal": null,
+      "has_country_place": null,
+      "has_country_rating": false,
+      "has_inherit_medals_to_related": false,
+      "has_multi_account": false,
+      "has_problem_archive": false,
+      "has_problem_rating": false,
+      "has_problem_statistic": false,
+      "has_problem_update": false,
+      "has_rating_history": true,
+      "has_standings_renamed_account": false,
+      "has_statistic_medal": null,
+      "has_statistic_n_first_ac": null,
+      "has_statistic_n_total_solved": null,
+      "has_statistic_place": null,
+      "has_statistic_total_solving": null,
+      "has_submissions_statistics_log": false,
+      "has_upsolving": false,
+      "host": "codearena.uz",
+      "icon_file": "resources/codearena_uz.png",
+      "icon_updated_at": "2026-10-25T18:19:15.976Z",
+      "icon_url": null,
+      "info": {
+        "accounts": {
+          "skip": true
+        },
+        "get_events": {
+          "colors": {
+            "darken": "#442916",
+            "lighten": "#EFDDD0"
+          }
+        }
+      },
+      "medal_win_equals_gold": null,
+      "modified": "2026-10-25T18:30:08.891Z",
+      "n_accounts": 25,
+      "n_accounts_to_update": 23,
+      "n_contests": 15,
+      "n_member_accounts": null,
+      "n_rating_accounts": 2,
+      "n_statistics": 0,
+      "n_team_accounts": null,
+      "n_university_accounts": null,
+      "parse_url": "https://codearena.uz/api/v1/contests/",
+      "path": "./module/codearena.uz/index.php",
+      "problem_archive_update_time": null,
+      "problem_rating_predictor": {},
+      "problem_url": null,
+      "problems_fields": {},
+      "profile_url": "https://codearena.uz/accounts/profile/{account}/",
+      "rank_update_time": "2026-10-25T18:30:08.652Z",
+      "rating_prediction": null,
+      "rating_update_time": "2026-10-25T18:21:06.985Z",
+      "ratings": [
+        {
+          "color": "gray",
+          "hex_rgb": "#888888",
+          "high": 700,
+          "hsl": [
+            0.0,
+            0.0,
+            0.5333333333333333
+          ],
+          "low": 0,
+          "name": "Newbie",
+          "next": 700,
+          "prev": 0
+        },
+        {
+          "color": "green",
+          "hex_rgb": "#008000",
+          "high": 900,
+          "hsl": [
+            0.3333333333333333,
+            1.0,
+            0.25098039215686274
+          ],
+          "low": 700,
+          "name": "Pupil",
+          "next": 900,
+          "prev": 700
+        },
+        {
+          "color": "cyan",
+          "hex_rgb": "#03A89E",
+          "high": 1100,
+          "hsl": [
+            0.4898989898989899,
+            0.9649122807017545,
+            0.3352941176470588
+          ],
+          "low": 900,
+          "name": "Specialist",
+          "next": 1100,
+          "prev": 900
+        },
+        {
+          "color": "blue",
+          "hex_rgb": "#0000FF",
+          "high": 1300,
+          "hsl": [
+            0.6666666666666666,
+            1.0,
+            0.5
+          ],
+          "low": 1100,
+          "name": "Expert",
+          "next": 1300,
+          "prev": 1100
+        },
+        {
+          "color": "violet",
+          "hex_rgb": "#AA00AA",
+          "high": 1500,
+          "hsl": [
+            0.8333333333333334,
+            1.0,
+            0.3333333333333333
+          ],
+          "low": 1300,
+          "name": "Candidate Master",
+          "next": 1500,
+          "prev": 1300
+        },
+        {
+          "color": "orange",
+          "hex_rgb": "#FF8C00",
+          "high": 1700,
+          "hsl": [
+            0.09150326797385622,
+            1.0,
+            0.5
+          ],
+          "low": 1500,
+          "name": "Master",
+          "next": 1700,
+          "prev": 1500
+        },
+        {
+          "color": "red",
+          "hex_rgb": "#FF0000",
+          "high": 1900,
+          "hsl": [
+            0.0,
+            1.0,
+            0.5
+          ],
+          "low": 1700,
+          "name": "Grandmaster",
+          "next": 1900,
+          "prev": 1700
+        },
+        {
+          "color": "legendary",
+          "hex_rgb": "#FF0000",
+          "high": 100500,
+          "hsl": [
+            0.0,
+            1.0,
+            0.5
+          ],
+          "low": 1900,
+          "name": "Legendary Grandmaster",
+          "prev": 1900
+        }
+      ],
+      "regexp": null,
+      "short_host": null,
+      "skip_for_contests_chart": false,
+      "statistics_fields": {},
+      "timezone": "UTC",
+      "uid": "3abf24866537c2a1e44a3c98c6c73b20d525c984250df2e6d95e62a6567569d3@group.calendar.google.com",
+      "url": "https://codearena.uz/contests/"
+    },
+    "model": "clist.resource",
+    "pk": 196
+  },
+  {
+    "fields": {
+      "created": "2026-10-25T18:19:15.988Z",
+      "delay_on_error": "01:00:00",
+      "delay_on_success": "08:00:00",
+      "delay_shortly_after": "00:05:00",
+      "enable": false,
+      "long_contest_divider": 15,
+      "long_contest_idle": "06:00:00",
+      "max_delay_after_end": "30 00:00:00",
+      "min_delay_after_end": "00:10:00",
+      "modified": "2026-10-25T18:19:33.839Z",
+      "path": "ranking/management/modules/codearena",
+      "resource": 196,
+      "shortly_after": "00:30:00"
+    },
+    "model": "ranking.module",
+    "pk": 100
+  },
+  {
+    "fields": {
+      "allow_updating_statistics_for_participants": null,
+      "auto_updated": "2026-10-25T18:19:53Z",
+      "calculate_time": false,
+      "created": "2026-10-25T18:19:53.754Z",
+      "duration_in_secs": 4200,
+      "edit": null,
+      "elimination_tournament_info": {},
+      "end_time": "2026-10-22T09:35:00Z",
+      "finalists_info": {},
+      "has_fixed_rating_prediction_field": null,
+      "has_hidden_results": false,
+      "has_submissions": null,
+      "has_submissions_tests": null,
+      "has_unlimited_statistics": null,
+      "hide_unsolved_standings_problems": null,
+      "host": "codearena.uz",
+      "info": {
+        "fields": [
+          "_no_update_n_contests",
+          "is_rated",
+          "penalty",
+          "solved",
+          "problems",
+          "name",
+          "country",
+          "author",
+          "disqualified",
+          "out_of_competition",
+          "old_rating",
+          "rating_change",
+          "new_rating"
+        ],
+        "fields_types": {
+          "_no_update_n_contests": [
+            "bool"
+          ],
+          "author": [
+            "bool"
+          ],
+          "country": [
+            "str"
+          ],
+          "disqualified": [
+            "bool"
+          ],
+          "is_rated": [
+            "bool"
+          ],
+          "name": [
+            "str"
+          ],
+          "new_rating": [
+            "int"
+          ],
+          "old_rating": [
+            "int"
+          ],
+          "out_of_competition": [
+            "bool"
+          ],
+          "penalty": [
+            "int"
+          ],
+          "problems": [
+            "dict"
+          ],
+          "rating_change": [
+            "int"
+          ],
+          "solved": [
+            "dict"
+          ]
+        },
+        "hidden_fields": [
+          "author",
+          "disqualified",
+          "out_of_competition",
+          "old_rating",
+          "rating_change"
+        ],
+        "parse": {
+          "authors": [
+            "c0de"
+          ],
+          "division": 2,
+          "duration_minutes": 70,
+          "end_time": "2026-10-22T09:35:00Z",
+          "id": 20,
+          "is_rated": true,
+          "key": "20",
+          "kind": "round",
+          "n_participants": 25,
+          "n_problems": 9,
+          "number": 12,
+          "open_division": true,
+          "personal_minutes": null,
+          "rating_applied": true,
+          "rules": "cf",
+          "standings_url": "https://codearena.uz/contests/20/standings/",
+          "start_time": "2026-10-22T08:25:00Z",
+          "status": "past",
+          "title": "CodeArena Round #12 (Div. 2)",
+          "updated": "2026-10-21T16:17:26.712719Z",
+          "url": "https://codearena.uz/contests/20/"
+        },
+        "problems": [
+          {
+            "code": "k6-royxat",
+            "difficulty": "beginner",
+            "first_ac": {
+              "accounts": [
+                "ruxwon"
+              ],
+              "in_seconds": 300,
+              "time": "00:05"
+            },
+            "full_score": 250,
+            "n_accepted": 23,
+            "n_teams": 23,
+            "n_total": 24,
+            "name": "Sign-up",
+            "rating": 400,
+            "short": "A",
+            "url": "https://codearena.uz/problems/k6-royxat/"
+          },
+          {
+            "code": "k6-insho",
+            "difficulty": "beginner",
+            "first_ac": {
+              "accounts": [
+                "durbek_01"
+              ],
+              "in_seconds": 480,
+              "time": "00:08"
+            },
+            "full_score": 300,
+            "n_accepted": 24,
+            "n_teams": 24,
+            "n_total": 24,
+            "name": "Essay",
+            "rating": 400,
+            "short": "B",
+            "url": "https://codearena.uz/problems/k6-insho/"
+          },
+          {
+            "code": "k6-karta",
+            "difficulty": "beginner",
+            "first_ac": {
+              "accounts": [
+                "ruxwon"
+              ],
+              "in_seconds": 720,
+              "time": "00:12"
+            },
+            "full_score": 400,
+            "n_accepted": 22,
+            "n_teams": 22,
+            "n_total": 24,
+            "name": "Bank card",
+            "rating": 400,
+            "short": "C",
+            "url": "https://codearena.uz/problems/k6-karta/"
+          },
+          {
+            "code": "k6-parol",
+            "difficulty": "easy",
+            "first_ac": {
+              "accounts": [
+                "rajabovamadina"
+              ],
+              "in_seconds": 2400,
+              "time": "00:40"
+            },
+            "full_score": 450,
+            "n_accepted": 12,
+            "n_failed": 4,
+            "n_submissions": 10,
+            "n_teams": 16,
+            "n_total": 24,
+            "name": "Password strength",
+            "rating": 800,
+            "short": "D",
+            "url": "https://codearena.uz/problems/k6-parol/"
+          },
+          {
+            "code": "k6-telefon",
+            "difficulty": "easy",
+            "first_ac": {
+              "accounts": [
+                "zubayda"
+              ],
+              "in_seconds": 660,
+              "time": "00:11"
+            },
+            "full_score": 600,
+            "n_accepted": 22,
+            "n_teams": 22,
+            "n_total": 24,
+            "name": "Phone number",
+            "rating": 500,
+            "short": "E",
+            "url": "https://codearena.uz/problems/k6-telefon/"
+          },
+          {
+            "code": "k6-fayl",
+            "difficulty": "easy",
+            "first_ac": {
+              "accounts": [
+                "mehrinisolazizovna"
+              ],
+              "in_seconds": 2040,
+              "time": "00:34"
+            },
+            "full_score": 750,
+            "n_accepted": 14,
+            "n_teams": 14,
+            "n_total": 24,
+            "name": "File upload",
+            "rating": 600,
+            "short": "F",
+            "url": "https://codearena.uz/problems/k6-fayl/"
+          },
+          {
+            "code": "k6-smena",
+            "difficulty": "easy",
+            "first_ac": {
+              "accounts": [
+                "zubayda"
+              ],
+              "in_seconds": 2040,
+              "time": "00:34"
+            },
+            "full_score": 1000,
+            "n_accepted": 8,
+            "n_teams": 8,
+            "n_total": 24,
+            "name": "Work shift",
+            "rating": 700,
+            "short": "G",
+            "url": "https://codearena.uz/problems/k6-smena/"
+          },
+          {
+            "code": "k6-email",
+            "difficulty": "easy",
+            "first_ac": {
+              "accounts": [
+                "rajabovamadina"
+              ],
+              "in_seconds": 3240,
+              "time": "00:54"
+            },
+            "full_score": 750,
+            "n_accepted": 6,
+            "n_failed": 1,
+            "n_submissions": 1,
+            "n_teams": 7,
+            "n_total": 24,
+            "name": "Email check",
+            "rating": 800,
+            "short": "H",
+            "url": "https://codearena.uz/problems/k6-email/"
+          },
+          {
+            "code": "k6-ism",
+            "difficulty": "easy",
+            "first_ac": {
+              "accounts": [
+                "shoxruxradjabov"
+              ],
+              "in_seconds": 3120,
+              "time": "00:52"
+            },
+            "full_score": 400,
+            "n_accepted": 17,
+            "n_teams": 17,
+            "n_total": 24,
+            "name": "Name abbreviation",
+            "rating": 500,
+            "short": "I",
+            "url": "https://codearena.uz/problems/k6-ism/"
+          }
+        ],
+        "writers": [
+          "c0de"
+        ]
+      },
+      "invisible": false,
+      "is_auto_added": true,
+      "is_promoted": null,
+      "is_rated": true,
+      "key": "20",
+      "kind": "round",
+      "link_statistic_timing": null,
+      "merging_contests": [],
+      "modified": "2026-10-25T18:19:53.754Z",
+      "n_problems": 9,
+      "n_statistics": 24,
+      "notification_timing": null,
+      "parsed_percentage": null,
+      "parsed_time": "2026-10-25T18:23:30.822Z",
+      "problem_rating_hash": null,
+      "problem_rating_update_required": false,
+      "rating_prediction_fields": null,
+      "rating_prediction_hash": null,
+      "rating_prediction_timing": null,
+      "raw_info": {},
+      "registration_url": null,
+      "related": null,
+      "resource": 196,
+      "series": null,
+      "set_matched_coders_to_members": null,
+      "slug": "codearena-round-12-div-2",
+      "standings_kind": "cf",
+      "standings_url": "https://codearena.uz/contests/20/standings/",
+      "start_time": "2026-10-22T08:25:00Z",
+      "statistic_timing": "2026-10-26T02:23:30.822Z",
+      "statistics_update_required": false,
+      "submissions_info": {},
+      "title": "CodeArena Round #12 (Div. 2)",
+      "title_path": "codearena.round.12.div.2",
+      "trial_standings_url": null,
+      "uid": "ncnqi1edska5ql81sqrphhf560",
+      "updated": "2026-10-25T18:23:32.298Z",
+      "upload_solved_problems_solutions": null,
+      "upsolving_key": null,
+      "upsolving_url": null,
+      "url": "https://codearena.uz/contests/20/",
+      "variables": {},
+      "wait_for_successful_update_timing": null,
+      "with_advance": false,
+      "with_medals": false
+    },
+    "model": "clist.contest",
+    "pk": 71630938
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "UZ",
+      "created": "2026-10-25T18:20:27.241Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "city": "Bukhara",
+        "club": null,
+        "country": "UZ",
+        "country_name": "Uzbekistan",
+        "duel_rating": 1310,
+        "joined": "2026-09-21T07:00:20.621299Z",
+        "max_rating": 1512,
+        "n_contests": 9,
+        "n_rated_contests": 8,
+        "n_solved": 117,
+        "name": "Ruxshona Teshayeva",
+        "on_board": true,
+        "practice_points": 3565,
+        "rank": 1,
+        "rating": 1512,
+        "ratings_url": "https://codearena.uz/api/v1/users/ruxwon/ratings/",
+        "school": "Asia International University",
+        "tier": "Master",
+        "tier_color": "#FF8C00",
+        "url": "https://codearena.uz/accounts/profile/ruxwon/",
+        "username": "ruxwon"
+      },
+      "key": "ruxwon",
+      "last_activity": "2026-10-22T09:27:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-10-25T18:21:04.791Z",
+      "n_bronze": null,
+      "n_contests": 2,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 0,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 0,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Ruxshona Teshayeva",
+      "need_verification": false,
+      "rating": 1512,
+      "rating50": 30,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 196,
+      "resource_rank": 1,
+      "solving": 0.0,
+      "submissions_info": {},
+      "total_solving": 0.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-10-25T23:59:59.999Z",
+      "upsolving": null,
+      "url": "/account/ruxwon/resource/codearena.uz/"
+    },
+    "model": "ranking.account",
+    "pk": 11878934
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": "UZ",
+      "created": "2026-10-25T18:20:30.253Z",
+      "deleted": false,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "city": "Gijduvan",
+        "club": "admins",
+        "country": "UZ",
+        "country_name": "Uzbekistan",
+        "duel_rating": 1504,
+        "joined": "2026-10-08T06:29:21.821429Z",
+        "max_rating": null,
+        "n_contests": 7,
+        "n_rated_contests": 0,
+        "n_solved": 95,
+        "name": "Komron Obloev",
+        "on_board": false,
+        "practice_points": 4385,
+        "rank": null,
+        "rating": 0,
+        "ratings_url": "https://codearena.uz/api/v1/users/c0de/ratings/",
+        "school": "Tashkent University of Information Technologies (TUIT)",
+        "tier": "Newbie",
+        "tier_color": "#888888",
+        "url": "https://codearena.uz/accounts/profile/c0de/",
+        "username": "c0de"
+      },
+      "key": "c0de",
+      "last_activity": null,
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-10-25T18:23:32.064Z",
+      "n_bronze": null,
+      "n_contests": 0,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 0,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 0,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 2,
+      "name": "Komron Obloev",
+      "need_verification": false,
+      "rating": 0,
+      "rating50": 0,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 196,
+      "resource_rank": 2,
+      "solving": 0.0,
+      "submissions_info": {},
+      "total_solving": 0.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2027-10-25T23:59:59.999Z",
+      "upsolving": null,
+      "url": "/account/c0de/resource/codearena.uz/"
+    },
+    "model": "ranking.account",
+    "pk": 11878958
+  },
+  {
+    "fields": {
+      "account": 11878934,
+      "addition": {
+        "author": false,
+        "country": "UZ",
+        "disqualified": false,
+        "name": "Ruxshona Teshayeva",
+        "new_rating": 1512,
+        "old_rating": 1421,
+        "out_of_competition": false,
+        "penalty": 0,
+        "problems": {
+          "A": {
+            "first_ac": true,
+            "penalty_score": 0,
+            "result": 242,
+            "result_verdict": "accepted",
+            "solved_at": "2026-10-22T08:30:27.031834Z",
+            "time": "00:05",
+            "time_in_seconds": 300,
+            "wrong_tries": 0
+          },
+          "B": {
+            "first_ac": false,
+            "penalty_score": 0,
+            "result": 282,
+            "result_verdict": "accepted",
+            "solved_at": "2026-10-22T08:34:24.480884Z",
+            "time": "00:09",
+            "time_in_seconds": 540,
+            "wrong_tries": 0
+          },
+          "C": {
+            "first_ac": true,
+            "penalty_score": 0,
+            "result": 368,
+            "result_verdict": "accepted",
+            "solved_at": "2026-10-22T08:37:49.183167Z",
+            "time": "00:12",
+            "time_in_seconds": 720,
+            "wrong_tries": 0
+          },
+          "D": {
+            "first_ac": false,
+            "penalty_score": 0,
+            "result": 309,
+            "result_verdict": "accepted",
+            "solved_at": "2026-10-22T09:11:22.763205Z",
+            "time": "00:46",
+            "time_in_seconds": 2760,
+            "wrong_tries": 0
+          },
+          "E": {
+            "first_ac": false,
+            "penalty_score": 0,
+            "result": 518,
+            "result_verdict": "accepted",
+            "solved_at": "2026-10-22T08:45:44.818888Z",
+            "time": "00:20",
+            "time_in_seconds": 1200,
+            "wrong_tries": 0
+          },
+          "F": {
+            "first_ac": false,
+            "penalty_score": 1,
+            "result": 428,
+            "result_verdict": "accepted",
+            "solved_at": "2026-10-22T09:18:00.714063Z",
+            "time": "00:53",
+            "time_in_seconds": 3180,
+            "wrong_tries": 1
+          },
+          "G": {
+            "first_ac": false,
+            "penalty_score": 0,
+            "result": 733,
+            "result_verdict": "accepted",
+            "solved_at": "2026-10-22T09:04:29.217443Z",
+            "time": "00:39",
+            "time_in_seconds": 2340,
+            "wrong_tries": 0
+          },
+          "H": {
+            "first_ac": false,
+            "penalty_score": 0,
+            "result": 452,
+            "result_verdict": "accepted",
+            "solved_at": "2026-10-22T09:23:42.514376Z",
+            "time": "00:58",
+            "time_in_seconds": 3480,
+            "wrong_tries": 0
+          },
+          "I": {
+            "first_ac": false,
+            "penalty_score": 0,
+            "result": 230,
+            "result_verdict": "accepted",
+            "solved_at": "2026-10-22T09:27:53.912958Z",
+            "time": "01:02",
+            "time_in_seconds": 3720,
+            "wrong_tries": 0
+          }
+        },
+        "rating_change": 91,
+        "solved": {
+          "solving": 9
+        }
+      },
+      "advanced": false,
+      "contest": 71630938,
+      "created": "2026-10-25T18:20:27.290Z",
+      "global_rating_change": null,
+      "last_activity": "2026-10-22T09:27:00Z",
+      "medal": null,
+      "modified": "2026-10-25T18:23:32.083Z",
+      "n_first_ac": 2,
+      "n_solved": 9,
+      "n_total_solved": 9,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 0.0,
+      "place": "1",
+      "place_as_int": 1,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 196,
+      "skip_in_stats": false,
+      "solving": 3562.0,
+      "total_solving": 3562.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 93256568
+  },
+  {
+    "fields": {
+      "account": 11878958,
+      "addition": {
+        "_no_update_n_contests": true,
+        "author": true,
+        "country": "UZ",
+        "disqualified": false,
+        "is_rated": false,
+        "name": "Komron Obloev",
+        "out_of_competition": true,
+        "penalty": 0,
+        "problems": {},
+        "solved": {
+          "solving": 0
+        }
+      },
+      "advanced": false,
+      "contest": 71630938,
+      "created": "2026-10-25T18:20:30.267Z",
+      "global_rating_change": null,
+      "last_activity": "2026-10-22T08:25:00Z",
+      "medal": null,
+      "modified": "2026-10-25T18:23:32.272Z",
+      "n_first_ac": 0,
+      "n_solved": 0,
+      "n_total_solved": 0,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": 0.0,
+      "place": null,
+      "place_as_int": null,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 196,
+      "skip_in_stats": true,
+      "solving": 0.0,
+      "total_solving": 0.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 93256592
+  }
+]
