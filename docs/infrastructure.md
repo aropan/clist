@@ -17,7 +17,7 @@ How CLIST is containerized and operated. **High-risk area** — change only with
 | `nginx` | Reverse proxy (`nginx:stable-alpine` + crond) |
 | `certbot` | TLS certificate renewal |
 | `netdata` | System metrics |
-| `legacy` | Legacy PHP app (`legacy/Dockerfile`, `php:8-fpm`) served alongside Django |
+| `legacy` | Legacy PHP app (`legacy/Dockerfile`, `php:8.5.12-fpm-trixie`) served alongside Django |
 | `loki`, `alloy`, `grafana` | Log collection, aggregation, and dashboards |
 | `bugsink` | Self-hosted error tracking (sentry-sdk compatible), DB in `db`; env in `.env.bugsink` |
 | `healthchecks` | Self-hosted cron monitoring (pinged by both cron runners), DB in `db`; env in `.env.healthchecks` |
@@ -227,5 +227,6 @@ Production runs ASGI (Daphne), uWSGI, cron, redis, logrotate, and **four RQ queu
 
 ## Legacy image ([`legacy/Dockerfile`](../legacy/Dockerfile))
 
-`php:8-fpm` running `cron && php-fpm` — serves the legacy PHP app alongside the Django
-app.
+`php:8.5.12-fpm-trixie` running `cron && php-fpm` — serves the legacy PHP app alongside
+the Django app. The base image is pinned by digest; PHP updates must change both the
+version tag and its digest, then rebuild the image and recreate the container.
