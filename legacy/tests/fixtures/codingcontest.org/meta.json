@@ -1,0 +1,19 @@
+{
+    "host": "codingcontest.org",
+    "rid": 100,
+    "path": "./module/codingcontest.org/index.php",
+    "url": "https://codingcontest.org/",
+    "parse_url": "https://register.codingcontest.org/listings?type=&country=&page=0",
+    "timezone": null,
+    "api_url": null,
+    "info": {
+        "get_events": {
+            "colors": {
+                "darken": "#443C16",
+                "lighten": "#EFEAD0"
+            }
+        }
+    },
+    "parse_full_list": false,
+    "recorded_at": "2026-10-24 14:29:33"
+}

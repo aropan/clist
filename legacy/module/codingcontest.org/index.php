@@ -1,57 +1,74 @@
 <?php
 
-global $contests, $HOST, $TIMEZONE, $RID;
+global $contests, $HOST_URL, $HOST, $RID;
 
 require_once dirname(__FILE__) . '/../../config.php';
 
-$page = curlexec($URL);
+$api_url = url_merge($HOST_URL, '/api/contests');
 
-if (!preg_match('#<a[^>]*href="([^"]*)"[^>]*>(?:\s*<[^>]*>)*the web#i', $page, $match)) {
-    trigger_error('Failed to find contest link', E_USER_WARNING);
-    return;
-}
+for ($page = 0; ; ++$page) {
+    $page_url = "$api_url?page=$page&size=100";
+    $response = curlexec($page_url, null, ['json_output' => true]);
+    if (
+        !is_array($response)
+        || !isset($response['content'], $response['page'], $response['totalPages'])
+        || !is_array($response['content'])
+        || (int) $response['page'] !== $page
+        || (int) $response['totalPages'] < 0
+    ) {
+        trigger_error("Unexpected contests response on $page_url", E_USER_WARNING);
+        break;
+    }
 
-$contest_url = url_merge($URL, $match[1]);
+    foreach ($response['content'] as $contest) {
+        if (
+            !isset($contest['id'], $contest['name'], $contest['contestType'], $contest['startTime'], $contest['durationMinutes'])
+            || strtotime($contest['startTime']) === false
+            || !is_numeric($contest['durationMinutes'])
+            || $contest['durationMinutes'] <= 0
+        ) {
+            trigger_error("Incomplete contest on $page_url", E_USER_WARNING);
+            continue;
+        }
 
-$page = curlexec($contest_url);
-if (!preg_match("#<h[^>]*>\s*the web\s*</h[^>]*>\s*<h[^>]*>[^<]*(?P<start_date>[0-9]{2}\.[0-9]{2}\.[0-9]{4})[^<]*</h[^>]*>#i", $page, $match)) {
-    trigger_error('Failed to find contest start date', E_USER_WARNING);
-    return;
-}
-$start_date = $match['start_date'];
+        $title_parts = [];
+        foreach (['editionName', 'name', 'gameName'] as $field) {
+            $words = preg_split('/\s+/u', trim($contest[$field] ?? ''), -1, PREG_SPLIT_NO_EMPTY);
+            $existing_title = ' ' . mb_strtolower(implode(' ', $title_parts)) . ' ';
+            // Remove whole-word prefixes and suffixes already present in earlier parts.
+            foreach (['prefix', 'suffix'] as $edge) {
+                for ($length = count($words); $length > 0; --$length) {
+                    $overlap = array_slice($words, $edge === 'prefix' ? 0 : -$length, $length);
+                    if (str_contains($existing_title, ' ' . mb_strtolower(implode(' ', $overlap)) . ' ')) {
+                        $words = $edge === 'prefix'
+                            ? array_slice($words, $length)
+                            : array_slice($words, 0, count($words) - $length);
+                        break;
+                    }
+                }
+            }
+            if ($words) {
+                $title_parts[] = implode(' ', $words);
+            }
+        }
 
-if (!preg_match('#<title[^>]*>(?P<title>[^<]*)</title>#', $page, $match)) {
-    trigger_error('Failed to find contest title', E_USER_WARNING);
-    return;
-}
-$title = $match['title'];
+        $kind = strtolower($contest['contestType']);
+        $contests[] = [
+            'start_time' => $contest['startTime'],
+            'duration' => $contest['durationMinutes'],
+            'title' => implode('. ', $title_parts),
+            'url' => $HOST_URL,
+            'key' => (string) $contest['id'],
+            'kind' => $kind,
+            'info' => ['parse' => $contest],
+            'skip_check_time' => true,
+            'host' => $HOST,
+            'timezone' => 'UTC',
+            'rid' => $RID,
+        ];
+    }
 
-if (!preg_match('#/(?P<key>[0-9]+(?:-[0-9]+)*)/?$#', $contest_url, $match)) {
-    trigger_error('Failed to find contest key', E_USER_WARNING);
-    return;
-}
-$contest_key = $match['key'];
-
-$regex = "#<h[^>]*>\s*(?P<tag>\#[a-z/]*)\s*</[^>]*>(?:\s*<[^>]*>)*\s*(?P<start_time>[0-9]{1,2}:[0-9]{2})[^<]*</[^>]*>(?P<start_tz>[^<]*)<#";
-if (!preg_match_all($regex, $page, $matches, PREG_SET_ORDER)) {
-    trigger_error('Failed to find contest start time', E_USER_WARNING);
-    return;
-}
-
-foreach ($matches as &$match) {
-    $start_time = $match['start_time'];
-    $start_tz = trim($match['start_tz']);
-    $start_time = $start_date . ' ' . $start_time . ' ' . $start_tz;
-    $tag = $match['tag'];
-
-    $contests[] = [
-        'start_time' => $start_time,
-        'duration' => $tag == '#school' ? '02:00' : '04:00',
-        'title' => $title . ' ' . $tag,
-        'url' => $contest_url,
-        'key' => $contest_key . $tag,
-        'host' => $HOST,
-        'timezone' => $TIMEZONE,
-        'rid' => $RID,
-    ];
+    if ($page + 1 >= (int) $response['totalPages']) {
+        break;
+    }
 }
