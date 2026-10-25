@@ -65,7 +65,7 @@ dependencies = [
     "unicodecsv==0.14.1",
     "docutils==0.23",
     "image==1.5.33",
-    "Pillow==12.3.0",
+    "Pillow==13.0.0",
     "olefile==0.47",
     "pytesseract==0.3.13",
     "python-dateutil==2.9.0.post0",
