@@ -129,6 +129,7 @@ fixture lacks `httpcache.json.gz` or `expected_standings.json[.gz]`, a `.gz` fil
 is still a Git LFS pointer (`... Git LFS pointer instead of archive data`), or a
 `.gz` file is not gzip data. An incomplete or unfetched fixture therefore fails
 instead of being silently skipped by discovery.
+It also rejects a missing `meta.json` or a `recorded_at` value without a valid timezone.
 
 ```bash
 docker compose exec dev ./manage.py test --keepdb ranking.tests.test_parsers
@@ -142,6 +143,7 @@ one directory (`nerc.itmo.ru/school` becomes `nerc.itmo.ru__school`). Each fixtu
 - `db.json` — the `Resource`, `Module`, `Contest`, any directly required
   `ContestSeries`, and the selected `Account`/`Statistics` rows used to limit
   parser replay;
+- `meta.json` — the timezone-aware `recorded_at` used as the fixed replay time;
 - `httpcache.json.gz` — one deterministic archive containing requester response
   bodies and response metadata;
 - `expected_standings.json` or `expected_standings.json.gz` — normalized
@@ -150,6 +152,15 @@ one directory (`nerc.itmo.ru/school` becomes `nerc.itmo.ru__school`). Each fixtu
 A cache miss raises `AssertionError: unexpected network access`, so a passing test is
 strictly offline. Offline replay also skips requester proxy setup, so a parser that
 enables proxies never loads or fetches a proxy list.
+
+Offline replay freezes Python's wall clock at the time saved in `meta.json`, so
+date-dependent parser behavior stays consistent across test runs. The clock is
+restored after each replay, including when parsing fails. Database-server clocks
+and external processes are not frozen.
+
+New recordings save their start time and use it for both immediate offline checks.
+Live requests use real time so authentication timestamps and network operations keep
+working. `--update` preserves the saved time when replaying the existing cache.
 
 The fixture intentionally does not replay every participant. `dump_parser_fixture`
 selects saved `Statistics` rows whose `addition` field introduces a new nested key

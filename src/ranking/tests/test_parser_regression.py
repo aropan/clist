@@ -5,13 +5,16 @@ import os
 import tempfile
 import time
 import urllib.error
+from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
-from datetime import timedelta
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
+from time import time as imported_time
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 import pytest
+import time_machine
 from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
 from lazy_load import lz
@@ -21,9 +24,12 @@ from ranking.management.modules import common
 from ranking.management.modules.excepts import FailOnGetResponse
 from ranking.models import Module
 from ranking.tests.parser_regression import (
+    PARSER_FIXTURES_ROOT,
+    ParserRegressionTestCase,
     assert_standings_equal,
     discover_parser_fixtures,
     fixture_file_path,
+    fixture_recorded_at,
     get_standings,
     materialized_http_cache,
     normalize_standings,
@@ -52,6 +58,33 @@ class Response(io.BytesIO):
 
 
 class ParserRegressionHelpersTest(SimpleTestCase):
+    def test_fixture_recorded_at_requires_a_timezone_and_normalizes_to_utc(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            path = Path(temporary_directory) / "meta.json"
+            write_json(path, {"recorded_at": "2026-10-24T13:51:28+02:00"})
+
+            assert fixture_recorded_at(temporary_directory) == datetime(2026, 10, 24, 11, 51, 28, tzinfo=UTC)
+
+            for metadata in (
+                {},
+                [],
+                {"recorded_at": None},
+                {"recorded_at": "invalid"},
+                {"recorded_at": "2026-10-24T11:51:28"},
+            ):
+                with self.subTest(metadata=metadata):
+                    write_json(path, metadata)
+                    with pytest.raises(ValueError, match="timezone-aware recorded_at"):
+                        fixture_recorded_at(temporary_directory)
+
+            path.unlink()
+            with pytest.raises(ValueError, match="timezone-aware recorded_at"):
+                fixture_recorded_at(temporary_directory)
+
+    def test_offline_replay_requires_an_explicit_time(self):
+        with pytest.raises(ValueError, match="offline parser replay requires recorded_at"):
+            get_standings(None, None, allow_network=False)
+
     def test_standings_mismatch_has_bounded_output(self):
         expected = {
             "result": {f"user_{index:04}": {"payload": "x" * 1000} for index in range(20)},
@@ -316,6 +349,7 @@ class ParserRegressionHelpersTest(SimpleTestCase):
         (cache_path / "page.html").write_text("cached response")
         pack_http_cache(cache_path, fixture_path / "httpcache.json.gz")
         (fixture_path / "db.json").write_text("[]")
+        write_json(fixture_path / "meta.json", {"recorded_at": "2026-10-24T11:51:28+00:00"})
         write_json(fixture_path / "expected_standings.json.gz", {})
         return fixture_path
 
@@ -343,11 +377,17 @@ class ParserRegressionHelpersTest(SimpleTestCase):
             root = Path(temporary_directory)
             self.write_inventory_fixture(root, "example.com/no-cache")
             self.write_inventory_fixture(root, "example.com/no-snapshot")
+            self.write_inventory_fixture(root, "example.com/no-clock")
+            self.write_inventory_fixture(root, "example.com/invalid-clock")
             (root / "example.com/no-cache/httpcache.json.gz").unlink()
             (root / "example.com/no-snapshot/expected_standings.json.gz").unlink()
+            (root / "example.com/no-clock/meta.json").unlink()
+            (root / "example.com/invalid-clock/meta.json").write_text('{"recorded_at": "2026-10-24"}')
 
             assert parser_fixture_inventory_problems(root) == [
+                "example.com/invalid-clock: missing or invalid timezone-aware recorded_at in meta.json",
                 "example.com/no-cache: missing httpcache.json.gz",
+                "example.com/no-clock: missing or invalid timezone-aware recorded_at in meta.json",
                 "example.com/no-snapshot: missing expected_standings.json or expected_standings.json.gz",
             ]
 
@@ -608,9 +648,98 @@ class ParserRegressionIsolationTest(TestCase):
             tempfile.TemporaryDirectory() as temporary_directory,
             patch.object(common, "Statistic", MutatingStatistic, create=True),
         ):
-            first = get_standings(self.contest, temporary_directory, allow_network=False)
-            second = get_standings(self.contest, temporary_directory, allow_network=False)
+            first = get_standings(
+                self.contest, temporary_directory, allow_network=False, recorded_at=self.contest.parsed_time
+            )
+            second = get_standings(
+                self.contest, temporary_directory, allow_network=False, recorded_at=self.contest.parsed_time
+            )
 
         assert first == second
         assert self.contest.info == original_info
         assert self.contest.submissions_info == original_submissions_info
+
+    def test_offline_replay_freezes_constructor_helpers_and_worker_threads(self):
+        recorded_at = datetime(2026, 10, 24, 11, 51, 28, tzinfo=UTC)
+
+        def read_clocks():
+            return {
+                "django": timezone.now(),
+                "helper": common.utc_now(),
+                "datetime": datetime.now(UTC),
+                "naive_datetime": datetime.now(),
+                "date": date.today(),
+                "timestamp": imported_time(),
+            }
+
+        class ClockStatistic:
+            def __init__(self, contest):
+                self.constructor = read_clocks()
+
+            def get_standings(self, **kwargs):
+                with ThreadPoolExecutor(max_workers=1) as executor:
+                    worker = executor.submit(read_clocks).result()
+                return {"constructor": self.constructor, "parser": read_clocks(), "worker": worker}
+
+        expected = {
+            "django": recorded_at,
+            "helper": recorded_at,
+            "datetime": recorded_at,
+            "naive_datetime": recorded_at.replace(tzinfo=None),
+            "date": recorded_at.date(),
+            "timestamp": recorded_at.timestamp(),
+        }
+        with (
+            tempfile.TemporaryDirectory() as cache_path,
+            patch.object(common, "Statistic", ClockStatistic, create=True),
+        ):
+            for current_time in (datetime(2020, 1, 1, tzinfo=UTC), datetime(2040, 1, 1, tzinfo=UTC)):
+                with self.subTest(current_time=current_time), time_machine.travel(current_time, tick=False):
+                    actual = get_standings(self.contest, cache_path, allow_network=False, recorded_at=recorded_at)
+                    assert actual == {"constructor": expected, "parser": expected, "worker": expected}
+                    assert timezone.now() == current_time
+
+    def test_live_recording_uses_real_time(self):
+        class ClockStatistic:
+            def __init__(self, contest):
+                self.now = timezone.now()
+
+            def get_standings(self, **kwargs):
+                return self.now, timezone.now()
+
+        current_time = datetime(2040, 1, 1, tzinfo=UTC)
+        with (
+            tempfile.TemporaryDirectory() as cache_path,
+            patch.object(common, "Statistic", ClockStatistic, create=True),
+            time_machine.travel(current_time, tick=False),
+        ):
+            actual = get_standings(
+                self.contest, cache_path, allow_network=True, recorded_at=datetime(2020, 1, 1, tzinfo=UTC)
+            )
+            assert actual == (current_time, current_time)
+
+    def test_offline_replay_restores_time_after_parser_error(self):
+        recorded_at = datetime(2026, 10, 24, 11, 51, 28, tzinfo=UTC)
+        current_time = datetime(2040, 1, 1, tzinfo=UTC)
+
+        class FailingStatistic:
+            def __init__(self, contest):
+                assert timezone.now() == recorded_at
+                raise RuntimeError("parser construction failed")
+
+        with (
+            tempfile.TemporaryDirectory() as cache_path,
+            patch.object(common, "Statistic", FailingStatistic, create=True),
+            time_machine.travel(current_time, tick=False),
+        ):
+            with pytest.raises(RuntimeError, match="parser construction failed"):
+                get_standings(self.contest, cache_path, allow_network=False, recorded_at=recorded_at)
+            assert timezone.now() == current_time
+
+
+class ParserFixtureClockTest(ParserRegressionTestCase):
+    def test_codeforces_replay_ignores_current_date(self):
+        fixture_path = PARSER_FIXTURES_ROOT / "codeforces.com" / "68492696"
+        for current_time in ("2026-08-15T12:00:00+00:00", "2040-01-01T12:00:00+00:00"):
+            with self.subTest(current_time=current_time), time_machine.travel(current_time, tick=False):
+                self.run_fixture(fixture_path)

@@ -122,6 +122,7 @@ dev = [
     "ipdb==0.13.13",
     "pytest==9.1.1",
     "pytest-django==4.14.0",
+    "time-machine==3.5.1",
 ]
 
 [tool.uv]

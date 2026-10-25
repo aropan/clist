@@ -20,11 +20,13 @@ from django_print_sql import print_sql_decorator
 from clist.models import Contest, Resource
 from ranking.models import Statistics
 from ranking.tests.parser_regression import (
+    FIXTURE_METADATA_FILENAME,
     HTTP_CACHE_FILENAME,
     PARSER_FIXTURES_ROOT,
     discover_parser_fixtures,
     fixture_file_path,
     fixture_path_for_contest,
+    fixture_recorded_at,
     get_standings,
     materialized_http_cache,
     normalize_standings,
@@ -1137,6 +1139,8 @@ class Command(BaseCommand):
             selected_statistics = self.select_statistics_for_fixture(contest)
 
             self.verbose("run parser with network enabled", level=2)
+            recorded_at = timezone.now()
+            write_json(temporary_path / FIXTURE_METADATA_FILENAME, {"recorded_at": recorded_at.isoformat()})
             standings = get_standings(
                 contest,
                 cache_path,
@@ -1173,6 +1177,7 @@ class Command(BaseCommand):
                 allow_network=False,
                 users=selected_statistics.users,
                 statistics=sanitized_statistics,
+                recorded_at=recorded_at,
             )
             self.verbose(f"offline standings: {self.describe_standings(replayed)}", level=3)
             self.verbose("compare live and offline normalized standings", level=2)
@@ -1208,6 +1213,7 @@ class Command(BaseCommand):
                     allow_network=False,
                     users=selected_statistics.users,
                     statistics=sanitized_statistics,
+                    recorded_at=recorded_at,
                 )
             self.verbose(f"bundled offline standings: {self.describe_standings(replayed)}", level=3)
             self.verbose("compare live and bundled offline normalized standings", level=2)
@@ -1251,6 +1257,10 @@ class Command(BaseCommand):
         self.verbose(f"fixture path: {self.display_path(fixture_path)}", level=2)
 
         if args.update:
+            try:
+                recorded_at = fixture_recorded_at(fixture_path)
+            except ValueError as error:
+                raise CommandError(str(error)) from error
             for required in ("db.json", "expected_standings.json"):
                 if not fixture_file_path(fixture_path, required).exists():
                     raise CommandError(f"fixture is incomplete, missing {required}: {fixture_path}")
@@ -1270,6 +1280,7 @@ class Command(BaseCommand):
                     allow_network=False,
                     users=selected_statistics.users,
                     statistics=sanitized_statistics,
+                    recorded_at=recorded_at,
                 )
                 pack_http_cache(cache_path, cache_archive_path)
             self.verbose(f"offline standings: {self.describe_standings(standings)}", level=3)

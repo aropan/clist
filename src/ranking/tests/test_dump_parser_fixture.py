@@ -1,12 +1,14 @@
 import gzip
 import json
 import tempfile
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 from io import StringIO
 from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
+import time_machine
+from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
@@ -24,10 +26,12 @@ from ranking.tests.parser_regression import (
     PARSER_FIXTURES_ROOT,
     discover_parser_fixtures,
     fixture_path_for_contest,
+    fixture_recorded_at,
     fixture_resource_component,
     materialized_http_cache,
     pack_http_cache,
     parser_fixture_path,
+    write_json,
 )
 from utils.attrdict import AttrDict
 from utils.filesystem import PathOwner
@@ -658,7 +662,7 @@ class ParserFixtureRecordingTest(SimpleTestCase):
         )
         standings = {"result": {"alice": {"solving": 1}}, "problems": [{"short": "A"}]}
 
-        def get_standings(contest, cache_path, allow_network, users=None, statistics=None):
+        def get_standings(contest, cache_path, allow_network, users=None, statistics=None, *, recorded_at=None):
             assert users == ["alice"]
             assert statistics == {"alice": {"rating": {"new": 1500}}}
             if allow_network:
@@ -691,12 +695,17 @@ class ParserFixtureRecordingTest(SimpleTestCase):
             )
         )
         standings = {"result": {"alice": {"solving": 1}}, "problems": [{"short": "A"}]}
+        recorded_at = datetime(2026, 10, 24, 11, 51, 28, tzinfo=UTC)
+        replay_times = []
 
-        def get_standings(contest, cache_path, allow_network, users=None, statistics=None):
+        def get_standings(contest, cache_path, allow_network, users=None, statistics=None, *, recorded_at=None):
             assert users == ["alice"]
             assert statistics == {"alice": {"rating": {"new": 1500}}}
             if allow_network:
                 (Path(cache_path) / "page.html").write_text('{"ok": true}')
+                clock.shift(timedelta(days=200))
+            else:
+                replay_times.append(recorded_at)
             return standings
 
         with tempfile.TemporaryDirectory() as temporary_directory:
@@ -704,9 +713,12 @@ class ParserFixtureRecordingTest(SimpleTestCase):
             with (
                 patch("ranking.tests.parser_fixture_command.get_standings", side_effect=get_standings),
                 patch.object(command, "make_fixture_owned_by_workspace_user"),
+                time_machine.travel(recorded_at, tick=False) as clock,
             ):
                 command.record_fixture(object(), fixture_path)
 
+            assert fixture_recorded_at(fixture_path) == recorded_at
+            assert replay_times == [recorded_at, recorded_at]
             assert not (fixture_path / "expected_standings.json").exists()
             assert (fixture_path / "expected_standings.json.gz").is_file()
             assert not (fixture_path / "httpcache").exists()
@@ -728,7 +740,7 @@ class ParserFixtureRecordingTest(SimpleTestCase):
             )
         )
 
-        def get_standings(contest, cache_path, allow_network, users=None, statistics=None):
+        def get_standings(contest, cache_path, allow_network, users=None, statistics=None, *, recorded_at=None):
             cache_path = Path(cache_path)
             if allow_network:
                 (cache_path / "page.html").write_text('{"name": "alice@example.com"}')
@@ -758,6 +770,38 @@ class ParserFixtureRecordingTest(SimpleTestCase):
 
         assert expected["result"]["alice"]["name"] == "<redacted-email>"
         assert cached["name"] == "<redacted-email>"
+
+    def test_update_preserves_the_existing_replay_time(self):
+        recorded_at = datetime(2026, 10, 24, 11, 51, 28, tzinfo=UTC)
+        command = Command(stdout=StringIO())
+        command.get_contest = Mock(return_value=AttrDict({"resource": AttrDict({"host": "example.com"}), "key": "1"}))
+        command.validate_contest = Mock()
+        command.serialize_database_fixture = Mock(return_value=[])
+        command.select_statistics_for_fixture = Mock(
+            return_value=SelectedStatistics(statistics=[], users=[], statistics_by_key={}, addition_keys=set())
+        )
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            fixture_path = root / "fixture"
+            fixture_path.mkdir()
+            write_json(fixture_path / "db.json", [])
+            write_json(fixture_path / "meta.json", {"recorded_at": recorded_at.isoformat()})
+            write_json(fixture_path / "expected_standings.json.gz", {"result": {}})
+            cache_path = root / "cache"
+            cache_path.mkdir()
+            (cache_path / "page.html").write_text("cached response")
+            pack_http_cache(cache_path, fixture_path / "httpcache.json.gz")
+            command.fixture_path_for_recording = Mock(return_value=fixture_path)
+
+            with (
+                time_machine.travel("2040-01-01T00:00:00+00:00", tick=False),
+                patch("ranking.tests.parser_fixture_command.get_standings", return_value={"result": {}}) as replay,
+            ):
+                call_command(command, contest_id=1, update=True, verbosity=0)
+
+            assert replay.call_args.kwargs["allow_network"] is False
+            assert replay.call_args.kwargs["recorded_at"] == recorded_at
+            assert fixture_recorded_at(fixture_path) == recorded_at
 
     def test_recorded_fixture_is_chowned_to_workspace_owner_when_running_as_root(self):
         command = Command()

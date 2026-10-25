@@ -6,8 +6,9 @@ import time
 import urllib.request
 from base64 import b64decode, b64encode
 from binascii import Error as Base64Error
-from contextlib import ExitStack, contextmanager
+from contextlib import ExitStack, contextmanager, nullcontext
 from copy import deepcopy
+from datetime import UTC, datetime
 from hashlib import sha256
 from io import BytesIO, TextIOWrapper
 from pathlib import Path, PurePosixPath
@@ -17,6 +18,7 @@ from unittest.mock import patch
 from urllib.parse import parse_qsl, quote, urlencode, urlsplit, urlunsplit
 
 import requests
+import time_machine
 from django.core.management import call_command
 from django.db.models import F
 from django.test import TestCase
@@ -33,6 +35,7 @@ PARSER_FIXTURES_ROOT = Path(__file__).parent / "fixtures" / "parsers"
 FIXTURE_FILENAMES = ("db.json", "expected_standings.json", "httpcache.json")
 HTTP_CACHE_ARCHIVE_VERSION = 1
 HTTP_CACHE_FILENAME = "httpcache.json.gz"
+FIXTURE_METADATA_FILENAME = "meta.json"
 GIT_LFS_POINTER_PREFIX = b"version https://git-lfs.github.com/spec/v1"
 GZIP_MAGIC = b"\x1f\x8b"
 PARSER_FIXTURES_LFS_PULL = 'git lfs pull --include="src/ranking/tests/fixtures/parsers/**"'
@@ -118,6 +121,10 @@ def parser_fixture_inventory_problems(root=PARSER_FIXTURES_ROOT):
     problems = []
     for fixture_path in fixture_paths:
         relative_path = fixture_path.relative_to(root).as_posix()
+        try:
+            fixture_recorded_at(fixture_path)
+        except ValueError:
+            problems.append(f"{relative_path}: missing or invalid timezone-aware recorded_at in meta.json")
         if not (fixture_path / HTTP_CACHE_FILENAME).is_file():
             problems.append(f"{relative_path}: missing {HTTP_CACHE_FILENAME}")
         if not fixture_file_path(fixture_path, "expected_standings.json").is_file():
@@ -139,6 +146,17 @@ def read_json(path):
     opener = gzip.open if path.suffix == ".gz" else open
     with opener(path, "rt") as input_file:
         return json.load(input_file)
+
+
+def fixture_recorded_at(fixture_path):
+    path = Path(fixture_path) / FIXTURE_METADATA_FILENAME
+    try:
+        recorded_at = datetime.fromisoformat(read_json(path)["recorded_at"])
+        if recorded_at.tzinfo is None:
+            raise ValueError("recorded_at must include a timezone")
+    except (OSError, KeyError, TypeError, ValueError) as error:
+        raise ValueError(f"missing or invalid timezone-aware recorded_at in {path}") from error
+    return recorded_at.astimezone(UTC)
 
 
 def _normalize_value(value):
@@ -550,12 +568,16 @@ def contest_standings_context(contest):
     return standings_context_from_statistics(statistics)
 
 
-def get_standings(contest, cache_path, allow_network, users=None, statistics=None):
-    contest = Contest.objects.select_related("resource__module").get(pk=contest.pk)
-    plugin_module = contest.resource.plugin
-    with use_parser_cache(plugin_module, cache_path, allow_network=allow_network), REQ:
-        plugin = plugin_module.Statistic(contest=contest)
-        return plugin.get_standings(users=deepcopy(users), statistics=deepcopy(statistics))
+def get_standings(contest, cache_path, allow_network, users=None, statistics=None, *, recorded_at=None):
+    if not allow_network and recorded_at is None:
+        raise ValueError("offline parser replay requires recorded_at")
+    clock = nullcontext() if allow_network else time_machine.travel(recorded_at, tick=False)
+    with clock:
+        contest = Contest.objects.select_related("resource__module").get(pk=contest.pk)
+        plugin_module = contest.resource.plugin
+        with use_parser_cache(plugin_module, cache_path, allow_network=allow_network), REQ:
+            plugin = plugin_module.Statistic(contest=contest)
+            return plugin.get_standings(users=deepcopy(users), statistics=deepcopy(statistics))
 
 
 def fixture_contest_pk(fixture_path):
@@ -569,6 +591,7 @@ def fixture_contest_pk(fixture_path):
 class ParserRegressionTestCase(TestCase):
     def run_fixture(self, fixture_path):
         fixture_path = Path(fixture_path)
+        recorded_at = fixture_recorded_at(fixture_path)
         call_command("loaddata", fixture_path / "db.json", verbosity=0)
         contest = Contest.objects.select_related("resource__module").get(pk=fixture_contest_pk(fixture_path))
 
@@ -580,6 +603,7 @@ class ParserRegressionTestCase(TestCase):
                 allow_network=False,
                 users=context.users,
                 statistics=context.statistics,
+                recorded_at=recorded_at,
             )
         actual = normalize_standings(standings)
         expected = read_json(fixture_file_path(fixture_path, "expected_standings.json"))
