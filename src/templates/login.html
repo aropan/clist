@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block end-head %}
+<link href="{% static_ts 'css/login.css' %}" rel="stylesheet">
 <script src="{% static_ts 'js/login.js' %}"></script>
 {% endblock %}
 
@@ -22,9 +23,21 @@
     {% for service in services %}
                 <div class="custom-btn-group-justified btn-group">
                     <a class="btn btn-default active icon service-icon-btn">{% icon_to service.name %}</a>
-                    <a data-service="{{ service.name }}" class="btn btn-default"><div class="text-left">{{ service.title }}</div></a>
+                    <a href="#" data-service="{{ service.name }}" class="btn btn-default login-service-button"{% if service.name == last_oauth_provider %} aria-describedby="last-oauth-provider-description"{% endif %}>
+                        <span class="login-service-label">
+                            <span class="login-service-name">{{ service.title }}</span>
+        {% if service.name == last_oauth_provider %}
+                            <span class="login-service-last-used" title="Last successful sign-in in this browser">
+                                <i class="fa-regular fa-clock" aria-hidden="true"></i> Last used
+                            </span>
+        {% endif %}
+                        </span>
+                    </a>
                 </div>
     {% endfor %}
+    {% if last_oauth_provider %}
+                <span id="last-oauth-provider-description" class="sr-only">Last successful sign-in in this browser</span>
+    {% endif %}
 {% else %}
                 <div class="form-group">
                     <input type="text" name="username" class="form-control" placeholder="Username" value="">

@@ -12,7 +12,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from my_oauth.models import Credential, Form, Service, Token
-from my_oauth.views import form, login, process_data, query, refresh, response
+from my_oauth.views import LAST_OAUTH_PROVIDER_COOKIE, form, login, process_data, query, refresh, response
 from true_coders.models import Coder
 
 
@@ -48,25 +48,31 @@ class OAuthFormSetup:
         with patch("my_oauth.views.render", return_value=HttpResponse()) as render:
             result = form(request, (target or self.form).pk)
         assert result.status_code == 200
+        assert LAST_OAUTH_PROVIDER_COOKIE not in result.cookies
         return render.call_args.args[2]
 
 
 class OAuthFormTest(OAuthFormSetup, TestCase):
     def test_expected_provider_login_grants_account(self):
         credential = self.credential()
-        request = self.request(action="login")
-        assert form(request, self.form.pk).status_code == 302
-        request.GET = request.GET.copy()
-        request.GET.clear()
-        assert query(request, self.service.name).status_code == 302
-        result = process_data(request, self.service, {}, {"id": "form-user", "email": "user@example.com"})
-        assert result.url == reverse("auth:form", args=(self.form.pk,))
-        context = self.context(request)
-        assert context["code"] == "Account: contest-account"
-        assert context["error"] is None
-        credential.refresh_from_db()
-        assert credential.token_id == self.token.pk
-        assert credential.state == Credential.State.ASSIGNED
+        for previous_provider in (None, "google"):
+            with self.subTest(previous_provider=previous_provider):
+                request = self.request(action="login")
+                if previous_provider:
+                    request.COOKIES[LAST_OAUTH_PROVIDER_COOKIE] = previous_provider
+                assert form(request, self.form.pk).status_code == 302
+                request.GET = request.GET.copy()
+                request.GET.clear()
+                assert query(request, self.service.name).status_code == 302
+                result = process_data(request, self.service, {}, {"id": "form-user", "email": "user@example.com"})
+                assert result.url == reverse("auth:form", args=(self.form.pk,))
+                assert LAST_OAUTH_PROVIDER_COOKIE not in result.cookies
+                context = self.context(request)
+                assert context["code"] == "Account: contest-account"
+                assert context["error"] is None
+                credential.refresh_from_db()
+                assert credential.token_id == self.token.pk
+                assert credential.state == Credential.State.ASSIGNED
 
     def test_pending_form_login_rejects_another_provider_at_every_entry_point(self):
         self.credential()
@@ -212,6 +218,8 @@ class OAuthFormSettingsTest(OAuthFormSetup, TestCase):
                     access_token={"access_token": "test-old-access", "refresh_token": "test-old-refresh"},
                 )
                 request = self.pending_form_request()
+                if service == self.other:
+                    request.COOKIES[LAST_OAUTH_PROVIDER_COOKIE] = "google"
                 new_tokens = {"access_token": "test-new-access", "refresh_token": "test-new-refresh"}
                 profile = {"id": token.user_id, "email": "user@example.com"}
                 with (
@@ -224,6 +232,7 @@ class OAuthFormSettingsTest(OAuthFormSetup, TestCase):
 
                 assert result.status_code == 302
                 assert result.url == self.settings_url
+                assert LAST_OAUTH_PROVIDER_COOKIE not in result.cookies
                 post.assert_called_once()
                 token.refresh_from_db()
                 assert token.access_token == new_tokens

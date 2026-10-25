@@ -1,0 +1,33 @@
+.login-service-button {
+  white-space: normal;
+}
+
+.login-service-label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25em 0.75em;
+  text-align: left;
+}
+
+.login-service-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.login-service-last-used {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  margin-left: auto;
+  padding: 0.15em 0.55em;
+  border-radius: 1em;
+  background-color: rgba(127, 127, 127, 0.16);
+  font-size: 0.8em;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.login-service-last-used .fa-clock {
+  opacity: 0.65;
+}

@@ -29,6 +29,8 @@ from my_oauth.utils import access_token_from_response, refresh_acccess_token
 from true_coders.models import Coder
 from utils.chart import make_chart
 
+LAST_OAUTH_PROVIDER_COOKIE = "last_oauth_provider"
+
 
 def generate_state(size=20, chars=string.ascii_uppercase + string.digits):
     return "".join(random.choice(chars) for _ in range(size))
@@ -227,12 +229,15 @@ def login(request):
     if service:
         return query(request, service)
 
+    last_provider = request.COOKIES.get(LAST_OAUTH_PROVIDER_COOKIE)
+    last_provider = next((service.name for service in services if service.name == last_provider), None)
     return render(
         request,
         "login.html",
         {
             "services": services,
             "session_durations": session_durations,
+            "last_oauth_provider": last_provider,
         },
     )
 
@@ -277,9 +282,20 @@ def signup(request, action=None):
             return signup(request)
 
         if user and user.is_active:
+            was_anonymous = request.user.is_anonymous
             user.backend = "django.contrib.auth.backends.ModelBackend"
             auth.login(request, user)
-            return signup(request)
+            response = signup(request)
+            if was_anonymous:
+                request.set_security_cookie(
+                    response,
+                    LAST_OAUTH_PROVIDER_COOKIE,
+                    token.service.name,
+                    max_age=timedelta(days=365),
+                    path=reverse("auth:login"),
+                    samesite="Lax",
+                )
+            return response
 
         request.session["token_id"] = token_id
         q_token = Q(email=token.email, email__isnull=False)
