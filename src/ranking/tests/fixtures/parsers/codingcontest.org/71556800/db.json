@@ -1,0 +1,686 @@
+[
+  {
+    "fields": {
+      "accounts_fields": {
+        "types": {},
+        "verification_fields": []
+      },
+      "activity_score": 1.8903399308773619,
+      "activity_updated_at": "2026-10-23T03:30:09.876Z",
+      "allow_delete_archived_statistics": false,
+      "api_url": null,
+      "auto_remove_started": false,
+      "avatar_url": null,
+      "avg_rating": null,
+      "color": "#CCB965",
+      "contest_update_time": "2026-10-24T00:52:21.648Z",
+      "country_rank_update_time": "2026-10-24T01:00:10.459Z",
+      "created": "2018-04-01T22:21:55.660Z",
+      "default_account_type": 1,
+      "enable": true,
+      "has_account_last_submission": null,
+      "has_account_n_writers": null,
+      "has_account_verification": false,
+      "has_accounts_infos_update": false,
+      "has_country_medal": null,
+      "has_country_place": null,
+      "has_country_rating": false,
+      "has_inherit_medals_to_related": false,
+      "has_multi_account": false,
+      "has_problem_archive": false,
+      "has_problem_rating": false,
+      "has_problem_statistic": false,
+      "has_problem_update": false,
+      "has_rating_history": false,
+      "has_standings_renamed_account": false,
+      "has_statistic_medal": null,
+      "has_statistic_n_first_ac": null,
+      "has_statistic_n_total_solved": null,
+      "has_statistic_place": null,
+      "has_statistic_total_solving": null,
+      "has_submissions_statistics_log": false,
+      "has_upsolving": false,
+      "host": "codingcontest.org",
+      "icon_file": "resources/codingcontest_org.png",
+      "icon_updated_at": null,
+      "icon_url": null,
+      "info": {
+        "get_events": {
+          "colors": {
+            "darken": "#443C16",
+            "lighten": "#EFEAD0"
+          }
+        }
+      },
+      "medal_win_equals_gold": null,
+      "modified": "2026-10-24T01:00:10.881Z",
+      "n_accounts": 3553,
+      "n_accounts_to_update": null,
+      "n_contests": 34,
+      "n_member_accounts": null,
+      "n_rating_accounts": null,
+      "n_statistics": 0,
+      "n_team_accounts": 1637,
+      "n_university_accounts": 0,
+      "parse_url": "https://register.codingcontest.org/listings?type=&country=&page=0",
+      "path": "./module/codingcontest.org/index.php",
+      "problem_archive_update_time": null,
+      "problem_rating_predictor": {},
+      "problem_url": null,
+      "problems_fields": {
+        "types": {}
+      },
+      "profile_url": null,
+      "rank_update_time": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "ratings": [],
+      "regexp": null,
+      "short_host": "codingcontest",
+      "skip_for_contests_chart": false,
+      "statistics_fields": {
+        "types": {}
+      },
+      "timezone": null,
+      "uid": "b8hi5kc1r118tcnd9pi5b4iqc4@group.calendar.google.com",
+      "url": "https://codingcontest.org/"
+    },
+    "model": "clist.resource",
+    "pk": 100
+  },
+  {
+    "fields": {
+      "created": "2026-10-24T00:50:32.835Z",
+      "delay_on_error": "01:00:00",
+      "delay_on_success": "06:00:00",
+      "delay_shortly_after": "00:05:00",
+      "enable": false,
+      "long_contest_divider": 15,
+      "long_contest_idle": "06:00:00",
+      "max_delay_after_end": "7 00:00:00",
+      "min_delay_after_end": "01:00:00",
+      "modified": "2026-10-24T00:50:32.835Z",
+      "path": "ranking.management.modules.codingcontest",
+      "resource": 100,
+      "shortly_after": "00:30:00"
+    },
+    "model": "ranking.module",
+    "pk": 99
+  },
+  {
+    "fields": {
+      "allow_updating_statistics_for_participants": null,
+      "auto_updated": "2026-10-24T01:46:05Z",
+      "calculate_time": false,
+      "created": "2026-10-23T14:36:28.087Z",
+      "duration_in_secs": 7200,
+      "edit": null,
+      "elimination_tournament_info": {},
+      "end_time": "2022-11-11T11:00:00Z",
+      "finalists_info": {},
+      "has_fixed_rating_prediction_field": null,
+      "has_hidden_results": false,
+      "has_submissions": null,
+      "has_submissions_tests": null,
+      "has_unlimited_statistics": null,
+      "hide_unsolved_standings_problems": null,
+      "host": "codingcontest.org",
+      "info": {
+        "fields": [
+          "name",
+          "level",
+          "mode",
+          "time",
+          "time_ms",
+          "venue",
+          "city",
+          "team_name",
+          "display_score"
+        ],
+        "fields_types": {
+          "city": [
+            "str"
+          ],
+          "display_score": [
+            "str"
+          ],
+          "level": [
+            "int"
+          ],
+          "mode": [
+            "str"
+          ],
+          "name": [
+            "str"
+          ],
+          "team_name": [
+            "str"
+          ],
+          "time": [
+            "str"
+          ],
+          "time_ms": [
+            "int"
+          ],
+          "venue": [
+            "str"
+          ]
+        },
+        "hidden_fields": [
+          "time_ms",
+          "display_score"
+        ],
+        "parse": {
+          "contestType": "SCHOOL",
+          "durationMinutes": 120,
+          "editionName": "36th Coding Contest 2022",
+          "gameBaseUrl": "https://enigma.codingcontest.org/",
+          "gameDescription": "Break substitution ciphers using letter histograms",
+          "gameImage": null,
+          "gameName": "Code Breaker",
+          "gameSlug": "ccc-2022.11-school-enigma",
+          "gameTags": [
+            "CCC36",
+            "school",
+            "levels"
+          ],
+          "id": 23,
+          "maxTeamSize": 5,
+          "name": "36th School CCC 2022",
+          "recruiting": false,
+          "registrationCount": 586,
+          "registrationStartTime": "2022-05-19T11:54:05Z",
+          "serverNowMs": 1792806362864,
+          "slug": "36th-school-ccc-2022-4639",
+          "startTime": "2022-11-11T09:00:00Z",
+          "status": "FINISHED",
+          "totalLevels": 5,
+          "venues": [
+            {
+              "availableSlots": 99638,
+              "hostName": "ONLINE",
+              "id": 1,
+              "maxParticipants": 99999,
+              "name": "ONLINE"
+            },
+            {
+              "availableSlots": 45,
+              "hostName": "Cloudflight Amstetten",
+              "id": 4,
+              "maxParticipants": 120,
+              "name": "AK Niederösterreich"
+            },
+            {
+              "availableSlots": 96,
+              "hostName": "JKU (Keplergebäude, HS1)",
+              "id": 5,
+              "maxParticipants": 229,
+              "name": "JKU (Keplergebäude, HS1)"
+            },
+            {
+              "availableSlots": 117,
+              "hostName": "Vienna City Hall",
+              "id": 6,
+              "maxParticipants": 370,
+              "name": "Vienna City Hall"
+            },
+            {
+              "availableSlots": 84,
+              "hostName": "HTL Braunau",
+              "id": 12,
+              "maxParticipants": 100,
+              "name": "HTL Braunau"
+            },
+            {
+              "availableSlots": 30,
+              "hostName": "University of West Bohemia",
+              "id": 16,
+              "maxParticipants": 30,
+              "name": "University of West Bohemia"
+            },
+            {
+              "availableSlots": 468,
+              "hostName": "FSEGA",
+              "id": 34,
+              "maxParticipants": 600,
+              "name": "FSEGA"
+            },
+            {
+              "availableSlots": 3,
+              "hostName": "AI Cuza University",
+              "id": 36,
+              "maxParticipants": 90,
+              "name": "AI Cuza University"
+            },
+            {
+              "availableSlots": 99,
+              "hostName": "Tuzane",
+              "id": 60,
+              "maxParticipants": 100,
+              "name": "Tuzane"
+            },
+            {
+              "availableSlots": 4,
+              "hostName": "Márton Áron High School",
+              "id": 72,
+              "maxParticipants": 30,
+              "name": "Márton Áron High School"
+            },
+            {
+              "availableSlots": 26,
+              "hostName": "\"David Prodan\" High School",
+              "id": 74,
+              "maxParticipants": 60,
+              "name": "\"David Prodan\" High School"
+            },
+            {
+              "availableSlots": 46,
+              "hostName": "Raiffeisenbank Region St. Pölten eGen",
+              "id": 86,
+              "maxParticipants": 96,
+              "name": "Raiffeisenbank Region St. Pölten eGen"
+            },
+            {
+              "availableSlots": 109,
+              "hostName": "Fronius International GmbH",
+              "id": 87,
+              "maxParticipants": 160,
+              "name": "Fronius International GmbH"
+            },
+            {
+              "availableSlots": 2,
+              "hostName": "HTL Traun - Think Future",
+              "id": 93,
+              "maxParticipants": 50,
+              "name": "HTL Traun - Think Future"
+            },
+            {
+              "availableSlots": 174,
+              "hostName": "Universität Innsbruck – Campus Technik, Technikerstraße",
+              "id": 100,
+              "maxParticipants": 200,
+              "name": "Universität Innsbruck – Campus Technik, Technikerstraße 13b, Großer Hörsaal"
+            },
+            {
+              "availableSlots": 89,
+              "hostName": "Palatul Copiilor Constanța",
+              "id": 112,
+              "maxParticipants": 100,
+              "name": "Palatul Copiilor Constanța"
+            },
+            {
+              "availableSlots": 74,
+              "hostName": "Dräger",
+              "id": 122,
+              "maxParticipants": 80,
+              "name": "Dräger"
+            },
+            {
+              "availableSlots": 37,
+              "hostName": "University of Klagenfurt",
+              "id": 124,
+              "maxParticipants": 40,
+              "name": "University of Klagenfurt"
+            },
+            {
+              "availableSlots": 27,
+              "hostName": "GLS Denmark",
+              "id": 126,
+              "maxParticipants": 28,
+              "name": "GLS Denmark"
+            },
+            {
+              "availableSlots": 15,
+              "hostName": "GLS Italy",
+              "id": 128,
+              "maxParticipants": 20,
+              "name": "GLS Italy"
+            },
+            {
+              "availableSlots": 39,
+              "hostName": "Avram Iancu High School",
+              "id": 134,
+              "maxParticipants": 60,
+              "name": "Avram Iancu High School"
+            }
+          ]
+        }
+      },
+      "invisible": false,
+      "is_auto_added": true,
+      "is_promoted": null,
+      "is_rated": null,
+      "key": "23",
+      "kind": "school",
+      "link_statistic_timing": null,
+      "merging_contests": [],
+      "modified": "2026-10-23T14:36:28.087Z",
+      "n_problems": null,
+      "n_statistics": 586,
+      "notification_timing": null,
+      "parsed_percentage": null,
+      "parsed_time": "2026-10-24T00:51:33.613Z",
+      "problem_rating_hash": null,
+      "problem_rating_update_required": false,
+      "rating_prediction_fields": null,
+      "rating_prediction_hash": null,
+      "rating_prediction_timing": null,
+      "raw_info": {},
+      "registration_url": null,
+      "related": null,
+      "resource": 100,
+      "series": null,
+      "set_matched_coders_to_members": null,
+      "slug": "36th-coding-contest-2022-school-ccc-code-breaker",
+      "standings_kind": null,
+      "standings_url": null,
+      "start_time": "2022-11-11T09:00:00Z",
+      "statistic_timing": "2026-10-24T06:51:33.613Z",
+      "statistics_update_required": false,
+      "submissions_info": {},
+      "title": "36th Coding Contest 2022. School CCC. Code Breaker",
+      "title_path": "36th.coding.contest.2022.school.ccc.code.breaker",
+      "trial_standings_url": null,
+      "uid": null,
+      "updated": "2026-10-24T01:46:05.290Z",
+      "upload_solved_problems_solutions": null,
+      "upsolving_key": null,
+      "upsolving_url": null,
+      "url": "https://codingcontest.org/",
+      "variables": {},
+      "wait_for_successful_update_timing": null,
+      "with_advance": false,
+      "with_medals": false
+    },
+    "model": "clist.contest",
+    "pk": 71556800
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2026-10-24T00:51:34.593Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "is_team": false
+      },
+      "key": "23:popax21:solo:online",
+      "last_activity": "2022-11-11T09:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-10-24T00:51:34.609Z",
+      "n_bronze": null,
+      "n_contests": 1,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 0,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 0,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Popax21",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 100,
+      "resource_rank": null,
+      "solving": 0.0,
+      "submissions_info": {},
+      "total_solving": 0.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-10-24T00:51:34.593Z",
+      "upsolving": null,
+      "url": "/account/23:5bd527d518379478ed9962b1a6b7bea33f9b0597b910a05d76fc868e3bff735a/resource/codingcontest.org/"
+    },
+    "model": "ranking.account",
+    "pk": 11839548
+  },
+  {
+    "fields": {
+      "account_type": 3,
+      "country": null,
+      "created": "2026-10-24T00:51:34.640Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "is_team": true
+      },
+      "key": "23:the-golden-trio:team:htl-traun-think-future",
+      "last_activity": "2022-11-11T09:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-10-24T00:51:34.653Z",
+      "n_bronze": null,
+      "n_contests": 1,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 0,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 0,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "The Golden Trio",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 100,
+      "resource_rank": null,
+      "solving": 0.0,
+      "submissions_info": {},
+      "total_solving": 0.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-10-24T00:51:34.640Z",
+      "upsolving": null,
+      "url": "/account/23:d53068515d03de41d5d556f399f8540e4fefa3f9071691bf88b4e67284f26093/resource/codingcontest.org/"
+    },
+    "model": "ranking.account",
+    "pk": 11839550
+  },
+  {
+    "fields": {
+      "account_type": 3,
+      "country": null,
+      "created": "2026-10-24T00:51:34.656Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "is_team": true
+      },
+      "key": "23:expirationdate2029:team:ai-cuza-university:iasi",
+      "last_activity": "2022-11-11T09:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-10-24T00:51:34.672Z",
+      "n_bronze": null,
+      "n_contests": 1,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 0,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 0,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "ExpirationDate2029",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 100,
+      "resource_rank": null,
+      "solving": 0.0,
+      "submissions_info": {},
+      "total_solving": 0.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-10-24T00:51:34.656Z",
+      "upsolving": null,
+      "url": "/account/23:67ee8e5d8aefc728ec576bb6bb8019ff7bd02512abf760366c6afd4b798a8cd4/resource/codingcontest.org/"
+    },
+    "model": "ranking.account",
+    "pk": 11839551
+  },
+  {
+    "fields": {
+      "account": 11839548,
+      "addition": {
+        "display_score": "5 levels",
+        "level": 5,
+        "mode": "Solo",
+        "name": "Popax21",
+        "time": "1:01:10",
+        "time_ms": 3670868,
+        "venue": "Online"
+      },
+      "advanced": false,
+      "contest": 71556800,
+      "created": "2026-10-24T00:51:34.607Z",
+      "global_rating_change": null,
+      "last_activity": "2022-11-11T09:00:00Z",
+      "medal": null,
+      "modified": "2026-10-24T00:51:34.607Z",
+      "n_first_ac": 0,
+      "n_solved": 0,
+      "n_total_solved": 0,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "1",
+      "place_as_int": 1,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 100,
+      "skip_in_stats": false,
+      "solving": 5.0,
+      "total_solving": 5.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 93146464
+  },
+  {
+    "fields": {
+      "account": 11839550,
+      "addition": {
+        "display_score": "5 levels",
+        "level": 5,
+        "mode": "Team",
+        "name": "The Golden Trio",
+        "team_name": "The Golden Trio",
+        "time": "1:47:34",
+        "time_ms": 6454948,
+        "venue": "HTL Traun - Think Future"
+      },
+      "advanced": false,
+      "contest": 71556800,
+      "created": "2026-10-24T00:51:34.650Z",
+      "global_rating_change": null,
+      "last_activity": "2022-11-11T09:00:00Z",
+      "medal": null,
+      "modified": "2026-10-24T00:51:34.650Z",
+      "n_first_ac": 0,
+      "n_solved": 0,
+      "n_total_solved": 0,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "3",
+      "place_as_int": 3,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 100,
+      "skip_in_stats": false,
+      "solving": 5.0,
+      "total_solving": 5.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 93146466
+  },
+  {
+    "fields": {
+      "account": 11839551,
+      "addition": {
+        "city": "Iasi",
+        "display_score": "5 levels",
+        "level": 5,
+        "mode": "Team",
+        "name": "ExpirationDate2029",
+        "team_name": "ExpirationDate2029",
+        "time": "1:53:11",
+        "time_ms": 6791674,
+        "venue": "AI Cuza University"
+      },
+      "advanced": false,
+      "contest": 71556800,
+      "created": "2026-10-24T00:51:34.669Z",
+      "global_rating_change": null,
+      "last_activity": "2022-11-11T09:00:00Z",
+      "medal": null,
+      "modified": "2026-10-24T00:51:34.669Z",
+      "n_first_ac": 0,
+      "n_solved": 0,
+      "n_total_solved": 0,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "4",
+      "place_as_int": 4,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 100,
+      "skip_in_stats": false,
+      "solving": 5.0,
+      "total_solving": 5.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 93146467
+  }
+]

@@ -1,0 +1,654 @@
+[
+  {
+    "fields": {
+      "accounts_fields": {
+        "types": {},
+        "verification_fields": []
+      },
+      "activity_score": 1.8903399308773619,
+      "activity_updated_at": "2026-10-23T03:30:09.876Z",
+      "allow_delete_archived_statistics": false,
+      "api_url": null,
+      "auto_remove_started": false,
+      "avatar_url": null,
+      "avg_rating": null,
+      "color": "#CCB965",
+      "contest_update_time": "2026-10-24T00:52:21.648Z",
+      "country_rank_update_time": "2026-10-24T01:00:10.459Z",
+      "created": "2018-04-01T22:21:55.660Z",
+      "default_account_type": 1,
+      "enable": true,
+      "has_account_last_submission": null,
+      "has_account_n_writers": null,
+      "has_account_verification": false,
+      "has_accounts_infos_update": false,
+      "has_country_medal": null,
+      "has_country_place": null,
+      "has_country_rating": false,
+      "has_inherit_medals_to_related": false,
+      "has_multi_account": false,
+      "has_problem_archive": false,
+      "has_problem_rating": false,
+      "has_problem_statistic": false,
+      "has_problem_update": false,
+      "has_rating_history": false,
+      "has_standings_renamed_account": false,
+      "has_statistic_medal": null,
+      "has_statistic_n_first_ac": null,
+      "has_statistic_n_total_solved": null,
+      "has_statistic_place": null,
+      "has_statistic_total_solving": null,
+      "has_submissions_statistics_log": false,
+      "has_upsolving": false,
+      "host": "codingcontest.org",
+      "icon_file": "resources/codingcontest_org.png",
+      "icon_updated_at": null,
+      "icon_url": null,
+      "info": {
+        "get_events": {
+          "colors": {
+            "darken": "#443C16",
+            "lighten": "#EFEAD0"
+          }
+        }
+      },
+      "medal_win_equals_gold": null,
+      "modified": "2026-10-24T01:00:10.881Z",
+      "n_accounts": 3553,
+      "n_accounts_to_update": null,
+      "n_contests": 34,
+      "n_member_accounts": null,
+      "n_rating_accounts": null,
+      "n_statistics": 0,
+      "n_team_accounts": 1637,
+      "n_university_accounts": 0,
+      "parse_url": "https://register.codingcontest.org/listings?type=&country=&page=0",
+      "path": "./module/codingcontest.org/index.php",
+      "problem_archive_update_time": null,
+      "problem_rating_predictor": {},
+      "problem_url": null,
+      "problems_fields": {
+        "types": {}
+      },
+      "profile_url": null,
+      "rank_update_time": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "ratings": [],
+      "regexp": null,
+      "short_host": "codingcontest",
+      "skip_for_contests_chart": false,
+      "statistics_fields": {
+        "types": {}
+      },
+      "timezone": null,
+      "uid": "b8hi5kc1r118tcnd9pi5b4iqc4@group.calendar.google.com",
+      "url": "https://codingcontest.org/"
+    },
+    "model": "clist.resource",
+    "pk": 100
+  },
+  {
+    "fields": {
+      "created": "2026-10-24T00:50:32.835Z",
+      "delay_on_error": "01:00:00",
+      "delay_on_success": "06:00:00",
+      "delay_shortly_after": "00:05:00",
+      "enable": false,
+      "long_contest_divider": 15,
+      "long_contest_idle": "06:00:00",
+      "max_delay_after_end": "7 00:00:00",
+      "min_delay_after_end": "01:00:00",
+      "modified": "2026-10-24T00:50:32.835Z",
+      "path": "ranking.management.modules.codingcontest",
+      "resource": 100,
+      "shortly_after": "00:30:00"
+    },
+    "model": "ranking.module",
+    "pk": 99
+  },
+  {
+    "fields": {
+      "allow_updating_statistics_for_participants": null,
+      "auto_updated": "2026-10-24T01:46:05Z",
+      "calculate_time": false,
+      "created": "2025-11-14T00:28:50.840Z",
+      "duration_in_secs": 14400,
+      "edit": null,
+      "elimination_tournament_info": {},
+      "end_time": "2025-11-14T18:00:00Z",
+      "finalists_info": {},
+      "has_fixed_rating_prediction_field": null,
+      "has_hidden_results": false,
+      "has_submissions": null,
+      "has_submissions_tests": null,
+      "has_unlimited_statistics": null,
+      "hide_unsolved_standings_problems": null,
+      "host": "codingcontest.org",
+      "info": {
+        "fields": [
+          "name",
+          "level",
+          "mode",
+          "time",
+          "time_ms",
+          "venue",
+          "city",
+          "team_name",
+          "display_score"
+        ],
+        "fields_types": {
+          "city": [
+            "str"
+          ],
+          "display_score": [
+            "str"
+          ],
+          "level": [
+            "int"
+          ],
+          "mode": [
+            "str"
+          ],
+          "name": [
+            "str"
+          ],
+          "team_name": [
+            "str"
+          ],
+          "time": [
+            "str"
+          ],
+          "time_ms": [
+            "int"
+          ],
+          "venue": [
+            "str"
+          ]
+        },
+        "hidden_fields": [
+          "time_ms",
+          "display_score"
+        ],
+        "parse": {
+          "contestType": "CLASSIC",
+          "durationMinutes": 240,
+          "editionName": "41st Coding Contest 2025",
+          "gameBaseUrl": "https://spaceship.codingcontest.org/",
+          "gameDescription": "Pilot a spaceship and dock with a station while avoiding collisions with asteroids",
+          "gameImage": null,
+          "gameName": "Spaceship",
+          "gameSlug": "ccc-2025.11-classic-spaceship",
+          "gameTags": [
+            "CCC41",
+            "classic",
+            "levels"
+          ],
+          "id": 37,
+          "maxTeamSize": 3,
+          "name": "41st Classic CCC",
+          "recruiting": false,
+          "registrationCount": 1360,
+          "registrationStartTime": "2025-07-16T12:58:18Z",
+          "serverNowMs": 1792806362875,
+          "slug": "41st-classic-ccc-5772",
+          "startTime": "2025-11-14T14:00:00Z",
+          "status": "FINISHED",
+          "totalLevels": 8,
+          "venues": [
+            {
+              "availableSlots": 99569,
+              "hostName": "ONLINE",
+              "id": 1,
+              "maxParticipants": 99999,
+              "name": "ONLINE"
+            },
+            {
+              "availableSlots": 102,
+              "hostName": "Cloudflight Amstetten",
+              "id": 4,
+              "maxParticipants": 120,
+              "name": "AK Niederösterreich"
+            },
+            {
+              "availableSlots": 33,
+              "hostName": "JKU (Keplergebäude, HS1)",
+              "id": 5,
+              "maxParticipants": 229,
+              "name": "JKU (Keplergebäude, HS1)"
+            },
+            {
+              "availableSlots": 0,
+              "hostName": "Vienna City Hall",
+              "id": 6,
+              "maxParticipants": 370,
+              "name": "Vienna City Hall"
+            },
+            {
+              "availableSlots": 17,
+              "hostName": "TU Graz",
+              "id": 7,
+              "maxParticipants": 48,
+              "name": "TU Graz"
+            },
+            {
+              "availableSlots": 10,
+              "hostName": "42 Heilbronn",
+              "id": 15,
+              "maxParticipants": 50,
+              "name": "42 Heilbronn"
+            },
+            {
+              "availableSlots": 13,
+              "hostName": "University of West Bohemia",
+              "id": 16,
+              "maxParticipants": 30,
+              "name": "University of West Bohemia"
+            },
+            {
+              "availableSlots": 0,
+              "hostName": "TU Darmstadt, Fachschaft Informatik",
+              "id": 20,
+              "maxParticipants": 100,
+              "name": "TU Darmstadt, Fachschaft Informatik"
+            },
+            {
+              "availableSlots": 40,
+              "hostName": "Auroville Institute of Applied Technology Irumbai Campus",
+              "id": 22,
+              "maxParticipants": 120,
+              "name": "Auroville Institute of Applied Technology Irumbai Campus"
+            },
+            {
+              "availableSlots": 4,
+              "hostName": "Technical University of Moldova",
+              "id": 29,
+              "maxParticipants": 100,
+              "name": "Technical University of Moldova"
+            },
+            {
+              "availableSlots": 13,
+              "hostName": "University of Craiova",
+              "id": 35,
+              "maxParticipants": 82,
+              "name": "University of Craiova"
+            },
+            {
+              "availableSlots": 31,
+              "hostName": "AI Cuza University",
+              "id": 36,
+              "maxParticipants": 90,
+              "name": "AI Cuza University"
+            },
+            {
+              "availableSlots": 16,
+              "hostName": "West University of Timisoara",
+              "id": 37,
+              "maxParticipants": 120,
+              "name": "West University of Timisoara"
+            },
+            {
+              "availableSlots": 9,
+              "hostName": "ALAN Systems",
+              "id": 53,
+              "maxParticipants": 20,
+              "name": "ALAN Systems"
+            },
+            {
+              "availableSlots": 70,
+              "hostName": "Escuela de Ingeniería Informática de Valladolid",
+              "id": 54,
+              "maxParticipants": 100,
+              "name": "Escuela de Ingeniería Informática de Valladolid"
+            },
+            {
+              "availableSlots": 99,
+              "hostName": "Tuzane",
+              "id": 60,
+              "maxParticipants": 100,
+              "name": "Tuzane"
+            },
+            {
+              "availableSlots": 6,
+              "hostName": "Parcul Științific și Tehnologic Oradea",
+              "id": 67,
+              "maxParticipants": 50,
+              "name": "Parcul Științific și Tehnologic Oradea"
+            },
+            {
+              "availableSlots": 0,
+              "hostName": "Cloudflight",
+              "id": 81,
+              "maxParticipants": 10,
+              "name": "Cloudflight"
+            },
+            {
+              "availableSlots": 60,
+              "hostName": "Raiffeisenbank Region St. Pölten eGen",
+              "id": 86,
+              "maxParticipants": 96,
+              "name": "Raiffeisenbank Region St. Pölten eGen"
+            },
+            {
+              "availableSlots": 152,
+              "hostName": "Universität Innsbruck – Campus Technik, Technikerstraße",
+              "id": 100,
+              "maxParticipants": 200,
+              "name": "Universität Innsbruck – Campus Technik, Technikerstraße 13b, Großer Hörsaal"
+            },
+            {
+              "availableSlots": 11,
+              "hostName": "LMU",
+              "id": 110,
+              "maxParticipants": 50,
+              "name": "LMU"
+            },
+            {
+              "availableSlots": 0,
+              "hostName": "Cloudflight PL",
+              "id": 123,
+              "maxParticipants": 32,
+              "name": "Cloudflight"
+            },
+            {
+              "availableSlots": 26,
+              "hostName": "University of Klagenfurt",
+              "id": 124,
+              "maxParticipants": 40,
+              "name": "University of Klagenfurt"
+            },
+            {
+              "availableSlots": 11,
+              "hostName": "University Kiel (CAU)",
+              "id": 125,
+              "maxParticipants": 40,
+              "name": "University Kiel (CAU)"
+            },
+            {
+              "availableSlots": 30,
+              "hostName": "University of Coimbra (DEI)",
+              "id": 129,
+              "maxParticipants": 45,
+              "name": "University of Coimbra (DEI)"
+            },
+            {
+              "availableSlots": 37,
+              "hostName": "GLS Portugal",
+              "id": 130,
+              "maxParticipants": 75,
+              "name": "Centro Cultural de Belém - Sala Sophia de Mello Breyner Andresen - 1449-003 Lisboa"
+            },
+            {
+              "availableSlots": 25,
+              "hostName": "defia Software Engineering",
+              "id": 131,
+              "maxParticipants": 25,
+              "name": "defia Software Engineering"
+            },
+            {
+              "availableSlots": 43,
+              "hostName": "Facultad de Informática UCM",
+              "id": 143,
+              "maxParticipants": 60,
+              "name": "Facultad de Informática UCM"
+            },
+            {
+              "availableSlots": 11,
+              "hostName": "National University of Science and Technology POLITEHNICA Bucharest",
+              "id": 145,
+              "maxParticipants": 100,
+              "name": "National University of Science and Technology POLITEHNICA Bucharest "
+            },
+            {
+              "availableSlots": 257,
+              "hostName": "CREIC - Centrul Regional de Excelență pentru Industrii Creative",
+              "id": 153,
+              "maxParticipants": 1000,
+              "name": "CREIC - Centrul Regional de Excelență pentru Industrii Creative"
+            }
+          ]
+        }
+      },
+      "invisible": false,
+      "is_auto_added": true,
+      "is_promoted": null,
+      "is_rated": null,
+      "key": "37",
+      "kind": "classic",
+      "link_statistic_timing": null,
+      "merging_contests": [],
+      "modified": "2026-10-23T14:36:28.163Z",
+      "n_problems": null,
+      "n_statistics": 1360,
+      "notification_timing": "2025-11-14T00:30:40.873Z",
+      "parsed_percentage": null,
+      "parsed_time": "2026-10-24T00:51:48.219Z",
+      "problem_rating_hash": null,
+      "problem_rating_update_required": false,
+      "rating_prediction_fields": null,
+      "rating_prediction_hash": null,
+      "rating_prediction_timing": null,
+      "raw_info": {},
+      "registration_url": null,
+      "related": null,
+      "resource": 100,
+      "series": null,
+      "set_matched_coders_to_members": null,
+      "slug": "41st-coding-contest-2025-classic-ccc-spaceship",
+      "standings_kind": null,
+      "standings_url": null,
+      "start_time": "2025-11-14T14:00:00Z",
+      "statistic_timing": "2026-10-24T06:51:48.219Z",
+      "statistics_update_required": false,
+      "submissions_info": {},
+      "title": "41st Coding Contest 2025. Classic CCC. Spaceship",
+      "title_path": "41st.coding.contest.2025.classic.ccc.spaceship",
+      "trial_standings_url": null,
+      "uid": "0i7gephao4u3qafg7c23v3gbl8",
+      "updated": "2026-10-24T01:46:05.371Z",
+      "upload_solved_problems_solutions": null,
+      "upsolving_key": null,
+      "upsolving_url": null,
+      "url": "https://codingcontest.org/",
+      "variables": {},
+      "wait_for_successful_update_timing": null,
+      "with_advance": false,
+      "with_medals": false
+    },
+    "model": "clist.contest",
+    "pk": 63260645
+  },
+  {
+    "fields": {
+      "account_type": 3,
+      "country": null,
+      "created": "2026-10-24T00:51:50.982Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "is_team": true
+      },
+      "key": "37:ki_ist_unverdient:team:raiffeisenbank-region-st-polten-egen",
+      "last_activity": "2025-11-14T14:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-10-24T00:51:50.999Z",
+      "n_bronze": null,
+      "n_contests": 1,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 0,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 0,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "KI_ist_unverdient",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 100,
+      "resource_rank": null,
+      "solving": 0.0,
+      "submissions_info": {},
+      "total_solving": 0.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-10-24T00:51:50.982Z",
+      "upsolving": null,
+      "url": "/account/37:6a262341e99cdb894b15b6ad0f1b38a60702acb9480f16a8268a6d59c3c14ca0/resource/codingcontest.org/"
+    },
+    "model": "ranking.account",
+    "pk": 11840134
+  },
+  {
+    "fields": {
+      "account_type": 3,
+      "country": null,
+      "created": "2026-10-24T00:51:51.027Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "is_team": true
+      },
+      "key": "37:vanillaplus:team:technical-university-of-moldova:chisinau",
+      "last_activity": "2025-11-14T14:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-10-24T00:51:51.051Z",
+      "n_bronze": null,
+      "n_contests": 1,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 0,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 0,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "VanillaPlus",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 100,
+      "resource_rank": null,
+      "solving": 0.0,
+      "submissions_info": {},
+      "total_solving": 0.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-10-24T00:51:51.027Z",
+      "upsolving": null,
+      "url": "/account/37:da0e0a7b88f2d02af26d6e10f3f3523e03a004df7963d916516516a9b5e341c2/resource/codingcontest.org/"
+    },
+    "model": "ranking.account",
+    "pk": 11840136
+  },
+  {
+    "fields": {
+      "account": 11840134,
+      "addition": {
+        "display_score": "7 levels",
+        "level": 7,
+        "mode": "Team",
+        "name": "KI_ist_unverdient",
+        "team_name": "KI_ist_unverdient",
+        "time": "3:42:10",
+        "time_ms": 13330445,
+        "venue": "Raiffeisenbank Region St. Pölten eGen"
+      },
+      "advanced": false,
+      "contest": 63260645,
+      "created": "2026-10-24T00:51:50.996Z",
+      "global_rating_change": null,
+      "last_activity": "2025-11-14T14:00:00Z",
+      "medal": null,
+      "modified": "2026-10-24T00:51:50.996Z",
+      "n_first_ac": 0,
+      "n_solved": 0,
+      "n_total_solved": 0,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "1",
+      "place_as_int": 1,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 100,
+      "skip_in_stats": false,
+      "solving": 7.0,
+      "total_solving": 7.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 93147050
+  },
+  {
+    "fields": {
+      "account": 11840136,
+      "addition": {
+        "city": "Chișinău",
+        "display_score": "6 levels",
+        "level": 6,
+        "mode": "Team",
+        "name": "VanillaPlus",
+        "team_name": "VanillaPlus",
+        "time": "1:30:38",
+        "time_ms": 5438992,
+        "venue": "Technical University of Moldova"
+      },
+      "advanced": false,
+      "contest": 63260645,
+      "created": "2026-10-24T00:51:51.045Z",
+      "global_rating_change": null,
+      "last_activity": "2025-11-14T14:00:00Z",
+      "medal": null,
+      "modified": "2026-10-24T00:51:51.045Z",
+      "n_first_ac": 0,
+      "n_solved": 0,
+      "n_total_solved": 0,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "3",
+      "place_as_int": 3,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 100,
+      "skip_in_stats": false,
+      "solving": 6.0,
+      "total_solving": 6.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 93147052
+  }
+]

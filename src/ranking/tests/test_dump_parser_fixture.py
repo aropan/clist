@@ -404,6 +404,144 @@ class ParserFixtureValidationTest(SimpleTestCase):
         assert "test-environment-secret" not in message
 
 
+class ParserFixturePublicNamesTest(SimpleTestCase):
+    def test_contact_like_public_names_are_preserved(self):
+        names = ["alice@example.com", "bob@example.com", "+1234567890", "+1234567891"]
+        payload = {"names": names + names}
+
+        sanitized = Command().sanitize_fixture_data(payload)
+
+        assert sanitized == payload
+        assert json.loads(Command().sanitize_fixture_bytes(json.dumps(payload).encode())) == sanitized
+        assert Command().sanitize_fixture_data(sanitized) == sanitized
+
+    def test_unicode_contacts_match_utf8_cache_bytes(self):
+        payload = {"names": ["太郎@example.com", "花子@example.com"]}
+        command = Command()
+
+        sanitized = command.sanitize_fixture_data(payload)
+        cached = command.sanitize_fixture_bytes(json.dumps(payload, ensure_ascii=False).encode("utf-8"))
+
+        assert json.loads(cached) == sanitized
+        assert sanitized == payload
+
+    def test_contact_fields_are_redacted_in_structured_data_and_json_cache(self):
+        payload = {"name": "alice@example.com", "email": "alice@example.com", "phone": "+1234567890"}
+        command = Command()
+        expected = {"name": "alice@example.com", "email": "<redacted-email>", "phone": "<redacted-phone>"}
+
+        assert command.sanitize_fixture_data(payload) == expected
+        cached = command.sanitize_fixture_bytes(json.dumps(payload).encode())
+        assert json.loads(cached) == expected
+        assert command.sanitize_fixture_bytes(cached) == cached
+
+    def test_contact_fields_are_redacted_regardless_of_case_or_structure(self):
+        payload = {
+            "name": "alice@example.com",
+            "profile": {
+                "Email": ["alice@example.com", {"value": "bob@example.com"}, None],
+                "PHONE": {"primary": 1234567890, "secondary": ["+1234567891", None]},
+                "email": None,
+                "phone": None,
+            },
+        }
+        expected = {
+            "name": "alice@example.com",
+            "profile": {
+                "Email": ["<redacted-email>", {"value": "<redacted-email>"}, None],
+                "PHONE": {"primary": "<redacted-phone>", "secondary": ["<redacted-phone>", None]},
+                "email": None,
+                "phone": None,
+            },
+        }
+        command = Command()
+        content = json.dumps(payload).encode()
+
+        assert command.sanitize_fixture_data(payload) == expected
+        sanitized = command.sanitize_fixture_bytes(content)
+        assert json.loads(sanitized) == expected
+        assert command.sanitize_fixture_data(expected) == expected
+        assert command.sanitize_fixture_bytes(sanitized) == sanitized
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            fixture_path = Path(temporary_directory)
+            payload_path = fixture_path / "payload.json"
+            payload_path.write_bytes(content)
+            with pytest.raises(CommandError, match="refusing to keep potentially sensitive data"):
+                command.validate_recording(fixture_path)
+            payload_path.write_bytes(sanitized)
+            command.validate_recording(fixture_path)
+
+    def test_binary_fallback_preserves_other_bytes(self):
+        text = "alice@example.com key=AIza" + "x" * 35
+        command = Command()
+
+        sanitized = command.sanitize_fixture_bytes(b"\xff " + text.encode() + b"\x00")
+
+        assert sanitized == b"\xff " + command.sanitize_fixture_text(text).encode() + b"\x00"
+        assert b"alice@example.com key=<redacted-google-api-key>" in sanitized
+        assert command.sanitize_fixture_bytes(sanitized) == sanitized
+
+
+class ParserFixtureSecretRedactionTest(SimpleTestCase):
+    def test_api_key_in_json_property_name_is_redacted(self):
+        command = Command()
+        api_key = "AIza" + "x" * 35
+        for contact_fields in ({}, {"email": "alice@example.com"}):
+            with self.subTest(contact_fields=contact_fields):
+                payload = {"result": {f"https://maps.example/?key={api_key}": "public"}, **contact_fields}
+                content = json.dumps(payload).encode()
+
+                sanitized = command.sanitize_fixture_bytes(content)
+
+                assert api_key.encode() not in sanitized
+                assert (
+                    json.loads(sanitized)["result"]["https://maps.example/?key=<redacted-google-api-key>"] == "public"
+                )
+                assert command.sanitize_fixture_bytes(sanitized) == sanitized
+                with tempfile.TemporaryDirectory() as temporary_directory:
+                    fixture_path = Path(temporary_directory)
+                    payload_path = fixture_path / "payload.json"
+                    payload_path.write_bytes(content)
+                    with pytest.raises(CommandError, match="refusing to keep potentially sensitive data"):
+                        command.validate_recording(fixture_path)
+                    payload_path.write_bytes(sanitized)
+                    command.validate_recording(fixture_path)
+
+    def test_duplicate_json_properties_are_rejected(self):
+        command = Command()
+        api_key = "AIza" + "x" * 35
+        contents = (
+            f'{{"name": "{api_key}", "name": "public"}}'.encode(),
+            b'{"email": "private@example.invalid", "email": null}',
+            b'{"profile": {"email": "private@example.invalid", "email": null}}',
+            rb'{"email": "private@example.invalid", "ema\u0069l": null}',
+            b'{"name": "first", "name": "last"}',
+        )
+        for content in contents:
+            with self.subTest(content=content):
+                with pytest.raises(CommandError, match="duplicate JSON properties") as error:
+                    command.sanitize_fixture_bytes(content)
+                assert api_key not in str(error.value)
+                assert "private@example.invalid" not in str(error.value)
+
+                with tempfile.TemporaryDirectory() as temporary_directory:
+                    fixture_path = Path(temporary_directory)
+                    payload_path = fixture_path / "payload.json"
+                    payload_path.write_bytes(content)
+                    with pytest.raises(CommandError, match="duplicate JSON properties"):
+                        command.validate_recording(fixture_path)
+
+    def test_same_json_property_in_separate_objects_is_allowed(self):
+        content = b'[{"name": "alice@example.com"}, {"name": "bob@example.com"}]'
+        command = Command()
+
+        assert command.sanitize_fixture_bytes(content) == content
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            fixture_path = Path(temporary_directory)
+            (fixture_path / "payload.json").write_bytes(content)
+            command.validate_recording(fixture_path)
+
+
 class ParserFixtureStatisticsSelectionTest(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -532,33 +670,36 @@ class ParserFixtureStatisticsSelectionTest(TestCase):
         assert statistic_object["fields"]["addition"] == {"rating": {"new": 1500}}
         assert statistic_object["fields"]["related"] is None
 
-    def test_fixture_public_data_is_redacted_but_calendar_uid_is_preserved(self):
+    def test_fixture_preserves_public_text_and_redacts_contact_fields_and_secrets(self):
         command = Command()
         google_api_key = "AIza" + "x" * 35
         payload = {
             "contact": "alice@example.com",
+            "email": "alice@example.com",
             "phone": "+123 456 7890",
             "link": "tel:+1234567890",
             "calendar": "calendar@group.calendar.google.com",
             "script": f"key={google_api_key}",
             "testSessionHandle": "public-test-session-handle",
         }
+        sanitized = command.sanitize_fixture_data(payload)
         expected = {
-            "contact": "<redacted-email>",
+            "contact": "alice@example.com",
+            "email": "<redacted-email>",
             "phone": "<redacted-phone>",
-            "link": "tel:<redacted-phone>",
+            "link": "tel:+1234567890",
             "calendar": "calendar@group.calendar.google.com",
             "script": "key=<redacted-google-api-key>",
             "testSessionHandle": "<redacted-test-session-handle>",
         }
 
-        assert command.sanitize_fixture_data(payload) == expected
+        assert sanitized == expected
         assert json.loads(command.sanitize_fixture_bytes(json.dumps(payload).encode())) == expected
 
-    def test_validation_rejects_unsanitized_public_data(self):
+    def test_validation_rejects_unsanitized_contact_fields(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
             fixture_path = Path(temporary_directory)
-            (fixture_path / "payload.txt").write_text('{"contact": "alice@example.com"}')
+            (fixture_path / "payload.txt").write_text('{"email": "alice@example.com"}')
 
             with pytest.raises(CommandError, match="refusing to keep potentially sensitive data"):
                 Command().validate_recording(fixture_path)
@@ -567,7 +708,7 @@ class ParserFixtureStatisticsSelectionTest(TestCase):
         with tempfile.TemporaryDirectory() as temporary_directory:
             fixture_path = Path(temporary_directory)
             with gzip.open(fixture_path / "payload.json.gz", "wt") as output_file:
-                json.dump({"contact": "alice@example.com"}, output_file)
+                json.dump({"email": "alice@example.com"}, output_file)
 
             with pytest.raises(CommandError, match="refusing to keep potentially sensitive data"):
                 Command().validate_recording(fixture_path)
@@ -578,7 +719,7 @@ class ParserFixtureStatisticsSelectionTest(TestCase):
             cache_path = fixture_path / "httpcache"
             cache_path.mkdir()
             payload_path = cache_path / "payload.json"
-            payload_path.write_text('{"contact": "alice@example.com"}')
+            payload_path.write_text('{"email": "alice@example.com"}')
             pack_http_cache(cache_path, fixture_path / "httpcache.json.gz")
             payload_path.unlink()
             cache_path.rmdir()
@@ -728,14 +869,14 @@ class ParserFixtureRecordingTest(SimpleTestCase):
             with materialized_http_cache(fixture_path) as cache_path:
                 assert json.loads((cache_path / "page.html").read_text()) == {"ok": True}
 
-    def test_recording_sanitizes_cache_and_expected_standings(self):
+    def test_recording_preserves_public_names_in_cache_and_expected_standings(self):
         command = Command()
         command.serialize_database_fixture = Mock(return_value=[])
         command.select_statistics_for_fixture = Mock(
             return_value=SelectedStatistics(
                 statistics=[],
-                users=["alice"],
-                statistics_by_key={"alice": {"name": "alice@example.com"}},
+                users=["alice", "bob"],
+                statistics_by_key={"alice": {"name": "alice@example.com"}, "bob": {"name": "bob@example.com"}},
                 addition_keys={"name"},
             )
         )
@@ -743,8 +884,8 @@ class ParserFixtureRecordingTest(SimpleTestCase):
         def get_standings(contest, cache_path, allow_network, users=None, statistics=None, *, recorded_at=None):
             cache_path = Path(cache_path)
             if allow_network:
-                (cache_path / "page.html").write_text('{"name": "alice@example.com"}')
-                name = "alice@example.com"
+                names = {"alice": "alice@example.com", "bob": "bob@example.com"}
+                (cache_path / "page.html").write_text(json.dumps(names))
             else:
                 page_path = cache_path / "page.html"
                 if page_path.is_file():
@@ -752,8 +893,9 @@ class ParserFixtureRecordingTest(SimpleTestCase):
                 else:
                     with gzip.open(f"{page_path}.gz", "rt") as input_file:
                         page = input_file.read()
-                name = json.loads(page)["name"]
-            return {"result": {"alice": {"name": name}}}
+                names = json.loads(page)
+            assert len(set(names.values())) == 2, "Redaction merged distinct participant names"
+            return {"result": {member: {"name": name} for member, name in names.items()}}
 
         with tempfile.TemporaryDirectory() as temporary_directory:
             fixture_path = Path(temporary_directory) / "1" / "2"
@@ -768,8 +910,9 @@ class ParserFixtureRecordingTest(SimpleTestCase):
             with materialized_http_cache(fixture_path) as cache_path:
                 cached = json.loads((cache_path / "page.html").read_text())
 
-        assert expected["result"]["alice"]["name"] == "<redacted-email>"
-        assert cached["name"] == "<redacted-email>"
+        assert cached == {"alice": "alice@example.com", "bob": "bob@example.com"}
+        for member in ("alice", "bob"):
+            assert expected["result"][member]["name"] == cached[member]
 
     def test_update_preserves_the_existing_replay_time(self):
         recorded_at = datetime(2026, 10, 24, 11, 51, 28, tzinfo=UTC)

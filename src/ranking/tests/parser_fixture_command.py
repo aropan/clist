@@ -88,24 +88,6 @@ SENSITIVE_NAME_RE = re.compile(
 ACCOUNT_PRIVATE_NAME_RE = re.compile(r"(?:e-?mail|phone|mobile|passwd|birth|telegram)", re.IGNORECASE)
 FIXTURE_REDACTIONS = (
     FixtureRedaction.compile(
-        "email",
-        r"(?<![\w.+-])[\w.+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}(?![\w.-])",
-        "<redacted-email>",
-        allowed_suffixes=("@group.calendar.google.com",),
-    ),
-    FixtureRedaction.compile(
-        "telephone-link",
-        r"\btel:\s*\+?(?:[ ()-]*\d){7,15}",
-        "<redacted-phone>",
-        replacement="tel:<redacted-phone>",
-        flags=re.IGNORECASE,
-    ),
-    FixtureRedaction.compile(
-        "phone",
-        r"(?<![A-Za-z0-9])\+(?:[ ()-]*\d){7,15}(?![A-Za-z0-9])",
-        "<redacted-phone>",
-    ),
-    FixtureRedaction.compile(
         "google-browser-api-key",
         r"\bAIza[0-9A-Za-z_-]{30,}\b",
         "<redacted-google-api-key>",
@@ -119,7 +101,9 @@ FIXTURE_REDACTIONS = (
 )
 FIXTURE_REDACTIONS_BY_NAME = {redaction.name: redaction for redaction in FIXTURE_REDACTIONS}
 FIXTURE_FIELD_REDACTIONS = {
-    "testSessionHandle": FIXTURE_REDACTIONS_BY_NAME["test-session-handle"].marker,
+    "email": "<redacted-email>",
+    "phone": "<redacted-phone>",
+    "testsessionhandle": FIXTURE_REDACTIONS_BY_NAME["test-session-handle"].marker,
 }
 DYNAMIC_JSON_MAP_FIELDS = {"problems", "result"}
 PUBLIC_JSON_TEXT_VALUE_FIELDS = {"affiliation"}
@@ -612,20 +596,42 @@ class Command(BaseCommand):
         return value
 
     def sanitize_fixture_bytes(self, value):
+        def unique_json_object(pairs):
+            data = dict(pairs)
+            if len(data) != len(pairs):
+                raise CommandError("refusing to keep duplicate JSON properties")
+            return data
+
+        try:
+            text = value.decode("utf-8")
+        except UnicodeDecodeError:
+            pass
+        else:
+            try:
+                data = json.loads(text, object_pairs_hook=unique_json_object)
+            except json.JSONDecodeError:
+                return self.sanitize_fixture_text(text).encode("utf-8")
+            sanitized = self.sanitize_fixture_data(data)
+            if sanitized != data:
+                text = json.dumps(sanitized, ensure_ascii=False)
+            return self.sanitize_fixture_text(text).encode("utf-8")
         for redaction in FIXTURE_REDACTIONS:
             value = redaction.sanitize_bytes(value)
         return value
 
-    def sanitize_fixture_data(self, value):
+    def sanitize_fixture_data(self, value, *, redaction=None):
         if isinstance(value, dict):
             return {
-                key: FIXTURE_FIELD_REDACTIONS[key]
-                if key in FIXTURE_FIELD_REDACTIONS and isinstance(item, str)
-                else self.sanitize_fixture_data(item)
+                key: self.sanitize_fixture_data(
+                    item,
+                    redaction=FIXTURE_FIELD_REDACTIONS.get(str(key).casefold(), redaction),
+                )
                 for key, item in value.items()
             }
         if isinstance(value, list):
-            return [self.sanitize_fixture_data(item) for item in value]
+            return [self.sanitize_fixture_data(item, redaction=redaction) for item in value]
+        if redaction is not None and value is not None:
+            return redaction
         if isinstance(value, str):
             return self.sanitize_fixture_text(value)
         return value

@@ -292,11 +292,15 @@
 
     {% include "resource_accounts_panel.html" with condition=resource.has_statistic_place accounts=most_places field="n_first_places,n_second_places,n_third_places,n_top_ten_places" title="Most top" header="T1,T2,T3,T10" paging="resource_most_places_paging.html" %}
 
+    {% if not resource.info.hide_most_participations %}
     {% include "resource_accounts_panel.html" with condition=True accounts=most_participated field="n_contests" title="Most participations" header="Contests count" paging="resource_most_participated_paging.html" %}
+    {% endif %}
 
     {% include "resource_accounts_panel.html" with condition=resource.has_account_last_submission accounts=last_submissions field="last_submission" title="Most recent submissions" header="Submission time" paging="resource_last_submission_paging.html" %}
 
+    {% if not resource.info.hide_most_recent_activity %}
     {% include "resource_accounts_panel.html" with condition=True accounts=last_activities field="last_activity" title="Most recent activity" header="Last activity" paging="resource_last_activity_paging.html" %}
+    {% endif %}
 
     {% include "resource_accounts_panel.html" with condition=resource.ratings accounts=last_rating_activities field="last_rating_activity" title="Most recent rating activity" header="Rating activity" paging="resource_last_rating_activity_paging.html" %}
 

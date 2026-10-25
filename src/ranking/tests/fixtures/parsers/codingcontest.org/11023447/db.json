@@ -1,0 +1,600 @@
+[
+  {
+    "fields": {
+      "accounts_fields": {
+        "types": {},
+        "verification_fields": []
+      },
+      "activity_score": 1.8903399308773619,
+      "activity_updated_at": "2026-10-23T03:30:09.876Z",
+      "allow_delete_archived_statistics": false,
+      "api_url": null,
+      "auto_remove_started": false,
+      "avatar_url": null,
+      "avg_rating": null,
+      "color": "#CCB965",
+      "contest_update_time": "2026-10-24T00:52:21.648Z",
+      "country_rank_update_time": "2026-10-24T01:00:10.459Z",
+      "created": "2018-04-01T22:21:55.660Z",
+      "default_account_type": 1,
+      "enable": true,
+      "has_account_last_submission": null,
+      "has_account_n_writers": null,
+      "has_account_verification": false,
+      "has_accounts_infos_update": false,
+      "has_country_medal": null,
+      "has_country_place": null,
+      "has_country_rating": false,
+      "has_inherit_medals_to_related": false,
+      "has_multi_account": false,
+      "has_problem_archive": false,
+      "has_problem_rating": false,
+      "has_problem_statistic": false,
+      "has_problem_update": false,
+      "has_rating_history": false,
+      "has_standings_renamed_account": false,
+      "has_statistic_medal": null,
+      "has_statistic_n_first_ac": null,
+      "has_statistic_n_total_solved": null,
+      "has_statistic_place": null,
+      "has_statistic_total_solving": null,
+      "has_submissions_statistics_log": false,
+      "has_upsolving": false,
+      "host": "codingcontest.org",
+      "icon_file": "resources/codingcontest_org.png",
+      "icon_updated_at": null,
+      "icon_url": null,
+      "info": {
+        "get_events": {
+          "colors": {
+            "darken": "#443C16",
+            "lighten": "#EFEAD0"
+          }
+        }
+      },
+      "medal_win_equals_gold": null,
+      "modified": "2026-10-24T01:00:10.881Z",
+      "n_accounts": 3553,
+      "n_accounts_to_update": null,
+      "n_contests": 34,
+      "n_member_accounts": null,
+      "n_rating_accounts": null,
+      "n_statistics": 0,
+      "n_team_accounts": 1637,
+      "n_university_accounts": 0,
+      "parse_url": "https://register.codingcontest.org/listings?type=&country=&page=0",
+      "path": "./module/codingcontest.org/index.php",
+      "problem_archive_update_time": null,
+      "problem_rating_predictor": {},
+      "problem_url": null,
+      "problems_fields": {
+        "types": {}
+      },
+      "profile_url": null,
+      "rank_update_time": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "ratings": [],
+      "regexp": null,
+      "short_host": "codingcontest",
+      "skip_for_contests_chart": false,
+      "statistics_fields": {
+        "types": {}
+      },
+      "timezone": null,
+      "uid": "b8hi5kc1r118tcnd9pi5b4iqc4@group.calendar.google.com",
+      "url": "https://codingcontest.org/"
+    },
+    "model": "clist.resource",
+    "pk": 100
+  },
+  {
+    "fields": {
+      "created": "2026-10-24T00:50:32.835Z",
+      "delay_on_error": "01:00:00",
+      "delay_on_success": "06:00:00",
+      "delay_shortly_after": "00:05:00",
+      "enable": false,
+      "long_contest_divider": 15,
+      "long_contest_idle": "06:00:00",
+      "max_delay_after_end": "7 00:00:00",
+      "min_delay_after_end": "01:00:00",
+      "modified": "2026-10-24T00:50:32.835Z",
+      "path": "ranking.management.modules.codingcontest",
+      "resource": 100,
+      "shortly_after": "00:30:00"
+    },
+    "model": "ranking.module",
+    "pk": 99
+  },
+  {
+    "fields": {
+      "allow_updating_statistics_for_participants": null,
+      "auto_updated": "2026-10-24T01:46:05Z",
+      "calculate_time": false,
+      "created": "2018-04-01T22:23:07.698Z",
+      "duration_in_secs": 14400,
+      "edit": null,
+      "elimination_tournament_info": {},
+      "end_time": "2018-04-27T17:00:00Z",
+      "finalists_info": {},
+      "has_fixed_rating_prediction_field": false,
+      "has_hidden_results": false,
+      "has_submissions": null,
+      "has_submissions_tests": null,
+      "has_unlimited_statistics": null,
+      "hide_unsolved_standings_problems": null,
+      "host": "codingcontest.org",
+      "info": {
+        "fields": [
+          "name",
+          "level",
+          "mode",
+          "time",
+          "time_ms",
+          "venue",
+          "city",
+          "team_name",
+          "display_score"
+        ],
+        "fields_types": {
+          "city": [
+            "str"
+          ],
+          "display_score": [
+            "str"
+          ],
+          "level": [
+            "int"
+          ],
+          "mode": [
+            "str"
+          ],
+          "name": [
+            "str"
+          ],
+          "team_name": [
+            "str"
+          ],
+          "time": [
+            "str"
+          ],
+          "time_ms": [
+            "int"
+          ],
+          "venue": [
+            "str"
+          ]
+        },
+        "hidden_fields": [
+          "time_ms",
+          "display_score"
+        ],
+        "parse": {
+          "contestType": "CLASSIC",
+          "durationMinutes": 240,
+          "editionName": "28th Coding Contest 2018",
+          "gameBaseUrl": "",
+          "gameDescription": null,
+          "gameImage": null,
+          "gameName": "ccc-main-2018",
+          "gameSlug": "ccc-main-2018",
+          "gameTags": [],
+          "id": 469,
+          "maxTeamSize": 3,
+          "name": "Coding Contest 2018",
+          "recruiting": false,
+          "registrationCount": 1282,
+          "registrationStartTime": "2018-03-20T19:41:12Z",
+          "serverNowMs": 1792806362852,
+          "slug": "coding-contest-2018-1",
+          "startTime": "2018-04-27T13:00:00Z",
+          "status": "FINISHED",
+          "totalLevels": 0,
+          "venues": [
+            {
+              "availableSlots": 99814,
+              "hostName": "ONLINE",
+              "id": 1,
+              "maxParticipants": 99999,
+              "name": "ONLINE"
+            },
+            {
+              "availableSlots": 89,
+              "hostName": "Cloudflight Amstetten",
+              "id": 4,
+              "maxParticipants": 120,
+              "name": "AK Niederösterreich"
+            },
+            {
+              "availableSlots": 73,
+              "hostName": "JKU (Keplergebäude, HS1)",
+              "id": 5,
+              "maxParticipants": 229,
+              "name": "JKU (Keplergebäude, HS1)"
+            },
+            {
+              "availableSlots": 143,
+              "hostName": "Vienna City Hall",
+              "id": 6,
+              "maxParticipants": 370,
+              "name": "Vienna City Hall"
+            },
+            {
+              "availableSlots": 29,
+              "hostName": "TU Graz",
+              "id": 7,
+              "maxParticipants": 48,
+              "name": "TU Graz"
+            },
+            {
+              "availableSlots": 73,
+              "hostName": "HTL Krems",
+              "id": 9,
+              "maxParticipants": 100,
+              "name": "HTL Krems"
+            },
+            {
+              "availableSlots": 25,
+              "hostName": "HTL Saalfelden",
+              "id": 10,
+              "maxParticipants": 50,
+              "name": "HTL Saalfelden"
+            },
+            {
+              "availableSlots": 29,
+              "hostName": "General Logistics Systems Poland Sp. z o.o.",
+              "id": 11,
+              "maxParticipants": 40,
+              "name": "General Logistics Systems Poland Sp. z o.o."
+            },
+            {
+              "availableSlots": 42,
+              "hostName": "42 Heilbronn",
+              "id": 15,
+              "maxParticipants": 50,
+              "name": "42 Heilbronn"
+            },
+            {
+              "availableSlots": 19,
+              "hostName": "University of West Bohemia",
+              "id": 16,
+              "maxParticipants": 30,
+              "name": "University of West Bohemia"
+            },
+            {
+              "availableSlots": 0,
+              "hostName": "German University in Cairo",
+              "id": 17,
+              "maxParticipants": 50,
+              "name": "German University in Cairo"
+            },
+            {
+              "availableSlots": 60,
+              "hostName": "University of Lille",
+              "id": 19,
+              "maxParticipants": 100,
+              "name": "University of Lille"
+            },
+            {
+              "availableSlots": 55,
+              "hostName": "TU Darmstadt, Fachschaft Informatik",
+              "id": 20,
+              "maxParticipants": 100,
+              "name": "TU Darmstadt, Fachschaft Informatik"
+            },
+            {
+              "availableSlots": 22,
+              "hostName": "Technische Hochschule Köln",
+              "id": 21,
+              "maxParticipants": 30,
+              "name": "Technische Hochschule Köln"
+            },
+            {
+              "availableSlots": 51,
+              "hostName": "Coders.Bay (21.03.2024)",
+              "id": 27,
+              "maxParticipants": 60,
+              "name": "Coders.Bay (21.03.2024)"
+            },
+            {
+              "availableSlots": 36,
+              "hostName": "Technical University of Moldova",
+              "id": 29,
+              "maxParticipants": 100,
+              "name": "Technical University of Moldova"
+            },
+            {
+              "availableSlots": 63,
+              "hostName": "University of Warsaw",
+              "id": 32,
+              "maxParticipants": 79,
+              "name": "University of Warsaw"
+            },
+            {
+              "availableSlots": 196,
+              "hostName": "FSEGA",
+              "id": 34,
+              "maxParticipants": 600,
+              "name": "FSEGA"
+            },
+            {
+              "availableSlots": 12,
+              "hostName": "University of Craiova",
+              "id": 35,
+              "maxParticipants": 82,
+              "name": "University of Craiova"
+            },
+            {
+              "availableSlots": 0,
+              "hostName": "AI Cuza University",
+              "id": 36,
+              "maxParticipants": 90,
+              "name": "AI Cuza University"
+            },
+            {
+              "availableSlots": 48,
+              "hostName": "West University of Timisoara",
+              "id": 37,
+              "maxParticipants": 120,
+              "name": "West University of Timisoara"
+            },
+            {
+              "availableSlots": 70,
+              "hostName": "University of Pretoria",
+              "id": 40,
+              "maxParticipants": 100,
+              "name": "University of Pretoria"
+            },
+            {
+              "availableSlots": 979,
+              "hostName": "Cloudflight",
+              "id": 43,
+              "maxParticipants": 999,
+              "name": "Cloudflight"
+            }
+          ]
+        }
+      },
+      "invisible": false,
+      "is_auto_added": true,
+      "is_promoted": null,
+      "is_rated": null,
+      "key": "469",
+      "kind": "classic",
+      "link_statistic_timing": null,
+      "merging_contests": [],
+      "modified": "2026-10-23T14:36:28.008Z",
+      "n_problems": null,
+      "n_statistics": 1225,
+      "notification_timing": "2018-04-01T22:43:10.832Z",
+      "parsed_percentage": null,
+      "parsed_time": "2026-10-24T00:51:02.054Z",
+      "problem_rating_hash": null,
+      "problem_rating_update_required": false,
+      "rating_prediction_fields": {},
+      "rating_prediction_hash": null,
+      "rating_prediction_timing": null,
+      "raw_info": {},
+      "registration_url": null,
+      "related": null,
+      "resource": 100,
+      "series": null,
+      "set_matched_coders_to_members": false,
+      "slug": "28th-coding-contest-2018-ccc-main-2018",
+      "standings_kind": null,
+      "standings_url": null,
+      "start_time": "2018-04-27T13:00:00Z",
+      "statistic_timing": "2026-10-24T06:51:02.054Z",
+      "statistics_update_required": false,
+      "submissions_info": {},
+      "title": "28th Coding Contest 2018. ccc-main-2018",
+      "title_path": "28th.coding.contest.2018.ccc.main.2018",
+      "trial_standings_url": null,
+      "uid": "ufra27jvq27h2qmvjnk8acg4cg",
+      "updated": "2026-10-24T01:46:05.170Z",
+      "upload_solved_problems_solutions": null,
+      "upsolving_key": null,
+      "upsolving_url": null,
+      "url": "https://codingcontest.org/",
+      "variables": {},
+      "wait_for_successful_update_timing": null,
+      "with_advance": false,
+      "with_medals": false
+    },
+    "model": "clist.contest",
+    "pk": 11023447
+  },
+  {
+    "fields": {
+      "account_type": 1,
+      "country": null,
+      "created": "2026-10-24T00:51:05.005Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "is_team": false
+      },
+      "key": "469:ulrikdem:solo:university-of-pretoria",
+      "last_activity": "2018-04-27T13:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-10-24T00:51:05.065Z",
+      "n_bronze": null,
+      "n_contests": 1,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 0,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 0,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "ulrikdem",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 100,
+      "resource_rank": null,
+      "solving": 0.0,
+      "submissions_info": {},
+      "total_solving": 0.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-10-24T00:51:05.006Z",
+      "upsolving": null,
+      "url": "/account/469:0c515b6bd45d0df5cef7c75ee2059f961bbec7c082b58753403c92651800502c/resource/codingcontest.org/"
+    },
+    "model": "ranking.account",
+    "pk": 11838323
+  },
+  {
+    "fields": {
+      "account_type": 3,
+      "country": null,
+      "created": "2026-10-24T00:51:05.071Z",
+      "deleted": null,
+      "duplicate": null,
+      "global_rating": null,
+      "info": {
+        "is_team": true
+      },
+      "key": "469:carla-s-bits:team:west-university-of-timisoara:timisoara",
+      "last_activity": "2018-04-27T13:00:00Z",
+      "last_rating_activity": null,
+      "last_submission": null,
+      "modified": "2026-10-24T00:51:05.100Z",
+      "n_bronze": null,
+      "n_contests": 1,
+      "n_first_ac": 0,
+      "n_first_places": null,
+      "n_gold": null,
+      "n_listvalues": 0,
+      "n_medals": null,
+      "n_other_medals": null,
+      "n_places": null,
+      "n_second_places": null,
+      "n_silver": null,
+      "n_solved": 0,
+      "n_subscribers": 0,
+      "n_third_places": null,
+      "n_top_ten_places": null,
+      "n_total_solved": 0,
+      "n_upsolved": null,
+      "n_win": null,
+      "n_writers": 0,
+      "name": "Carla's Bits",
+      "need_verification": false,
+      "rating": null,
+      "rating50": null,
+      "rating_prediction": null,
+      "rating_update_time": null,
+      "related": null,
+      "resource": 100,
+      "resource_rank": null,
+      "solving": 0.0,
+      "submissions_info": {},
+      "total_solving": 0.0,
+      "try_fill_missed_ranks_time": null,
+      "try_renaming_check_time": null,
+      "updated": "2026-10-24T00:51:05.071Z",
+      "upsolving": null,
+      "url": "/account/469:abeee6747fb8a0259f527faf92c968d5df2aff68d7b8f25b43cbc130ceb9d954/resource/codingcontest.org/"
+    },
+    "model": "ranking.account",
+    "pk": 11838324
+  },
+  {
+    "fields": {
+      "account": 11838323,
+      "addition": {
+        "display_score": "6 levels",
+        "level": 6,
+        "mode": "Solo",
+        "name": "ulrikdem",
+        "time": "2:58:16",
+        "time_ms": 10696289,
+        "venue": "University of Pretoria"
+      },
+      "advanced": false,
+      "contest": 11023447,
+      "created": "2026-10-24T00:51:05.055Z",
+      "global_rating_change": null,
+      "last_activity": "2018-04-27T13:00:00Z",
+      "medal": null,
+      "modified": "2026-10-24T00:51:05.055Z",
+      "n_first_ac": 0,
+      "n_solved": 0,
+      "n_total_solved": 0,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "1",
+      "place_as_int": 1,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 100,
+      "skip_in_stats": false,
+      "solving": 6.0,
+      "total_solving": 6.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 93145237
+  },
+  {
+    "fields": {
+      "account": 11838324,
+      "addition": {
+        "city": "Timișoara",
+        "display_score": "6 levels",
+        "level": 6,
+        "mode": "Team",
+        "name": "Carla's Bits",
+        "team_name": "Carla's Bits",
+        "time": "3:44:16",
+        "time_ms": 13456523,
+        "venue": "West University of Timisoara"
+      },
+      "advanced": false,
+      "contest": 11023447,
+      "created": "2026-10-24T00:51:05.094Z",
+      "global_rating_change": null,
+      "last_activity": "2018-04-27T13:00:00Z",
+      "medal": null,
+      "modified": "2026-10-24T00:51:05.094Z",
+      "n_first_ac": 0,
+      "n_solved": 0,
+      "n_total_solved": 0,
+      "n_upsolved": null,
+      "new_global_rating": null,
+      "penalty": null,
+      "place": "2",
+      "place_as_int": 2,
+      "rating_prediction": null,
+      "related": null,
+      "resource": 100,
+      "skip_in_stats": false,
+      "solving": 6.0,
+      "total_solving": 6.0,
+      "upsolving": null,
+      "url": null
+    },
+    "model": "ranking.statistics",
+    "pk": 93145238
+  }
+]

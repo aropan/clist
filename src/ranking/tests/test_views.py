@@ -264,6 +264,35 @@ class MixedTeamStandingsTest(TestCase):
                 assert len(statistic_ids) == 1
                 assert Statistics.objects.get(pk=int(statistic_ids[0])).account.key == handle
 
+    def test_mode_filter_supports_source_values_and_multiple_selection(self):
+        self.contest.info = {"fields": ["mode"]}
+        self.contest.n_statistics = len(self.statistics)
+        self.contest.save(update_fields=["info", "n_statistics"])
+        modes = ("Solo", "Team", "Relay", "Solo", "Team")
+        for statistic, mode in zip(self.statistics.values(), modes, strict=True):
+            statistic.addition = {"mode": mode}
+            statistic.save(update_fields=["addition"])
+
+        url = reverse("ranking:standings_by_id", args=[self.contest.pk])
+        for selected in ([], ["Solo"], ["Team"], ["Relay"], ["Solo", "Team"]):
+            with self.subTest(selected=selected):
+                response = self.client.get(url, {"mode": selected})
+                assert response.status_code == 200
+                assert "mode" in response.context["fields_to_select"]
+                statistic_ids = re.findall(rb'data-statistic-id="([0-9]+)"', response.content)
+                expected = {
+                    str(statistic.pk).encode()
+                    for statistic, mode in zip(self.statistics.values(), modes, strict=True)
+                    if not selected or mode in selected
+                }
+                assert set(statistic_ids) == expected
+
+        response = self.client.get(
+            reverse("coder:search"), {"query": "field-to-select", "cid": self.contest.pk, "field": "mode"}
+        )
+        assert response.status_code == 200
+        assert {item["id"] for item in response.json()["items"]} == set(modes)
+
     def test_find_me_paginates_by_grouped_rows(self):
         with mock.patch.object(Contest, "standings_per_page", new_callable=mock.PropertyMock, return_value=2):
             response = self.client.get(

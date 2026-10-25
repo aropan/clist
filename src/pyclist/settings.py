@@ -881,6 +881,7 @@ FONTAWESOME_ICONS_ = {
     "languages": '<i class="fa-fw fas fa-code"></i>',
     "verdicts": '<i class="fa-fw fas fa-scroll"></i>',
     "league": '<i class="fa-fw fas fa-chess"></i>',
+    "mode": '<i class="fa-fw fa-solid fa-sliders"></i>',
     "degree": '<i class="fa-fw fas fa-user-graduate"></i>',
     "university": '<i class="fa-fw fas fa-university"></i>',
     "list": '<i class="fa-fw fas fa-list"></i>',

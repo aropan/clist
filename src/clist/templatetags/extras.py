@@ -362,7 +362,7 @@ def calc_mod_penalty(info, contest, solving, penalty):
 
 @register.filter
 def slug(value, sep=None):
-    ret = slugify(unidecode(value)).strip("-")
+    ret = slugify(unidecode(value))
     if sep:
         ret = ret.replace("-", sep)
     return ret

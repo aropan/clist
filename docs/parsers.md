@@ -39,4 +39,5 @@ contest problems and event logs; use it only when those effects are acceptable.
 
 ## Resource-specific notes
 
+- [Coding Contest](parsers/codingcontest.md) — public results and contest-scoped identities.
 - [Universal Cup](parsers/ucup.md) — season ratings and special participation.
