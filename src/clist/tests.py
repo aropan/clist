@@ -12,6 +12,7 @@ from bs4 import BeautifulSoup
 from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth.models import AnonymousUser, User
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
@@ -27,6 +28,7 @@ from oauth2_provider.checks import validate_bcp_configuration
 from oauth2_provider.models import Application
 from PIL import Image
 
+from clist import views
 from clist.api.paginator import EstimatedCountPaginator
 from clist.models import Contest, Problem, Resource
 from clist.oauth_application import check_oauth_application_redirect_uris
@@ -44,6 +46,7 @@ from pyclist.indexes import GinIndexTrgrmOps
 from pyclist.sitemaps import CodersSitemap, ResourcesSitemap, StandingsSitemap, StaticViewSitemap, sitemaps
 from ranking.models import Account, CountryAccount
 from true_coders.models import Coder
+from utils.chart import make_chart
 
 
 class CountryTemplateTagsTest(SimpleTestCase):
@@ -508,6 +511,170 @@ class SitemapTest(TestCase):
 
         assert response.status_code == 200
         assert f'<link rel="canonical" href="http://testserver{location}">' in response.content.decode()
+
+
+@override_settings(
+    MIDDLEWARE=MIDDLEWARE_WITHOUT_DEBUG_TOOLING,
+    CACHES={
+        "default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache", "LOCATION": "resource-rating-tests"}
+    },
+)
+class ResourceRatingChartTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        with mock.patch.object(Resource, "update_icon"):
+            cls.resource = Resource.objects.create(
+                host="rating-chart.example.com",
+                url="https://rating-chart.example.com/",
+                enable=True,
+                has_rating_history=True,
+                ratings=[
+                    {"low": -10000, "high": 20, "next": 20, "hex_rgb": "#aaa", "color": "gray"},
+                    {"low": 20, "high": 80, "next": 80, "hex_rgb": "#bbb", "color": "green"},
+                    {"low": 80, "high": 10000, "hex_rgb": "#ccc", "color": "red"},
+                ],
+            )
+
+    def setUp(self):
+        cache.clear()
+
+    def create_accounts(self, ratings, prefix="user", **kwargs):
+        Account.objects.bulk_create([
+            Account(resource=self.resource, key=f"{prefix}-{index}", rating=rating, **kwargs)
+            for index, rating in enumerate(ratings)
+        ])
+        return self.resource.account_set.filter(key__startswith=f"{prefix}-")
+
+    def assert_chart_equal(self, actual, expected):
+        for chart in (actual, expected):
+            if chart is not None:
+                queryset = chart.pop("queryset")
+                assert queryset.query.annotations["value"] is not None
+        assert actual == expected
+
+    def test_integer_histogram_matches_existing_chart(self):
+        datasets = (
+            (),
+            (None, None),
+            (5,),
+            (0, 0, 0),
+            (-100, 0, 0, 1, 20, 40, 80, 100, 101, None),
+            (0, 20, 20, 40, 60, 80, 100),
+            (0, 2),
+        )
+        for index, values in enumerate(datasets):
+            ratings = self.create_accounts(values, prefix=f"dataset-{index}").filter(rating__isnull=False)
+            for n_bins, step in ((4, None), (40, 100), (0, None)):
+                with self.subTest(values=values, n_bins=n_bins, step=step):
+                    expected = make_chart(ratings, "rating", n_bins=n_bins, step=step)
+                    actual = views.resource_account_rating_histogram(ratings, n_bins, step)
+                    self.assert_chart_equal(actual, expected)
+
+    def test_resource_colors_and_range_bounds_match_existing_chart(self):
+        accounts = self.create_accounts((-100, 0, 20, 40, 80, 100, None))
+        filtered = accounts.filter(rating__gte=20, rating__lte=80)
+        logger = mock.Mock()
+
+        def old_histogram(ratings, n_bins, step):
+            return make_chart(ratings, "rating", n_bins=n_bins, step=step)
+
+        with mock.patch.object(views, "resource_account_rating_histogram", side_effect=old_histogram):
+            expected = views.resource_account_rating_chart(self.resource, filtered, self.resource.ratings, logger)
+        actual = views.resource_account_rating_chart(self.resource, filtered, self.resource.ratings, logger)
+
+        assert actual["min"] == expected["min"] == -100
+        assert actual["max"] == expected["max"] == 100
+        self.assert_chart_equal(actual["chart"], expected["chart"])
+
+    def test_requested_filters_do_not_reuse_default_cache(self):
+        now = timezone.now()
+        self.create_accounts((0, 20, 40), country="PL", n_contests=10, last_activity=now)
+        self.create_accounts((60,), prefix="other-country", country="DE", n_contests=10, last_activity=now)
+        self.create_accounts(
+            (80,), prefix="inactive", country="PL", n_contests=1, last_activity=now - timedelta(days=400)
+        )
+        self.create_accounts((100,), prefix="team", account_type=3, country="PL", n_contests=10, last_activity=now)
+        path = reverse("clist:resource", args=[self.resource.host])
+
+        response = self.client.get(path)
+        assert response.status_code == 200
+        default_chart = response.context["rating"]["chart"]
+        assert sum(row["count"] for row in default_chart["data"]) == 5
+        assert "queryset" not in default_chart
+        with mock.patch.object(views, "resource_account_rating_histogram") as histogram:
+            response = self.client.get(path)
+        assert response.status_code == 200
+        histogram.assert_not_called()
+
+        for params, count in (
+            ({"country": "DE"}, 1),
+            ({"account_type": "team"}, 1),
+            ({"country": "PL", "period": "year", "rating_from": 20, "rating_to": 40, "n_participations_from": 5}, 2),
+        ):
+            with self.subTest(params=params):
+                response = self.client.get(path, params)
+                assert response.status_code == 200
+                chart = response.context["rating"]["chart"]
+                assert sum(row["count"] for row in chart["data"]) == count
+                assert "queryset" in chart
+
+        response = self.client.get(path)
+        assert response.context["rating"]["chart"] == default_chart
+
+    def test_join_multiplicity_and_ordering_are_preserved(self):
+        account = self.create_accounts((20,)).get()
+        for index in range(2):
+            user = User.objects.create_user(username=f"rating-coder-{index}")
+            account.coders.add(Coder.objects.create(user=user))
+        ratings = self.resource.account_set.filter(coders__user__is_active=True).order_by("-key")
+
+        expected = make_chart(ratings, "rating", n_bins=4)
+        actual = views.resource_account_rating_histogram(ratings, 4, None)
+
+        assert sum(row["value"] for row in actual["data"]) == 2
+        self.assert_chart_equal(actual, expected)
+
+    def test_coloring_field_uses_existing_aggregation(self):
+        self.resource.info = {"ratings": {"chartjs": {"coloring_field": "rank", "n_bins": 4}}}
+        accounts = self.create_accounts((0, 20), info={"rank": 50})
+        self.create_accounts((100,), prefix="without-rank")
+        with (
+            mock.patch.object(views, "resource_account_rating_histogram") as histogram,
+            mock.patch.object(views, "make_chart", wraps=make_chart) as chart,
+        ):
+            result = views.resource_account_rating_chart(
+                self.resource, self.resource.account_set.all(), self.resource.ratings, mock.Mock()
+            )
+
+        histogram.assert_not_called()
+        chart.assert_called_once()
+        rows = result["chart"]["data"]
+        assert sum(row["count"] for row in rows) == accounts.count()
+        assert {row["coloring_field"] for row in rows if row["count"]} == {50}
+        assert {row["hex_rgb"] for row in rows if row["count"]} == {"#bbb"}
+
+    def test_ajax_pagination_does_not_calculate_chart(self):
+        self.create_accounts(range(12))
+        with mock.patch.object(views, "resource_account_rating_chart") as chart:
+            response = self.client.get(
+                reverse("clist:resource", args=[self.resource.host]),
+                {"top_page": 2, "querystring_key": "top_page"},
+                HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+            )
+
+        assert response.status_code == 200
+        chart.assert_not_called()
+        assert response.context["rating"]["chart"] is None
+
+    @override_settings(CHART_N_BINS_LIMIT=2)
+    def test_too_many_bins_keeps_range_bounds(self):
+        accounts = self.create_accounts((0, 100))
+        logger = mock.Mock()
+
+        result = views.resource_account_rating_chart(self.resource, accounts, self.resource.ratings, logger)
+
+        assert result == {"chart": None, "min": 0, "max": 100}
+        logger.error.assert_called_once()
 
 
 @override_settings(MIDDLEWARE=MIDDLEWARE_WITHOUT_DEBUG_TOOLING)

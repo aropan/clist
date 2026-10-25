@@ -40,6 +40,7 @@ from clist.templatetags.extras import (
     media_size,
     rating_from_probability,
     redirect_login,
+    title_field,
     toint,
     win_probability,
 )
@@ -50,7 +51,7 @@ from pyclist.decorators import context_pagination
 from ranking.models import Account, CountryAccount, Rating, Statistics
 from ranking.utils import get_participation_contests
 from true_coders.models import Coder, CoderList, CoderProblem, Filter, Party
-from utils.chart import TooManyBinsException, make_bins, make_chart
+from utils.chart import TooManyBinsException, make_bins, make_chart, make_histogram
 from utils.db import get_order_by
 from utils.json_field import JSONF
 from utils.regex import get_iregex_filter
@@ -565,6 +566,37 @@ def resource_problem_rating_chart(resource):
     return problem_rating_chart
 
 
+def resource_account_rating_histogram(ratings, n_bins, step):
+    # Count equal ratings before binning to avoid evaluating SQL CASEs for every account.
+    distribution = list(ratings.values("rating").annotate(count=Count("*")).order_by("rating"))
+    if not distribution:
+        return None
+
+    src, dst = distribution[0]["rating"], distribution[-1]["rating"]
+    bins = make_bins(src, dst, n_bins or settings.CHART_N_BINS_DEFAULT, step=step)
+    counts, _ = make_histogram(
+        [row["rating"] for row in distribution],
+        bins=bins,
+        deltas=[row["count"] for row in distribution],
+    )
+    return {
+        "title": title_field("rating"),
+        "queryset": ratings.annotate(value=F("rating")),
+        "field": "rating",
+        "x_from": src,
+        "x_to": dst,
+        "bins": bins,
+        "data": [
+            {
+                "bin": str(bins[idx]),
+                "value": count,
+                "title": f"[{bins[idx]}..{bins[idx + 1]}{']' if idx + 1 == len(counts) else ')'}",
+            }
+            for idx, count in enumerate(counts)
+        ],
+    }
+
+
 def resource_account_rating_chart(resource, accounts, resource_ratings, logger, use_cache=False):
     if use_cache:
         cache_key = f"resource-rating-chart:{resource.pk}"
@@ -592,7 +624,10 @@ def resource_account_rating_chart(resource, accounts, resource_ratings, logger, 
         aggregations = None
 
     try:
-        rating_chart = make_chart(ratings, "rating", n_bins=n_bins, step=step, aggregations=aggregations)
+        if coloring_field:
+            rating_chart = make_chart(ratings, "rating", n_bins=n_bins, step=step, aggregations=aggregations)
+        else:
+            rating_chart = resource_account_rating_histogram(ratings, n_bins, step)
     except TooManyBinsException as e:
         rating_chart = None
         logger.error(f"Rating chart for {resource} failed: {e}")

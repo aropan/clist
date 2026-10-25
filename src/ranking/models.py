@@ -362,6 +362,11 @@ class Account(BaseModel):
             ExpressionIndex(expressions=[F("resource"), Upper("key")]),
             DescNullsLastIndex(fields=["resource", "rating"]),
             DescNullsLastIndex(fields=["resource", "-rating"]),
+            models.Index(
+                fields=["resource", "account_type", "rating"],
+                condition=Q(rating__isnull=False),
+                name="account_resource_type_rating",
+            ),
             DescNullsLastIndex(fields=["resource", "rating50"]),
             DescNullsLastIndex(fields=["resource", "-rating50"]),
             DescNullsLastIndex(fields=["resource", "last_activity"]),
