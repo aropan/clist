@@ -14,3 +14,4 @@ src/**/tests
 legacy/tests
 logs
 volumes
+.local/
