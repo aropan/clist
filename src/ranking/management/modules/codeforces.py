@@ -809,6 +809,7 @@ class Statistic(BaseModule):
                     r["old_rating"] = old_rating
                     r["new_rating"] = new_rating
         elif statistics:
+            user_ratings = {}
             for handle, row in statistics.items():
                 if handle not in result:
                     continue
@@ -816,6 +817,28 @@ class Statistic(BaseModule):
                 for field in ("old_rating", "new_rating"):
                     if field in row:
                         r[field] = row[field]
+                if "new_rating" in r or not (self.contest.end_time and self.contest.end_time < now):
+                    continue
+                # An earlier full parse has stored the account without rating
+                # data, e.g. when contest.ratingChanges failed and was skipped;
+                # restore the missing ratings from the account's rating history.
+                if handle not in user_ratings:
+                    user_ratings[handle] = api_query(
+                        method="user.rating",
+                        params={"handle": handle},
+                        api_key=self.api_key,
+                    )
+                ratings = user_ratings[handle]
+                if ratings["status"] != "OK":
+                    LOG.warning(f"Missing user rating changes = {ratings}")
+                    continue
+                ratings = ratings["result"]
+                user_ratings[handle] = {"status": "OK", "result": ratings}
+                for rating_row in ratings:
+                    if str(rating_row["contestId"]) == self.cid:
+                        r["old_rating"] = rating_row["oldRating"]
+                        r["new_rating"] = rating_row["newRating"]
+                        break
 
         params = {"contestId": self.cid}
         if users:
