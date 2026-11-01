@@ -114,7 +114,7 @@ RUN crontab /etc/cron.d/nginx
 CMD ["sh", "-c", "crond && exec nginx -g 'daemon off;'"]
 
 
-FROM postgres:18-alpine3.24@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873 AS postgres-base
+FROM postgres:18-alpine3.24@sha256:10a5c69a83035ab5239f5620d708520e8b28f5aa1f2b20143e6024532edadfb5 AS postgres-base
 
 
 FROM postgres-base AS postgres
