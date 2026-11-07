@@ -451,6 +451,16 @@ class Statistic(BaseModule):
                                 "type": "best_place",
                                 "message": message,
                             })
+                    elif statistics and (
+                        r["member"] not in statistics
+                        or (statistics[r["member"]].get("percentage", 100) < 100 and not r.get("_score_history"))
+                    ):
+                        in_league = f" in {league_message(league)} league" if league else ""
+                        message = f"{{account}} entered the leaderboard, place `{place}`{in_league}"
+                        r.setdefault("_subscription_messages", []).append({
+                            "type": "first_submission",
+                            "message": message,
+                        })
 
                     if previous_best_place is None or league_changed:
                         r["_best_place"] = place

@@ -587,14 +587,16 @@ class CustomSubscriptionMessagesParseTest(TestCase):
         subscription = Subscription.objects.create(coder=self.coder, method=method, **fields)
         return subscription
 
-    def parse(self, **row):
+    def parse(self, parse_kwargs=None, **row):
         rows = {"player": {"member": "player", "place": 1, "solving": 10, **row}}
 
         class Statistic(BaseModule):
             def get_standings(inner_self, **kwargs):
                 return {"result": copy.deepcopy(rows)}
 
-        return ParseStatisticConcurrencyTest.run_with_plugin(self, Statistic, without_subscriptions=False)
+        return ParseStatisticConcurrencyTest.run_with_plugin(
+            self, Statistic, **{"without_subscriptions": False, **(parse_kwargs or {})}
+        )
 
     def sent_messages(self):
         return list(Task.objects.filter(message__isnull=False).values_list("message", flat=True))
@@ -611,6 +613,27 @@ class CustomSubscriptionMessagesParseTest(TestCase):
 
         self.parse(_subscription_messages=CUSTOM_MESSAGES, _skip_subscription=True)
 
+        assert self.sent_messages() == []
+
+    def test_parse_without_statistics_does_not_send_custom_messages(self):
+        self.subscribe().accounts.add(self.account)
+        Statistics.objects.create(resource=self.resource, contest=self.contest, account=self.account)
+
+        result = self.parse(parse_kwargs={"with_stats": False}, _subscription_messages=CUSTOM_MESSAGES)
+
+        assert result.status == parse_statistic.EventStatus.COMPLETED
+        assert self.sent_messages() == []
+
+    def test_archive_reparse_does_not_send_custom_messages(self):
+        self.subscribe().accounts.add(self.account)
+        old_time = timezone.now() - timedelta(days=60)
+        Contest.objects.filter(pk=self.contest.pk).update(
+            created=old_time, start_time=old_time, end_time=old_time + timedelta(hours=1)
+        )
+
+        result = self.parse(_subscription_messages=CUSTOM_MESSAGES)
+
+        assert result.status == parse_statistic.EventStatus.COMPLETED
         assert self.sent_messages() == []
 
     def test_recipient_matched_twice_gets_single_message(self):

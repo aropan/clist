@@ -148,7 +148,7 @@ class CodingameProgressMessagesTest(SimpleTestCase):
             raise AssertionError(f"unexpected request: {url}")
 
         with mock.patch("ranking.management.modules.codingame.REQ.get", side_effect=get):
-            standings = Statistic(contest=contest).get_standings(users=users, statistics=statistics or {})
+            standings = Statistic(contest=contest).get_standings(users=users, statistics=statistics)
         return standings["result"]
 
     def test_leagues_are_resolved_from_script(self):
@@ -156,12 +156,55 @@ class CodingameProgressMessagesTest(SimpleTestCase):
         assert result["1"]["league"] == "Silver"
 
     def test_first_observation_initializes_progress_without_message(self):
-        result = self.get_standings([self.make_row(rank=10)])
+        for statistics in (None, {}):
+            with self.subTest(statistics=statistics):
+                result = self.get_standings([self.make_row(rank=10)], statistics=statistics)
+                row = result["1"]
+                assert "_subscription_messages" not in row
+                assert row["_agent_id"] == 100
+                assert row["_league"] == "Bronze"
+                assert row["_best_place"] == 10
+
+    def test_first_appearance_notifies_once_when_statistics_exist(self):
+        statistics = {"2": {"_best_place": 50}}
+
+        result = self.get_standings([self.make_row(rank=10)], statistics=statistics)
+
         row = result["1"]
-        assert "_subscription_messages" not in row
-        assert row["_agent_id"] == 100
-        assert row["_league"] == "Bronze"
+        (message,) = row["_subscription_messages"]
+        assert message["type"] == "first_submission"
+        assert message["message"] == "{account} entered the leaderboard, place `10` in 🥉`Bronze` league"
         assert row["_best_place"] == 10
+
+        statistics["1"] = row
+        result = self.get_standings([self.make_row(rank=10)], statistics=statistics)
+        assert "_subscription_messages" not in result["1"]
+
+    def test_first_appearance_without_league_notifies(self):
+        result = self.get_standings([self.make_row(league=None)], statistics={"2": {"_best_place": 50}})
+
+        (message,) = result["1"]["_subscription_messages"]
+        assert message["message"] == "{account} entered the leaderboard, place `10`"
+
+    def test_first_submission_waits_for_finished_percentage(self):
+        statistics = {"2": {"_best_place": 50}}
+        pending = self.get_standings([self.make_row(percentage=50)], statistics=statistics)
+        assert "_subscription_messages" not in pending["1"]
+
+        statistics["1"] = pending["1"]
+        result = self.get_standings([self.make_row()], statistics=statistics)
+
+        (message,) = result["1"]["_subscription_messages"]
+        assert message["type"] == "first_submission"
+
+    def test_existing_history_without_progress_fields_only_initializes(self):
+        statistics = {
+            "1": {"percentage": 50, "_score_history": [{"timestamp": 1, "score": 18.0, "rank": 50}]},
+        }
+
+        result = self.get_standings([self.make_row()], statistics=statistics)
+
+        assert "_subscription_messages" not in result["1"]
 
     def test_row_saved_before_progress_fields_only_initializes(self):
         statistics = {"1": {"_agent_id": 99, "_score_history": []}}
