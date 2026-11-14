@@ -107,12 +107,13 @@ $(() => {
     });
   }
 
-  var hour12 = is_12_hour_clock();
+  var hour12 = calendar_time_format === "auto" ? is_12_hour_clock() : calendar_time_format === "12h";
   var time_format = {
-    hour: "numeric",
+    hour: hour12 ? "numeric" : "2-digit",
     minute: "2-digit",
     hour12: hour12,
   };
+  var tooltip_time_format = hour12 ? "YYYY-MM-DD h:mm A" : "YYYY-MM-DD HH:mm";
 
   var calendar_views = {
     dayGridMonth: {},
@@ -145,6 +146,9 @@ $(() => {
     views: {
       ...calendar_views,
       timeGrid: {
+        // FullCalendar coerces an explicit null limit to zero.
+        ...(calendar_event_max_stack ? { eventMaxStack: calendar_event_max_stack } : {}),
+        moreLinkClick: "popover",
         allDayHeaderInnerClass: "clist-calendar-all-day-label",
         dayCellBottomClass: "clist-calendar-all-day-bottom",
       },
@@ -232,9 +236,9 @@ $(() => {
         event.extendedProps.hr_duration +
         "</div>" +
         "<div>Start: " +
-        start_time +
+        start.format(tooltip_time_format) +
         "</div>" +
-        (event.end ? "<div>End: " + end_time + "</div>" : "") +
+        (event.end ? "<div>End: " + end.format(tooltip_time_format) + "</div>" : "") +
         (countdown
           ? '<div class="countdown">' +
             (start < now ? "Ends in " : "Starts in ") +

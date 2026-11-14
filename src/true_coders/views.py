@@ -1239,6 +1239,11 @@ def change(request):
         if value == "":
             coder.settings.pop("time_format")
         coder.save()
+    elif name == "calendar-time-format":
+        if value not in ["auto", "12h", "24h"]:
+            return HttpResponseBadRequest("invalid calendar-time-format value")
+        coder.settings["calendar_time_format"] = value
+        coder.save()
     elif name == "add-to-calendar":
         if value not in django_settings.ACE_CALENDARS_:
             return HttpResponseBadRequest("invalid add-to-calendar value")
@@ -1257,6 +1262,12 @@ def change(request):
         ):
             return HttpResponseBadRequest("invalid event-limit-calendar value")
         coder.settings["event_limit_calendar"] = value
+        coder.save()
+    elif name == "calendar-event-max-stack":
+        value = request.POST.get("value", None)
+        if value not in [str(limit) for limit in range(8)]:
+            return HttpResponseBadRequest("invalid calendar-event-max-stack value")
+        coder.settings["calendar_event_max_stack"] = int(value)
         coder.save()
     elif name in ["calendar-days-before", "calendar-days-after"]:
         value = request.POST.get("value", None)

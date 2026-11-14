@@ -125,6 +125,24 @@ $(() => {
 
   $("#time-format").editable({ type: "text" });
 
+  $("#calendar-time-format")
+    .editable({
+      type: "select",
+      showbuttons: false,
+      source: { auto: "Auto", "12h": "12h", "24h": "24h" },
+      onblur: "ignore",
+    })
+    .on("shown", (_e, editable) => {
+      editable.input.$input.select2({
+        width: 250,
+        placeholder: "Select time format",
+        val: editable.input.$input.val(),
+      });
+      setTimeout(() => {
+        editable.input.$input.select2("open");
+      }, 1);
+    });
+
   $("#add-to-calendar")
     .editable({
       type: "select",
@@ -188,6 +206,24 @@ $(() => {
       type: "select",
       showbuttons: false,
       source: event_limit_source,
+      onblur: "ignore",
+    })
+    .on("shown", (_e, editable) => {
+      editable.input.$input.select2({
+        width: 250,
+        placeholder: "Select event limit",
+        val: editable.input.$input.val(),
+      });
+      setTimeout(() => {
+        editable.input.$input.select2("open");
+      }, 1);
+    });
+
+  $("#calendar-event-max-stack")
+    .editable({
+      type: "select",
+      showbuttons: false,
+      source: { 0: "Disabled", 1: "1", 2: "2", 3: "3", 4: "4", 5: "5", 6: "6", 7: "7" },
       onblur: "ignore",
     })
     .on("shown", (_e, editable) => {

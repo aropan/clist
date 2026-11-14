@@ -774,6 +774,25 @@ class CalendarDaysSettingsTest(TestCase):
                 self.coder.refresh_from_db()
                 assert self.coder.settings == expected
 
+    def test_saves_calendar_preferences(self):
+        expected = {**self.coder.settings, "calendar_event_max_stack": 0, "calendar_time_format": "24h"}
+
+        assert self.post("calendar-event-max-stack", "0").status_code == 200
+        assert self.post("calendar-time-format", "24h").status_code == 200
+
+        self.coder.refresh_from_db()
+        assert self.coder.settings == expected
+
+    def test_rejects_invalid_calendar_preferences(self):
+        expected = dict(self.coder.settings)
+        for name, value in [("calendar-event-max-stack", "8"), ("calendar-time-format", "invalid")]:
+            with self.subTest(name=name):
+                response = self.post(name, value)
+
+                assert response.status_code == 400
+                self.coder.refresh_from_db()
+                assert self.coder.settings == expected
+
     def render_calendar(self, user):
         return render_to_string(
             "calendar.html",
@@ -781,12 +800,13 @@ class CalendarDaysSettingsTest(TestCase):
         )
 
     def test_calendar_template_preserves_zero(self):
-        self.coder.settings.update(calendar_days_before=0, calendar_days_after=0)
+        self.coder.settings.update(calendar_days_before=0, calendar_days_after=0, calendar_event_max_stack=0)
 
         html = self.render_calendar(self.user)
 
         assert "calendar_days_before = 0" in html
         assert "calendar_days_after = 0" in html
+        assert "calendar_event_max_stack = 0" in html
 
     def test_calendar_template_defaults_for_missing_settings_and_guests(self):
         self.coder.settings = {}
@@ -796,6 +816,8 @@ class CalendarDaysSettingsTest(TestCase):
 
                 assert "calendar_days_before = 1" in html
                 assert "calendar_days_after = 3" in html
+                assert "calendar_event_max_stack = 4" in html
+                assert "calendar_time_format = 'auto'" in html
 
     def test_preferences_template_preserves_zero_and_uses_defaults(self):
         request = self.factory.get("/settings/preferences/")

@@ -95,6 +95,11 @@
             </div>
             <div class="value"><a href="#" id="time-format" data-value="{{ coder.settings.time_format }}"></a></div>
 
+            <div class="key">Calendar time format
+                <i rel="tooltip" title="Applies to calendar time labels and tooltips. Auto follows your browser language."></i>
+            </div>
+            <div class="value"><a href="#" id="calendar-time-format" data-value="{{ coder.settings.calendar_time_format|default:"auto" }}"></a></div>
+
             <div class="key">Default import to calendar</div>
             <div class="value"><a href="#" id="add-to-calendar" data-value="{{ coder.settings.add_to_calendar }}"></a></div>
 
@@ -116,6 +121,11 @@
 
             <div class="key">Day event limit in calendar</div>
             <div class="value"><a href="#" id="event-limit-calendar" data-value="{{ coder.settings.event_limit_calendar }}"></a></div>
+
+            <div class="key">Overlapping event limit in calendar
+                <i rel="tooltip" title="Applies to Days and Week views. Extra events open in a list on click. Default: 4."></i>
+            </div>
+            <div class="value"><a href="#" id="calendar-event-max-stack" data-value="{{ coder.settings|get_item:"calendar_event_max_stack"|default_if_none:4 }}"></a></div>
 
             <div class="key">Days before selected date
                 <i rel="tooltip" title="Applies to Days view. The selected day is always shown. Default: 1."></i>

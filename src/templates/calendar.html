@@ -9,6 +9,8 @@
   has_permission_toggle_party_contests = {{ party.has_permission_toggle|default:0 }}
   add_to_calendar = {% if add_to_calendar %}"{{ add_to_calendar }}"{% else %}"disable"{% endif %}
   event_limit = {{ request.user.coder.settings.event_limit_calendar|default:"true" }}
+  calendar_time_format = '{{ request.user.coder.settings.calendar_time_format|default:"auto"|escapejs }}'
+  calendar_event_max_stack = {{ request.user.coder.settings|get_item:"calendar_event_max_stack"|default_if_none:4 }}
   calendar_days_before = {{ request.user.coder.settings|get_item:"calendar_days_before"|default_if_none:1 }}
   calendar_days_after = {{ request.user.coder.settings|get_item:"calendar_days_after"|default_if_none:3 }}
 </script>
