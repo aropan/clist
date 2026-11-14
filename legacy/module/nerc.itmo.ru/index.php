@@ -167,6 +167,9 @@ parse_nef();
 parse_archive();
 
 foreach ($_contests as $contest) {
+    if (stripos($contest['title'], 'practice session') !== false) {
+        continue;
+    }
     $contest['rid'] = $RID;
     $contest['host'] = $HOST;
     $contest['timezone'] = $TIMEZONE;
