@@ -20,11 +20,16 @@ if (preg_match_all('#<a[^>]*href="(?P<url>archive/[0-9_]*/[^"]*)"[^>]*>#', $page
 
 foreach ($urls as $url) {
     $page = curlexec($url);
-    if (!preg_match('#[0-9]{4}.[0-9]{4}#', $page, $match)) {
+    // Anchor the season to its heading, not year-like substrings in HTTP headers.
+    if (!preg_match(
+        '#<div\b[^>]*>\s*(?:COCI|CROATIAN OPEN COMPETITION IN INFORMATICS)\s+' .
+        '\b(?P<year>[0-9]{4})\b\s*[-/]\s*\b(?P<next_year>[0-9]{4})\b\s*</div>#i',
+        $page,
+        $match,
+    ) || (int) $match['next_year'] !== (int) $match['year'] + 1) {
         continue;
     }
-    $season = $match[0];
-    $season[4] = '-';
+    $season = $match['year'] . '-' . $match['next_year'];
 
     preg_match_all('#<td[^>]*>\s*<div[^>]*class="naslov">(?<title>[^<]+)</div>.*?<a [^>]+>(?<date>\d\d\.\d\d\.\d\d\d\d)\.<br />(?<date_start_time>\d\d:\d\d) GMT/UTC.*?</td>#si', $page, $matches, PREG_SET_ORDER);
 

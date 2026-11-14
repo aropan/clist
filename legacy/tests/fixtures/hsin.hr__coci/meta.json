@@ -1,0 +1,23 @@
+{
+    "host": "hsin.hr/coci",
+    "rid": 23,
+    "path": "./module/hsin.hr/index.php",
+    "url": "https://hsin.hr/coci/",
+    "parse_url": "https://hsin.hr/coci/",
+    "timezone": "UTC",
+    "api_url": null,
+    "info": {
+        "standings": {
+            "name_instead_key": true,
+            "avg_problem_width": true
+        },
+        "get_events": {
+            "colors": {
+                "darken": "#2D4416",
+                "lighten": "#DFEFD1"
+            }
+        }
+    },
+    "parse_full_list": false,
+    "recorded_at": "2026-11-14 22:32:25"
+}
