@@ -23,6 +23,32 @@ class Migration(migrations.Migration):
     ]
 """
 
+# Backport https://github.com/django-oauth/django-oauth-toolkit/pull/1951
+# until the pinned release supports oauthlib 4.0.1's device-code validation hook.
+OAUTH_TOOLKIT_DEVICE_CODE_VALIDATOR = """    def validate_device_code(self, client_id, code, request, *args, **kwargs):
+        from .models import get_device_grant_model
+
+        device_grant_model = get_device_grant_model()
+        try:
+            device = device_grant_model.objects.get(device_code=code, client_id=client_id)
+        except device_grant_model.DoesNotExist:
+            return None
+
+        if device.status == device.DENIED:
+            return "access_denied"
+        if device.is_expired():
+            return "expired_token"
+        if device.status == device.AUTHORIZATION_PENDING:
+            return "authorization_pending"
+        if device.status != device.AUTHORIZED:
+            return None
+
+        request.user = device.user
+        request.scopes = device.scope.split() if device.scope else []
+        return "authorized"
+
+"""
+
 
 def replace_once(path: Path, old: str, new: str) -> None:
     content = path.read_text(encoding="utf-8")
@@ -40,6 +66,53 @@ def write_exact(path: Path, content: str) -> None:
     path.write_text(content, encoding="utf-8")
 
 
+def patch_oauthlib(site_packages: Path) -> None:
+    scope_validation = """        # OPTIONAL. The scope of the access request as defined by Section 3.3
+        # of [RFC6749]. https://www.rfc-editor.org/rfc/rfc8628#section-3.1
+        self.validate_scopes(request)
+"""
+    # Normalize only after OAuthLib has checked duplicates (RFC 8628 section 3.1).
+    replace_once(
+        site_packages / "oauthlib" / "oauth2" / "rfc8628" / "grant_types" / "device_code.py",
+        scope_validation,
+        scope_validation.replace(
+            "        self.validate_scopes(request)",
+            '        if request.scope == "":\n            request.scope = None\n        self.validate_scopes(request)',
+        ),
+    )
+
+
+def patch_oauth_toolkit(site_packages: Path) -> None:
+    validators_path = site_packages / "oauth2_provider" / "oauth2_validators.py"
+    if "    def validate_device_code(" in validators_path.read_text(encoding="utf-8"):
+        raise RuntimeError("OAuth Toolkit already implements validate_device_code; review the compatibility patch")
+    validate_grant_type = "    def validate_grant_type(self, client_id, grant_type, client, request, *args, **kwargs):"
+    replace_once(
+        validators_path,
+        validate_grant_type,
+        OAUTH_TOOLKIT_DEVICE_CODE_VALIDATOR + validate_grant_type,
+    )
+    device_response = "        device_response = DeviceCodeResponse(**response)"
+    replace_once(
+        site_packages / "oauth2_provider" / "views" / "device.py",
+        device_response,
+        '        response.pop("scope", None)\n' + device_response,
+    )
+    device_parameters = """    def create_device_authorization_response(self, request: HttpRequest):
+        uri, http_method, body, headers = self._extract_params(request)
+        try:
+"""
+    replace_once(
+        site_packages / "oauth2_provider" / "oauth2_backends.py",
+        device_parameters,
+        device_parameters.replace(
+            "        try:",
+            "        body = urlencode([(key, value) for key, values in request.POST.lists() for value in values])\n"
+            "        try:",
+        ),
+    )
+
+
 def main() -> None:
     site_packages = Path(get_path("purelib"))
     replace_once(
@@ -51,6 +124,8 @@ def main() -> None:
         site_packages / "webpush" / "migrations" / "0006_alter_subscriptioninfo_user_agent.py",
         WEBPUSH_USER_AGENT_MIGRATION,
     )
+    patch_oauthlib(site_packages)
+    patch_oauth_toolkit(site_packages)
 
 
 if __name__ == "__main__":
