@@ -1,11 +1,13 @@
 import ast
 import copy
+import io
 import logging
 from datetime import timedelta
 from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
 
+from django.core.management import call_command
 from django.test import SimpleTestCase, TestCase, override_settings
 from django.utils import timezone
 
@@ -78,6 +80,62 @@ class ParseStatisticDiagnosticsTest(SimpleTestCase):
                     direct_imports.append(str(path.relative_to(modules_path)))
 
         assert direct_imports == []
+
+
+class ParseStatisticSelectionTest(TestCase):
+    def test_split_by_resource_selects_due_contests_without_duplicates(self):
+        resource = Resource(host="selection.example", url="https://selection.example", enable=True)
+        Resource.objects.bulk_create([resource])
+        Module.objects.create(
+            resource=resource,
+            path="dummy.py",
+            min_delay_after_end=timedelta(0),
+            max_delay_after_end=timedelta(days=1),
+            delay_on_error=timedelta(minutes=10),
+        )
+        now = timezone.now()
+        contests = {}
+        for key, start, end, delay in (
+            ("live-empty", -1, 1, -1),
+            ("live-one", -1, 1, -1),
+            ("live-many", -1, 1, -1),
+            ("not-due", -1, 1, 1),
+            ("future", 1, 2, -1),
+            ("finished", -2, -1, -1),
+            ("old", -49, -48, -1),
+        ):
+            contests[key] = Contest(
+                resource=resource,
+                title=key,
+                key=key,
+                host=resource.host,
+                url=f"https://selection.example/{key}",
+                start_time=now + timedelta(hours=start),
+                end_time=now + timedelta(hours=end),
+                duration_in_secs=(end - start) * 3600,
+                statistic_timing=now + timedelta(minutes=delay),
+            )
+        Contest.objects.bulk_create(contests.values())
+        accounts = [Account(resource=resource, key=f"account-{i}") for i in range(2)]
+        Account.objects.bulk_create(accounts)
+        Statistics.objects.bulk_create([
+            Statistics(resource=resource, contest=contests[key], account=account)
+            for key, count in (("live-one", 1), ("live-many", 2), ("not-due", 1), ("future", 1))
+            for account in accounts[:count]
+        ])
+
+        with (
+            mock.patch.object(parse_statistic, "timezone_now", return_value=now),
+            mock.patch.object(parse_statistic, "tqdm") as progress,
+            mock.patch.object(parse_statistic.django_rq, "get_queue") as get_queue,
+            mock.patch.object(parse_statistic, "is_job_active", return_value=True),
+        ):
+            call_command("parse_statistic", split_by_resource=True, stdout=io.StringIO())
+
+        selected = progress.call_args.args[0]
+        assert {contest.key for contest in selected} == {"live-one", "live-many", "finished"}
+        assert len(selected) == 3
+        get_queue.return_value.enqueue.assert_not_called()
 
 
 class ParseStatisticConcurrencyTest(TestCase):

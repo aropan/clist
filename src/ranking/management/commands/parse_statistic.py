@@ -287,7 +287,8 @@ class Command(BaseCommand):
                     contests = contests.filter(end_time__gt=now - timedelta(days=previous_days), end_time__lt=now)
                 else:
                     contests = contests.filter(Q(statistic_timing=None) | Q(statistic_timing__lt=now))
-                    parsed_contests = contests.filter(start_time__lt=now, end_time__gt=now, statistics__isnull=False)
+                    has_statistics = Statistics.objects.filter(contest_id=OuterRef("pk"))
+                    parsed_contests = contests.filter(Exists(has_statistics), start_time__lt=now, end_time__gt=now)
 
                     before_end_limit_query = (
                         Q(end_time__gt=now - F("resource__module__max_delay_after_end"))
