@@ -2,9 +2,6 @@
 
 import colorsys
 
-import numpy as np
-from skimage import color
-
 
 def color_to_rgb(color, normalization=1):
     return [int(color[i : i + 2], 16) * normalization / 255 for i in range(1, 6, 2)]
@@ -33,6 +30,9 @@ def darken_hls(hue, lightness, saturation, alpha):
 
 
 def get_n_colors(n, ignore_colors=None):
+    import numpy as np
+    from skimage import color
+
     if ignore_colors is None:
         ignore_colors = []
     ignore_colors = [*ignore_colors, [0, 0, 0]]

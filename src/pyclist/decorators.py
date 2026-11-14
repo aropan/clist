@@ -5,7 +5,6 @@ import logging
 import re
 from functools import wraps
 
-import numpy as np
 from django.conf import settings
 from django.db import connection
 from django.http import HttpResponse, HttpResponseNotFound
@@ -138,6 +137,8 @@ def analyze_db_queries():
 
 
 def group_and_calculate_times(queries):
+    import numpy as np
+
     grouped = {}
     for query in queries:
         query_sql = query["sql"]
@@ -160,6 +161,8 @@ def group_and_calculate_times(queries):
 
 
 def log_grouped_times(grouped_times):
+    import numpy as np
+
     grouped_times.sort(key=lambda x: x["sum"], reverse=True)
     mean = np.mean([g["sum"] for g in grouped_times])
     for g in grouped_times:

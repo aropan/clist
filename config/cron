@@ -1,5 +1,9 @@
 PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 DJANGO_ENV_FILE=.env.prod
+OPENBLAS_NUM_THREADS=1
+CRON_SKIP_CHECKS=1
+# Maximum random delay before Django cron commands, in seconds.
+CRON_JITTER_SECONDS=10
 
 20,35,55  *    *    *    *    env  MONITOR_NAME=calendar-update         /usr/src/clist/run-manage.bash update_google_calendars
 10        4    *    *    *    env  MONITOR_NAME=calendar-public-access  /usr/src/clist/run-manage.bash ensure_google_calendars_public
@@ -11,7 +15,6 @@ DJANGO_ENV_FILE=.env.prod
 30        3    *    *    *    env  MONITOR_NAME=resource-activity       /usr/src/clist/run-manage.bash update_resource_activity
 */3       *    *    *    *    env  MONITOR_NAME=parsing-accounts        /usr/src/clist/run-manage.bash parse_accounts_infos --split-by-resource
 30        *    *    *    *    env  MONITOR_NAME=parse-archive-problems  /usr/src/clist/run-manage.bash parse_archive_problems
-*/1       *    *    *    *    env  MONITOR_NAME=checking-logs           /usr/src/clist/run-manage.bash check_logs
 17        */2  *    *    *                                              /usr/src/clist/run-manage.bash ensure_telegram_webhook
 */15      *    *    *    *    env  MONITOR_NAME=check-schedule-parsing  /usr/src/clist/run-manage.bash check_schedule_parsing
 */15      *    *    *    *    env  MONITOR_NAME=set-account-rank        /usr/src/clist/run-manage.bash set_account_rank

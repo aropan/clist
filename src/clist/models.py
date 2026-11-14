@@ -12,10 +12,7 @@ from datetime import UTC, datetime, timedelta
 from typing import ClassVar
 from urllib.parse import urljoin, urlparse
 
-import numpy as np
-import pandas as pd
 import requests
-import xgboost as xgb
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
@@ -29,7 +26,6 @@ from django.urls import reverse
 from django.utils.timezone import now as timezone_now
 from django_ltree.fields import PathField
 from PIL import Image, UnidentifiedImageError
-from scipy.stats import randint, uniform
 
 from clist.templatetags.extras import get_item, get_problem_key, slug
 from clist.utils import similar_contests_queryset, update_accounts_by_coders
@@ -338,6 +334,8 @@ class Resource(BaseModel):
             self.save()
 
     def change_icon_background_color(self):
+        import numpy as np
+
         icon_background_color = self.info.get("icon_background_color")
         if not icon_background_color:
             return
@@ -502,11 +500,16 @@ class Resource(BaseModel):
         return features
 
     def problem_rating_predictor_data(self, problems):
+        import pandas as pd
+
         data = [self.problem_rating_predictor_features(problem) for problem in problems]
         df = pd.DataFrame(data)
         return df
 
     def problem_rating_predictor_model(self):
+        import xgboost as xgb
+        from scipy.stats import randint, uniform
+
         param_distributions = {
             "learning_rate": uniform(0.01, 0.3),
             "max_depth": randint(3, 8),

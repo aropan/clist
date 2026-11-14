@@ -8,7 +8,6 @@ from sql_util.utils import SubqueryCount
 
 from clist.models import Banner, Contest, ContestSeries, Discussion, Problem, ProblemTag, PromoLink, Promotion, Resource
 from pyclist.admin import BaseModelAdmin, admin_register
-from ranking.management.commands.parse_statistic import Command as parse_stat
 from ranking.models import Module, Rating
 
 
@@ -53,6 +52,8 @@ class ContestAdmin(BaseModelAdmin):
         extra = 0
 
     def parse_statistic(self, request, queryset):
+        from ranking.management.commands.parse_statistic import Command as parse_stat
+
         result = parse_stat().parse_statistic(queryset, with_check=False)
         self.message_user(request, f"{result.count:d} of {result.total:d} parsed.")
 

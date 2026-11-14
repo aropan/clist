@@ -67,11 +67,6 @@ MONITORS = {
         timedelta(minutes=10),
         "sendout_tasks: delivers queued notification tasks every minute.",
     ),
-    "checking-logs": (
-        "* * * * *",
-        timedelta(minutes=10),
-        "check_logs: scans management-command logs for errors every minute.",
-    ),
     "parsing-accounts": (
         "*/3 * * * *",
         timedelta(minutes=20),

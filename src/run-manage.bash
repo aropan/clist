@@ -5,8 +5,17 @@ set -e
 
 name=$1
 
+if [[ ${CRON_SKIP_CHECKS:-0} == 1 ]]; then
+    set -- "$@" --skip-checks
+fi
+
 exec 200>/tmp/$name.lock
 flock -n 200 || { date; echo "Script '$name' is already running"; exit 0; }
+
+if [[ ${CRON_JITTER_SECONDS:-0} -gt 0 ]]; then
+    printf -v jitter_seconds '%d.%03d' "$((RANDOM % CRON_JITTER_SECONDS))" "$((RANDOM % 1000))"
+    sleep "$jitter_seconds"
+fi
 
 cd "$(dirname "$0")"
 
