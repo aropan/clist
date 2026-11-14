@@ -143,6 +143,10 @@ services:
       context: .
       target: postgres
       provenance: disabled=true
+    ulimits:
+      nofile:
+        soft: 8192
+        hard: 524288
     networks:
       clist_network:
         ipv4_address: 10.42.0.105

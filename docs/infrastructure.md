@@ -202,6 +202,12 @@ The PostgreSQL stage runs the database and its weekly `pg_repack` cron through
 supervisord. Development Redis has snapshots disabled and uses `/tmp` as its working
 directory; production Redis persists RQ state in `./volumes/redis_data`.
 
+The `db` service sets the `nofile` soft limit to 8192 in Compose, and its supervisor
+also sets `minfds=8192`, inherited by the database processes. This applies on
+container recreation even before rebuilding the image. It leaves room above
+PostgreSQL's default `max_files_per_process=1000` cache; the default OS soft limit
+of 1024 otherwise reaches about 97% under normal I/O.
+
 ## Supervisord & RQ queues ([`config/supervisord.conf`](../config/supervisord.conf))
 
 Production runs ASGI (Daphne), uWSGI, cron, redis, logrotate, and **four RQ queues**:
