@@ -251,6 +251,10 @@ html {
   color: #ff0000 !important;
 }
 
+.coder-repovive-red {
+  color: #ff4500 !important;
+}
+
 .coder-yellow {
   color: #bbbb00 !important;
 }
@@ -265,6 +269,10 @@ html {
 
 .coder-blue {
   color: #0000ff !important;
+}
+
+.coder-repovive-blue {
+  color: #4d4dff !important;
 }
 
 .coder-samcoding-blue {

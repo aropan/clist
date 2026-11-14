@@ -1,0 +1,19 @@
+{
+    "host": "repovive.com",
+    "rid": 180,
+    "path": "./module/repovive.com/index.php",
+    "url": "https://repovive.com/contests",
+    "parse_url": "https://repovive.com/contests",
+    "timezone": null,
+    "api_url": null,
+    "info": {
+        "get_events": {
+            "colors": {
+                "darken": "#164426",
+                "lighten": "#D0EFDB"
+            }
+        }
+    },
+    "parse_full_list": false,
+    "recorded_at": "2026-11-08 18:09:15"
+}

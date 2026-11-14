@@ -340,7 +340,7 @@ def account_update_contest_additions(
         for stat in stat_qs:
             contest = stat.contest
             for field in fields:
-                key = getattr(contest, field)
+                key = get_item(contest, field)
                 contest_keys.discard(key)
                 if not stat.skip_in_stats:
                     renaming_contest_keys.discard(key)
@@ -348,7 +348,7 @@ def account_update_contest_additions(
             total += 1
             addition = dict(stat.addition)
             for field in fields:
-                key = getattr(contest, field)
+                key = get_item(contest, field)
                 if key in contest_addition_update:
                     ordered_dict = contest_addition_update[key]
                     break

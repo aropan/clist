@@ -6,28 +6,41 @@ require_once dirname(__FILE__) . '/../../config.php';
 
 $page = curlexec($URL);
 
-$page = preg_replace('#\\\#', '', $page);
-$page = preg_replace('#"\$D#', '"', $page);
+$data = '';
+preg_match_all('#self\.__next_f\.push\((.*?)\)</script>#s', $page, $chunks);
+foreach ($chunks[1] as $chunk) {
+    $chunk = json_decode($chunk, true);
+    if (isset($chunk[1]) && is_string($chunk[1])) {
+        $data .= $chunk[1];
+    }
+}
 
 preg_match_all(
-    '#
-    "id":"(?P<key>[^"]*)",[^}]*
-    "title":"(?P<title>[^"]*)",[^}]*
-    "startDate":"(?P<start_time>[^"]*)",[^}]*
-    "endDate":"(?P<end_time>[^"]*)",[^}]*
-    #sx',
-    $page,
+    '#(?=\{"id":)(?P<json>\{(?:[^{}"]++|"(?:[^"\\\\]++|\\\\.)*"|(?&json))*\})#s',
+    $data,
     $matches,
     PREG_SET_ORDER,
 );
 
-foreach ($matches as &$match) {
+foreach ($matches as $match) {
+    $contest = json_decode($match['json'], true);
+    if (!isset($contest['id'], $contest['title'], $contest['startDate'], $contest['endDate'])) {
+        continue;
+    }
+
+    $slug = $contest['urlSlug'] ?? '';
+    if ($slug === '' || $slug === '$undefined') {
+        $slug = $contest['contestNumber'];
+    }
+
     $contests[] = [
-        'start_time' => $match['start_time'],
-        'end_time' => $match['end_time'],
-        'title' => $match['title'],
-        'url' => $URL,
-        'key' => $match['key'],
+        'start_time' => preg_replace('#^\$D#', '', $contest['startDate']),
+        'end_time' => preg_replace('#^\$D#', '', $contest['endDate']),
+        'title' => $contest['title'],
+        'url' => url_merge($URL, '/contests/') . rawurlencode((string) $slug),
+        'key' => $contest['id'],
+        'kind' => $contest['contestType'] ?? null,
+        'info' => ['parse' => $contest],
         'host' => $HOST,
         'timezone' => $TIMEZONE,
         'rid' => $RID,
