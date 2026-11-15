@@ -216,7 +216,7 @@ function curlexec(&$url, $postfields = null, $params = [])
         $page = file_get_contents($cachefile);
     } else {
         if ($with_curl) {
-            $command = "curl -i {$url} -L --silent";
+            $command = 'curl -i -L --silent --url ' . escapeshellarg($url);
             foreach ($header as $h) {
                 $command .= ' -H ' . escapeshellarg($h);
             }
